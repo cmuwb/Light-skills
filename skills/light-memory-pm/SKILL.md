@@ -7,7 +7,7 @@ user-invocable: false
 # 上下文记忆与科研项目管理
 
 ## 持久化（用 Light 记忆系统 + 项目库 db09）
-- 跨会话事实写入记忆文件(user/feedback/project/reference)，并在 MEMORY.md 加索引行。
+- 跨会话事实写入记忆文件(user/feedback/project/reference)，并在 MEMORY.md 加索引行。其中 **feedback 记忆槽的「跨项目过程教训」部分结构化落地为 db09 顶层 `lessons.md`**（与 `projects/` 平级，格式见下）；feedback 记忆文件本身仍存个人偏好类反馈。
 - 项目级状态写入 db09 的 project_card：`project_name, goal, current_stage, confirmed_idea, data_status, method_status, experiment_status, paper_status, ppt_status, code_status, risk_list, next_actions, decision_log, version_history`。
 - 相对日期一律转绝对日期再存。
 - **两层记忆模型**（借 LangGraph checkpointer/Store 与 mem0 的作用域设计）：会话级状态(≈thread_id，短期、随会话压缩可丢)与项目级状态(≈跨会话的 Store/db09，长期、按"项目"namespace 持久)分开管理。关键事实即使能被自动抽取也要显式写入——自动记忆(mem0 式 LLM 抽取)会漏记，db09 是权威来源。
@@ -54,6 +54,8 @@ databases/db09-projects/projects/<project_name>/
 
 **触发→写入对照**：idea 定稿→改 `confirmed_idea` + 追加 decision_log；实验跑完→改 `experiment_status` + `next_actions`；论文/PPT/代码出新版→改对应 `*_status` + 追加 version_history（并打 git tag）；方案变更/取舍→追加 decision_log；新术语/指标/创新点定名→补 terminology.md。
 
+**跨项目教训回写（节制，避免噪声）**：仅当某决策产生了**可跨项目复用的过程教训**——踩坑、被审稿/导师否掉、复现失败、某流程显著省时/避雷——才在追加 decision_log 的**同时**回写一条 lesson 到 db09 顶层 `lessons.md`（格式：`- [YYYY-MM-DD] 阶段/场景 — 做法 — 结果(有效|失败) — 适用条件 — 来源项目slug`）。日常项目内决策**不强制**回写。边界：方法选型事实归 db03 方法卡，个人偏好归 feedback 记忆，二者不进 lessons.md。
+
 ### 写入步骤示例（落地一次实验进展）
 假设刚跑完检测 baseline，项目 `dairygoat-detect-track`：
 1. **读现状**：Read `databases/db09-projects/projects/dairygoat-detect-track/project_card.md`，看 `experiment_status` 与 `next_actions` 当前值。
@@ -65,6 +67,8 @@ databases/db09-projects/projects/<project_name>/
 
 ## 会话开始时
 先读项目库与记忆：定位 `databases/db09-projects/projects/<project_name>/project_card.md`，**优先读 `next_actions` 字段**确认"上次做到哪、下一步是什么"，必要时再读 decision_log 末几条与 version_history。会话长时被压缩后，靠 db09/记忆而非短期记忆恢复状态。
+
+**复用历史教训**：新项目立项，或选定方法/投稿策略**前**，先 Grep db09 顶层 `lessons.md` 检索同类"阶段/场景"关键词（如 `方案确认`/`数据准备`/`投稿`）的历史有效做法；命中可复用的，在写 decision_log 时注明"复用自 lesson [日期]"。
 
 ## 衔接
 是所有技能的状态中枢：m01–m17 的产出都在此登记，a06 的目录与之对应。

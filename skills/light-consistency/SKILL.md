@@ -27,7 +27,7 @@ user-invocable: false
 - **指标名称**：统一符号与单位(如 F1 vs F-score)，连同定义与单位一并锁定。
 - **创新点表述**：3 条贡献的标准措辞，论文/PPT/软著/竞赛一字对齐。
 - **关键术语**：中英对照、专有名词译法、大小写与连字符(如 fine-tune 不写 finetune)。
-- **视觉规范**：建议落成 DTCG/Style Dictionary 风格的命名 token——主色/语义色、字族字重、模块化字号、间距阶梯(4/8pt)、圆角阴影；论文图/PPT/前端/海报全部取同一 token 源(链 db05/db06/db07)。
+- **视觉规范**：落成 DTCG 风格命名 token——主色/语义色、字族字重、模块化字号、间距阶梯(4/8pt)、圆角阴影。视觉 SSOT 锚点为 db05 的 `design_tokens.template.json`，论文图(db07)/PPT(db06)/前端(db05)/海报全部从同一份取值。**当前以人工/清单对照执行,非脚本自动核对。**
 - **变更广播**：定义一旦修改，立即触发对所有已产出材料的回扫，避免下游过期。
 
 ## 审计脚本：consistency_audit.py
@@ -64,7 +64,7 @@ python scripts/consistency_audit.py
 2. **指标一致**：名称、定义、数值在各处相同(论文表 = PPT 图 = 摘要数字)。
 3. **创新点一致**：摘要/引言/结论/PPT/申报书表述不矛盾。
 4. **方法/数据集名称一致**：不中途改名。
-5. **视觉一致**：论文图、PPT、前端、海报共用设计语言；逐项对照 token(主色/字体/字号/间距/圆角)而非凭感觉。
+5. **视觉一致**：论文图、PPT、前端、海报共用设计语言。**目前为人工/清单对照**——依据 db05 的 `design_tokens.template.json`(DTCG 视觉 SSOT)逐项核对主色/字体/字号/间距/圆角，而非凭感觉。注意：审计脚本 `consistency_audit.py` 只核文本类一致(术语/指标名/数值/覆盖)，**暂不自动核视觉 token**,视觉对照靠 `assets/design_language_extract.template.md` 的核对栏人工签字完成。
 6. **逻辑线索一致**：论文叙事与 PPT 叙事、软著功能与系统实现对得上。
 
 ## 触发检查的场景
@@ -79,7 +79,7 @@ python scripts/consistency_audit.py
 - **audit/critique** 提供"分维度+具体证据"评审模式：每条批评指向位置、给三段式(现状→问题→建议)，维度即上述五维。
 
 风格层（视觉一致工程化）：
-- **extract-design-system**：从现有论文图/PPT/前端反推设计语言(主色/语义色、字族字重、模块化字号、间距阶梯、圆角阴影)，归一成命名 token 写入规范。
+- **extract-design-system**：从现有论文图/PPT/前端反推设计语言(主色/语义色、字族字重、模块化字号、间距阶梯、圆角阴影)。用 `assets/design_language_extract.template.md` 走"采样→原子属性抽取→⚠人工确认签字"流程,产出**视觉规范卡(必填人读)**;确认后的取值可写入 db05 的 `design_tokens.template.json`。**此抽取为人工/半人工**——截图取色受压缩/抗锯齿影响、语义映射可能非原意,标 ⚠ 项须人工签字方可作 SSOT。
 - **Design Tokens(W3C DTCG)**：用 `$value`/`$type` 结构定义视觉 token，分组 `$type` 可继承，别名用花括号引用 `{color.brand.primary}`；复合类型 typography/shadow/border 直接描述完整样式。作为跨工具交换格式。
 - **Style Dictionary(v4)**：单一 token 源经 `transformGroup`/`transforms` 输出到多平台(`css/variables`、`scss/variables`、`javascript/es6` 等)，实现"一处定义、多端一致"。注意 v4 为 ESM+异步。
 - **Prettier**：统一代码格式(`.prettierrc`：printWidth/tabWidth/semi/singleQuote/trailingComma)，保证代码符号与论文符号、跨文件风格一致。
@@ -91,6 +91,7 @@ python scripts/consistency_audit.py
 
 ## 文件清单
 - `assets/db09_glossary.yaml` / `db09_method_lock.yaml` / `db09_metric_registry.yaml`：db09 单一事实源 schema 模板。
+- `assets/design_language_extract.template.md`：视觉设计语言抽取模板(采样清单+原子属性抽取表+⚠人工确认核对栏+视觉规范卡)，配套 db05 的 `design_tokens.template.json`(DTCG 视觉 SSOT)。
 - `scripts/consistency_audit.py`：跨材料一致性审计器(四类检测+定位+修正建议+JSON 导出+自测)。
 - `examples/worked_example.md`：论文 vs PPT 指标名/数值冲突的端到端实例(定位→统一→修正→回归)。
 - `examples/materials_paper.txt` / `materials_ppt.txt`：配套可运行材料。

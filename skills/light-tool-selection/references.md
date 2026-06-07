@@ -75,6 +75,20 @@
 - 【链接】https://docs.docker.com/get-started/docker-concepts/building-images/writing-a-dockerfile/ （注：研究时该域名在本环境被网络策略拦截，内容据 Docker 既有官方知识整理；端点/概念稳定，使用前以官方文档为准）
 - 【已知坑】用 latest 破坏可复现；镜像层顺序不当导致缓存失效、构建慢；容器内写数据不持久需 volume。
 
+## GitHub Actions（仓库事件触发的 CI/CD 自动化）
+- 【是什么】GitHub 内建的事件驱动自动化平台：仓库发生事件(push/PR/定时/手动)时，在云端 runner 上跑 workflow。与 Snakemake/Make 互补——后者管本地数据依赖编排，前者管"何时由什么事件触发、跑在哪个环境"。科研常用：push 即跑测试、cron 定时抓 arXiv/数据/重算、自动构建 LaTeX PDF 与图、发布 release、matrix 多环境复现。
+- 【可复用方法】workflow 是 YAML，放 `.github/workflows/*.yml`(一仓可多份)。核心字段：
+  - `name`：workflow 名。
+  - `on`：触发条件——`push`/`pull_request`(可按 branches/paths 过滤)、`schedule`(cron 定时，如 `- cron: '0 6 * * *'` 每日 06:00 UTC)、`workflow_dispatch`(手动/带输入参数触发)、`release`/`issues` 等。
+  - `jobs`：并行的作业，每个含 `runs-on`(如 ubuntu-latest)与有序 `steps`。
+  - `steps`：每步要么 `uses`(调现成 action)要么 `run`(跑 shell)。常用 action：`actions/checkout@v4`(拉代码)、`actions/setup-python@v5`(装 Python)、`astral-sh/setup-uv@v5`(装 uv，配 `uv sync` 复现)、`actions/cache@v4`(缓存依赖/~/.cache 提速)、`actions/upload-artifact@v4` / `download-artifact`(传产物如 PDF/图/数据)。
+  - `strategy.matrix`：多版本/多环境笛卡尔积复现，如 `matrix: {python-version: ['3.10','3.11','3.12'], os: [ubuntu-latest, macos-latest]}`，配 `runs-on: ${{ matrix.os }}`。
+  - `secrets`：敏感值经 `${{ secrets.NAME }}` 注入(仓库/环境级配置，绝不写进 YAML)。
+  - `permissions`：收窄 `GITHUB_TOKEN` 权限(如发 release/写 pages 才给 `contents: write`)，最小权限原则。
+- 【科研典型场景】① test-on-push：`on: [push, pull_request]` + setup-uv + `uv run pytest`。② 定时抓数：`on: schedule` cron + 脚本抓 arXiv/数据 + commit 回仓或 upload-artifact。③ 自动出论文：checkout + 装 TinyTeX/TeX Live + `latexmk -pdf` + upload-artifact 上传 PDF。④ 发布：打 tag 触发 `on: release` 或 `softprops/action-gh-release` 传产物。⑤ matrix 复现：跨 Python/OS 跑同一套实验验证可复现。
+- 【链接】https://docs.github.com/actions ；action 市场 https://github.com/marketplace?type=actions ；setup-uv https://github.com/astral-sh/setup-uv
+- 【已知坑】schedule cron 用 UTC 且高峰可能延迟数分钟、仓库 60 天无活动会停跑定时任务；私有仓有分钟配额、注意成本；不要把 secret 写进日志/YAML；第三方 action 钉到 commit SHA 或可信版本 tag(防供应链投毒)；GITHUB_TOKEN 默认权限按仓库设置，能收窄就收窄。
+
 ## Conda（语言无关的包+环境管理）
 - 【是什么】跨平台命令行工具，管理"环境+包"，含非 Python 二进制/编译库，语言无关。
 - 【可复用方法】`conda create --name env`、`conda activate env`、`conda install pkg`、`conda env export`(→ environment.yml 复现)、`conda env create -f environment.yml`、`conda info --envs`。channel 是包来源，社区首选 conda-forge（`conda install conda-forge::numpy` 或 .condarc 设默认）。**何时优先 conda**：编译科学库(NumPy/SciPy/OpenCV 预编译二进制)、CUDA/GPU 栈(能协调 CUDA toolkit 版本，pip 做不到)、系统级非 Python 依赖(HDF5/FFTW/MKL)、跨语言(R/Julia/C++ 同环境)。提速用 **mamba**(C++ 重写、drop-in)，**miniforge** 最小安装器(默认 conda-forge + 自带 mamba，规避 Anaconda 商业 license 顾虑)。

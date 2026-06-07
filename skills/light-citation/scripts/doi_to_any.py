@@ -24,6 +24,10 @@ import sys
 import urllib.error
 import urllib.request
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
 DOI_BASE = "https://doi.org/"
 UA = "light-citation/1.0 (mailto:light.research@gmail.com)"
 ACCEPT = {
@@ -31,6 +35,35 @@ ACCEPT = {
     "csljson": "application/vnd.citationstyles.csl+json",
     "ris": "application/x-research-info-systems",
 }
+
+
+def _has_cjk(text: str) -> bool:
+    """判断字符串是否含 CJK 汉字（用于推断 langid）。"""
+    for ch in text or "":
+        if "一" <= ch <= "鿿" or "㐀" <= ch <= "䶿":
+            return True
+    return False
+
+
+def inject_langid(bibtex: str) -> str:
+    """给 BibTeX 条目注入 langid 字段（GB/T 7714 排版必需）。
+
+    按 author/title 是否含 CJK 字符判定：含汉字→langid={chinese}，否则→{english}。
+    已存在 langid 的条目不重复注入。诚实原则：只依据真实字段判定，不臆造。
+    """
+    if not bibtex or "@" not in bibtex:
+        return bibtex
+    if "langid" in bibtex.lower():
+        return bibtex
+    lang = "chinese" if _has_cjk(bibtex) else "english"
+    # 定位 @type{citekey, 后的首个逗号，在其后插入 langid 字段（兼容单行/多行）
+    brace = bibtex.find("{")
+    if brace == -1:
+        return bibtex
+    comma = bibtex.find(",", brace)
+    if comma == -1:
+        return bibtex
+    return f"{bibtex[:comma + 1]} langid={{{lang}}},{bibtex[comma + 1:]}"
 
 
 def negotiate(doi: str, kind: str, timeout: int = 30):
@@ -139,7 +172,7 @@ def main(argv=None):
         code, txt = negotiate(args.doi, "bibtex")
         print(f"[content-negotiation bibtex] HTTP {code}", file=sys.stderr)
         print("=== BibTeX ===")
-        print(txt.strip() if code == 200 else f"[ERROR HTTP {code}] {txt[:200]}")
+        print(inject_langid(txt.strip()) if code == 200 else f"[ERROR HTTP {code}] {txt[:200]}")
 
     if "csljson" in want:
         print("=== CSL JSON ===")
@@ -159,7 +192,24 @@ def _selftest():
     code_b, bib = negotiate(doi, "bibtex")
     print("BibTeX HTTP", code_b)
     assert code_b == 200 and "@" in bib, "bibtex 协商失败"
-    print(bib.strip()[:200], "...\n")
+    bib_tagged = inject_langid(bib.strip())
+    print(bib_tagged[:240], "...\n")
+    assert "langid={english}" in bib_tagged, "英文条目应注入 langid=english"
+
+    # langid 注入断言：含中文的条目应得到 langid=chinese
+    cn_entry = (
+        "@article{zhang2024shenjing,\n"
+        "  title = {深度神经网络研究},\n"
+        "  author = {张三 and 李四},\n"
+        "  year = {2024},\n}"
+    )
+    cn_tagged = inject_langid(cn_entry)
+    print("--- 中文条目 langid 注入 ---")
+    print(cn_tagged)
+    assert "langid={chinese}" in cn_tagged, "含中文条目应得到 langid=chinese"
+    # 幂等：已含 langid 不重复注入
+    assert inject_langid(cn_tagged).count("langid") == 1, "langid 注入应幂等"
+    print("[OK] langid 注入断言通过\n")
 
     code_c, csl = negotiate(doi, "csljson")
     print("CSL JSON HTTP", code_c)

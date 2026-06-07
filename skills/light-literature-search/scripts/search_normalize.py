@@ -25,6 +25,10 @@ import urllib.parse
 import urllib.request
 from typing import Any
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
 MAILTO = "light-skill@example.com"
 TIMEOUT = 30
 UA = "Light-literature-search/1.0 (mailto:%s)" % MAILTO
@@ -76,7 +80,8 @@ def search_openalex(query: str, per_page: int = 10) -> tuple[int, list[dict]]:
         "sort": "cited_by_count:desc",
         "mailto": MAILTO,
         "select": "id,doi,title,publication_year,cited_by_count,"
-                  "authorships,primary_location,abstract_inverted_index,type",
+                  "authorships,primary_location,abstract_inverted_index,type,"
+                  "referenced_works",
     }
     url = "https://api.openalex.org/works?" + urllib.parse.urlencode(params)
     code, data = _get_json(url)
@@ -99,6 +104,7 @@ def search_openalex(query: str, per_page: int = 10) -> tuple[int, list[dict]]:
                 "type": w.get("type") or "",
                 "abstract": restore_abstract(w.get("abstract_inverted_index")),
                 "url": w.get("id") or "",
+                "referenced_works": w.get("referenced_works") or [],
             })
     return code, out
 

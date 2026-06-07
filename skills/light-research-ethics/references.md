@@ -117,6 +117,17 @@ Conceptualization、Data curation、Formal analysis、Funding acquisition、Inve
 
 【已知坑】闭源、需机构订阅；句子级误报率（~4%）远高于文档级，单句标红不可靠；不要把相似度百分比当作"抄袭率"对外宣称；AI 检测对非母语写作误报偏高。
 
+### 离线自查重（本技能落地 · scripts/text_overlap.py）
+
+【范围】Turnitin 本体闭源、需订阅、比对其私有期刊/网页/历史学生库——无法复刻。但"本地自查重"（自我抄袭 / 重复发表 / 与某特定源文本比对）可做且原 references 缺失，故补此脚本。纯 Python 标准库（difflib），无第三方依赖。
+
+【方法】文本归一化（小写 + 去标点 `\w+` + 折叠空白）→ 词级处理 → `difflib.SequenceMatcher.get_matching_blocks` 找"最长逐字连续重合片段"（比纯 n-gram 更精确命中"连续 >N 词逐字相同"红旗），同时算整体重合比例（词重合率 / Jaccard）。输出最长逐字重合（词数 + 原文 + 两份文件行定位）、重合比例、超阈片段计数。参数：`--min-run`（默认 40 词，对应 risk_checklist 红旗，命中标 🛑）、`--exclude-refs`（丢弃 References/参考文献 标题之后内容避免书目误报）、`--json`、`--selftest`（离线自测）。
+
+【局限（守诚实原则，引用时必带）】
+- 本地只比对**用户提供的文本**，不含 Turnitin 的期刊/网页/学生库。
+- 仅用于**自我抄袭与重复文本筛查**，不得对外宣称"抄袭率 / 相似度 %"。
+- 清结果只代表"在所给语料内未见重合"，**不是**保证无抄袭。
+
 ---
 
 ## ScanCode Toolkit（开源许可/版权扫描）

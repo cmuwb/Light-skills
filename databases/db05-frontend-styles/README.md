@@ -27,6 +27,9 @@ Mobbin、Awwwards、Dribbble、Behance、Lapa Ninja、Land-book、Godly、Sitein
 ## 设计 token 化
 每个项目沉淀一套 tokens(色/字/间距/圆角)，由 a07 跨材料统一(链 Style Dictionary/Design Tokens)。
 
+## 视觉 SSOT 锚点
+[design_tokens.template.json](design_tokens.template.json) — DTCG(W3C)格式视觉单一事实源种子模板(color brand/semantic、typography 复合类型、4/8pt dimension、radius/shadow，含 `{color.brand.primary}` 别名示例)。由 a05(light-frontend-design) + extract-design-system 维护;论文图(db07)/PPT(db06)/前端(db05)/海报从同一份取值。真实项目副本落 db09 项目目录。
+
 种子卡片见 [design_cards.md](design_cards.md)。
 
 ## 真实资源文件

@@ -23,6 +23,7 @@ user-invocable: false
 - **API 调用**：有 OpenAPI(3.1.x，JSON/YAML)描述就按 `paths→operationId`+参数 schema(parameters 的 name/in=path|query|header|cookie)+`components.securitySchemes`(apiKey/oauth2…)确定性调用，按 response schema 解析，别靠散文文档猜。
 - **云算力**：Python serverless/GPU 训练/沙箱用 Modal(`@app.function(gpu="h100", image=...)`，`modal.Image.debian_slim().uv_pip_install(...)` 代码内定义环境，Volumes/Secrets/Sandboxes/Cron 原语，`modal run`/`modal deploy`，按秒计费无空闲成本)。
 - **版本/实验**：Git、DVC、MLflow、W&B、Hydra、Snakemake。
+- **自动化/CI**：仓库事件触发用 GitHub Actions(test-on-push、schedule 定时抓数/重算、自动构建论文 PDF 与图、发布产物 release)；本地数据依赖编排仍用 Snakemake/Make——二者互补不替代(GitHub Actions 管"何时由什么事件触发"，Snakemake 管"步骤间数据依赖怎么算")。
 - **文献管理**：Zotero/pyzotero、JabRef、Better BibTeX。
 - **环境**：纯 Python 优先 uv；编译科学库/CUDA/跨语言用 conda(mamba/miniforge)；已有 Poetry 项目延续 Poetry。
 

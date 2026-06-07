@@ -27,7 +27,7 @@ user-invocable: false
 - **署名**：ICMJE 四条标准定"够不够署名"，CRediT 14 角色定"各做了什么"。
 - **不端口径**：ORI/42 CFR Part 93 FFP 三要件，避免把诚实错误当不端。
 - **撤稿核查**：Crossref REST API + Retraction Watch CSV(见清单第4条端点)。
-- **相似度/AI 检测**：Turnitin 类——文本匹配≠抄袭，先排除引文/参考文献/小段匹配，再看"大段未标注"文本。AI 检测官方误报率：文档级 <1%、句子级 ~4%，且整篇 AI 占比 <20% 不出标记；故单句标红不可靠，AI 分数只作"对话起点"非定罪依据，须人工复核+与作者沟通，对非母语写作误报偏高，不作高利害判定唯一依据。
+- **相似度/AI 检测**：Turnitin 类——文本匹配≠抄袭，先排除引文/参考文献/小段匹配，再看"大段未标注"文本。AI 检测官方误报率：文档级 <1%、句子级 ~4%，且整篇 AI 占比 <20% 不出标记；故单句标红不可靠，AI 分数只作"对话起点"非定罪依据，须人工复核+与作者沟通，对非母语写作误报偏高，不作高利害判定唯一依据。**自查重落地**：Turnitin 本体闭源不可复刻，但本地自我抄袭/重复发表筛查可做——用 `scripts/text_overlap.py` 把目标文与自己旧论文语料比对，找最长逐字连续重合(对应红旗 >40 词)，仅限所给语料、不得对外宣称相似度%(见 references.md「离线自查重」)。
 - **代码/许可/供应链**：ScanCode(许可+版权+SBOM)、Snyk(漏洞)、Socket(恶意包行为分析)分工互补。
 - **作品授权**：Creative Commons Chooser 四问选 CC 许可。
 - **涉人研究**：IRB/Common Rule(45 CFR 46.111/46.116)三级审查与知情同意要素。
@@ -40,6 +40,7 @@ user-invocable: false
 - **红旗自查清单** `assets/risk_checklist.md`：11 类风险逐条 checkbox，每条带红旗信号与默认起评级，命中即到模板登记定级。
 - **高利害决策树** `references/decision_trees.md`：A 疑似不端→FFP 三要件→COPE flowchart；B IRB Exempt/Expedited/Full Board + 46.111 八标准；C 引用前撤稿核查(Crossref，端点已实测 HTTP 200)。
 - **批量撤稿核查脚本** `scripts/check_retractions.py`：把决策树 C 落地为可跑工具——传一组 DOI(或 `--file`)逐条查 Crossref `update-to[]`，标出 🛑撤稿/⚠️更正或关注/✅未见信号，产 markdown 或 `--json` 报告，`--selftest` 离线自测。已实测两个真 DOI HTTP 200。诚实限制:Crossref 未必暴露所有撤稿,高利害文献再交叉 Retraction Watch。
+- **离线自查重脚本** `scripts/text_overlap.py`：把"连续 >40 词逐字相同"红旗落地为可跑工具(纯 stdlib 无依赖)——传目标文 + 一组对比文件/glob(自己旧论文/课程报告语料),归一化后用 `difflib.SequenceMatcher` 找最长逐字连续重合片段(词数+原文+两份文件行定位)与整体重合比例(词重合率/Jaccard),超 `--min-run`(默认 40)阈值标 🛑;`--exclude-refs` 丢弃参考文献段避免书目误报,`--json`/`--selftest`。诚实限制:只比对所给语料,不含 Turnitin 期刊/网页/学生库,仅用于自我抄袭与重复文本筛查,不得对外宣称"抄袭率/相似度%"。
 
 ## 合规审查产出
 风险清单(分级:阻断/警示/提示) + 每项说明(为什么是风险 + 合规做法) + 是否需第三方(伦理委员会/代理人/法律)审核的标注。套用 `assets/ethics_review_template.md` 产出。

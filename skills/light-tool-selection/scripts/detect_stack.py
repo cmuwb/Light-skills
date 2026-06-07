@@ -215,6 +215,23 @@ MANIFESTS = {
 }
 
 
+def _detect_ci(project_dir):
+    """探测 .github/workflows/*.yml(.yaml) 是否存在 → CI 已配置提示。"""
+    wf_dir = os.path.join(project_dir, ".github", "workflows")
+    if not os.path.isdir(wf_dir):
+        return None
+    try:
+        wfs = [f for f in os.listdir(wf_dir)
+               if f.endswith((".yml", ".yaml"))]
+    except OSError:
+        return None
+    if not wfs:
+        return None
+    return (f"检测到 GitHub Actions({len(wfs)} 个 workflow: "
+            f"{', '.join(sorted(wfs)[:5])}{' ...' if len(wfs) > 5 else ''})："
+            "CI 已配置；事件触发/定时/matrix 复现走 Actions，本地数据依赖编排仍用 Snakemake/Make")
+
+
 def scan(project_dir):
     """扫描目录，返回 (deps集合, 命中清单文件, env提示, 解析备注)。"""
     deps, found_manifests, env_hits, notes = [], [], [], []
@@ -228,6 +245,9 @@ def scan(project_dir):
     for fname, hint in ENV_HINTS.items():
         if os.path.isfile(os.path.join(project_dir, fname)):
             env_hits.append(hint)
+    ci = _detect_ci(project_dir)
+    if ci:
+        env_hits.append(ci)
     return sorted(set(deps)), found_manifests, env_hits, notes
 
 
@@ -315,6 +335,14 @@ def self_test():
                        "tailwindcss": "4"}, "devDependencies": {"vitest": "3"}}, f)
         open(os.path.join(tmp, "uv.lock"), "w").close()
 
+        # 合成 GitHub Actions workflow
+        wf_dir = os.path.join(tmp, ".github", "workflows")
+        os.makedirs(wf_dir, exist_ok=True)
+        with open(os.path.join(wf_dir, "ci.yml"), "w", encoding="utf-8") as f:
+            f.write("name: ci\non: [push]\njobs:\n  test:\n"
+                    "    runs-on: ubuntu-latest\n    steps:\n"
+                    "      - uses: actions/checkout@v4\n")
+
         rep = build_report(tmp)
         print_report(rep)
         print("\n--- 自检断言 ---")
@@ -328,6 +356,8 @@ def self_test():
             "识别 uv.lock 环境": any("uv.lock" in h
                 for h in rep["env_recommendations"]),
             "识别 conda 环境": any("conda" in h
+                for h in rep["env_recommendations"]),
+            "识别 GitHub Actions CI": any("GitHub Actions" in h
                 for h in rep["env_recommendations"]),
             "三个清单都解析到": set(rep["manifests_found"]) >=
                 {"package.json", "requirements.txt", "environment.yml"},

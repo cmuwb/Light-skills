@@ -49,7 +49,7 @@ project-name/
 ## 整理动作
 1. 盘点已有项目（借 repo-intake-and-plan 思路）：先读 README→扫 setup 脚本与文档化命令→把工作流归类为 推理/训练/评估，再据此给散落文件归位。
 2. 新项目骨架：**首选 `scripts/scaffold.py`**——一条命令建全树 + 拷模板 + 可选 `--dvc/--poetry`：
-   `python scripts/scaffold.py ./my-proj --name my-proj --poetry --dvc`（生成 data 四分层 + notebooks 探索/报告分流 + src 包 + 落地 5 模板；目标非空需 `--force`）。或用 CCDS（`pipx install cookiecutter-data-science` 后 `ccds`）；或按上面骨架手工生成。无论哪种，都要落 README/CHANGELOG/PROJECT_PLAN/.gitignore/.editorconfig/pyproject.toml。
+   `python scripts/scaffold.py ./my-proj --name my-proj --poetry --dvc`（生成 data 四分层 + notebooks 探索/报告分流 + src 包 + 落地 6 模板；目标非空需 `--force`）。或用 CCDS（`pipx install cookiecutter-data-science` 后 `ccds`）；或按上面骨架手工生成。无论哪种，都要落 README/CHANGELOG/PROJECT_PLAN/.gitignore/.editorconfig/pyproject.toml。
 3. 重命名规范化→补 README/CHANGELOG→产出"文件归位说明"（借 handoff 结构：Key Decisions 表 + 失败尝试 + 警告）。
 
 ## 版本与依赖
@@ -68,13 +68,14 @@ project-name/
 目录结构与 db09 project_card 的各 status 字段一一对应（paper_status↔paper/，code_status↔src/，data_status↔data/…），便于 a02 跟踪进度。
 
 ## 现成模板（本技能目录 `templates/`，可直接复制使用）
-- `scripts/scaffold.py` — **一条命令生成全套骨架**：建标准目录树 + 拷下面 5 个模板到项目根（去 `.template` 后缀）+ 写 `src/<module>/__init__.py`；`--poetry` 加写 `pyproject.toml`（Poetry+Ruff），`--dvc` 加写 `dvc.yaml`（有 dvc 则 `dvc init`），`--force` 覆盖非空目录。空目录补 `.gitkeep`。已实测可跑（synth 自测：建树→解析 pyproject→非空守卫均通过）。
+- `scripts/scaffold.py` — **一条命令生成全套骨架**：建标准目录树 + 拷下面 6 个模板到项目根（去 `.template` 后缀）+ 写 `src/<module>/__init__.py`；`--poetry` 加写 `pyproject.toml`（Poetry+Ruff），`--dvc` 加写 `dvc.yaml`（有 dvc 则 `dvc init`），`--force` 覆盖非空目录。空目录补 `.gitkeep`。已实测可跑（synth 自测：建树→解析 pyproject→非空守卫均通过）。
 - `templates/PROJECT_STRUCTURE.md` — 科研项目标准目录结构说明 + 命名规范 + 与 db09 字段对应 + 生成方式。
 - `templates/README.template.md` — README 模板（状态表/环境/目录/数据/复现/结果/引用）。
 - `templates/PROJECT_PLAN.template.md` — 实现计划模板（借 writing-plans：2–5 分钟可勾选任务 + No-Placeholders 强制规则 + 验收/前置/失败尝试/关键决策/阻塞）。
 - `templates/CHANGELOG.template.md` — CHANGELOG 模板（Keep a Changelog + SemVer）。
 - `templates/python-research.gitignore` — Python 科研项目 .gitignore，基线取自 GitHub 官方 `github/gitignore` 的 Python.gitignore（raw 实测 HTTP 200 @2026-06-06），末尾补充模型权重/日志/wandb/mlruns 等科研条目；复制为根目录 `.gitignore`。
 - `templates/editorconfig.template` — EditorConfig 模板；复制为根目录 `.editorconfig`。
+- `templates/pre-commit-config.template.yaml` — pre-commit 质量门模板（pre-commit-hooks 的 trailing-whitespace/end-of-file-fixer/check-yaml + ruff-pre-commit 的 ruff `--fix`/ruff-format，rev 钉死 tag，用 `pre-commit autoupdate --freeze` 维护）；复制为根目录 `.pre-commit-config.yaml`，仅在 git 仓库内 `pre-commit install` 后生效。
 
 新建项目时优先 `python scripts/scaffold.py <dir> [--poetry --dvc]` 一步到位；或手工把上述文件复制到项目根（gitignore/editorconfig 去掉模板后缀），填充 README/CHANGELOG/PROJECT_PLAN 中的 `{{占位符}}` 即可。
 

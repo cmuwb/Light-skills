@@ -9,6 +9,8 @@
 - [ ] 同一数据/结论投多刊或拆分为最小可发表单元（salami slicing）
 - [ ] 译述他人成果当原创（translation plagiarism）
 > 口径：对照 ORI/42 CFR 93 的 FFP——须"显著偏离惯例 + 故意/明知/轻率 + 优势证据"，把诚实错误与学术分歧排除。
+> 离线自查重（自我抄袭/重复文本筛查，纯 stdlib 无依赖）：
+> `python scripts/text_overlap.py 目标文件 "旧论文/*.txt" --min-run 40 --exclude-refs` → 找最长逐字连续重合，命中 >=40 词即 🛑。仅比对所给语料，不含 Turnitin 库，不得当"抄袭率"。
 
 ## 2. 数据造假（编造/篡改/选择性报告/p-hacking）— 默认 🛑
 - [ ] 实验记录与上报数据对不上，或无原始数据可溯（红旗：无 raw data / 无实验日志）

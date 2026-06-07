@@ -265,3 +265,36 @@
 【链接】https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/
 
 【已知坑】默认只改 Host/Connection 头，不透传真实 IP 需手动 set_header；改配置后 `nginx -t` 校验再 `nginx -s reload`。
+
+## GitHub Actions（CI）
+
+【是什么】GitHub 内置的工作流引擎，每次 push/PR 自动跑 lint/test/迁移校验。面向科研：把"代码能跑、迁移没漏生成"固化成可复现的绿勾，而非搭企业级发布流水线。
+
+【可复用方法 / 真实结构】
+- 文件放 `.github/workflows/*.yml`，三件套：
+  - `on`：触发事件——`push`（推送）、`pull_request`（PR，含 fork）、`workflow_dispatch`（Actions 页手动触发）。
+  - `jobs.<id>.runs-on`：跑在哪个 runner，如 `ubuntu-latest`。
+  - `steps`：依次执行，`uses:` 调 action、`run:` 跑命令。
+- 关键 action：`actions/checkout@v4` 拉代码；`actions/setup-python@v5`（或 `setup-node`）装运行时，配 `cache: pip`/`npm` 复用依赖缓存提速。
+- 闭合 SKILL 迁移铁律的最小 job 骨架：
+  ```yaml
+  jobs:
+    test:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: actions/setup-python@v5
+          with: { python-version: "3.12", cache: pip }
+        - run: pip install -r requirements.txt
+        - run: ruff check .        # lint
+        - run: pytest -q           # test
+        - run: alembic check       # 迁移有没漏生成（Prisma 换 migrate deploy 对临时库）
+  ```
+- 最小权限：顶层 `permissions: { contents: read }` 把默认 token 收成只读，需要写（如发 release）才按 job 放宽。
+- secrets：`${{ secrets.NAME }}` 读仓库/环境密钥，绝不硬编码；**fork 发起的 `pull_request` 默认拿不到 secrets**（防恶意 PR 偷密钥），需密钥的集成测试要么跳过要么用 `pull_request_target`（谨慎）。
+
+【链接】
+- https://docs.github.com/actions/writing-workflows/workflow-syntax-for-github-actions
+- https://docs.github.com/actions/security-guides/security-hardening-for-github-actions
+
+【已知坑 / 进阶（科研一般不展开）】第三方 action 钉 commit SHA 而非 tag（防供应链投毒，官方 `actions/*` 用版本 tag 可接受）；多版本测试用 `strategy.matrix`；build-push 镜像到仓库 / 部署 K8s、`environments` 配审批与回滚、OIDC 免密换云凭证（不存长期 secret）——这些属发布/部署链，按需再加，别让 CI 一上来就背全套 DevOps。

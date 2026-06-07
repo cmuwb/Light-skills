@@ -12,6 +12,7 @@
 
 ## B. 关联度与正文匹配
 - [ ] 每个 `\cite` 都能指回它支撑的具体句子/论点（借鉴 Anthropic Citations 的"可定位"标准）。
+- [ ] 正文声称的第三方引用关系（"A 引用了 B"）已用 `verify_citation_edge.py <A> <B>` 实证：取 `confirmed`；得 `not_in_open_index` 须人工查全文/WoS/Scopus 后再断言（开放索引未覆盖≠未引用）；得 `unknown` 不下结论。
 - [ ] 无"凑数引用"：删掉与论点无直接关系的来源。
 - [ ] 综述 vs 原始工作用对地方：方法/数据归原始论文，背景概览才引综述。
 

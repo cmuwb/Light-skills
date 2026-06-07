@@ -7,6 +7,18 @@
 
 - `current_stage`: 资料调研 | idea 构思 | 方案确认 | 数据准备 | 实验实现 | 结果分析 | 论文写作 | 图表制作 | 投稿准备 | 答辩展示 | 成果转化
 
+## 顶层目录结构
+```
+db09-projects/
+├── README.md              本说明
+├── project_card_template.md
+├── lessons.md             跨项目过程/方法论教训库（与 projects/ 平级，见下）
+└── projects/<project_name>/   每个项目一个独立目录（结构见下）
+```
+
+## lessons.md — 跨项目过程教训库
+全局单文件，追加式。收"做法层面的有效/失败经验"（踩坑、被拒、复现失败、流程省时），**不收**方法选型事实（→ db03 方法卡）与个人偏好（→ Light feedback 记忆）。格式：`- [YYYY-MM-DD] 阶段/场景 — 做法 — 结果(有效|失败) — 适用条件 — 来源项目slug`。写入纪律与检索时机见 a02 SKILL.md。
+
 ## 每个项目目录结构
 ```
 projects/<project_name>/

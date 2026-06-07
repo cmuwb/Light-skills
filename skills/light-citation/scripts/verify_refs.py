@@ -4,7 +4,11 @@
 
 对每个 DOI 同时查 Crossref `/works/{doi}` 与 OpenAlex `/works/https://doi.org/{doi}`，
 核对：是否存在、标题/年份是否一致、被引数、是否自引、出版年龄。
-汇总：中外文献占比、自引率、缺近 2 年标志、errors[].severity / warnings[]。
+另从 OpenAlex 同一响应读开放性字段（is_oa/oa_status/venue/is_in_doaj/type/version，不新增 HTTP）。
+汇总：中外文献占比、自引率、缺近 2 年标志、预印本数、errors[].severity / warnings[]。
+
+OA 字段定位"开放性/可访问性"，非权威性；权威性须人工查 DOAJ/分区/预警名单。
+warning 只对预印本或非正式版本产生；闭源(oa_status=closed)绝不告警（顶刊多闭源）。
 
 实测端点（2026-06-06，均 HTTP 200）：
   https://api.crossref.org/works/10.1038/s41597-023-02555-8?mailto=...
@@ -26,6 +30,10 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
 
 UA = "light-citation/1.0 (mailto:light.research@gmail.com)"
 MAILTO = "light.research@gmail.com"
@@ -65,6 +73,8 @@ def verify_one(doi: str, self_authors=None):
     rec = {"doi": doi, "found_crossref": False, "found_openalex": False,
            "http": {}, "title": None, "year": None,
            "cited_by_count": None, "is_cn": False, "is_self_cite": False,
+           "is_oa": None, "oa_status": None, "venue": None,
+           "is_in_doaj": None, "oa_type": None, "version": None,
            "errors": [], "warnings": []}
 
     # --- Crossref ---
@@ -113,6 +123,23 @@ def verify_one(doi: str, self_authors=None):
         # 语言/国别
         if oa.get("language") == "zh":
             rec["is_cn"] = True
+        # --- 开放性字段（复用本次 OpenAlex 响应，不新增 HTTP；规避 Unpaywall 邮箱坑）---
+        oaobj = oa.get("open_access") or {}
+        rec["is_oa"] = oaobj.get("is_oa")
+        rec["oa_status"] = oaobj.get("oa_status")  # gold/green/hybrid/bronze/closed
+        rec["oa_type"] = oa.get("type")            # journal-article/preprint/...
+        ploc = oa.get("primary_location") or {}
+        src = ploc.get("source") or {}
+        rec["venue"] = src.get("display_name")
+        rec["is_in_doaj"] = src.get("is_in_doaj")
+        rec["version"] = ploc.get("version")       # publishedVersion/acceptedVersion/...
+        # warning 判据：仅预印本 或 非正式版本才告警；闭源(closed)绝不告警（顶刊多闭源）
+        if rec["oa_type"] == "preprint":
+            rec["warnings"].append(
+                "疑似预印本(type=preprint)：引用须注明未经同行评审，或换正式发表版 DOI")
+        elif rec["version"] and rec["version"] != "publishedVersion":
+            rec["warnings"].append(
+                f"非正式发表版本(version={rec['version']})：确认是否应换 publishedVersion DOI")
     else:
         if rec["found_crossref"]:
             rec["warnings"].append(f"OpenAlex 未收录（HTTP {code2}），仅 Crossref 单源，建议补证")
@@ -140,6 +167,7 @@ def build_report(dois, self_authors=None):
     self_n = sum(1 for r in items if r["is_self_cite"])
     recent = sum(1 for r in items if (r["year"] or 0) >= THIS_YEAR - 2)
     n_err = sum(len(r["errors"]) for r in items)
+    preprint_n = sum(1 for r in items if r.get("oa_type") == "preprint")
     summary = {
         "total": n,
         "verified_ok": sum(1 for r in items if r["found_crossref"] and not r["errors"]),
@@ -149,6 +177,8 @@ def build_report(dois, self_authors=None):
         "self_citation_rate": round(self_n / n, 3) if n else 0,
         "recent_2y_count": recent,
         "missing_recent_2y": recent == 0 and n > 0,
+        "preprint_count": preprint_n,
+        "authority_note": "权威性/掠夺性判定需人工+查 DOAJ/分区/预警名单；脚本仅给 OA 线索，oa_status 反映开放性≠权威性",
         "checked_at": datetime.date.today().isoformat(),
     }
     return {"summary": summary, "items": items}
@@ -192,7 +222,14 @@ def _selftest():
     assert rep["items"][0]["http"]["crossref"] == 200, "真 DOI Crossref 应 HTTP 200"
     assert rep["items"][1]["errors"], "假 DOI 应产 high severity error"
     assert s["self_citation_rate"] > 0, "应识别自引"
-    print("\n[OK] verify_refs 自测通过：真 DOI HTTP200 命中、假 DOI 标 high error、自引率/中外占比已算")
+    assert "preprint_count" in s, "summary 应含 preprint_count"
+    assert "is_oa" in rep["items"][0], "rec 应含 OA 字段"
+    # 闭源不得仅因 closed 而告警（误报防线）
+    r0 = rep["items"][0]
+    if r0.get("oa_status") == "closed":
+        assert not any("closed" in w for w in r0["warnings"]), "闭源不得产 warning"
+    print("\n[OK] verify_refs 自测通过：真 DOI HTTP200 命中、假 DOI 标 high error、"
+          "自引率/中外占比已算、OA 字段已纳入、闭源不误报")
 
 
 if __name__ == "__main__":

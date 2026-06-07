@@ -53,7 +53,7 @@ description: 制作精美 PPT。当用户需要为论文、项目、竞赛、答
 出稿后默认有问题。① 内容 QA：`python -m markitdown out.pptx` 查缺漏/错字/顺序，并 `grep -iE "xxxx|lorem|ipsum"` 抓残留占位符。② 视觉 QA：优先 `python scripts/thumbnail.py out.pptx` 出缩略图网格逐页扫(无 soffice 也能出版式示意)；有 LibreOffice 时 `python scripts/to_pdf.py out.pptx` 转 PDF 再 `pdftoppm -jpeg -r 150 out.pdf slide` 出高保真图，逐图找重叠/文字溢出/低对比/对齐错位/边距不足/装饰线压两行标题；有子代理就交给它(新鲜眼睛)。③ 改完只重渲受影响页，循环到整轮无新问题才收。
 
 ## 衔接
-内容来自 m07(论文正文)/m06(结果)，图表来自 m11，竞赛路演来自 m17；视觉风格与 a05/m11 协调(由 a07 统一术语与指标)；文件解析借 a01；版本与风格登记 db06/db09。
+内容来自 m07(论文正文)/m06(结果)，图表来自 m11，竞赛路演来自 m17；视觉风格与 a05/m11 协调(由 a07 统一术语与指标)；文件解析借 a01；版本与风格登记 db06/db09。交付前过 a08(light-self-review)自检闸门。
 
 ## 产出
 完整 PPT(源文件 + 导出) + 叙事大纲 + 每页 speaker notes + 风格说明(登记 db06/db09)。

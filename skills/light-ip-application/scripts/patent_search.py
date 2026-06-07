@@ -27,6 +27,10 @@ import sys
 import urllib.parse
 import urllib.request
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
 OPENALEX_BASE = "https://api.openalex.org"
 
 
@@ -47,7 +51,8 @@ def build_openalex_url(query: str, *, from_year: int | None = None,
     params: list[tuple[str, str]] = [
         ("search", query),
         ("per_page", str(per_page)),
-        ("select", "id,title,publication_year,doi,cited_by_count,authorships"),
+        ("select", "id,title,publication_year,doi,cited_by_count,"
+                   "referenced_works,authorships"),
     ]
     filters = []
     if from_year is not None:
@@ -61,30 +66,143 @@ def build_openalex_url(query: str, *, from_year: int | None = None,
     return f"{OPENALEX_BASE}/works?" + urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
 
 
+def _normalize_work(w: dict, origin: str = "seed") -> dict:
+    """把 OpenAlex work 对象归一化为 prior-art 候选记录。
+
+    origin 标注来源:seed(关键词命中)/backward(后向引文)/forward(前向引文),
+    便于交底书留档引用链路。
+    """
+    insts = []
+    for a in (w.get("authorships") or [])[:5]:
+        for ins in (a.get("institutions") or []):
+            if ins.get("display_name"):
+                insts.append(ins["display_name"])
+    return {
+        "source": "OpenAlex(NPL)",
+        "id": w.get("id"),
+        "title": w.get("title"),
+        "year": w.get("publication_year"),
+        "doi": w.get("doi"),
+        "cited_by_count": w.get("cited_by_count", 0),
+        "referenced_works": list(w.get("referenced_works") or []),
+        "cited_by_api_url": w.get("cited_by_api_url"),
+        "institutions": sorted(set(insts))[:5],
+        "origin": origin,
+    }
+
+
 def search_openalex_npl(query: str, **kw) -> list[dict]:
     """实发 OpenAlex 检索,归一化为 prior-art 候选记录。免 key。"""
     url = build_openalex_url(query, **kw)
     data = _http_get_json(url)
-    out = []
-    for w in data.get("results", []):
-        insts = []
-        for a in (w.get("authorships") or [])[:5]:
-            for ins in (a.get("institutions") or []):
-                if ins.get("display_name"):
-                    insts.append(ins["display_name"])
-        out.append({
-            "source": "OpenAlex(NPL)",
-            "id": w.get("id"),
-            "title": w.get("title"),
-            "year": w.get("publication_year"),
-            "doi": w.get("doi"),
-            "cited_by_count": w.get("cited_by_count", 0),
-            "institutions": sorted(set(insts))[:5],
-        })
+    return [_normalize_work(w, origin="seed") for w in data.get("results", [])]
+
+
+# ---- 引用图一跳扩展(snowballing,免 key,OpenAlex)----
+
+def _openalex_short_id(work_id: str) -> str:
+    """把 https://openalex.org/W123 或 W123 归一为短 id 'W123'。"""
+    if not work_id:
+        return ""
+    return work_id.rstrip("/").rsplit("/", 1)[-1]
+
+
+def build_openalex_ids_url(ids: list[str], *, per_page: int = 200,
+                           mailto: str | None = None) -> str:
+    """构造按 openalex_id OR 批量回填的 /works URL(单批 <=200)。"""
+    per_page = max(1, min(int(per_page), 200))
+    short = [s for s in (_openalex_short_id(i) for i in ids) if s]
+    params: list[tuple[str, str]] = [
+        ("filter", "openalex_id:" + "|".join(short[:per_page])),
+        ("per_page", str(per_page)),
+        ("select", "id,title,publication_year,doi,cited_by_count,"
+                   "referenced_works,authorships"),
+    ]
+    if mailto:
+        params.append(("mailto", mailto))
+    return f"{OPENALEX_BASE}/works?" + urllib.parse.urlencode(
+        params, quote_via=urllib.parse.quote)
+
+
+def build_openalex_cites_url(work_id: str, *, per_page: int = 200,
+                             mailto: str | None = None) -> str:
+    """构造前向引文 URL:filter=cites:{id}(引用了该 work 的文献)。"""
+    per_page = max(1, min(int(per_page), 200))
+    params: list[tuple[str, str]] = [
+        ("filter", f"cites:{_openalex_short_id(work_id)}"),
+        ("per_page", str(per_page)),
+        ("select", "id,title,publication_year,doi,cited_by_count,"
+                   "referenced_works,authorships"),
+    ]
+    if mailto:
+        params.append(("mailto", mailto))
+    return f"{OPENALEX_BASE}/works?" + urllib.parse.urlencode(
+        params, quote_via=urllib.parse.quote)
+
+
+def merge_dedup(records: list[dict]) -> list[dict]:
+    """按 id 合并去重;保留首个 origin,但 seed 优先级最高。"""
+    order = {"seed": 0, "backward": 1, "forward": 2}
+    by_id: dict[str, dict] = {}
+    for r in records:
+        rid = r.get("id")
+        if not rid:
+            continue
+        if rid not in by_id:
+            by_id[rid] = dict(r)
+        else:
+            cur = by_id[rid]
+            if order.get(r.get("origin"), 9) < order.get(cur.get("origin"), 9):
+                cur["origin"] = r.get("origin")
+    return list(by_id.values())
+
+
+def expand_openalex_citations(seeds: list[dict], *, direction: str = "both",
+                              per_seed: int = 200,
+                              mailto: str | None = None) -> list[dict]:
+    """对种子候选做一跳引用图扩展(免 key)。
+    backward: 种子的 referenced_works(它引用的在先文献)。
+    forward : filter=cites:{id}(后续引用它的文献)。
+    单跳为限,避免指数爆炸;每种子配额由 per_seed 钳制。
+    """
+    out: list[dict] = []
+    want_back = direction in ("both", "backward")
+    want_fwd = direction in ("both", "forward")
+    for s in seeds:
+        sid = _openalex_short_id(s.get("id", ""))
+        if not sid:
+            continue
+        if want_back:
+            refs = (s.get("referenced_works") or [])[:per_seed]
+            for batch in (refs[i:i + 200] for i in range(0, len(refs), 200)):
+                if not batch:
+                    continue
+                data = _http_get_json(
+                    build_openalex_ids_url(batch, mailto=mailto))
+                out += [_normalize_work(w, origin="backward")
+                        for w in data.get("results", [])]
+        if want_fwd:
+            data = _http_get_json(
+                build_openalex_cites_url(sid, per_page=per_seed, mailto=mailto))
+            out += [_normalize_work(w, origin="forward")
+                    for w in data.get("results", [])]
     return out
 
 
-# ---- 专利库适配器:构造请求(需用户自带 key),不内置伪造凭证 ----
+def build_lens_citation_request(lens_id: str, edge: str = "references") -> dict:
+    """The Lens 专利↔论文引用关系(PatCite)。edge: references|cited_by。
+    key-gated 可选项,优先级低;发起需 Bearer token。"""
+    field = "references" if edge == "references" else "cited_by"
+    return {
+        "method": "POST",
+        "url": "https://api.lens.org/patent/search",
+        "headers": {"Authorization": "Bearer <YOUR_LENS_TOKEN>",
+                    "Content-Type": "application/json"},
+        "body": {"query": {"term": {"lens_id": lens_id}},
+                 "include": ["lens_id", field]},
+        "note": f"取该专利的 {field} 引用边(PatCite);需付费 scholarly 权限",
+    }
+
 
 def build_lens_request(query: str, size: int = 25) -> dict:
     """The Lens 专利检索请求体(ES 风格 DSL)。发起需 Authorization: Bearer <token>。"""
@@ -147,8 +265,26 @@ def _selftest() -> int:
     # 3) 排序
     ranked = rank_candidates(list(_OFFLINE_SAMPLE))
     assert ranked[0]["cited_by_count"] == 300, ranked
+    # 4) 引用图扩展 URL 构造(unquote 后比对,避开 %3A/%7C 编码差异)
+    bu = urllib.parse.unquote(
+        build_openalex_ids_url(["https://openalex.org/W10", "W11"], mailto="a@b.com"))
+    assert "openalex_id:W10|W11" in bu, bu
+    cu = urllib.parse.unquote(build_openalex_cites_url("https://openalex.org/W1"))
+    assert "cites:W1" in cu, cu
+    # 5) merge_dedup:同 id 合并,seed origin 优先
+    merged = merge_dedup([
+        {"id": "W1", "origin": "backward"}, {"id": "W1", "origin": "seed"},
+        {"id": "W2", "origin": "forward"}, {"id": "W2", "origin": "forward"},
+    ])
+    assert len(merged) == 2, merged
+    w1 = next(r for r in merged if r["id"] == "W1")
+    assert w1["origin"] == "seed", w1
+    # 6) Lens 引用边请求体
+    lc = build_lens_citation_request("123-456-789", edge="cited_by")
+    assert lc["body"]["include"] == ["lens_id", "cited_by"], lc
     print("[selftest] OK  url=", u)
     print("[selftest] ranked top:", ranked[0]["title"])
+    print("[selftest] snowball+merge_dedup+lens-cite: PASS")
     return 0
 
 
@@ -159,6 +295,9 @@ def main() -> int:
     ap.add_argument("--to-year", type=int, default=None)
     ap.add_argument("--per-page", type=int, default=10)
     ap.add_argument("--mailto", default=None, help="进入 OpenAlex polite pool")
+    ap.add_argument("--snowball", nargs="?", type=int, const=3, default=0,
+                    metavar="N",
+                    help="对前 N 条命中(默认3)做一跳引用图扩展(后向+前向),省配额默认关")
     ap.add_argument("--selftest", action="store_true", help="离线自测(不联网)")
     ap.add_argument("--print-adapters", action="store_true", help="打印专利库请求构造示例")
     args = ap.parse_args()
@@ -174,12 +313,22 @@ def main() -> int:
         return 0
     if not args.query:
         ap.error("需要 query(或用 --selftest / --print-adapters)")
-    recs = rank_candidates(search_openalex_npl(
+    seeds = search_openalex_npl(
         args.query, from_year=args.from_year, to_year=args.to_year,
-        per_page=args.per_page, mailto=args.mailto))
-    print(f"# NPL 在先技术候选(OpenAlex) query={args.query!r} n={len(recs)}")
+        per_page=args.per_page, mailto=args.mailto)
+    pool = list(seeds)
+    if args.snowball:
+        top_seeds = rank_candidates(list(seeds))[:args.snowball]
+        print(f"# 引用图一跳扩展: 对前 {len(top_seeds)} 条种子做后向+前向追踪")
+        pool += expand_openalex_citations(top_seeds, mailto=args.mailto)
+    recs = rank_candidates(merge_dedup(pool))
+    n_seed = sum(1 for r in recs if r.get("origin") == "seed")
+    print(f"# NPL 在先技术候选(OpenAlex) query={args.query!r} "
+          f"n={len(recs)} (seed={n_seed}, 扩展={len(recs) - n_seed})")
     for i, r in enumerate(recs, 1):
-        print(f"{i}. [{r['year']}] {r['title']}  (cited={r['cited_by_count']}) {r['doi'] or ''}")
+        og = r.get("origin", "seed")
+        print(f"{i}. [{r['year']}] {r['title']}  "
+              f"(cited={r['cited_by_count']}, {og}) {r['doi'] or ''}")
     print("\n注:仅 NPL 文献;专利库检索请用 --print-adapters 取请求模板,自带 key 发起。"
           "查新/FTO 结论须代理师判定。")
     return 0

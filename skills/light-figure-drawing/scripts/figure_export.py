@@ -12,9 +12,14 @@
 """
 from __future__ import annotations
 import os
+import sys
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
 
 MM_PER_INCH = 25.4
 
@@ -78,23 +83,39 @@ def inch_to_mm(inch: float) -> float:
 
 def save_publication_figure(fig, basename, formats=("pdf", "png", "svg"),
                             dpi=600, transparent=False, pad_inches=0.02,
-                            close=False):
+                            close=False, bbox_inches="tight"):
     """多格式 + DPI 导出。返回写出的文件路径列表。
 
     - basename 可含目录, 不含扩展名。
     - 矢量格式(pdf/svg/eps)忽略 dpi(对线条无意义), 但保留以便位图。
     - 自动确保 pdf/ps fonttype=42、svg 文字不转曲, 文字可二次编辑。
+    - bbox_inches: 默认 "tight" 裁掉白边(通用导出器的常见诉求)。
+      传 None 则严格按 fig 的 set_size_inches 落盘, 物理宽度不被裁剪改变
+      (精确栏宽投稿场景必须用 None; 此时 pad_inches 不生效)。
     """
     os.makedirs(os.path.dirname(os.path.abspath(basename)), exist_ok=True)
     plt.rcParams["pdf.fonttype"] = 42
     plt.rcParams["ps.fonttype"] = 42
     plt.rcParams["svg.fonttype"] = "none"
+    # 注意: matplotlib 里 savefig(bbox_inches=None) 不是"不裁剪", 而是回退到
+    # rcParams["savefig.bbox"]。若活动样式(如 publication.mplstyle)设了
+    # savefig.bbox=tight, 显式传 None 会被静默改回 tight。故此处把 rcParam
+    # 同步成调用者意图, 让显式参数始终生效。
     written = []
-    for fmt in formats:
-        path = f"{basename}.{fmt}"
-        fig.savefig(path, format=fmt, dpi=dpi, transparent=transparent,
-                    bbox_inches="tight", pad_inches=pad_inches)
-        written.append(path)
+    prev_bbox = plt.rcParams.get("savefig.bbox")
+    plt.rcParams["savefig.bbox"] = bbox_inches
+    try:
+        for fmt in formats:
+            path = f"{basename}.{fmt}"
+            save_kwargs = {"format": fmt, "dpi": dpi, "transparent": transparent,
+                           "bbox_inches": bbox_inches}
+            # bbox_inches=None 时 pad_inches 不生效, 不传以免干扰
+            if bbox_inches is not None:
+                save_kwargs["pad_inches"] = pad_inches
+            fig.savefig(path, **save_kwargs)
+            written.append(path)
+    finally:
+        plt.rcParams["savefig.bbox"] = prev_bbox
     if close:
         plt.close(fig)
     return written
@@ -125,10 +146,22 @@ def save_for_journal(fig, basename, journal="nature", column="single",
     else:
         height_in = mm_to_inch(height_mm)
     fig.set_size_inches(width_in, height_in)
+    # 把内容压进固定画布(而非靠 bbox_inches="tight" 裁剪改变物理尺寸)。
+    # constrained 引擎在固定 figsize 下重排 axes; 老版本回退 tight_layout。
+    try:
+        fig.set_layout_engine("constrained")
+    except Exception:
+        try:
+            fig.tight_layout()
+        except Exception:
+            pass
     if formats is None:
         formats = spec["preferred_formats"][:2]
     if dpi is None:
         dpi = spec["min_dpi_line"]
+    # 关键: bbox_inches=None 使落盘宽度严格等于 set_size_inches 设定值,
+    # 不被 "tight" 按内容裁剪改变, 兑现"精确栏宽投稿"承诺。
+    kwargs.setdefault("bbox_inches", None)
     written = save_publication_figure(fig, basename, formats=formats, dpi=dpi, **kwargs)
     info = {"journal": j, "column": column, "width_mm": width_mm,
             "height_mm": round(inch_to_mm(height_in), 1), "dpi": dpi,
@@ -138,12 +171,24 @@ def save_for_journal(fig, basename, journal="nature", column="single",
 
 
 def check_figure_size(fig, max_width_mm=None, journal=None, column="single",
-                      tol_mm=0.5, verbose=True):
+                      tol_mm=0.5, verbose=True, measured=False, path=None):
     """校验图形物理宽度(mm)是否符合栏宽。返回 dict 报告。
 
     给 journal 则用该刊该栏宽作为上限; 否则用 max_width_mm。
     同时检查可见文字字号是否 >= 该刊下限(若给 journal)。
+
+    measured=True: 不信任 fig.get_size_inches()(那是裁剪前画布尺寸),
+      改为读回已落盘文件的真实物理宽度复核——这才能抓出 bbox_inches="tight"
+      静默改变栏宽的问题。需传 path(已写出的文件)。
+      PNG: 用 PIL 读像素宽/dpi 反推 mm(零额外重依赖)。
+      PDF/SVG: 有 pypdf/PdfReader 走真实读取, 缺则降级跳过(report 标注)。
     """
+    if measured:
+        if path is None:
+            raise ValueError("measured=True 需传 path(已写出的文件)")
+        return _check_measured(path, max_width_mm=max_width_mm,
+                               journal=journal, column=column,
+                               tol_mm=tol_mm, verbose=verbose)
     w_in, h_in = fig.get_size_inches()
     w_mm, h_mm = inch_to_mm(w_in), inch_to_mm(h_in)
     report = {"width_mm": round(w_mm, 2), "height_mm": round(h_mm, 2),
@@ -193,6 +238,97 @@ def _collect_small_fonts(fig, min_font_pt):
     return small
 
 
+def _measure_file_width_mm(path):
+    """读回已落盘文件的真实物理宽度(mm)。
+
+    返回 (width_mm, backend) 或 (None, reason)。无重依赖:
+      .png  -> PIL 读 (像素宽 / dpi) * 25.4
+      .pdf  -> pypdf.PdfReader 读 MediaBox(单位 pt=1/72in)
+      .svg  -> 解析根 <svg width="..."> (mm/in/px/pt)
+    """
+    ext = os.path.splitext(path)[1].lower()
+    if ext == ".png":
+        try:
+            from PIL import Image
+        except Exception:
+            return None, "PIL-missing"
+        with Image.open(path) as im:
+            px_w = im.size[0]
+            dpi = im.info.get("dpi", (None, None))[0]
+        if not dpi:
+            return None, "png-no-dpi"
+        return px_w / float(dpi) * MM_PER_INCH, "PIL"
+    if ext == ".pdf":
+        try:
+            from pypdf import PdfReader
+        except Exception:
+            try:
+                from PyPDF2 import PdfReader
+            except Exception:
+                return None, "pypdf-missing"
+        box = PdfReader(path).pages[0].mediabox
+        return float(box.width) / 72.0 * MM_PER_INCH, "pypdf"
+    if ext == ".svg":
+        return _measure_svg_width_mm(path)
+    return None, f"unsupported-ext-{ext}"
+
+
+def _measure_svg_width_mm(path):
+    """解析 SVG 根元素 width 属性 -> mm。无依赖。"""
+    import re
+    import xml.etree.ElementTree as ET
+    try:
+        root = ET.parse(path).getroot()
+    except Exception as e:
+        return None, f"svg-parse-{e.__class__.__name__}"
+    raw = root.get("width")
+    if not raw:
+        return None, "svg-no-width"
+    m = re.match(r"\s*([0-9.]+)\s*([a-z%]*)", raw)
+    if not m:
+        return None, "svg-bad-width"
+    val, unit = float(m.group(1)), m.group(2)
+    factor = {"mm": 1.0, "cm": 10.0, "in": MM_PER_INCH,
+              "pt": MM_PER_INCH / 72.0, "px": MM_PER_INCH / 96.0,
+              "": MM_PER_INCH / 96.0}.get(unit)
+    if factor is None:
+        return None, f"svg-unit-{unit}"
+    return val * factor, "svg"
+
+
+def _check_measured(path, max_width_mm=None, journal=None, column="single",
+                    tol_mm=0.5, verbose=True):
+    """读回落盘文件真实宽度并对照目标栏宽。"""
+    w_mm, backend = _measure_file_width_mm(path)
+    report = {"path": path, "measured": True, "backend": backend,
+              "ok": True, "problems": []}
+    limit = max_width_mm
+    if journal is not None:
+        spec = JOURNAL_SPECS[journal.lower()]
+        limit = spec.get(f"{column}_mm", limit)
+        report["journal"] = journal.lower()
+        report["column"] = column
+    if w_mm is None:
+        report["skipped"] = True
+        report["reason"] = backend
+        if verbose:
+            print(f"[check_figure_size:measured] SKIP ({backend})  {report}")
+        return report
+    report["width_mm"] = round(w_mm, 2)
+    if limit is not None:
+        report["target_mm"] = limit
+        # 精确栏宽: 实测宽度应严格等于目标(双向容差), 而非仅"不超上限"
+        if abs(w_mm - limit) > tol_mm:
+            report["ok"] = False
+            report["problems"].append(
+                f"实测宽度 {w_mm:.2f}mm 偏离目标栏宽 {limit}mm "
+                f"(差 {w_mm - limit:+.2f}mm, 容差 {tol_mm}mm)")
+    if verbose:
+        status = "OK" if report["ok"] else "FAIL"
+        print(f"[check_figure_size:measured] {status}  {report}")
+    return report
+
+
 def _demo_and_selfcheck():
     """产 demo 图, 跑三个函数, 断言关键不变量。"""
     import numpy as np
@@ -221,11 +357,27 @@ def _demo_and_selfcheck():
     fig2, ax2 = plt.subplots(figsize=(5.0, 4.0))
     ax2.bar(["A", "B", "C"], [3, 5, 2])
     ax2.set_ylabel("count")
-    w2, info = save_for_journal(fig2, os.path.join(outdir, "demo_nature"),
-                                journal="nature", column="single")
+    nat_base = os.path.join(outdir, "demo_nature")
+    w2, info = save_for_journal(fig2, nat_base,
+                                journal="nature", column="single",
+                                formats=("pdf", "png"))
     assert abs(info["width_mm"] - 89.0) < 0.6, info
     print("[demo] save_for_journal nature/single ->", info["width_mm"], "mm",
           [os.path.basename(p) for p in w2])
+
+    # 关键回归断言: 读回落盘文件的真实物理宽度, 而非由设定值反算的 width_mm。
+    # bbox_inches="tight" 曾在此静默裁剪改变栏宽; 现 save_for_journal 传 None。
+    for fmt in ("png", "pdf"):
+        fpath = f"{nat_base}.{fmt}"
+        rep_m = check_figure_size(fig2, journal="nature", column="single",
+                                  measured=True, path=fpath, tol_mm=0.5)
+        if rep_m.get("skipped"):
+            print(f"[demo] measured {fmt}: SKIP ({rep_m['reason']}) — 环境缺读取后端")
+            continue
+        assert rep_m["ok"], rep_m
+        assert abs(rep_m["width_mm"] - 89.0) < 0.5, rep_m
+        print(f"[demo] 导出后读回实测宽度({fmt})={rep_m['width_mm']}mm "
+              f"== 目标栏宽 89.0mm  [backend={rep_m['backend']}] PASS")
 
     rep_ok = check_figure_size(fig2, journal="nature", column="single", verbose=False)
     assert rep_ok["ok"], rep_ok

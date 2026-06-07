@@ -1,0 +1,388 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""snowball.py — 引用滚雪球（前向被引 + 后向参考）。
+
+给一个种子（DOI / OpenAlex workid / 标题），抓取其引用邻居做一/两跳扩展：
+- 后向（参考 references）：
+    OpenAlex GET /works/{id} 取 referenced_works → 批量回填
+      GET /works?filter=openalex_id:W..|W..（OR 竖线分批，每批 ≤50）。
+    或 S2 GET /paper/{DOI:..}/references?fields=title,year,citationCount,isInfluential
+      （offset/limit 分页）。
+- 前向（被引 citations）：
+    OpenAlex GET /works?filter=cites:{workid}&sort=cited_by_count:desc
+      （注意是 cites: 过滤器，OpenAlex 无单独 cited_by 端点）。
+    或 S2 GET /paper/{id}/citations（offset/limit 分页，带 isInfluential）。
+
+诚实约定（见 d:/skill/Light/CONVENTIONS.md）：
+- 不臆造 DOI/被引；被引数标来源库（OpenAlex vs S2 口径不同，不可直接比）。
+- 网络不可用时回退到内置合成样本，保证 __main__ 可跑通并打印 [OFFLINE]。
+- S2 的 citations/references 用 offset/limit 翻页；token 续翻只属于 /paper/search/bulk。
+
+用法：
+    python scripts/snowball.py 10.1016/j.compag.2021.100001
+    python scripts/snowball.py W2000000001 --hops 2 --provider openalex
+"""
+from __future__ import annotations
+import argparse
+import json
+import re
+import sys
+import urllib.parse
+import urllib.request
+from typing import Any
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
+# 复用 search_normalize 的规范化逻辑（同目录导入；失败则内联同名实现）。
+try:
+    from search_normalize import _norm_doi, _norm_title
+except Exception:  # noqa: 单文件运行时的兜底
+    def _norm_title(t: str) -> str:
+        return re.sub(r"[^a-z0-9]+", "", (t or "").lower())
+
+    def _norm_doi(doi: str | None) -> str:
+        if not doi:
+            return ""
+        d = doi.lower().strip()
+        d = re.sub(r"^https?://(dx\.)?doi\.org/", "", d)
+        return d
+
+MAILTO = "light-skill@example.com"
+TIMEOUT = 30
+UA = "Light-literature-search/1.0 (mailto:%s)" % MAILTO
+PLACEHOLDER_MORE = None
+
+
+def _get_json(url: str) -> tuple[int, Any]:
+    """返回 (http_code, parsed_json_or_None)。任何异常吞掉返回 (0, None)。"""
+    req = urllib.request.Request(
+        url, headers={"User-Agent": UA, "Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+            code = resp.getcode()
+            data = json.loads(resp.read().decode("utf-8", "replace"))
+            return code, data
+    except urllib.error.HTTPError as e:  # noqa
+        return e.code, None
+    except Exception:  # noqa: network down / timeout / json error
+        return 0, None
+
+
+def _oa_id(workid: str) -> str:
+    """归一化 OpenAlex work id：取末段 W... 大写。"""
+    s = (workid or "").strip().rstrip("/")
+    s = s.split("/")[-1]
+    return s.upper() if s.upper().startswith("W") else s
+
+
+def _rec_from_oa(w: dict, edge: str, is_infl: bool | None = None) -> dict:
+    """OpenAlex work dict -> 统一邻居记录。edge: 'reference'|'citation'。"""
+    auths = [a.get("author", {}).get("display_name", "")
+             for a in w.get("authorships", [])][:8]
+    loc = w.get("primary_location") or {}
+    src = loc.get("source") or {}
+    return {
+        "edge": edge,
+        "source_api": "OpenAlex",
+        "title": w.get("title") or "",
+        "authors": [a for a in auths if a],
+        "year": w.get("publication_year"),
+        "venue": src.get("display_name") or "",
+        "doi": _norm_doi(w.get("doi")),
+        "cited_by": w.get("cited_by_count"),
+        "cited_by_src": "OpenAlex",
+        "is_influential": is_infl,
+        "oa_id": _oa_id(w.get("id") or ""),
+        "url": w.get("id") or "",
+    }
+
+
+# ----------------------------- OpenAlex seed -----------------------------
+def oa_resolve_seed(seed: str) -> tuple[int, dict | None]:
+    """把种子（DOI / W-id / 标题）解析成一个 OpenAlex work（含 referenced_works）。"""
+    sel = ("id,doi,title,publication_year,cited_by_count,authorships,"
+           "primary_location,type,referenced_works")
+    s = seed.strip()
+    if s.upper().startswith("W") and re.fullmatch(r"[Ww]\d+", s):
+        url = ("https://api.openalex.org/works/%s?select=%s&mailto=%s"
+               % (_oa_id(s), sel, MAILTO))
+    elif _norm_doi(s):
+        url = ("https://api.openalex.org/works/doi:%s?select=%s&mailto=%s"
+               % (urllib.parse.quote(_norm_doi(s)), sel, MAILTO))
+    else:
+        params = {"search": s, "per-page": "1", "select": sel, "mailto": MAILTO}
+        url = "https://api.openalex.org/works?" + urllib.parse.urlencode(params)
+        code, data = _get_json(url)
+        if data and data.get("results"):
+            return code, data["results"][0]
+        return code, None
+    code, data = _get_json(url)
+    return code, data if isinstance(data, dict) and data.get("id") else None
+
+
+# ----------------------------- OpenAlex backward -----------------------------
+def oa_backward(seed_work: dict, max_refs: int = 50) -> tuple[int, list[dict]]:
+    """后向参考：referenced_works → 分批 filter=openalex_id:W..|W..（每批 ≤50）。"""
+    refs = [_oa_id(x) for x in (seed_work.get("referenced_works") or [])][:max_refs]
+    out: list[dict] = []
+    last_code = 0
+    sel = ("id,doi,title,publication_year,cited_by_count,authorships,"
+           "primary_location,type")
+    for i in range(0, len(refs), 50):
+        batch = refs[i:i + 50]
+        flt = "openalex_id:" + "|".join(batch)  # OR 用竖线
+        params = {"filter": flt, "per-page": "50", "select": sel, "mailto": MAILTO}
+        url = "https://api.openalex.org/works?" + urllib.parse.urlencode(params)
+        last_code, data = _get_json(url)
+        if data and data.get("results"):
+            for w in data["results"]:
+                out.append(_rec_from_oa(w, "reference"))
+    return last_code, out
+
+
+# ----------------------------- OpenAlex forward -----------------------------
+def oa_forward(seed_work: dict, limit: int = 50) -> tuple[int, list[dict]]:
+    """前向被引：filter=cites:{workid}&sort=cited_by_count:desc（无单独端点）。"""
+    wid = _oa_id(seed_work.get("id") or "")
+    if not wid:
+        return 0, []
+    sel = ("id,doi,title,publication_year,cited_by_count,authorships,"
+           "primary_location,type")
+    params = {"filter": "cites:" + wid, "sort": "cited_by_count:desc",
+              "per-page": str(min(limit, 200)), "select": sel, "mailto": MAILTO}
+    url = "https://api.openalex.org/works?" + urllib.parse.urlencode(params)
+    code, data = _get_json(url)
+    out: list[dict] = []
+    if data and data.get("results"):
+        for w in data["results"]:
+            out.append(_rec_from_oa(w, "citation"))
+    return code, out
+
+
+# ----------------------------- Semantic Scholar -----------------------------
+def _s2_pid(seed: str) -> str:
+    """把种子映射成 S2 paper id：DOI -> DOI:..；W-id 不被 S2 直接识别，回退原串。"""
+    s = seed.strip()
+    if _norm_doi(s) and not re.fullmatch(r"[Ww]\d+", s):
+        return "DOI:" + _norm_doi(s)
+    return s
+
+
+def _rec_from_s2(p: dict, edge: str, is_infl: bool | None) -> dict:
+    ext = p.get("externalIds") or {}
+    return {
+        "edge": edge,
+        "source_api": "SemanticScholar",
+        "title": p.get("title") or "",
+        "authors": [a.get("name", "") for a in (p.get("authors") or [])][:8],
+        "year": p.get("year"),
+        "venue": p.get("venue") or "",
+        "doi": _norm_doi(ext.get("DOI")),
+        "cited_by": p.get("citationCount"),
+        "cited_by_src": "SemanticScholar",
+        "is_influential": is_infl,
+        "oa_id": "",
+        "url": p.get("url") or "",
+    }
+
+
+def s2_neighbors(seed: str, edge: str, limit: int = 50) -> tuple[int, list[dict]]:
+    """S2 /paper/{id}/references|citations，offset/limit 分页（非 token）。"""
+    pid = _s2_pid(seed)
+    endpoint = "references" if edge == "reference" else "citations"
+    inner = "title,year,citationCount,externalIds,venue,authors,url"
+    fields = "isInfluential,%s" % inner
+    base = ("https://api.semanticscholar.org/graph/v1/paper/%s/%s"
+            % (urllib.parse.quote(pid, safe=":"), endpoint))
+    out: list[dict] = []
+    last_code = 0
+    offset = 0
+    page = min(limit, 100)
+    while offset < limit:
+        params = {"fields": fields, "offset": str(offset),
+                  "limit": str(min(page, limit - offset))}
+        url = base + "?" + urllib.parse.urlencode(params)
+        last_code, data = _get_json(url)
+        items = (data or {}).get("data") or []
+        if not items:
+            break
+        for it in items:
+            paper = it.get("citingPaper" if edge == "citation"
+                           else "citedPaper") or {}
+            out.append(_rec_from_s2(paper, edge, it.get("isInfluential")))
+        if (data or {}).get("next") is None:
+            break
+        offset += len(items)
+    return last_code, out
+
+
+# ----------------------------- 去重归并 -----------------------------
+def dedup_neighbors(records: list[dict]) -> list[dict]:
+    """邻居去重：DOI 优先，无 DOI 回退 规范化标题+年。合并边类型与被引来源。"""
+    buckets: dict[str, dict] = {}
+    for r in records:
+        key = (_norm_doi(r.get("doi"))
+               or (_norm_title(r.get("title")) + str(r.get("year") or "")))
+        if not key:
+            key = str(id(r))
+        if key not in buckets:
+            r = dict(r)
+            r["edges"] = [r["edge"]]
+            r["cited_by_by_src"] = {}
+            if r.get("cited_by") is not None:
+                r["cited_by_by_src"][r["cited_by_src"]] = r["cited_by"]
+            buckets[key] = r
+        else:
+            b = buckets[key]
+            if r["edge"] not in b["edges"]:
+                b["edges"].append(r["edge"])
+            if r.get("cited_by") is not None:
+                b["cited_by_by_src"][r["cited_by_src"]] = r["cited_by"]
+            if r.get("is_influential") and not b.get("is_influential"):
+                b["is_influential"] = True
+            if not b.get("doi") and r.get("doi"):
+                b["doi"] = r["doi"]
+    merged = list(buckets.values())
+
+    def _sortkey(x: dict) -> int:
+        vals = [v for v in x.get("cited_by_by_src", {}).values()
+                if isinstance(v, int)]
+        return max(vals) if vals else -1
+    merged.sort(key=_sortkey, reverse=True)
+    return merged
+
+
+# ----------------------------- 编排 -----------------------------
+def snowball(seed: str, hops: int = 1, provider: str = "openalex",
+             limit: int = 50, offline_sample: bool = False) -> dict:
+    offline = False
+    all_recs: list[dict] = []
+    seed_title = seed
+    if not offline_sample:
+        if provider == "s2":
+            rc, refs = s2_neighbors(seed, "reference", limit)
+            cc, cites = s2_neighbors(seed, "citation", limit)
+            print("[HTTP] S2 references=%s citations=%s" % (rc, cc),
+                  file=sys.stderr)
+            all_recs = refs + cites
+            if rc == 0 and cc == 0:
+                offline = True
+        else:
+            sc, seed_work = oa_resolve_seed(seed)
+            print("[HTTP] OpenAlex seed=%s" % sc, file=sys.stderr)
+            if seed_work:
+                seed_title = seed_work.get("title") or seed
+                bc, refs = oa_backward(seed_work, max_refs=limit)
+                fc, cites = oa_forward(seed_work, limit=limit)
+                print("[HTTP] OpenAlex backward=%s forward=%s" % (bc, fc),
+                      file=sys.stderr)
+                all_recs = refs + cites
+                # 两跳：对一跳邻居中被引最高的若干篇再做一次后向参考。
+                if hops >= 2 and refs:
+                    one = dedup_neighbors(refs + cites)[:3]
+                    for nb in one:
+                        if nb.get("oa_id"):
+                            c2, w2 = oa_resolve_seed(nb["oa_id"])
+                            if w2:
+                                _, r2 = oa_backward(w2, max_refs=limit)
+                                for x in r2:
+                                    x["edge"] = "reference"
+                                all_recs += r2
+            else:
+                offline = True
+    if offline_sample or offline:
+        offline = True
+        all_recs = _SYNTHETIC
+        seed_title = seed
+        print("[OFFLINE] 网络不可达，使用内置合成样本验证管线。", file=sys.stderr)
+    merged = dedup_neighbors(all_recs)
+    return {"seed": seed, "seed_title": seed_title, "provider": provider,
+            "hops": hops, "offline": offline, "raw_count": len(all_recs),
+            "merged_count": len(merged), "neighbors": merged}
+
+
+_SYNTHETIC = [
+    {"edge": "reference", "source_api": "OpenAlex",
+     "title": "Accelerometer-based activity recognition in goats",
+     "authors": ["C Wang"], "year": 2019, "venue": "Animals",
+     "doi": "10.3390/ani9120999", "cited_by": 45, "cited_by_src": "OpenAlex",
+     "is_influential": None, "oa_id": "W2000000002", "url": "openalex:W2"},
+    {"edge": "reference", "source_api": "SemanticScholar",
+     "title": "Accelerometer-Based Activity Recognition in Goats",
+     "authors": ["Chen Wang"], "year": 2019, "venue": "Animals",
+     "doi": "10.3390/ani9120999", "cited_by": 52, "cited_by_src": "SemanticScholar",
+     "is_influential": True, "oa_id": "", "url": "https://s2/paper2"},
+    {"edge": "citation", "source_api": "OpenAlex",
+     "title": "Deep learning for precision livestock farming",
+     "authors": ["D Kim", "E Park"], "year": 2023,
+     "venue": "Computers and Electronics in Agriculture",
+     "doi": "10.1016/j.compag.2023.200200", "cited_by": 120,
+     "cited_by_src": "OpenAlex", "is_influential": None,
+     "oa_id": "W2000000003", "url": "openalex:W3"},
+    {"edge": "citation", "source_api": "SemanticScholar",
+     "title": "A review of sensor-based animal behaviour monitoring",
+     "authors": ["F Li"], "year": 2022, "venue": "Sensors",
+     "doi": "10.3390/s22010100", "cited_by": 78, "cited_by_src": "SemanticScholar",
+     "is_influential": True, "oa_id": "", "url": "https://s2/paper4"},
+]
+
+
+def to_markdown(result: dict) -> str:
+    nb = result["neighbors"]
+    lines = [
+        "# 引用滚雪球：%s" % result.get("seed_title", result["seed"]),
+        "",
+        "种子=`%s`  provider=%s  hops=%s  offline=%s" % (
+            result["seed"], result["provider"], result["hops"],
+            result["offline"]),
+        "共 %d 个邻居（去重后，按被引降序）。被引数标来源库，"
+        "OpenAlex/S2 口径不同不可直接比；Europe PMC/PubMed 又是另一口径。" % len(nb),
+        "",
+        "| # | 边类型 | infl | 标题 | 年 | 被引(来源) | DOI |",
+        "|---|--------|------|------|----|-----------|-----|",
+    ]
+    for i, r in enumerate(nb, 1):
+        cb = "; ".join("%s(%s)" % (v, k)
+                       for k, v in r.get("cited_by_by_src", {}).items()) or "NA"
+        edges = "+".join(r.get("edges", []))
+        infl = "Y" if r.get("is_influential") else ""
+        title = (r.get("title") or "").replace("|", "/")[:70]
+        lines.append("| %d | %s | %s | %s | %s | %s | %s |" % (
+            i, edges, infl, title, r.get("year") or "", cb, r.get("doi") or ""))
+    return "\n".join(lines)
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description="引用滚雪球（前向被引+后向参考）")
+    ap.add_argument("seed", nargs="?", default="10.1016/j.compag.2021.100001",
+                    help="DOI / OpenAlex workid(W..) / 标题")
+    ap.add_argument("--hops", type=int, default=1, choices=[1, 2])
+    ap.add_argument("--provider", default="openalex",
+                    choices=["openalex", "s2"])
+    ap.add_argument("--limit", type=int, default=50)
+    ap.add_argument("--offline", action="store_true", help="强制用合成样本")
+    ap.add_argument("--json-out", default="")
+    ap.add_argument("--md-out", default="")
+    args = ap.parse_args()
+
+    result = snowball(args.seed, hops=args.hops, provider=args.provider,
+                      limit=args.limit, offline_sample=args.offline)
+    md = to_markdown(result)
+
+    if args.json_out:
+        with open(args.json_out, "w", encoding="utf-8") as f:
+            json.dump(result, f, ensure_ascii=False, indent=2)
+    if args.md_out:
+        with open(args.md_out, "w", encoding="utf-8") as f:
+            f.write(md)
+
+    print(md)
+    print("\n[SUMMARY] seed=%r provider=%s hops=%s offline=%s raw=%s merged=%s"
+          % (args.seed, args.provider, args.hops, result["offline"],
+             result["raw_count"], result["merged_count"]))
+
+
+if __name__ == "__main__":
+    main()

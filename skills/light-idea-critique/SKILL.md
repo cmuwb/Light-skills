@@ -41,7 +41,7 @@ description: 以顶刊/顶会审稿人标准严格判断 idea 是否真有突破
 拿全文，按 rubric.md 逐维 0–100 + 理由（指到点 + 给反例 + 给替代解释）。命中 Phase 1 的 block/warn 显式点名。**若打分偏离 Phase 1 预设标准，先输出 `Scoring Plan Dissent` 说明为何正文证据值得改判**，否则属协议违规。
 
 ### Step 4 — 五视角对抗（强制真冲突）
-按 protocol.md：方法/实验/理论/应用四视角各按 `Position→Reasoning→Key Risk→Insight` 独立挑刺（锚到不同维度，禁伪多样）；外加 Devil's Advocate 只挑刺找四类 CRITICAL（地基崩塌/逻辑断链/证据缺口/更强反叙事）。去标识汇总共识关切与个别关切。
+按 protocol.md：方法/实验/理论/应用四视角各按 `Position→Reasoning→Key Risk→Insight` 独立挑刺（锚到不同维度，禁伪多样）；外加 Devil's Advocate 只挑刺找四类 CRITICAL（地基崩塌/逻辑断链/证据缺口/更强反叙事）。去标识汇总共识关切与个别关切。「更强反叙事」必须落地为**单变量精确 IF**（protocol.md Devil's Advocate 节）：挑载荷最重的 2–3 条假设，每条只变一个变量、量化后果、推二阶影响、回写判决——这是把"实验审稿人"已散在各处的归因质疑（增益来自算力/数据而非创新点）和 Phase 1 的 block 条件收敛成**一次单变量隔离归因证否**，而非新发明检查项；"增益不可归因"的 IF 结论等同未化解 CRITICAL，喂回 Step 6 否决项。
 
 ### Step 5 — 反谄媚反驳环节
 作者反驳时，按 contract.md B 节给每条反驳 1–5 分（5 撤回/4 降级/3 保持/2 重述/1 加强）：让步必须挂新证据；禁连续让步；用 `scripts/sycophancy_guard.py` 算 concession-rate，>50% 输出 `⚠ SYCOPHANCY-ALERT`。未被 5 分新证据撤回的 CRITICAL 仍有效。

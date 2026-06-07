@@ -129,6 +129,45 @@
 
 ---
 
+## PubMed E-utilities (NCBI Entrez)
+
+【是什么】美国 NCBI 提供的免费生物医学文献检索 API，覆盖 PubMed/MEDLINE（3700 万+ 生医/临床题录）。生医领域不可替代的主力源：MeSH 受控词检索与 Clinical Queries 临床过滤器是此源独有，OpenAlex/S2 的全文检索替代不了。
+
+【可复用方法/真实端点/参数】
+- Base：`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/`，**两步式**：
+  1. `esearch.fcgi?db=pubmed&term=...&retmax=&retstart=` → 返回命中 PMID 列表（XML 或 `&retmode=json`）。
+  2. `efetch.fcgi?db=pubmed&id=PMID,PMID&rettype=abstract&retmode=xml`（取摘要全文）或 `esummary.fcgi?db=pubmed&id=...&retmode=json`（取题录摘要）。
+- `term` 字段标签（PubMed 检索语法，独有）：`[MeSH Terms]`(受控主题词)、`[tiab]`(标题+摘要)、`[ti]`(标题)、`[au]`(作者)、`[dp]`(出版日期，如 `2020:2024[dp]`)；布尔 `AND`/`OR`/`NOT`，短语用双引号。
+- 分页：`retmax`(单页上限，默认 20，最大 10000) + `retstart`(偏移)。**大集合**用 `usehistory=y`，esearch 返回 `WebEnv`+`query_key`，后续 efetch/esummary 带 `&WebEnv=&query_key=&retstart=&retmax=` 分批回取，避免 URL 过长。
+- Clinical Queries：临床过滤器（Therapy/Diagnosis/Etiology/Prognosis + broad/narrow 范围），可在 term 中拼接对应过滤策略，做循证医学规范检索。
+- 限流/礼貌：建议带 `&email=you@example.com&tool=yourtool`；无 API key 限 **3 req/s**，注册免费 `&api_key=` 提到 **10 req/s**。
+
+【链接】E-utilities 文档 https://www.ncbi.nlm.nih.gov/books/NBK25501/ ；参数详表 https://www.ncbi.nlm.nih.gov/books/NBK25499/ ；MeSH https://www.ncbi.nlm.nih.gov/mesh ；Clinical Queries https://pubmed.ncbi.nlm.nih.gov/help/#clinical-queries
+
+【已知坑/局限】返回主要是 XML 需解析；超速无 key 易被 429/封 IP；被引数不在此 API（PubMed 不提供被引计数，需配 Europe PMC `citedByCount` 或 OpenAlex，口径不同须标来源库）；MeSH 标引对最新文章有滞后（in-process 记录尚未标引）。
+
+---
+
+## Europe PMC REST API
+
+【是什么】EMBL-EBI 的免费生物医学文献库，**完全免 key**，聚合 MED(PubMed/MEDLINE)+PMC(全文开放获取)+PPR(预印本)。相比 PubMed 多了直接返回 abstract、开放获取标记与被引计数，且有现成的引用/参考端点做滚雪球。
+
+【可复用方法/真实端点/参数】
+- 检索：`https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=&format=json&resultType=core`
+  - `query=`：支持字段检索（`TITLE:`、`ABSTRACT:`、`AUTH:`、`MESH:`、`PUB_YEAR:`、`SRC:MED`、`OPEN_ACCESS:Y` 等）与布尔逻辑。
+  - `resultType=core`(全字段含 abstract) | `lite` | `idlist`；`format=json`(或 xml/dc)。
+- 分页：`pageSize`(≤1000) + **`cursorMark`**（首次传 `cursorMark=*`，响应里 `nextCursorMark` 续翻；游标式深翻，避免 offset 上限）。
+- 滚雪球端点：
+  - `https://www.ebi.ac.uk/europepmc/webservices/rest/{source}/{id}/citations?format=json&pageSize=`（前向被引）。
+  - `.../{source}/{id}/references?format=json&pageSize=`（后向参考）。`{source}` 如 `MED`/`PMC`/`PPR`，`{id}` 为对应 ID。
+- 返回字段：`abstractText`、`pmid`/`pmcid`/`doi`、`isOpenAccess`/`inEPMC`/`hasPDF`、`citedByCount`、`title`、`authorString`、`journalInfo`、`firstPublicationDate`、`source`。
+
+【链接】REST 文档 https://europepmc.org/RestfulWebService ；检索语法 https://europepmc.org/searchsyntax ；Articles API https://www.ebi.ac.uk/europepmc/webservices/rest/
+
+【已知坑/局限】`citedByCount` 是 Europe PMC 自有口径（基于其聚合的引文数据），与 OpenAlex/Crossref/S2 不可直接比，入表须标来源库；PPR(预印本)质量参差需另判；全文检索仅限 PMC 开放获取部分，订阅期刊仅有题录/摘要。
+
+---
+
 ## Exa Search API
 
 【是什么】面向 LLM/agent 的"神经检索 + 关键词检索"网络搜索 API；可直接返回网页正文、摘要、高亮，并支持"找相似页"。适合补充学术库覆盖不到的博客/官方文档/项目页。

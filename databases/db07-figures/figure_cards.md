@@ -5,6 +5,7 @@
 ## 卡片模板
 ```yaml
 - figure_type:
+  figure_id:           # F# 图 / T# 表 (如 F1/T1), 与 m07 模板 [图位 F1]/[表位 T1] 对齐
   paper_source:        # 仅元数据/链接
   research_field:
   purpose:             # 支撑哪个 claim
@@ -16,6 +17,8 @@
   possible_code_tool:
   replication_notes:
   where_to_place_in_paper:
+  target_journal:      # JOURNAL_SPECS 键: nature/science/cell/plos/ieee/elsevier
+  column:              # single/double/full/onehalf (须为该刊实有的键)
 ```
 
 ## 种子卡片

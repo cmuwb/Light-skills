@@ -236,6 +236,28 @@
 
 ---
 
+## Inkscape / Adobe Illustrator（最终多-panel 拼版与手工矢量精修）
+
+【是什么】矢量编辑器，用于投稿前的"手工拼版"这条标准路径：把多个异源面板（matplotlib 导出的 PDF、显微/真实效果位图、文字标签）在画布上自由对齐、组装成单张投稿图，并做字距微调、字体转曲、导出可交付编辑源。**Inkscape** 免费开源（GPL，SVG 原生），科研学生优先；**Adobe Illustrator** 是付费行业标准（`.ai` 私有非开放格式）。SKILL 的 GridSpec 是代码式拼版，这里补的是代码搞不定的自由精修。
+
+【何时用（对比代码拼版）】异源面板组合 / 需逐像素对齐与自由精修 → 手工矢量编辑；同源同类数据图、追求复现性 → 代码生成（GridSpec/subplots）。二者互补，不重复。
+
+【交付要点（保留可编辑源）】
+- 始终保留**可编辑矢量源**（Inkscape 存 `.svg`，Illustrator 存 `.ai` 但跨工具协作另存 PDF/SVG，`.ai` 私有不通用）。
+- 导出时**字体优先嵌入**（PDF/SVG 嵌字保持文字可搜索可改）；**期刊拒嵌入或缺字时再转曲（outline）作兜底**——转曲后文字变路径不可再编辑，故只在交付终稿时做，留一份未转曲源备改。
+- Inkscape CLI（1.x 语法）：`inkscape in.svg --export-type=pdf,svg`；转曲 `inkscape in.svg --export-text-to-path --export-filename=out.pdf`；按 DPI 出位图 `--export-dpi=600`。
+
+【关键坑】
+- **拼版时勿把矢量面板栅格化/拼合**——会把 mpl 导出的矢量曲线变成位图，毁掉矢量质量与缩放清晰度；应让每个面板保持矢量对象，仅位图面板（显微图/照片）才是栅格。
+- **`.ai` 是私有格式**，跨工具/与合作者协作一律存 PDF 或 SVG；Inkscape 读 `.ai` 也是当 PDF 解析。
+- **Inkscape CLI 在 headless/CI** 注意 1.x 命令行已重写：用 `--export-filename` / `--export-type`，**旧 `-A`/`-E`/`-e` 等单字母导出选项已废弃**，旧脚本需迁移；无显示环境可加 `xvfb` 或用 `--export-type` 的无头导出。
+
+【与 mpl `pdf.fonttype=42` 的分工】mpl 的 `fonttype=42` 只解决**代码图自身**嵌字（避免 Type-3 被拒）；拼版阶段的转曲解决的是**多源面板混排后整体缺字**风险（位图标签、不同来源 PDF 的字体在审稿端机器缺失）。二者作用层级不同，不重复。
+
+【链接】Inkscape CLI https://inkscape.org/doc/inkscape-man.html ；Illustrator https://helpx.adobe.com/illustrator/
+
+---
+
 ## 出版商图宽硬规格核查表（mm，研究日期 2026-06）
 
 【核查方法与诚实声明】只有 Nature 的 figure guide 子站对 curl 返回 HTTP 200、数值逐字实测；Science(science.org)、Cell(cell.com)、Elsevier(elsevier.com)、IEEE(ieee.org)、MDPI(mdpi.com) 的作者指南页对 curl 与 WebFetch 一律返回 **HTTP 403（付费墙/反爬）**，WebSearch 仅返回标题+URL 无正文。故下表除 Nature 外均标 **⚠️付费墙未实测**，数值为各出版商长期公开作者指南通行值，**投稿前必须以目标刊当期官网为准**。

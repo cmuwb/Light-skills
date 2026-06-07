@@ -49,6 +49,16 @@
 
 - 判据：**“别人能否照脚本复现同一结果”**。投稿/审稿/竞赛一律走可复现。
 
+### 自动化触发条件 → 方案
+
+| 触发条件 | 方案 | 理由 |
+|---|---|---|
+| 一次性本地运行 | 直接脚本/命令 | 无需编排，跑完即弃 |
+| 多步骤、步骤间有数据依赖 | Snakemake/Make | 按文件依赖增量重算，本地编排 |
+| 仓库事件/定时/协作复现 | GitHub Actions | `.github/workflows/*.yml`：push 即测、cron 定时抓数/重算、自动构建 PDF/图、发 release、matrix 多环境 |
+
+- GitHub Actions 与 Snakemake 互补不替代：Actions 管"何时由什么事件触发、跑在哪个环境"，Snakemake 管"步骤间数据依赖怎么算"。CI 里常套一层 Actions 触发 → 内部调 Snakemake/脚本。
+
 ## 5. Python 环境：按依赖性质选
 
 | 场景 | 工具 | 关键命令 |

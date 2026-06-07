@@ -7,8 +7,10 @@
 
 行为:
     1. 创建标准科研目录树 (data 四分层 / src / experiments / ... 见 DIRS)。
-    2. 从本脚本同目录拷贝 5 个模板, 去掉 .template 后缀落到项目根:
-       README / CHANGELOG / PROJECT_PLAN / .gitignore / .editorconfig。
+    2. 从本脚本同目录拷贝 6 个模板, 去掉 .template 后缀落到项目根:
+       README / CHANGELOG / PROJECT_PLAN / .gitignore / .editorconfig /
+       .pre-commit-config.yaml。.pre-commit-config.yaml 在 `pre-commit install`
+       前完全惰性, 故与 .editorconfig 一样默认始终落地。
     3. --poetry: 额外写 pyproject.toml (Poetry + Ruff 配置, 离线可用)。
     4. --dvc:    写 dvc.yaml 占位管线; 若本机有 dvc 则顺带 dvc init。
     5. 空目录放 .gitkeep, 便于 git 跟踪空树。
@@ -44,6 +46,7 @@ TEMPLATE_MAP = {
     "PROJECT_PLAN.template.md": "PROJECT_PLAN.md",
     "python-research.gitignore": ".gitignore",
     "editorconfig.template": ".editorconfig",
+    "pre-commit-config.template.yaml": ".pre-commit-config.yaml",
 }
 
 PYPROJECT_TOML = '''[project]
@@ -93,7 +96,7 @@ def write_text(path: Path, text: str) -> None:
 
 
 def copy_templates(root: Path) -> list[str]:
-    """拷贝 5 个模板到项目根, 去后缀。返回已落地文件名列表。"""
+    """拷贝模板到项目根, 去后缀。返回已落地文件名列表。"""
     done = []
     for src_name, dst_name in TEMPLATE_MAP.items():
         src = TEMPLATE_DIR / src_name
@@ -158,7 +161,12 @@ def main(argv=None) -> int:
     print(f"  模板落地: {', '.join(copied)}")
     if extras:
         print(f"  附加: {', '.join(extras)}")
-    print("下一步: 填 README/CHANGELOG/PROJECT_PLAN 的 {{占位}}, git init, 写第一个测试。")
+    print("下一步:")
+    print("  1. 填 README/CHANGELOG/PROJECT_PLAN 的 {{占位}}。")
+    print("  2. git init  (无 git 仓库时 .pre-commit-config.yaml 不生效)。")
+    print("  3. pip install pre-commit  (或 pipx/uv, 已装可跳过)。")
+    print("  4. pre-commit install  (把钩子挂进 .git/hooks/, 否则有配置也没门)。")
+    print("  5. pre-commit run --all-files  (首次全量跑一遍)。")
     return 0
 
 

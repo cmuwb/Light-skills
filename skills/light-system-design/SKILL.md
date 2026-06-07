@@ -48,11 +48,11 @@ user-invocable: false
   - Docker：多阶段构建、先 COPY 依赖清单再装依赖再 COPY 源码(护缓存)、非 root `USER`、slim/distroless 基础镜像、钉 digest、`HEALTHCHECK`、`.dockerignore`；`apt-get update && install` 必须同一 RUN(否则吃旧缓存)；build 期临时文件用 `RUN --mount=type=bind` 不进镜像。
   - K8s：Deployment(`rollingUpdate` maxSurge/maxUnavailable 默认各 25%、只改 `.spec.template` 才触发滚动)、`readinessProbe`(摘流量)+`livenessProbe`(重启)+`startupProbe`(慢启动)、`requests/limits`、ConfigMap/Secret(注意 Secret 仅 base64 需配 RBAC)、HPA 按 CPU 70% 扩缩、`progressDeadlineSeconds`(默认 600 超时报卡住)。
   - Nginx：反代 `proxy_pass` + 透传 `X-Real-IP`/`X-Forwarded-For`/`Host`、`upstream` 负载均衡、TLS 终止、`limit_req` 限流；改配置 `nginx -t` 后 reload。
-  - CI/CD(GitHub Actions)、环境分离、回滚方案(`kubectl rollout undo`)。
+  - CI(GitHub Actions)：push/PR/手动触发，checkout→setup(配 cache)→install→lint→test→`alembic check`/`prisma migrate deploy`(对临时库校验迁移没漏生成)；最小权限 `permissions: contents: read`，fork 的 PR 拿不到 secrets。骨架见 references「GitHub Actions」段与 `templates/ci.yml`。环境分离、回滚(`kubectl rollout undo`)、build-push/部署属发布链按需再加。
 ⚠ 网络暴露服务若无鉴权必须主动提示(security_awareness)。
 
 ## 产出
-架构图 + ER 图 + 表结构 DDL + 接口文档(OpenAPI) + 权限/安全/部署说明。设计文档可直接喂 m15 软著功能说明。起手骨架见 `templates/`(schema.sql / openapi.yaml / rls_policy.sql)，按项目改字段即可。
+架构图 + ER 图 + 表结构 DDL + 接口文档(OpenAPI) + 权限/安全/部署说明。设计文档可直接喂 m15 软著功能说明。起手骨架见 `templates/`(schema.sql / openapi.yaml / rls_policy.sql / ci.yml)，按项目改字段即可。
 
 ## 衔接
 设计→a03 实现→a06 规整目录；与论文系统描述、软著材料保持一致(a07)；版本入 db09。
