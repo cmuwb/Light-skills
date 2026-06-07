@@ -120,7 +120,7 @@
   - `/paper/{id}/citations` 和 `/references`：前向(被引)/后向(参考)滚雪球，含 `isInfluential` 标记。
   - `/paper/batch`（POST，传 ids 列表）+ `fields=`：批量取详情。
   - `/author/{id}`、`/author/{id}/papers`。
-- 认证/限流：可匿名用（共享限速，约 1000 次/5 分钟级别）；申请免费 API key 走 `x-api-key` header 得更高更稳配额。
+- 认证/限流：可匿名用（全体匿名用户**共享** 1000 req/s 池，高峰常 429、不保证）；申请免费 API key 走 `x-api-key` header 得专属配额（introductory 约 1 RPS 起，更稳更可预期）。
 - 特色字段：`tldr`(自动单句总结)、`influentialCitationCount`(更能反映真实影响力)、`embedding`(SPECTER2)、`openAccessPdf`。
 
 【链接】文档 https://api.semanticscholar.org/api-docs/ ；产品 https://www.semanticscholar.org/product/api

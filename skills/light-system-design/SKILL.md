@@ -52,7 +52,7 @@ user-invocable: false
 ⚠ 网络暴露服务若无鉴权必须主动提示(security_awareness)。
 
 ## 产出
-架构图 + ER 图 + 表结构 DDL + 接口文档(OpenAPI) + 权限/安全/部署说明。设计文档可直接喂 m15 软著功能说明。
+架构图 + ER 图 + 表结构 DDL + 接口文档(OpenAPI) + 权限/安全/部署说明。设计文档可直接喂 m15 软著功能说明。起手骨架见 `templates/`(schema.sql / openapi.yaml / rls_policy.sql)，按项目改字段即可。
 
 ## 衔接
 设计→a03 实现→a06 规整目录；与论文系统描述、软著材料保持一致(a07)；版本入 db09。

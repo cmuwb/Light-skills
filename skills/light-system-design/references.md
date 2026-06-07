@@ -157,8 +157,8 @@
 - Cache-aside（旁路缓存）：读→查缓存命中即返回→未命中读 DB→写回 Redis 带 TTL→返回；写时更新 DB 后失效或更新缓存。
 - 内存上限：`maxmemory 100mb`（运行时 `CONFIG SET maxmemory`）。
 - 淘汰策略 `maxmemory-policy`：
-  - `allkeys-lru` 最佳默认（热点访问呈幂律）；`allkeys-lfu` 频率比近因更重要时；`allkeys-random` 访问均匀；`volatile-ttl` 优先淘汰快过期的；`volatile-*` 在无 TTL 键时退化成 `noeviction`。
-  - Redis 8.6 新增 `allkeys-lrm`/`volatile-lrm`（least-recently-modified，按最后修改时间淘汰）。
+  - 合法值仅 8 个：`noeviction`/`allkeys-lru`/`allkeys-lfu`/`allkeys-random`/`volatile-lru`/`volatile-lfu`/`volatile-random`/`volatile-ttl`。`allkeys-lru` 最佳默认（热点访问呈幂律）；`allkeys-lfu` 频率比近因更重要时；`allkeys-random` 访问均匀；`volatile-ttl` 优先淘汰快过期的；`volatile-*` 在无 TTL 键时退化成 `noeviction`。
+  - 注：不存在按"最后修改时间"淘汰的策略（如 lrm），只有上述 LRU/LFU 的近似实现；勿凭印象添加不存在的值。
   - 持久化/复制实例留内存余量给 AOF/复制缓冲（查 `INFO memory` 的 `mem_not_counted_for_evict`）。
 - 近似 LRU：采样而非全量，`maxmemory-samples 5`（调到 10 更准、略耗 CPU）；LFU 调 `lfu-log-factor`/`lfu-decay-time`。
 - 监控：命中率 `keyspace_hits/(hits+misses)`；`evicted_keys` 高说明策略不对。

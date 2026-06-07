@@ -100,16 +100,16 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 
 | 阶段 | 技能 | 做什么 |
 |------|------|--------|
-| 📚 资料调研 | `light-literature-search` | 多源检索文献、去重、判可信度、排重要性、搭综述骨架 |
-| 🧹 数据处理 | `light-data-engineering` | 体检数据、防泄漏划分、校验质量门、规划自建数据集 |
-| 💡 创新提案 | `light-idea-generation` ⇄ `light-idea-critique` | 提创新点 ↔ 以审稿人视角对抗挑刺,成对循环到站得住 |
-| 🗺️ 方案设计 | `light-research-plan` | 定技术路线、排实验矩阵、评可行性、保可复现 |
-| 📊 结果分析 | `light-result-analysis` | 跑 EDA、做显著性检验、算效应量、溯因异常、挖规律 |
-| ✍️ 论文写作 | `light-paper-drafting` ⇄ `light-paper-polishing` | 分模块成稿 ↔ 以审稿人视角打磨逻辑·结构·语言 |
-| 📈 图表 | `light-figure-planning` ⇄ `light-figure-drawing` | 规划做什么图、放哪 ↔ 按刊物规格出版级绘图 |
-| 🔖 引用排版 | `light-citation` · `light-typesetting` | 核验 DOI、生成多格式参考文献 · 用 LaTeX/Word 排版导出 PDF |
-| 📮 投稿返修 | `light-venue-matching` · `light-review-rebuttal` | 分层定位投稿(冲刺/稳妥/保底)· 模拟审稿、逐条返修 |
-| 🏆 成果转化 | `light-ip-application` · `light-slides` · `light-competition` | 写软著专利 · 做答辩路演 PPT · 备竞赛申报材料 |
+| 📚 资料调研 | [`light-literature-search`](skills/light-literature-search/SKILL.md) | 多源检索文献、去重、判可信度、排重要性、搭综述骨架 |
+| 🧹 数据处理 | [`light-data-engineering`](skills/light-data-engineering/SKILL.md) | 体检数据、防泄漏划分、校验质量门、规划自建数据集 |
+| 💡 创新提案 | [`light-idea-generation`](skills/light-idea-generation/SKILL.md) ⇄ [`light-idea-critique`](skills/light-idea-critique/SKILL.md) | 提创新点 ↔ 以审稿人视角对抗挑刺,成对循环到站得住 |
+| 🗺️ 方案设计 | [`light-research-plan`](skills/light-research-plan/SKILL.md) | 定技术路线、排实验矩阵、评可行性、保可复现 |
+| 📊 结果分析 | [`light-result-analysis`](skills/light-result-analysis/SKILL.md) | 跑 EDA、做显著性检验、算效应量、溯因异常、挖规律 |
+| ✍️ 论文写作 | [`light-paper-drafting`](skills/light-paper-drafting/SKILL.md) ⇄ [`light-paper-polishing`](skills/light-paper-polishing/SKILL.md) | 分模块成稿 ↔ 以审稿人视角打磨逻辑·结构·语言 |
+| 📈 图表 | [`light-figure-planning`](skills/light-figure-planning/SKILL.md) ⇄ [`light-figure-drawing`](skills/light-figure-drawing/SKILL.md) | 规划做什么图、放哪 ↔ 按刊物规格出版级绘图 |
+| 🔖 引用排版 | [`light-citation`](skills/light-citation/SKILL.md) · [`light-typesetting`](skills/light-typesetting/SKILL.md) | 核验 DOI、生成多格式参考文献 · 用 LaTeX/Word 排版导出 PDF |
+| 📮 投稿返修 | [`light-venue-matching`](skills/light-venue-matching/SKILL.md) · [`light-review-rebuttal`](skills/light-review-rebuttal/SKILL.md) | 分层定位投稿(冲刺/稳妥/保底)· 模拟审稿、逐条返修 |
+| 🏆 成果转化 | [`light-ip-application`](skills/light-ip-application/SKILL.md) · [`light-slides`](skills/light-slides/SKILL.md) · [`light-competition`](skills/light-competition/SKILL.md) | 写软著专利 · 做答辩路演 PPT · 备竞赛申报材料 |
 
 ### 常驻技能 · 后台自动(10)
 
@@ -117,16 +117,16 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 
 | 技能 | 职责 |
 |------|------|
-| `light-file-reading` | 读 PDF/Word/PPT/Excel/CSV/图片/代码/压缩包,理解结构而非只提字 |
-| `light-memory-pm` | 跨会话项目记忆、阶段拆解、里程碑与版本记录 |
-| `light-backend-coding` | 实验/模型/数据/可视化/后端代码,TDD 与系统化调试 |
-| `light-system-design` | 系统架构、数据库、接口、权限、部署设计 |
-| `light-frontend-design` | 前端界面与可视化大屏,审美统一、可演示 |
-| `light-project-structure` | 规范项目目录与命名,便于复现与成果整理 |
-| `light-consistency` | 术语/指标/创新点跨论文·PPT·软著一致 |
-| `light-self-review` | 逻辑/事实/格式/夸大自审,产出前先迭代 |
-| `light-tool-selection` | 按任务选最合适的工具与方法 |
-| `light-research-ethics` | 学术伦理、合规、防造假与过度包装的底线 |
+| [`light-file-reading`](skills/light-file-reading/SKILL.md) | 读 PDF/Word/PPT/Excel/CSV/图片/代码/压缩包,理解结构而非只提字 |
+| [`light-memory-pm`](skills/light-memory-pm/SKILL.md) | 跨会话项目记忆、阶段拆解、里程碑与版本记录 |
+| [`light-backend-coding`](skills/light-backend-coding/SKILL.md) | 实验/模型/数据/可视化/后端代码,TDD 与系统化调试 |
+| [`light-system-design`](skills/light-system-design/SKILL.md) | 系统架构、数据库、接口、权限、部署设计 |
+| [`light-frontend-design`](skills/light-frontend-design/SKILL.md) | 前端界面与可视化大屏,审美统一、可演示 |
+| [`light-project-structure`](skills/light-project-structure/SKILL.md) | 规范项目目录与命名,便于复现与成果整理 |
+| [`light-consistency`](skills/light-consistency/SKILL.md) | 术语/指标/创新点跨论文·PPT·软著一致 |
+| [`light-self-review`](skills/light-self-review/SKILL.md) | 逻辑/事实/格式/夸大自审,产出前先迭代 |
+| [`light-tool-selection`](skills/light-tool-selection/SKILL.md) | 按任务选最合适的工具与方法 |
+| [`light-research-ethics`](skills/light-research-ethics/SKILL.md) | 学术伦理、合规、防造假与过度包装的底线 |
 
 ## 一个项目的完整链路
 
@@ -151,15 +151,15 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 
 | 库 | 内容 |
 |----|------|
-| `db01` 期刊会议 | 期刊/会议元数据、审稿周期、代表作、分层(含真实 ISSN 与替代指标) |
-| `db02` 模板 | 各阶段产出的可套用模板 |
-| `db03` 方法 | 方法卡:任务/输入输出/优劣/基线/评测/代表作与实现仓库 |
-| `db04` 数据集 | 数据集卡:规模/许可/已知问题/下载方式 |
-| `db05` 设计系统 | 前端/可视化设计规范 |
-| `db06` 幻灯主题 | PPT 主题与配色 |
-| `db07` 科研图表 | 顶刊顶会图表案例:审美/布局/配色/组图逻辑 |
-| `db08` 知识产权与竞赛 | 软著专利、竞赛申报材料骨架与评审维度 |
-| `db09` 项目状态 | 跨会话项目记忆:项目卡/术语表/决策日志 |
+| [`db01` 期刊会议](databases/db01-venues-templates/README.md) | 期刊/会议元数据、审稿周期、代表作、分层(含真实 ISSN 与替代指标) |
+| [`db02` 模板](databases/db02-paper-writing/README.md) | 各阶段产出的可套用模板 |
+| [`db03` 方法](databases/db03-methods/README.md) | 方法卡:任务/输入输出/优劣/基线/评测/代表作与实现仓库 |
+| [`db04` 数据集](databases/db04-datasets/README.md) | 数据集卡:规模/许可/已知问题/下载方式 |
+| [`db05` 设计系统](databases/db05-frontend-styles/README.md) | 前端/可视化设计规范 |
+| [`db06` 幻灯主题](databases/db06-ppt-styles/README.md) | PPT 主题与配色 |
+| [`db07` 科研图表](databases/db07-figures/README.md) | 顶刊顶会图表案例:审美/布局/配色/组图逻辑 |
+| [`db08` 知识产权与竞赛](databases/db08-ip-materials/README.md) | 软著专利、竞赛申报材料骨架与评审维度 |
+| [`db09` 项目状态](databases/db09-projects/README.md) | 跨会话项目记忆:项目卡/术语表/决策日志 |
 
 另有 `code_assets/` 收录经对抗验证的统计与指标代码(一致性 κ/QWK 对照 `sklearn`,Welch t/BH-FDR/Wilson 对照 `scipy`,MOTA/IDF1、CORAL 序数损失、长尾重采样),数值与权威库逐位对齐,并由 CI 持续校验。
 
@@ -190,16 +190,21 @@ key 通过环境变量提供,不要写进代码或提交到仓库。Light 的安
 
 ```
 Light/
-├── skills/             # 27 个技能,每个含 SKILL.md + references + scripts/templates/examples
+├── skills/             # 27 个技能,每个含 SKILL.md + references,按需带 scripts/templates/examples
 ├── databases/          # 9 个知识库(db01–db09)
 ├── code_assets/        # 经对抗验证、CI 持续校验的统计与指标代码
+├── projects/           # 端到端示例项目(dairygoat-detect-track,跑通完整链路)
+├── _verification_log/  # 二次核实证据链(API 字段/库行为/技能来源,带真实 HTTP 码)
 ├── assets/             # LOGO、图片
 ├── install.ps1 / .sh   # 一键安装脚本(幂等可重跑)
 ├── CONVENTIONS.md      # 全局规约(诚实底线、产出规范)
 ├── ROUTER.md           # 技能路由逻辑
 ├── AGENTS.snippet.md   # Codex 路由片段
-├── CONTRIBUTING.md     # 贡献指南
-├── CHANGELOG.md        # 更新日志
+├── .claude-plugin/     # Claude 插件清单(plugin.json)
+├── .codex-plugin/      # Codex 插件清单
+├── CONTRIBUTING.md · CODE_OF_CONDUCT.md · SECURITY.md   # 贡献/行为准则/安全策略
+├── CHANGELOG.md · CITATION.cff · LICENSE                # 更新日志/引用信息/许可
+├── README.md · README.en.md                            # 中 / 英文档
 ├── .github/            # issue/PR 模板、CI、赞助配置
 └── .codex/INSTALL.md   # Codex 安装说明
 ```

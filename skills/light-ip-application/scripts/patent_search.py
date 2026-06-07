@@ -14,7 +14,7 @@ patent_search.py — 在先技术(prior-art)检索辅助。
       - EPO OPS  auth       POST ops.epo.org/3.2/auth/accesstoken       -> 401 (需 key)
       - The Lens patent     POST api.lens.org/patent/search             -> 401 (需 token)
       - USPTO 程序化 API    POST api.uspto.gov/api/v1/patent/.../search -> 401 (需 X-Api-Key)
-      - 旧 api.patentsview.org -> 301 弃用; search.patentsview.org -> DNS 失效
+      - 旧 api.patentsview.org -> 301 弃用; search.patentsview.org 本机无法解析(未实测)
   * 检索结果仅供查新参考,FTO/新颖性/无效结论须由专利代理师/律师判定。
 
 无网络/无 key 时:运行 `python patent_search.py --selftest` 用内置离线样本自测
@@ -116,7 +116,7 @@ def build_uspto_odp_request(query_json: dict) -> dict:
         "url": "https://api.uspto.gov/api/v1/patent/applications/search",
         "headers": {"X-Api-Key": "<YOUR_USPTO_ODP_KEY>", "Content-Type": "application/json"},
         "body": query_json,
-        "note": "旧 api.patentsview.org 已 301 弃用; search.patentsview.org DNS 失效; 统一走 api.uspto.gov",
+        "note": "旧 api.patentsview.org 已 301 弃用; search.patentsview.org 本机无法解析(未实测); 统一走 api.uspto.gov",
     }
 
 

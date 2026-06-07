@@ -102,7 +102,7 @@ DataCite https://datacite.readme.io/docs/what-is-the-best-way-to-make-a-content-
   - 引用 `/paper/{id}/citations`、参考文献 `/paper/{id}/references`。
   - ID 形式多样：DOI:、ARXIV:、CorpusId: 等前缀。
 - `fields=` 控制返回字段：`title,abstract,year,authors,citationCount,influentialCitationCount,externalIds,tldr,openAccessPdf,referenceCount`。
-- 认证/限速：无 key 时共享池约 ~1 req/s（不稳）；申请免费 `x-api-key` 后限额更高、更稳。
+- 认证/限速：无 key 时为全体匿名用户**共享** 1000 req/s 池（高峰常 429，不保证）；申请免费 `x-api-key` 后走专属配额（introductory 约 1 RPS 起，更稳定可预期）。
 
 【链接】教程 https://www.semanticscholar.org/product/api/tutorial ；API 文档 https://api.semanticscholar.org/api-docs/
 

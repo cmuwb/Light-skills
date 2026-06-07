@@ -130,7 +130,7 @@
 
 【⚠️ 重大变更（curl 实测 2026-06-06）】PatentsView 已完成向 USPTO Open Data Portal（ODP）的迁移：
 - 旧 legacy `https://api.patentsview.org/patents/query` → **HTTP 301**，重定向到 `https://data.uspto.gov/support/transition-guide/patentsview`（已停服，2025-02 起）。
-- 过渡端点 `https://search.patentsview.org/api/v1/` → **DNS 已无法解析（Could not resolve host，curl HTTP 000）**，即该过渡域名也已下线，**不再是"过渡中可用"状态**。
+- 过渡端点 `https://search.patentsview.org/api/v1/` → 本机 **DNS 无法解析（Could not resolve host，curl HTTP 000；本机 DoH 亦被网络策略拦截）**，故**未能实测其在线状态**；官方迁移指南已宣布该域属过渡安排，能否程序化访问以 ODP 为准。
 - `https://patentsview.org/apis/*` → **HTTP 301**，同样指向 data.uspto.gov 迁移指南。
 - 迁移目的地 ODP：`https://data.uspto.gov/` → **HTTP 200**（站点在线）；其 API 形如 `https://data.uspto.gov/api/v1/patent/applications/search` → **HTTP 200**；另有 `https://api.uspto.gov/api/v1/patent/applications/search` → **HTTP 401**（端点存在，需 key/鉴权）。
 - 结论：PatentsView 风格旧端点（api./search.patentsview.org）均已不可用，**程序化访问统一走 data.uspto.gov 的 ODP API**，调用前到 ODP 注册 key 并核对当前在用的 base URL 与各端点路径（ODP 页面 JS 渲染，逐字端点清单需人工核对，本次未抓全）。
@@ -140,7 +140,7 @@
   - 字段码后缀格式：`词.字段.`，如 `nanowire.ti.`(标题)、`graphene.ab.`(摘要)、`.pn.`(专利号)、`.in.`(发明人)、`.cpcl.`(CPC)。
   - 布尔：`AND OR NOT XOR`；邻近：`ADJ`(相邻,可 `ADJ3`)、`NEAR`、`WITH`(同句)、`SAME`(同段)；截词：`$`(任意长度)、`?`(0或1字符)、`!`(1字符)。
   - 日期：`@pd>=20200101`(公开日)、`@ad`(申请日) 等。字段索引清单见 USPTO Searchable indexes 页。
-- PatentSearch API（旧 search.patentsview.org 已下线，**现统一以 data.uspto.gov 的 ODP API 为准**，下列查询 DSL 为 PatentsView 沿用风格，端点路径以 ODP 文档为准）：
+- PatentSearch API（旧 `search.patentsview.org` 本机无法解析、未能实测；**现统一以 data.uspto.gov 的 ODP API 为准**，下列查询 DSL 为 PatentsView 沿用风格，端点路径以 ODP 文档为准）：
   - 资源类型如 patent / assignee / inventor / cpc_class / us_patent_citation 等。
   - 认证：申请 API key（ODP 注册），放 `X-Api-Key` 请求头。实测 `https://api.uspto.gov/api/v1/...` 无 key → 401。
   - 查询三参数：`q`(查询，JSON)、`f`(返回字段数组)、`o`(选项如分页 size/after)、`s`(排序)。
@@ -148,7 +148,7 @@
   - 示例：`q={"_and":[{"_gte":{"patent_date":"2020-01-01"}},{"_text_phrase":{"patent_abstract":"neural network"}}]}`。
   - 分页：`o={"size":1000,"after":"<last_id>"}` 游标式（单页上限 1000，总量可深翻）。
 
-【限流/配额】PatentsView 时代约每分钟 ~45 次请求；迁移到 ODP 后限流以 data.uspto.gov 的 swagger/文档为准，数值**待核查**。PPUBS 为交互界面无公开 API 配额。
+【限流/配额】PatentSearch API 官方文档载明约每分钟 45 次请求；迁移到 ODP 后以 data.uspto.gov 的 swagger/文档为准（若有调整以官方为准）。PPUBS 为交互界面无公开 API 配额。
 
 【链接】
 - https://ppubs.uspto.gov/pubwebapp/
@@ -157,7 +157,7 @@
 - https://data.uspto.gov/support/transition-guide/patentsview
 - https://www.uspto.gov/subscription-center/2026/patentsview-migrating-uspto-open-data-portal-march-20
 
-【已知坑/局限】仅覆盖美国数据；**端点迁移已完成：旧 `api.patentsview.org` 301 弃用、过渡域 `search.patentsview.org` 已无法解析（DNS 失效），程序化访问统一走 data.uspto.gov 的 ODP API**，编码前必须到 data.uspto.gov 注册 key 并核对最新 base URL 与端点路径；PPUBS 语法与 PatentSearch 查询 DSL 完全不同别混用。
+【已知坑/局限】仅覆盖美国数据；**端点迁移已完成：旧 `api.patentsview.org` 301 弃用、过渡域 `search.patentsview.org` 本机无法解析（受网络策略限制，未能实测其在线状态），程序化访问统一走 data.uspto.gov 的 ODP API**，编码前必须到 data.uspto.gov 注册 key 并核对最新 base URL 与端点路径；PPUBS 语法与 PatentSearch 查询 DSL 完全不同别混用。
 
 ---
 

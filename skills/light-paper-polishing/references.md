@@ -151,7 +151,7 @@
 
 【实测（2026-06-06 本环境 curl）】`POST https://api.languagetool.org/v2/check`，匿名（无 key）`-d language=en-US --data-urlencode text=...` → **HTTP 200**，返回合法 JSON，`matches[]` 含 `message`/`replacements`/`offset`/`rule.id`（如 PLURAL_VERB_AFTER_THIS、EN_A_VS_AN），并带 `premiumHint`（提示部分规则仅 Premium 可见）。结论：本组里唯一可直接匿名跑通的工具，定为首选。
 
-【已知坑】免费匿名端点有每分钟请求数与单次字数上限（公开文档常见限制为每次约 2 万字符、匿名约 20 req/min，**确切数值未在本次核实，使用前需查最新条款**）；规则偏通用语法，深层学术论证它管不了；长稿需分段并尊重限流。
+【已知坑】免费匿名端点有限流（官方文档实测 2026-06：每 IP 每分钟 20 请求 + 75 KB 文本，仅 POST，超限 HTTP 429）；规则偏通用语法，深层学术论证它管不了；长稿需分段并尊重限流。
 
 ---
 

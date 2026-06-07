@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 """detect_stack.py — 读取项目清单文件，识别技术栈，给出工具/技能选型建议。
 
-支持的清单：package.json / pyproject.toml / requirements.txt /
-environment.yml(.yaml) / Pipfile / poetry 段 / Cargo.toml / go.mod。
+支持的清单：package.json / pyproject.toml(含 poetry 段) /
+requirements.txt / environment.yml(.yaml) / Pipfile。
 
 用法：
   python detect_stack.py <项目目录>      # 扫描真实项目
@@ -188,12 +188,30 @@ def parse_environment_yml(path):
     return deps, notes
 
 
+def parse_pipfile(path):
+    """Pipfile 本质是 TOML，读 [packages] 与 [dev-packages] 的键名。"""
+    deps, notes = [], []
+    if tomllib is None:
+        return deps, ["tomllib 不可用(需 Python 3.11+)，跳过 Pipfile"]
+    try:
+        with open(path, "rb") as f:
+            d = tomllib.load(f)
+    except Exception as e:
+        return deps, [f"Pipfile 解析失败: {e}"]
+    for section in ("packages", "dev-packages"):
+        for k in (d.get(section) or {}):
+            if k.lower() != "python":
+                deps.append(_norm(k))
+    return deps, notes
+
+
 MANIFESTS = {
     "package.json": parse_package_json,
     "pyproject.toml": parse_pyproject,
     "requirements.txt": parse_requirements,
     "environment.yml": parse_environment_yml,
     "environment.yaml": parse_environment_yml,
+    "Pipfile": parse_pipfile,
 }
 
 
@@ -250,7 +268,7 @@ def print_report(rep):
     print("=" * 60)
     if not rep["manifests_found"]:
         print("未发现任何清单文件 (package.json/pyproject.toml/requirements.txt/"
-              "environment.yml)。无信号，无法建议。")
+              "environment.yml/Pipfile)。无信号，无法建议。")
         return
     print(f"清单文件: {', '.join(rep['manifests_found'])}")
     print(f"依赖总数: {rep['total_deps']}  命中规则: {len(rep['matched'])}")

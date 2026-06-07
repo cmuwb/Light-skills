@@ -25,8 +25,8 @@ description: 制作精美 PPT。当用户需要为论文、项目、竞赛、答
 
 ## 实现工具（按需，见 a09）
 按"是否需可编辑 PPTX / 文本化版本控制 / 设计强度"选型：
-- **python-pptx**(Python)：`Presentation()` → `slides.add_slide(slide_layouts[i])` → 占位符/`add_textbox`/`add_picture`/`add_table`/`add_chart` → `save()`；单位 `Inches/Pt`、色 `RGBColor`。强在数据驱动批量出页、表格密集；无渐变、不能自渲 PDF。
-- **PptxGenJS**(Node)：`new pptxgen()` → `addSlide()` → `addText/addShape/addImage/addTable/addChart` → `writeFile()`，坐标=英寸。列表项用 `bullet:true`+`breakLine:true`(忌 Unicode `•`)；与形状对齐设 `margin:0`；阴影 offset 必须≥0、color 用 6 位 hex 无 `#`；无渐变(用渐变图当背景)。Anthropic「从零创建」首选。
+- **python-pptx**(Python，**本 skill 自带可运行资产的首选路线**)：`Presentation()` → `slides.add_slide(slide_layouts[i])` → 占位符/`add_textbox`/`add_picture`/`add_table`/`add_chart` → `save()`；单位 `Inches/Pt`、色 `RGBColor`。强在数据驱动批量出页、表格密集、衔接 m06/m11 的 Python 分析链路；无渐变(用渐变图当背景)、不能自渲 PDF(走 LibreOffice)。
+- **PptxGenJS**(Node)：`new pptxgen()` → `addSlide()` → `addText/addShape/addImage/addTable/addChart` → `writeFile()`，坐标=英寸。列表项用 `bullet:true`+`breakLine:true`(忌 Unicode `•`)；与形状对齐设 `margin:0`；阴影 offset 必须≥0、color 用 6 位 hex 无 `#`；无渐变(用渐变图当背景)。Anthropic 通用 deck「从零创建」首选；**JS 路线本 skill 不带可运行资产，直接走 a09 → anthropics/skills 的 pptxgenjs.md**。
 - **Marp**(Markdown)：front-matter 设 `theme/paginate/headingDivider/style`，`---` 分页，`<!-- -->` 写备注；`npx @marp-team/marp-cli deck.md --pdf|--pptx`(走无头浏览器)。`--pptx` 默认每页栅格化成图不可再编辑，需可编辑文本加 `--pptx --pptx-editable`(样式可能复现不全)。
 - **reveal.js**(HTML)：`Reveal.initialize({plugins:[Markdown,Notes,Math]})`；`section` 分页、嵌套=纵向；`?print-pdf` 导 PDF；交互/动画强但分发不如 PPTX。
 - **Beamer**(LaTeX，学术)：`\documentclass{beamer}`+`\usetheme{}`；`frame`/`columns`/`block`/`alertblock`；overlay 用 `\item<1->` 或 `\pause`；公式/BibTeX 强、视觉迭代慢。

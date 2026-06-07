@@ -60,3 +60,4 @@ user-invocable: false
 - `references/excuse_intercept.md` — 26 条自我借口→真相拦截表。
 - `references/self_check_contrasts.md` — 11 项通用自检的最小 ✓/✖ 反例对照。
 - `references/receiving_feedback.md` — 禁表演式同意 + 不清楚就停 + YAGNI。
+- `references/walkthrough.md` — 证据闸门+借口拦截+三态/严重级在代码/论文上的两个端到端走查示例。
