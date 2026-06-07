@@ -26,18 +26,7 @@
 
 ## 目录
 
-- [Light 是什么](#light-是什么)
-- [为什么用它](#为什么用它)
-- [快速上手](#-安装)
-- [技能总览](#-技能总览)
-- [一个项目的完整链路](#一个项目的完整链路)
-- [知识库](#-知识库)
-- [设计理念](#-设计理念)
-- [目录结构](#-目录结构)
-- [常见问题](#-常见问题)
-- [参与贡献](#-参与贡献)
-- [支持与反馈](#-支持与鼓励)
-- [许可](#-许可)
+[Light 是什么](#light-是什么) · [为什么用它](#为什么用它) · [快速上手](#-安装) · [技能总览](#-技能总览) · [完整链路](#一个项目的完整链路) · [知识库](#-知识库) · [API key](#-关于-api-key) · [常见问题](#-常见问题) · [参与贡献](#-参与贡献) · [引用](#-引用)
 
 ---
 
@@ -45,7 +34,7 @@
 
 Light 把科研全流程拆成 **27 个互相衔接的 AI 技能**,装进你的 Claude Code 和 Codex。从找文献、理数据、想创新点,到写论文、画图、排版、投稿、返修,再到软著专利、答辩 PPT、竞赛申报——每一步都有专门的技能接手,背后还垫着 9 个**可溯源**的知识库。
 
-它不是一堆提示词。每个技能都带**能跑的脚本、能套的模板、真实的范例**:对外接口经过实测,统计代码与 `scipy`/`sklearn` 逐位对齐。**不编文献、不造数据、不臆想出处和数据来源**——这是不可逾越的底线。
+它不是一堆提示词,也不是 MCP 或插件——而是一套装进客户端的**技能包**:每个技能都带**能跑的脚本、能套的模板、真实的范例**,对外接口经过实测,统计代码与 `scipy`/`sklearn` 逐位对齐。**不编文献、不造数据、不臆想出处和数据来源**——这是不可逾越的底线。
 
 > 一句话:把一位真正懂科研工具的资深伙伴,装进你的编辑器。
 
@@ -67,7 +56,8 @@ Light 把科研全流程拆成 **27 个互相衔接的 AI 技能**,装进你的 
 
 > 前置:已安装 [Claude Code](https://claude.ai/code) 或 Codex,本机有 `git`。
 
-27 个技能共用根目录下的 9 个知识库与 `code_assets/`(靠相对路径引用),所以**整个仓库必须放在一起**——安装脚本会把技能和共享库一起链接到客户端的技能目录。
+> [!IMPORTANT]
+> 27 个技能共用根目录下的 9 个知识库与 `code_assets/`(靠相对路径引用),所以**整个仓库必须放在一起**。安装脚本会把技能和共享库一并链接到客户端的技能目录,请勿只挪单个技能。
 
 **1. 克隆仓库**(放哪都行):
 
@@ -110,16 +100,16 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 
 | 阶段 | 技能 | 做什么 |
 |------|------|--------|
-| 📚 资料调研 | `light-literature-search` | 多源检索、去重、可信度判断、重要性分级、综述骨架 |
-| 🧹 数据处理 | `light-data-engineering` | 数据体检、防泄漏划分、质量门校验、自建数据集规划 |
-| 💡 创新提案 | `light-idea-generation` ⇄ `light-idea-critique` | 提创新点 ↔ 审稿人级对抗挑刺,成对循环到站得住 |
-| 🗺️ 方案设计 | `light-research-plan` | 技术路线、实验矩阵、可行性、可复现规划 |
-| 📊 结果分析 | `light-result-analysis` | EDA、显著性检验、效应量、异常溯因、规律发现 |
-| ✍️ 论文写作 | `light-paper-drafting` ⇄ `light-paper-polishing` | 分模块成稿 / 逻辑·结构·语言润色,审稿人视角打磨 |
-| 📈 图表 | `light-figure-planning` ⇄ `light-figure-drawing` | 图表规划(做什么图、放哪) / 逐刊规格出版级绘图 |
-| 🔖 引用排版 | `light-citation` · `light-typesetting` | DOI 核验、多格式参考文献 / LaTeX·Word 排版导出 PDF |
-| 📮 投稿返修 | `light-venue-matching` · `light-review-rebuttal` | 投稿定位分层(冲刺/稳妥/保底) / 模拟审稿 + 逐条返修 |
-| 🏆 成果转化 | `light-ip-application` · `light-slides` · `light-competition` | 软著专利 / 答辩路演 PPT / 竞赛申报材料 |
+| 📚 资料调研 | `light-literature-search` | 多源检索文献、去重、判可信度、排重要性、搭综述骨架 |
+| 🧹 数据处理 | `light-data-engineering` | 体检数据、防泄漏划分、校验质量门、规划自建数据集 |
+| 💡 创新提案 | `light-idea-generation` ⇄ `light-idea-critique` | 提创新点 ↔ 以审稿人视角对抗挑刺,成对循环到站得住 |
+| 🗺️ 方案设计 | `light-research-plan` | 定技术路线、排实验矩阵、评可行性、保可复现 |
+| 📊 结果分析 | `light-result-analysis` | 跑 EDA、做显著性检验、算效应量、溯因异常、挖规律 |
+| ✍️ 论文写作 | `light-paper-drafting` ⇄ `light-paper-polishing` | 分模块成稿 ↔ 以审稿人视角打磨逻辑·结构·语言 |
+| 📈 图表 | `light-figure-planning` ⇄ `light-figure-drawing` | 规划做什么图、放哪 ↔ 按刊物规格出版级绘图 |
+| 🔖 引用排版 | `light-citation` · `light-typesetting` | 核验 DOI、生成多格式参考文献 · 用 LaTeX/Word 排版导出 PDF |
+| 📮 投稿返修 | `light-venue-matching` · `light-review-rebuttal` | 分层定位投稿(冲刺/稳妥/保底)· 模拟审稿、逐条返修 |
+| 🏆 成果转化 | `light-ip-application` · `light-slides` · `light-competition` | 写软著专利 · 做答辩路演 PPT · 备竞赛申报材料 |
 
 ### 常驻技能 · 后台自动(10)
 
@@ -173,6 +163,22 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 
 另有 `code_assets/` 收录经对抗验证的统计与指标代码(一致性 κ/QWK 对照 `sklearn`,Welch t/BH-FDR/Wilson 对照 `scipy`,MOTA/IDF1、CORAL 序数损失、长尾重采样),数值与权威库逐位对齐,并由 CI 持续校验。
 
+## 🔑 关于 API key
+
+> [!NOTE]
+> **绝大多数功能开箱即用,无需任何 API key。** 文献检索默认走免费、免注册的 OpenAlex / Crossref。
+
+只有一种情况需要你自备 key:用 `light-ip-application` 做**专利检索**时,调用商用专利库需要各自的凭证。Light **不内置、也不会替你保存任何 key**,只在你提供时才发起请求。
+
+| 服务 | 用途 | 是否必需 | 怎么获取 |
+|------|------|----------|----------|
+| OpenAlex / Crossref | 学术文献检索 | 免 key,默认 | 无需注册 |
+| [The Lens](https://www.lens.org/lens/user/subscriptions#scholar) | 专利↔论文关联检索 | 选用 | 注册申请,学术用途多数免费授权 |
+| [EPO OPS](https://developers.epo.org/) | 欧洲专利官方数据 | 选用 | 注册拿 consumer key/secret |
+| [USPTO ODP](https://developer.uspto.gov/) | 美国专利数据 | 选用 | 注册申请 API key |
+
+key 通过环境变量提供,不要写进代码或提交到仓库。Light 的安全约定见 [SECURITY.md](SECURITY.md)。
+
 ## 🎯 设计理念
 
 - **诚实优先** — 不编造文献、数据、出处、数据来源;核不实的明确标注"待核查",并区分"已验证"与"推测";受版权材料只保留元数据与链接。
@@ -200,20 +206,41 @@ Light/
 
 ## ❓ 常见问题
 
-**Q:它和直接用 ChatGPT/Claude 聊有什么区别?**
-A:Light 给的是能跑的脚本、能套的模板和真实范例,且有"不编造"的硬底线和对抗式自检;还能跨会话记住你的项目进度。不是一次性问答。
+<details>
+<summary><b>它和直接用 ChatGPT/Claude 聊有什么区别?</b></summary>
 
-**Q:常驻技能为什么在 `/` 里看不到?**
-A:这 10 个技能设计为后台自动生效,无需手动唤起,所以不占用 `/` 菜单。17 个手动技能则照常用 `/` 调用。
+Light 给的是能跑的脚本、能套的模板和真实范例,且有"不编造"的硬底线和对抗式自检;还能跨会话记住你的项目进度。不是一次性问答。
+</details>
 
-**Q:必须两端都装吗?**
-A:不必。`install.ps1 -Client claude` 或 `install.sh claude` 只装一端。
+<details>
+<summary><b>需要配置 API key 吗?</b></summary>
 
-**Q:会把我的数据上传到第三方吗?**
-A:不会,除非任务本身需要(如检索文献会访问公开学术 API)。涉及上传的操作会提示。详见 [SECURITY.md](SECURITY.md)。
+绝大多数功能免 key,文献检索默认走免费的 OpenAlex / Crossref。只有用 `light-ip-application` 做专利检索时,才需自备 Lens/EPO/USPTO 的凭证。详见 [关于 API key](#-关于-api-key)。
+</details>
 
-**Q:Light 会替我写论文/造数据吗?**
-A:不会。它辅助你做研究、组织表达,但严守学术伦理(见 `light-research-ethics`):不造数据、不编文献、不过度包装。
+<details>
+<summary><b>常驻技能为什么在 <code>/</code> 里看不到?</b></summary>
+
+这 10 个技能设计为后台自动生效,无需手动唤起,所以不占用 `/` 菜单。17 个手动技能则照常用 `/` 调用。
+</details>
+
+<details>
+<summary><b>必须两端都装吗?</b></summary>
+
+不必。`install.ps1 -Client claude` 或 `install.sh claude` 只装一端。
+</details>
+
+<details>
+<summary><b>会把我的数据上传到第三方吗?</b></summary>
+
+不会,除非任务本身需要(如检索文献会访问公开学术 API)。涉及上传的操作会提示。详见 [SECURITY.md](SECURITY.md)。
+</details>
+
+<details>
+<summary><b>Light 会替我写论文、造数据吗?</b></summary>
+
+不会。它辅助你做研究、组织表达,但严守学术伦理(见 `light-research-ethics`):不造数据、不编文献、不过度包装。
+</details>
 
 ## 🤝 参与贡献
 

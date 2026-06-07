@@ -26,18 +26,7 @@ Every step of research, from literature search to rebuttal, has a dedicated skil
 
 ## Contents
 
-- [What is Light](#what-is-light)
-- [Why use it](#why-use-it)
-- [Quick start](#-install)
-- [Skills at a glance](#-skills-at-a-glance)
-- [A full project flow](#a-full-project-flow)
-- [Knowledge bases](#-knowledge-bases)
-- [Principles](#-principles)
-- [Layout](#-layout)
-- [FAQ](#-faq)
-- [Contributing](#-contributing)
-- [Support & feedback](#-support)
-- [License](#-license)
+[What is Light](#what-is-light) · [Why use it](#why-use-it) · [Quick start](#-install) · [Skills](#-skills-at-a-glance) · [Project flow](#a-full-project-flow) · [Knowledge bases](#-knowledge-bases) · [API keys](#-about-api-keys) · [FAQ](#-faq) · [Contributing](#-contributing) · [Citation](#-citation)
 
 ---
 
@@ -45,7 +34,7 @@ Every step of research, from literature search to rebuttal, has a dedicated skil
 
 Light breaks the full research pipeline into **27 interlocking AI skills**, installed into your Claude Code and Codex. From finding literature, wrangling data, and generating ideas, to drafting papers, making figures, typesetting, submitting, and rebutting — plus patents, defense decks, and competition materials — every step has a dedicated skill, backed by 9 **traceable** knowledge bases.
 
-It is not a pile of prompts. Each skill ships **runnable scripts, reusable templates, and real worked examples**: external interfaces are tested for real, and statistics code is aligned with `scipy`/`sklearn` down to the last digit. **Never fabricating references, data, sources, or origins** is a line it won't cross.
+It is not a pile of prompts, nor an MCP server or plugin — it is a **skill pack** installed into your client. Each skill ships **runnable scripts, reusable templates, and real worked examples**: external interfaces are tested for real, and statistics code is aligned with `scipy`/`sklearn` down to the last digit. **Never fabricating references, data, sources, or origins** is a line it won't cross.
 
 > In one line: a senior research companion who genuinely knows the tools, installed into your editor.
 
@@ -67,7 +56,8 @@ For: undergrads, grad students, and independent researchers who want to turn a p
 
 > Prereq: [Claude Code](https://claude.ai/code) or Codex installed, and `git` available.
 
-The 27 skills share the 9 knowledge bases and `code_assets/` at the repo root (via relative paths), so **keep the whole repo together** — the installer links the skills plus shared libraries into your client's skills directory.
+> [!IMPORTANT]
+> The 27 skills share the 9 knowledge bases and `code_assets/` at the repo root (via relative paths), so **keep the whole repo together**. The installer links the skills plus shared libraries into your client's skills directory — don't move a single skill out on its own.
 
 **1. Clone** (anywhere):
 
@@ -110,16 +100,16 @@ The 27 skills split in two: **17 manual skills** you can invoke by name with `/`
 
 | Stage | Skill | What it does |
 |-------|-------|--------------|
-| 📚 Literature | `light-literature-search` | Multi-source search, dedup, credibility & importance tiering, review skeleton |
-| 🧹 Data | `light-data-engineering` | Health check, leakage-safe split, quality gate, dataset building |
-| 💡 Ideation | `light-idea-generation` ⇄ `light-idea-critique` | Propose ideas ↔ reviewer-grade adversarial critique, paired loop |
-| 🗺️ Planning | `light-research-plan` | Technical roadmap, experiment matrix, feasibility, reproducible plan |
-| 📊 Analysis | `light-result-analysis` | EDA, significance tests, effect sizes, anomaly tracing |
-| ✍️ Writing | `light-paper-drafting` ⇄ `light-paper-polishing` | Per-module drafting / logic-structure-language polish, reviewer lens |
-| 📈 Figures | `light-figure-planning` ⇄ `light-figure-drawing` | Figure planning (what & where) / per-journal publication-grade drawing |
-| 🔖 Cite & typeset | `light-citation` · `light-typesetting` | DOI verification, multi-format refs / LaTeX·Word typeset & export PDF |
-| 📮 Submit & rebut | `light-venue-matching` · `light-review-rebuttal` | Venue targeting & tiering / mock review + point-by-point rebuttal |
-| 🏆 Outputs | `light-ip-application` · `light-slides` · `light-competition` | Patents/copyright / defense & pitch decks / contest materials |
+| 📚 Literature | `light-literature-search` | Search multiple sources, dedup, judge credibility, rank importance, draft a review skeleton |
+| 🧹 Data | `light-data-engineering` | Health-check data, split leakage-safe, enforce a quality gate, plan a custom dataset |
+| 💡 Ideation | `light-idea-generation` ⇄ `light-idea-critique` | Propose ideas ↔ critique them adversarially through a reviewer's eyes, loop until solid |
+| 🗺️ Planning | `light-research-plan` | Set the technical route, lay out an experiment matrix, judge feasibility, keep it reproducible |
+| 📊 Analysis | `light-result-analysis` | Run EDA, test significance, compute effect sizes, trace anomalies, surface patterns |
+| ✍️ Writing | `light-paper-drafting` ⇄ `light-paper-polishing` | Draft module by module ↔ polish logic, structure & language through a reviewer's eyes |
+| 📈 Figures | `light-figure-planning` ⇄ `light-figure-drawing` | Plan what to chart and where ↔ draw it to publication spec per journal |
+| 🔖 Cite & typeset | `light-citation` · `light-typesetting` | Verify DOIs, generate refs in any format · typeset in LaTeX/Word, export PDF |
+| 📮 Submit & rebut | `light-venue-matching` · `light-review-rebuttal` | Target venues by tier (reach/safe/floor) · mock-review, rebut point by point |
+| 🏆 Outputs | `light-ip-application` · `light-slides` · `light-competition` | Write patents/copyright · build defense & pitch decks · prep contest materials |
 
 ### Always-on skills · background (10)
 
@@ -173,6 +163,22 @@ Behind the skills sit 9 shared knowledge bases (`databases/`), all verified and 
 
 Plus `code_assets/` — adversarially-verified statistics and metrics code (Cohen's κ/QWK vs `sklearn`, Welch t/BH-FDR/Wilson vs `scipy`, MOTA/IDF1, CORAL ordinal loss, long-tail resampling), aligned to authoritative libraries down to the last digit and continuously checked by CI.
 
+## 🔑 About API keys
+
+> [!NOTE]
+> **Most features work out of the box with no API key.** Literature search defaults to the free, no-signup OpenAlex / Crossref.
+
+Only one case needs your own key: **patent search** via `light-ip-application` calls commercial patent databases that require their own credentials. Light **never bundles or stores any key** — it only issues a request when you supply one.
+
+| Service | Use | Required? | How to get |
+|---------|-----|-----------|------------|
+| OpenAlex / Crossref | Academic literature search | No key, default | No signup |
+| [The Lens](https://www.lens.org/lens/user/subscriptions#scholar) | Patent↔paper linkage | Optional | Register; free for most academic use |
+| [EPO OPS](https://developers.epo.org/) | European patent office data | Optional | Register for consumer key/secret |
+| [USPTO ODP](https://developer.uspto.gov/) | US patent data | Optional | Register for an API key |
+
+Provide keys via environment variables — never hard-code or commit them. See [SECURITY.md](SECURITY.md) for Light's security conventions.
+
 ## 🎯 Principles
 
 - **Honesty first** — never invent references, data, sources, or origins; the unverifiable is clearly flagged "to be checked", verified is kept separate from inferred, and copyrighted material is stored as metadata and links only.
@@ -200,20 +206,41 @@ Light/
 
 ## ❓ FAQ
 
-**Q: How is this different from just chatting with ChatGPT/Claude?**
-A: Light gives runnable scripts, fillable templates, and real examples, with a hard "no fabrication" rule and adversarial self-check — plus cross-session project memory. Not one-off Q&A.
+<details>
+<summary><b>How is this different from just chatting with ChatGPT/Claude?</b></summary>
 
-**Q: Why don't the always-on skills show up under `/`?**
-A: These 10 skills are designed to work in the background automatically, so they don't take up space in the `/` menu. The 17 manual skills work via `/` as usual.
+Light gives runnable scripts, fillable templates, and real examples, with a hard "no fabrication" rule and adversarial self-check — plus cross-session project memory. Not one-off Q&A.
+</details>
 
-**Q: Do I have to install both clients?**
-A: No. `install.ps1 -Client claude` or `install.sh claude` installs just one.
+<details>
+<summary><b>Do I need to configure an API key?</b></summary>
 
-**Q: Will it upload my data to third parties?**
-A: No, unless the task requires it (e.g. searching public academic APIs). Operations that upload are surfaced. See [SECURITY.md](SECURITY.md).
+Most features need none — literature search defaults to the free OpenAlex / Crossref. Only patent search via `light-ip-application` needs your own Lens/EPO/USPTO credentials. See [About API keys](#-about-api-keys).
+</details>
 
-**Q: Will Light write my paper or fabricate data for me?**
-A: No. It assists your research and expression but enforces academic ethics (`light-research-ethics`): no fabricated data, no invented references, no overclaiming.
+<details>
+<summary><b>Why don't the always-on skills show up under <code>/</code>?</b></summary>
+
+These 10 skills are designed to work in the background automatically, so they don't take up space in the `/` menu. The 17 manual skills work via `/` as usual.
+</details>
+
+<details>
+<summary><b>Do I have to install both clients?</b></summary>
+
+No. `install.ps1 -Client claude` or `install.sh claude` installs just one.
+</details>
+
+<details>
+<summary><b>Will it upload my data to third parties?</b></summary>
+
+No, unless the task requires it (e.g. searching public academic APIs). Operations that upload are surfaced. See [SECURITY.md](SECURITY.md).
+</details>
+
+<details>
+<summary><b>Will Light write my paper or fabricate data for me?</b></summary>
+
+No. It assists your research and expression but enforces academic ethics (`light-research-ethics`): no fabricated data, no invented references, no overclaiming.
+</details>
 
 ## 🤝 Contributing
 
