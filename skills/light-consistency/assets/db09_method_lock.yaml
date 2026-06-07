@@ -1,0 +1,39 @@
+# db09 方法名锁定清单 (method-name lock list)
+# 用途：锁定模型/算法/模块的统一叫法，列入"禁改清单"——润色/翻译不得替换。
+# 与 glossary 区别：本表专管"命名实体"，带组件层级(主方法→子模块)，
+# 审计脚本据此检测"方法在某材料里被改名/简称不一致"。
+
+schema_version: "1.0"
+
+methods:
+  - id: method.main
+    canonical: "DCA-Net"
+    role: main                       # main | module | baseline
+    abbr: "DCA-Net"
+    full: "Dual-Cross Attention Network"
+    forbidden: ["DCANet", "我们的网络", "本文方法(在正式名出现后仍这么写)"]
+    first_use_rule: "首次出现写全称(缩写)，此后统一用缩写 DCA-Net"
+
+  - id: method.module.cca
+    canonical: "CCA 模块"
+    role: module
+    abbr: "CCA"
+    full: "Cross-Channel Attention"
+    forbidden: ["通道注意力模块", "CCAttention", "CC-A"]
+    first_use_rule: "首次写 CCA(Cross-Channel Attention)"
+
+  - id: method.module.sfp
+    canonical: "SFP 模块"
+    role: module
+    abbr: "SFP"
+    full: "Scale Fusion Pyramid"
+    forbidden: ["尺度金字塔", "ScaleFusion", "SFP-Net"]
+    first_use_rule: "首次写 SFP(Scale Fusion Pyramid)"
+
+  - id: method.baseline.yolo
+    canonical: "YOLOv8"
+    role: baseline
+    abbr: "YOLOv8"
+    full: "YOLOv8"
+    forbidden: ["YOLO v8", "yolov8", "YOLO8"]
+    first_use_rule: "基线名按官方写法"

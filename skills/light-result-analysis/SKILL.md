@@ -1,0 +1,52 @@
+---
+name: light-result-analysis
+description: 对执行出来的结果、实验数据、模型输出、图表结果进行详细专业深入的分析。当用户实验跑完、需要解读数据、问"这些结果说明什么"时使用。不只描述好坏，而是解释为什么、哪些结果证明方法有效、哪些暴露问题、哪些异常需排查、哪些规律可成为论文亮点、哪些需补充实验。
+---
+
+# 结果与数据深度分析
+
+## 分析层次（逐层深入）
+1. **描述**：指标汇总、分布、与 baseline 的差距，配误差棒/置信区间。
+2. **解释**：为什么是这个结果？归因到方法的哪个组件（结合消融）。
+3. **诊断**：哪些结果证明创新点有效，哪些反而暴露问题或矛盾。
+4. **洞察**：能成为论文亮点的规律；意外发现；可解释性证据(SHAP/特征重要性/注意力)。
+5. **行动**：哪些异常需排查，哪些结论需补实验验证，哪些不能过度声称。
+
+## 必查清单
+- 显著性：≥5 随机种子报均值±标准差；两组用 Welch t（不假设等方差）、非正态用 Mann-Whitney U、多组用 ANOVA+Tukey、比例用 two-proportion z-test。p 值 + 效应量(Cohen's d) + 置信区间三件套，别只报 p。多比较用 BH-FDR 校正（`multipletests(method="fdr_bh")`）。
+- 一致性：跨数据集/跨设置是否稳定？哪里反常？
+- 消融自洽：移除组件性能确实下降？方向对不对？用 anova_lm 或回归系数看组件贡献是否显著。
+- 失败案例：错例分析找系统性偏差；用 SHAP(beeswarm/bar) 看模型实际依赖哪些特征是否合理。
+- 公平性：对比是否同设置、同算力、同数据，避免不公平比较。
+- 过拟合/泄漏：train/val/test 差距是否异常；特征-标签相关过高或时间穿越要查（deepchecks data_integrity / 漂移用 Evidently DataDriftPreset）。
+
+## 工具与具体用法
+- **快速体检**：`ProfileReport(df, minimal=True).to_file(...)` 一键出分布/缺失/相关/告警；deepchecks `data_integrity().run(Dataset(df,label=...))` 查泄漏/重复/单值列。
+- **统计推断**：statsmodels。回归 `smf.ols("y~x1+x2",data).fit().summary()` 给系数/p/R²/AIC（OLS 用 sm.add_constant 加截距，公式接口自动加）；方差分析 `anova_lm(model, typ=2)`；检验在 `statsmodels.stats`（ttest_ind / proportions_ztest / multipletests / het_breuschpagan）。
+- **可解释性**：SHAP。树模型用 `shap.TreeExplainer`（快），通用兜底 `KernelExplainer`（慢，背景集要采样）；`shap.plots.beeswarm` 看全局方向、`bar` 看重要性排序、`waterfall` 拆单样本。SHAP 反映模型非因果。
+- **静态出版图**：matplotlib 面向对象接口 `fig,ax=plt.subplots(layout="constrained")`，`savefig(dpi=300,bbox_inches="tight")` 存 PDF/SVG 矢量；seaborn 轴级函数(boxplot/heatmap/barplot, barplot 默认带 95%CI 误差棒)可嵌 ax，图形级(relplot/catplot)自带分面。配色用 viridis 等色盲友好 colormap，避免 jet。
+- **交互/探索图**：plotly express(`px.scatter(...,color=,facet_col=)` → `write_html`) 或 altair(`alt.Chart(df).mark_point().encode(x="a:Q",...)`)，做附录/补充材料。
+- **漂移监控**：Evidently `Report(metrics=[DataDriftPreset()]).run(reference_data=ref,current_data=cur)`（API 版本敏感，先确认版本）。
+- **关系分析**：networkx 算 betweenness/pagerank 中心性、louvain 社区，用于引用网/特征关系/消融依赖。
+- **留痕与汇编**：Jupyter Notebook 交付前 Restart&Run All 保证可复现、`nbconvert` 出报告；多组实验汇编成站点用 Jupyter Book(`_config.yml`+`_toc.yml` → `jupyter-book build`)。
+
+## 产出
+1. 结果分析报告：每个发现配"现象→原因→证据→对论文的意义"。
+2. 亮点清单（可写进 contribution）。
+3. 问题/异常清单（含排查建议）。
+4. 待补实验清单（回 m05 补设计）。
+5. 推荐图表（交 m09 规划、m11 绘制）。
+
+## 即用脚本（scripts/，全部 python 自测跑通，复用 code_assets 已验证统计）
+- `scripts/analyze_results.py`：结果表 csv 一键分析。EDA 摘要（n/均值±std/中位/95%CI/正态性）+ 按正态性与组数**自动选检验**（2 组正态→Welch t / 非正态→Mann-Whitney；≥3 组正态→ANOVA+Tukey / 非正态→Kruskal-Wallis）+ 每对 Cohen's d(Hedges 校正)+ BH-FDR 跨比较校正，输出 `summary.json` + `summary.md`。用法 `python scripts/analyze_results.py results.csv --group method --metric acc f1`；无参跑合成 demo。
+- `scripts/significance_test.py`："p + Cohen's d + CI + FDR"函数库（`welch_t`/`cohens_d`/`mean_diff_ci`/`bootstrap_ci`/`benjamini_hochberg`/`compare_two`）。`__main__` 逐函数对齐 scipy/statsmodels 打印 ALL PASS。复用 `../../../code_assets/stats_tests.py`。
+- `scripts/make_figs.py`：出版级 matplotlib 模板（OO 接口、constrained_layout、viridis 色盲友好、误差棒、dpi300 矢量 PDF/SVG/PNG）。builder：`grouped_bar_ci`/`box_strip`/`line_with_band`/`heatmap` + `save_all`。`python scripts/make_figs.py` 产 demo 四联图。
+- `scripts/leakage_overfit_check.py`：纯 numpy/pandas 的 train/val/test gap（过拟合/漂移）+ 特征-标签高相关泄漏 + train/test 重复行 + 近常量列告警；deepchecks 缺失时自动降级（不强依赖）。`python scripts/leakage_overfit_check.py` 跑带"植入泄漏"的合成 demo。
+- `examples/worked_example.py`：端到端 EDA→显著性→图→泄漏体检→填好的 `example_report.md`，全部写入 `examples/example_out/`。
+- `assets/result_analysis_report_template.md`：四段式（现象→原因→证据→对论文的意义）报告模板，含亮点/异常/待补实验清单。
+
+## 衔接
+亮点 → m07 写作支撑；异常/不足 → 回 m05 补实验 或 回 m03 提新 idea；结论写入 db09。诚实标注已验证/未验证（CONVENTIONS §4）。
+
+---
+工具真实端点/API/参数与已知坑的逐工具笔记见 `references.md`。
