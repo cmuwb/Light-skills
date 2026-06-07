@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+    paths: ["code_assets/**", "skills/**/scripts/**", "skills/**/assets/**", ".github/workflows/**"]
+  pull_request:
+    paths: ["code_assets/**", "skills/**/scripts/**", "skills/**/assets/**", ".github/workflows/**"]
+
+jobs:
+  test:
+    name: 验证统计/指标代码 (code_assets)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy scipy scikit-learn pytest
+
+      - name: Run code_assets sanity check
+        run: |
+          if ls code_assets/*.py >/dev/null 2>&1; then
+            python -c "import numpy, scipy, sklearn; print('deps ok')"
+            for f in code_assets/*.py; do
+              echo "::group::compile $f"; python -m py_compile "$f" && echo "ok"; echo "::endgroup::"
+            done
+          fi
+
+      - name: Run pytest if tests exist
+        run: |
+          if [ -d code_assets ] && ls code_assets/*test*.py >/dev/null 2>&1; then
+            pytest -q code_assets
+          else
+            echo "no pytest targets in code_assets; skipping"
+          fi
+
+  lint:
+    name: 校验技能 frontmatter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check every SKILL.md has name + description
+        run: python .github/scripts/check_skills.py
