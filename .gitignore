@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Build / dist
+dist/
+build/
+*.whl
+
+# Generated figures / temp outputs (keep committed examples under examples/)
+*.tmp
+/tmp/
+scratch/
+
+# Lock files that are environment-specific (keep uv.lock when present intentionally)
