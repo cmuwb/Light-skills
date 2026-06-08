@@ -123,7 +123,7 @@ python src/run_experiments.py     # 主网格 700 行
 python src/run_rho_sweep.py       # E4：过采样比扫描
 python src/run_prior_correct.py   # E5：解析先验校正(负结果)
 python src/run_shap.py            # SHAP 特征归因偏移
-python src/make_figures.py && python src/make_figures_extra.py && python src/make_showcase.py
+python src/make_figures.py && python src/make_figures_extra.py && python src/make_gallery.py
 cd paper && pdflatex main && bibtex main && pdflatex main && pdflatex main
 ```
 
