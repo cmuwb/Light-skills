@@ -145,6 +145,18 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 
 全程 10 个常驻技能在后台兜底:`file-reading` 吃进任意材料,`memory-pm` 记住做到哪一步,`consistency` 盯跨材料一致,`self-review` 每次产出前自审,`research-ethics` 守住诚信底线。
 
+## 🔬 案例展示:一篇用 Light 从头做到底的论文
+
+[**Resampling Silently Degrades Probability Calibration in Tree Ensembles**](projects/resampling-calibration-study/) —— 完全用 Light 走完全流程的端到端实证研究:从找文献、提 idea、对抗严审,到真跑实验、出图、写成 6 页 IEEE 论文。**所有数字都来自真实运行,不造一个数据。**
+
+[![案例展示](projects/resampling-calibration-study/figures/showcase.png)](projects/resampling-calibration-study/)
+
+- **5** 个 OpenML 数据集(不平衡比 1.9–70)· **2** 个树集成 · **7** 种处理 · **10** 个随机种子 · 配对统计检验
+- 核心发现:重采样(SMOTE/过采样/欠采样)会**系统性破坏概率校准**,而 F1/AUC 等常看的指标几乎不动——所以这个代价是"隐形"的
+- 一步事后校准可把 ECE 降约 66%,AUC 仅损 0.003
+
+**最有价值的不是论文本身,而是 Light 在做的过程中暴露并修复了自己的短板**:这篇的核心结论与前人工作高度重叠,直到接近完稿才被检索出来。为根除此类"做完才发现撞车",`idea-generation`/`idea-critique`/`self-review` 的新颖性撞车检查已被强化,`paper-drafting` 也补上了"论文确实只是增量时如何诚实地讲好故事"。技能包通过真刀真枪做项目、并诚实面对不足,变得更可靠。详见[项目 README](projects/resampling-calibration-study/README.md)。
+
 ## 📚 知识库
 
 技能背后垫着 9 个共享知识库(`databases/`),内容均经核查、可溯源:
