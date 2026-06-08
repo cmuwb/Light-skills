@@ -31,37 +31,60 @@
 
 ## 📊 图表展示
 
+<p align="center">
+  <img src="figures/showcase.png" alt="四面板总览" width="900"><br>
+  <sub><b>四面板总览</b>：柱状 / 折线 / 对数散点 / 热力图——一图读完整个故事</sub>
+</p>
+
 <table>
   <tr>
     <td align="center" width="50%">
-      <b>① 重采样抬高 ECE，校准修复它</b><br>
-      <img src="figures/fig1_ece_by_condition.png" alt="ECE by condition" width="420"><br>
-      <sub>七种处理的 ECE：重采样族全部高于基线，事后校准压到最低</sub>
+      <b>🕸 五指标权衡雷达</b><br>
+      <img src="figures/g1_radar.png" alt="five-metric radar" width="400"><br>
+      <sub>判别指标几乎不变，唯独"校准"那根轴塌陷</sub>
     </td>
     <td align="center" width="50%">
-      <b>② 损害随不平衡比急剧放大</b><br>
-      <img src="figures/fig3_ece_vs_ir.png" alt="ECE vs imbalance ratio" width="420"><br>
-      <sub>欠采样的校准误差在高不平衡比下爆炸式增长</sub>
+      <b>🎻 各处理的 ECE 分布(小提琴+散点)</b><br>
+      <img src="figures/g2_violin.png" alt="ECE violin" width="400"><br>
+      <sub>欠采样下分布散得极宽，校准后收紧贴地</sub>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <b>③ 代价随过采样幅度单调上升</b><br>
-      <img src="figures/fig4_rho_sweep.png" alt="ECE vs oversampling ratio" width="420"><br>
-      <sub>合成少数类越多，校准误差越大</sub>
+      <b>📉 一步校准把每个数据集拉下来(斜率图)</b><br>
+      <img src="figures/g3_slope.png" alt="ECE slope" width="400"><br>
+      <sub>SMOTE → +Isotonic，五个数据集无一例外下降</sub>
     </td>
     <td align="center" width="50%">
-      <b>④ 特征归因被保留，只有概率标度受损</b><br>
-      <img src="figures/fig6_shap_shift.png" alt="SHAP attribution shift" width="420"><br>
-      <sub>基线 vs SMOTE 的 SHAP 重要性几乎一致(Spearman ρ=0.96)</sub>
+      <b>🫧 损害随不平衡比放大(气泡图)</b><br>
+      <img src="figures/g4_bubble.png" alt="ECE bubble" width="400"><br>
+      <sub>横轴对数不平衡比，气泡面积=样本量</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <b>↔️ 两种集成都受害，校准都能救(发散条形)</b><br>
+      <img src="figures/g5_diverge.png" alt="ECE diverging bars" width="560"><br>
+      <sub>提升树 vs 随机森林：重采样把两者都推向更差，事后校准把两者都拉回</sub>
     </td>
   </tr>
 </table>
 
-<p align="center">
-  <img src="figures/showcase.png" alt="四面板总览" width="880"><br>
-  <sub>四面板总览：柱状 / 折线 / 对数散点 / 热力图——一图读完整个故事</sub>
-</p>
+<details>
+<summary>📎 论文里用到的原始出版级图(点开)</summary>
+
+<table>
+  <tr>
+    <td align="center" width="50%"><img src="figures/fig1_ece_by_condition.png" width="380"><br><sub>ECE by condition</sub></td>
+    <td align="center" width="50%"><img src="figures/fig3_ece_vs_ir.png" width="380"><br><sub>ECE vs imbalance ratio</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><img src="figures/fig4_rho_sweep.png" width="380"><br><sub>ECE vs oversampling ratio</sub></td>
+    <td align="center" width="50%"><img src="figures/fig6_shap_shift.png" width="380"><br><sub>SHAP attribution shift (ρ=0.96)</sub></td>
+  </tr>
+</table>
+
+</details>
 
 ## 📂 项目内容
 
