@@ -31,41 +31,58 @@
 
 ## 📊 图表展示
 
-<p align="center">
-  <img src="figures/showcase.png" alt="四面板总览" width="900"><br>
-  <sub><b>四面板总览</b>：柱状 / 折线 / 对数散点 / 热力图——一图读完整个故事</sub>
-</p>
+九种各不相同的图,全部来自真实实验数据——一图一个角度,拼成完整故事。
 
 <table>
   <tr>
-    <td align="center" width="50%">
+    <td align="center" width="33%">
       <b>🕸 五指标权衡雷达</b><br>
-      <img src="figures/g1_radar.png" alt="five-metric radar" width="400"><br>
-      <sub>判别指标几乎不变，唯独"校准"那根轴塌陷</sub>
+      <img src="figures/g1_radar.png" alt="radar" width="280"><br>
+      <sub>判别指标几乎不变,唯独校准轴塌陷</sub>
     </td>
-    <td align="center" width="50%">
-      <b>🎻 各处理的 ECE 分布(小提琴+散点)</b><br>
-      <img src="figures/g2_violin.png" alt="ECE violin" width="400"><br>
-      <sub>欠采样下分布散得极宽，校准后收紧贴地</sub>
+    <td align="center" width="33%">
+      <b>🎻 ECE 分布小提琴</b><br>
+      <img src="figures/g2_violin.png" alt="violin" width="280"><br>
+      <sub>欠采样散得极宽,校准后收紧贴地</sub>
     </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <b>📉 一步校准把每个数据集拉下来(斜率图)</b><br>
-      <img src="figures/g3_slope.png" alt="ECE slope" width="400"><br>
-      <sub>SMOTE → +Isotonic，五个数据集无一例外下降</sub>
-    </td>
-    <td align="center" width="50%">
-      <b>🫧 损害随不平衡比放大(气泡图)</b><br>
-      <img src="figures/g4_bubble.png" alt="ECE bubble" width="400"><br>
-      <sub>横轴对数不平衡比，气泡面积=样本量</sub>
+    <td align="center" width="33%">
+      <b>📉 校准修复斜率图</b><br>
+      <img src="figures/g3_slope.png" alt="slope" width="280"><br>
+      <sub>SMOTE→+Iso,五数据集无一例外下降</sub>
     </td>
   </tr>
   <tr>
-    <td align="center" colspan="2">
-      <b>↔️ 两种集成都受害，校准都能救(发散条形)</b><br>
-      <img src="figures/g5_diverge.png" alt="ECE diverging bars" width="560"><br>
-      <sub>提升树 vs 随机森林：重采样把两者都推向更差，事后校准把两者都拉回</sub>
+    <td align="center" width="33%">
+      <b>🫧 损害随不平衡比放大气泡图</b><br>
+      <img src="figures/g4_bubble.png" alt="bubble" width="280"><br>
+      <sub>对数不平衡比,气泡面积=样本量</sub>
+    </td>
+    <td align="center" width="33%">
+      <b>↔️ 双模型发散条形</b><br>
+      <img src="figures/g5_diverge.png" alt="diverge" width="280"><br>
+      <sub>提升树 vs 随机森林,两者都受害都能救</sub>
+    </td>
+    <td align="center" width="33%">
+      <b>🔥 条件×数据集热力图</b><br>
+      <img src="figures/g6_heatmap.png" alt="heatmap" width="280"><br>
+      <sub>七处理×五数据集的 ECE 一览</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="33%">
+      <b>🏔 ECE 密度山脊图</b><br>
+      <img src="figures/g7_ridge.png" alt="ridgeline" width="280"><br>
+      <sub>重采样越激进,分布整体右移</sub>
+    </td>
+    <td align="center" width="33%">
+      <b>📈 累积分布 ECDF</b><br>
+      <img src="figures/g8_ecdf.png" alt="ecdf" width="280"><br>
+      <sub>欠采样曲线远远甩到右侧</sub>
+    </td>
+    <td align="center" width="33%">
+      <b>🍭 数据集损害排行棒棒糖</b><br>
+      <img src="figures/g9_lollipop.png" alt="lollipop" width="280"><br>
+      <sub>按校准损害排序,谁最受伤一目了然</sub>
     </td>
   </tr>
 </table>

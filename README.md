@@ -149,30 +149,40 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 
 [**Resampling Silently Degrades Probability Calibration in Tree Ensembles**](projects/resampling-calibration-study/) —— 完全用 Light 走完全流程的端到端实证研究:从找文献、提 idea、对抗严审,到真跑实验、出图、写成 **6 页 IEEE 论文**。**所有数字都来自真实运行,不造一个数据。**
 
-<table>
-  <tr>
-    <td align="center" width="38%">
-      <b>📄 6 页 IEEE 论文</b><br>
-      <a href="projects/resampling-calibration-study/paper/main.pdf">
-        <img src="projects/resampling-calibration-study/paper/main-preview.png" alt="论文首页预览" width="300">
-      </a><br>
-      <sub><a href="projects/resampling-calibration-study/paper/main.pdf">阅读 PDF</a> · <a href="projects/resampling-calibration-study/paper/main.tex">LaTeX 源码</a></sub>
-    </td>
-    <td align="center" width="62%">
-      <b>📊 四面板结果总览</b><br>
-      <a href="projects/resampling-calibration-study/">
-        <img src="projects/resampling-calibration-study/figures/showcase.png" alt="四面板结果总览" width="520">
-      </a><br>
-      <sub>柱状 / 折线 / 对数散点 / 热力图——一图读完整个故事</sub>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <a href="projects/resampling-calibration-study/paper/main.pdf">
+    <img src="projects/resampling-calibration-study/paper/main-preview.png" alt="论文首页预览" width="520">
+  </a><br>
+  <sub>点击论文首页预览打开完整 PDF · <a href="projects/resampling-calibration-study/paper/main.pdf">阅读 PDF</a> · <a href="projects/resampling-calibration-study/paper/main.tex">LaTeX 源码</a></sub>
+</p>
 
 - **5** 个 OpenML 数据集(不平衡比 1.9–70)· **2** 个树集成 · **7** 种处理 · **10** 个随机种子 · 配对统计检验
 - 核心发现:重采样(SMOTE/过采样/欠采样)会**系统性破坏概率校准**,而 F1/AUC 等常看的指标几乎不动——所以这个代价是"隐形"的
 - 一步事后校准可把 ECE 降约 66%,AUC 仅损 0.003
 
 > 这个项目还推动了技能包自身的进化:它如实承认核心结论与前作重叠,并据此强化了 idea/审稿/自审环节的"新颖性撞车检查"。完整经过见[项目 README](projects/resampling-calibration-study/README.md)。
+
+## 📊 图表展示
+
+同一份真实数据,九种各不相同的图——一图一个角度,拼成完整故事。完整大图见[项目 README](projects/resampling-calibration-study/#-图表展示)。
+
+<table>
+  <tr>
+    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g1_radar.png" alt="雷达图" width="250"><br><sub>🕸 五指标权衡雷达</sub></td>
+    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g2_violin.png" alt="小提琴图" width="250"><br><sub>🎻 ECE 分布小提琴</sub></td>
+    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g3_slope.png" alt="斜率图" width="250"><br><sub>📉 校准修复斜率图</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g4_bubble.png" alt="气泡图" width="250"><br><sub>🫧 不平衡比×损害气泡</sub></td>
+    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g5_diverge.png" alt="发散条形" width="250"><br><sub>↔️ 双模型发散条形</sub></td>
+    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g6_heatmap.png" alt="热力图" width="250"><br><sub>🔥 条件×数据集热力图</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g7_ridge.png" alt="山脊图" width="250"><br><sub>🏔 ECE 密度山脊图</sub></td>
+    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g8_ecdf.png" alt="ECDF" width="250"><br><sub>📈 累积分布 ECDF</sub></td>
+    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g9_lollipop.png" alt="棒棒糖图" width="250"><br><sub>🍭 数据集损害排行</sub></td>
+  </tr>
+</table>
 
 ## 📚 知识库
 

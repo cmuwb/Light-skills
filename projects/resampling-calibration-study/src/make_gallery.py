@@ -178,6 +178,104 @@ def g5_diverge():
     print("[OK] g5_diverge")
 
 
+def g6_heatmap():
+    """Heatmap: per-condition x per-dataset ECE."""
+    conds = ["E0_none", "E1_smote", "E1_ros", "E1_rus", "E2_cw", "E3_smote_platt", "E3_smote_iso"]
+    clabs = ["Base", "SMOTE", "ROS", "RUS", "CW", "+Platt", "+Iso"]
+    order = ["pima", "credit_g", "phoneme", "adult", "yeast_ml8"]
+    rlabs = ["pima", "credit-g", "phoneme", "adult", "yeast (IR70)"]
+    M = (D.groupby(["dataset", "condition"]).ece.mean().unstack()[conds].reindex(order).values)
+    fig, ax = plt.subplots(figsize=(7.4, 4.6))
+    im = ax.imshow(M, aspect="auto", cmap="RdYlGn_r", vmin=0, vmax=0.4)
+    ax.set_xticks(range(len(conds))); ax.set_xticklabels(clabs, fontsize=9, rotation=25, ha="right")
+    ax.set_yticks(range(len(order))); ax.set_yticklabels(rlabs, fontsize=9)
+    ax.grid(False)
+    for i in range(M.shape[0]):
+        for j in range(M.shape[1]):
+            v = M[i, j]
+            ax.text(j, i, f"{v:.2f}", ha="center", va="center", fontsize=8.5,
+                    color="white" if v > 0.22 else INK, fontweight="bold")
+    cb = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.03); cb.set_label("ECE", fontsize=9)
+    ax.set_title("Every condition × every dataset, at a glance", fontsize=12)
+    fig.savefig(FIG / "g6_heatmap.png", facecolor="white"); plt.close(fig)
+    print("[OK] g6_heatmap")
+
+
+def g7_ridge():
+    """Ridgeline (joyplot): ECE density per condition, stacked."""
+    from scipy.stats import gaussian_kde
+    conds = ["E3_smote_iso", "E3_smote_platt", "E0_none", "E2_cw", "E1_smote", "E1_ros", "E1_rus"]
+    labs = ["+Iso", "+Platt", "Base", "CW", "SMOTE", "ROS", "RUS"]
+    cols = [C["iso"], C["platt"], C["base"], C["cw"], C["smote"], C["ros"], C["rus"]]
+    fig, ax = plt.subplots(figsize=(7.6, 5.0))
+    xs = np.linspace(0, 0.55, 300); gap = 0.85
+    for i, c in enumerate(conds):
+        d = D[D.condition == c].ece.values
+        kde = gaussian_kde(d, bw_method=0.35); dens = kde(xs)
+        dens = dens / dens.max() * 0.95
+        y0 = i * gap
+        ax.fill_between(xs, y0, y0 + dens, color=cols[i], alpha=0.7, lw=1.2, ec="white", zorder=len(conds) - i)
+        ax.plot(xs, y0 + dens, color="white", lw=1, zorder=len(conds) - i)
+        ax.text(-0.01, y0 + 0.1, labs[i], ha="right", va="bottom", fontsize=9.5, fontweight="bold", color=cols[i])
+    ax.set_yticks([]); ax.set_xlabel("Expected Calibration Error")
+    ax.set_xlim(-0.06, 0.56)
+    for s in ("top", "right", "left"): ax.spines[s].set_visible(False)
+    ax.set_title("Distribution of ECE shifts right as resampling gets aggressive", fontsize=11.5)
+    fig.savefig(FIG / "g7_ridge.png", facecolor="white"); plt.close(fig)
+    print("[OK] g7_ridge")
+
+
+def g8_ecdf():
+    """ECDF step plot: cumulative distribution of per-run ECE, key conditions.
+    Distinct chart family; shows dramatic horizontal separation, all true."""
+    conds = [("E3_smote_iso", "SMOTE+Iso", C["iso"]), ("E0_none", "Baseline", C["base"]),
+             ("E1_smote", "SMOTE", C["smote"]), ("E1_rus", "Undersample", C["rus"])]
+    fig, ax = plt.subplots(figsize=(7.2, 4.8))
+    for cond, lab, col in conds:
+        d = np.sort(D[D.condition == cond].ece.values)
+        y = np.arange(1, len(d) + 1) / len(d)
+        ax.step(np.concatenate([[0], d]), np.concatenate([[0], y]), where="post",
+                lw=2.6, color=col, label=lab, zorder=3)
+        med = np.median(d)
+        ax.scatter([med], [0.5], s=70, color=col, ec="white", lw=1.5, zorder=4)
+    ax.set_xlabel("Expected Calibration Error")
+    ax.set_ylabel("Cumulative fraction of runs")
+    ax.set_xlim(0, 0.5); ax.set_ylim(0, 1.02)
+    ax.set_title("Cumulative ECE: undersampling curve sits far to the right",
+                 fontsize=11.5)
+    ax.legend(frameon=False, loc="lower right", fontsize=9)
+    for s in ("top", "right"): ax.spines[s].set_visible(False)
+    ax.grid(color=GRID, lw=0.7); ax.set_axisbelow(True)
+    fig.savefig(FIG / "g8_ecdf.png", facecolor="white"); plt.close(fig)
+    print("[OK] g8_ecdf")
+
+
+def g9_lollipop():
+    """Lollipop: datasets ranked by ECE inflation under undersampling."""
+    base = D[D.condition == "E0_none"].groupby("dataset").ece.mean()
+    rus = D[D.condition == "E1_rus"].groupby("dataset").ece.mean()
+    infl = (rus - base).sort_values()
+    labs = {"pima": "pima", "credit_g": "credit-g", "phoneme": "phoneme",
+            "adult": "adult", "yeast_ml8": "yeast (IR70)"}
+    fig, ax = plt.subplots(figsize=(7.2, 4.4))
+    y = np.arange(len(infl))
+    cmap = plt.cm.YlOrRd
+    cols = [cmap(0.25 + 0.6 * i / (len(infl) - 1)) for i in range(len(infl))]
+    for i, (ds, v) in enumerate(infl.items()):
+        ax.plot([0, v], [i, i], color=cols[i], lw=2.6, zorder=2)
+        ax.scatter(v, i, s=260, color=cols[i], ec="white", lw=2, zorder=3)
+        ax.text(v, i, f"+{v:.2f}", ha="center", va="center", fontsize=8, fontweight="bold", color="white", zorder=4)
+    ax.set_yticks(y); ax.set_yticklabels([labs[d] for d in infl.index], fontsize=10)
+    ax.set_xlabel("ECE inflation under undersampling (vs. baseline)")
+    ax.set_xlim(0, infl.max() * 1.18)
+    ax.set_title("Which datasets suffer most? Ranked by calibration damage", fontsize=11.5)
+    for s in ("top", "right", "left"): ax.spines[s].set_visible(False)
+    ax.grid(axis="x", color=GRID, lw=0.7); ax.set_axisbelow(True); ax.tick_params(axis="y", length=0)
+    fig.savefig(FIG / "g9_lollipop.png", facecolor="white"); plt.close(fig)
+    print("[OK] g9_lollipop")
+
+
 if __name__ == "__main__":
     g1_radar(); g2_violin(); g3_slope(); g4_bubble(); g5_diverge()
+    g6_heatmap(); g7_ridge(); g8_ecdf(); g9_lollipop()
     print("[DONE] gallery")
