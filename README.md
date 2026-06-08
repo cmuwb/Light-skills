@@ -147,15 +147,32 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 
 ## 🔬 案例展示:一篇用 Light 从头做到底的论文
 
-[**Resampling Silently Degrades Probability Calibration in Tree Ensembles**](projects/resampling-calibration-study/) —— 完全用 Light 走完全流程的端到端实证研究:从找文献、提 idea、对抗严审,到真跑实验、出图、写成 6 页 IEEE 论文。**所有数字都来自真实运行,不造一个数据。**
+[**Resampling Silently Degrades Probability Calibration in Tree Ensembles**](projects/resampling-calibration-study/) —— 完全用 Light 走完全流程的端到端实证研究:从找文献、提 idea、对抗严审,到真跑实验、出图、写成 **6 页 IEEE 论文**。**所有数字都来自真实运行,不造一个数据。**
 
-[![案例展示](projects/resampling-calibration-study/figures/showcase.png)](projects/resampling-calibration-study/)
+<table>
+  <tr>
+    <td align="center" width="38%">
+      <b>📄 6 页 IEEE 论文</b><br>
+      <a href="projects/resampling-calibration-study/paper/main.pdf">
+        <img src="projects/resampling-calibration-study/paper/main-preview.png" alt="论文首页预览" width="300">
+      </a><br>
+      <sub><a href="projects/resampling-calibration-study/paper/main.pdf">阅读 PDF</a> · <a href="projects/resampling-calibration-study/paper/main.tex">LaTeX 源码</a></sub>
+    </td>
+    <td align="center" width="62%">
+      <b>📊 四面板结果总览</b><br>
+      <a href="projects/resampling-calibration-study/">
+        <img src="projects/resampling-calibration-study/figures/showcase.png" alt="四面板结果总览" width="520">
+      </a><br>
+      <sub>柱状 / 折线 / 对数散点 / 热力图——一图读完整个故事</sub>
+    </td>
+  </tr>
+</table>
 
 - **5** 个 OpenML 数据集(不平衡比 1.9–70)· **2** 个树集成 · **7** 种处理 · **10** 个随机种子 · 配对统计检验
 - 核心发现:重采样(SMOTE/过采样/欠采样)会**系统性破坏概率校准**,而 F1/AUC 等常看的指标几乎不动——所以这个代价是"隐形"的
 - 一步事后校准可把 ECE 降约 66%,AUC 仅损 0.003
 
-**最有价值的不是论文本身,而是 Light 在做的过程中暴露并修复了自己的短板**:这篇的核心结论与前人工作高度重叠,直到接近完稿才被检索出来。为根除此类"做完才发现撞车",`idea-generation`/`idea-critique`/`self-review` 的新颖性撞车检查已被强化,`paper-drafting` 也补上了"论文确实只是增量时如何诚实地讲好故事"。技能包通过真刀真枪做项目、并诚实面对不足,变得更可靠。详见[项目 README](projects/resampling-calibration-study/README.md)。
+> 这个项目还推动了技能包自身的进化:它如实承认核心结论与前作重叠,并据此强化了 idea/审稿/自审环节的"新颖性撞车检查"。完整经过见[项目 README](projects/resampling-calibration-study/README.md)。
 
 ## 📚 知识库
 

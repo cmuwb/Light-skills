@@ -1,60 +1,103 @@
 # Resampling Silently Degrades Probability Calibration in Tree Ensembles
 
-> An end-to-end empirical study built entirely with the **Light** skill pack — from literature search and idea critique through experiments, figures, and a 6-page IEEE paper. Every number comes from real runs; no data was fabricated.
+[![Read PDF](https://img.shields.io/badge/Read%20PDF-6--page%20IEEE%20paper-b91c1c)](paper/main.pdf)
+[![Pages](https://img.shields.io/badge/pages-6-0f766e)](paper/main.pdf)
+[![Figures](https://img.shields.io/badge/figures-6-2563eb)](figures/)
+[![Datasets](https://img.shields.io/badge/datasets-5%20OpenML-7c3aed)](data/processed/)
+[![Reproducible](https://img.shields.io/badge/reproducible-end--to--end-brightgreen)](#-复现)
 
-![Showcase](figures/showcase.png)
+> 一篇**完全用 [Light](../../README.md) 技能包从零做到底**的端到端实证研究：找文献 → 提 idea → 对抗严审 → 跑实验 → 出图 → 写成 6 页 IEEE 论文。**所有数字都来自真实运行，不造一个数据。**
+
+## 📄 论文展示
+
+**[📖 阅读完整 IEEE PDF 论文](paper/main.pdf)** · [Raw PDF](https://raw.githubusercontent.com/Light0305/Light/master/projects/resampling-calibration-study/paper/main.pdf) · [LaTeX 源码](paper/main.tex)
+
+<p align="center">
+  <a href="paper/main.pdf">
+    <img src="paper/main-preview.png" alt="论文首页预览" width="720">
+  </a>
+</p>
+
+<p align="center"><sub>点击论文首页预览即可打开完整 PDF</sub></p>
 
 ## TL;DR
 
-Resampling methods (SMOTE, random over/under-sampling) are standard for class imbalance and are almost always judged by F1 or AUC. This study shows they carry a hidden cost: they **systematically degrade the probability calibration** of tree ensembles, while the discrimination metrics practitioners watch stay flat or even improve — so the damage is invisible to standard evaluation.
+重采样(SMOTE、随机过/欠采样)是处理类别不平衡的标准做法，几乎总是用 F1 或 AUC 来评判。本研究揭示它们有个隐形代价：会**系统性破坏树集成的概率校准**，而实践者常看的判别指标几乎不动甚至变好——所以这个代价在标准评估下完全看不见。
 
-- **5** OpenML datasets (imbalance ratio 1.9–70) · **2** ensembles · **7** conditions · **10** seeds
-- All resampling families significantly raise ECE (Wilcoxon *p* < 10⁻³, Holm-corrected)
-- Undersampling is worst, and its harm explodes with imbalance: ECE 0.008 → 0.395 at IR=70
-- A single post-hoc recalibration step cuts ECE by ~66% at a negligible AUC cost (−0.003)
+- **5** 个 OpenML 数据集(不平衡比 1.9–70)· **2** 个树集成 · **7** 种处理 · **10** 个随机种子 · 配对统计检验
+- 所有重采样族都显著抬高 ECE(Wilcoxon *p* < 10⁻³，Holm 校正)
+- 欠采样最糟，且随不平衡比急剧恶化：IR=70 时 ECE 从 0.008 飙到 0.395
+- 一步事后校准可把 ECE 降约 66%，AUC 仅损 0.003
 
-## Honest framing
+## 📊 图表展示
 
-This is a **consolidation and cautionary extension**, not a brand-new discovery. Dal Pozzolo et al. (2015) already showed undersampling distorts calibration. Our value is breadth (SMOTE + oversampling + class-weight under one protocol), a sampling-ratio sweep, and a **negative result**: the analytic prior-shift correction that fixes undersampling does *not* transfer to SMOTE, because SMOTE distorts the class-conditional density, not just the prior. The paper states this plainly rather than overclaiming — and the same honesty is now baked into the Light skills (see below).
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <b>① 重采样抬高 ECE，校准修复它</b><br>
+      <img src="figures/fig1_ece_by_condition.png" alt="ECE by condition" width="420"><br>
+      <sub>七种处理的 ECE：重采样族全部高于基线，事后校准压到最低</sub>
+    </td>
+    <td align="center" width="50%">
+      <b>② 损害随不平衡比急剧放大</b><br>
+      <img src="figures/fig3_ece_vs_ir.png" alt="ECE vs imbalance ratio" width="420"><br>
+      <sub>欠采样的校准误差在高不平衡比下爆炸式增长</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <b>③ 代价随过采样幅度单调上升</b><br>
+      <img src="figures/fig4_rho_sweep.png" alt="ECE vs oversampling ratio" width="420"><br>
+      <sub>合成少数类越多，校准误差越大</sub>
+    </td>
+    <td align="center" width="50%">
+      <b>④ 特征归因被保留，只有概率标度受损</b><br>
+      <img src="figures/fig6_shap_shift.png" alt="SHAP attribution shift" width="420"><br>
+      <sub>基线 vs SMOTE 的 SHAP 重要性几乎一致(Spearman ρ=0.96)</sub>
+    </td>
+  </tr>
+</table>
 
-## What's in here
+<p align="center">
+  <img src="figures/showcase.png" alt="四面板总览" width="880"><br>
+  <sub>四面板总览：柱状 / 折线 / 对数散点 / 热力图——一图读完整个故事</sub>
+</p>
 
-| Path | Contents |
-|------|----------|
-| [`paper/main.pdf`](paper/main.pdf) | The 6-page IEEE paper (compiles clean: 6 figures, 5 tables, 8 verified refs) |
-| [`paper/main.tex`](paper/main.tex), [`paper/refs.bib`](paper/refs.bib) | LaTeX source and bibliography |
-| [`src/`](src/) | Data fetch, experiment runner, ρ-sweep, SHAP, prior-correction, figure scripts |
-| [`experiments/`](experiments/) | Raw results: 700-row main grid, 250-row ρ-sweep, SHAP shift, E5 prior-correction |
-| [`data/processed/`](data/processed/) | The five preprocessed OpenML datasets (parquet) |
-| [`docs/`](docs/) | Per-stage records: literature review, ideas, critique verdict, plan, dataset card, analysis |
-| [`figures/`](figures/) | All paper figures plus the composite `showcase.png` |
+## 📂 项目内容
 
-## The figures
+| 路径 | 内容 |
+|------|------|
+| [`paper/main.pdf`](paper/main.pdf) | 6 页 IEEE 论文(编译零错误：6 图 5 表 8 条已核验引用) |
+| [`paper/main.tex`](paper/main.tex) · [`paper/refs.bib`](paper/refs.bib) | LaTeX 源码与文献库 |
+| [`src/`](src/) | 数据获取、主实验、ρ 扫描、SHAP、先验校正、绘图脚本 |
+| [`experiments/`](experiments/) | 原始结果：700 行主网格、250 行 ρ 扫描、SHAP 偏移、E5 先验校正 |
+| [`data/processed/`](data/processed/) | 5 个预处理好的 OpenML 数据集(parquet) |
+| [`docs/`](docs/) | 各阶段记录：文献综述、idea、严审判决、计划、数据集卡、结果分析 |
 
-| | |
-|---|---|
-| ![ECE by condition](figures/fig1_ece_by_condition.png) | ![ECE vs imbalance ratio](figures/fig3_ece_vs_ir.png) |
-| **Resampling raises ECE; recalibration repairs it.** | **Undersampling damage explodes with imbalance.** |
-| ![ECE vs oversampling ratio](figures/fig4_rho_sweep.png) | ![SHAP attribution shift](figures/fig6_shap_shift.png) |
-| **Calibration cost grows with the oversampling ratio.** | **Feature attributions are preserved (ρ=0.96) — only the probability scale is harmed.** |
-
-## Reproduce
+## 🔁 复现
 
 ```bash
 pip install numpy pandas scikit-learn matplotlib scipy shap
-python src/fetch_data.py          # pull + preprocess the 5 OpenML datasets
-python src/run_experiments.py     # main 700-row grid
-python src/run_rho_sweep.py       # E4: oversampling-ratio sweep
-python src/run_prior_correct.py   # E5: analytic prior correction (negative result)
-python src/run_shap.py            # SHAP attribution shift
+python src/fetch_data.py          # 拉取并预处理 5 个 OpenML 数据集
+python src/run_experiments.py     # 主网格 700 行
+python src/run_rho_sweep.py       # E4：过采样比扫描
+python src/run_prior_correct.py   # E5：解析先验校正(负结果)
+python src/run_shap.py            # SHAP 特征归因偏移
 python src/make_figures.py && python src/make_figures_extra.py && python src/make_showcase.py
 cd paper && pdflatex main && bibtex main && pdflatex main && pdflatex main
 ```
 
-## How Light built this — and learned from it
+## 🪞 诚实复盘：Light 在这个项目里暴露并修复了自己的短板
 
-Every stage used a dedicated Light skill: literature-search → idea-generation → idea-critique → research-plan → data-engineering → experiments → result-analysis → figure-drawing → paper-drafting → citation → typesetting, with self-review as the output gate.
+这篇论文最有价值的产出，其实不是论文本身。它的**核心结论与前人工作高度重叠**(Dal Pozzolo 2015 已专门研究欠采样破坏校准)，而这一点直到接近完稿才被检索出来——立项时新颖性被高估为约 70，实际只有 35–45。
 
-The most useful outcome was a **failure caught and fixed in the skills themselves**. The core finding turned out to overlap heavily with prior work that wasn't surfaced until the paper was nearly done. In response, the novelty-collision checks in `idea-generation`, `idea-critique`, and `self-review` were hardened, and `paper-drafting` gained guidance on honestly reframing genuinely incremental work. The skill pack got better by doing the work and being honest about where it fell short.
+我们没有掩盖这件事，而是把它转化成对技能包的改进。为根除此类"做完才发现撞车"：
 
-> Part of the [Light](../../README.md) research skill pack.
+- **`idea-generation`**：提 idea 时强制回答四问——有没有人做过同一核心、是不是真缺口、是真创新还是增量、审稿人会用什么理由拒；
+- **`idea-critique`**：严审时独立复核核心撞车、对新颖性谎报记红旗、预演拒稿理由；
+- **`self-review`**：论文定稿前的核心撞车终检兜底；
+- **`paper-drafting`**：补上"论文确实只是增量时，如何诚实地讲好故事"——重定位而非夸大、把负结果变成卖点、把 claim 收缩到证据撑得住的尺度。
+
+论文本身也贯彻了同样的诚实：明确承认前作、如实写出一个**负结果**(解析先验校正对 SMOTE 不奏效，因为 SMOTE 扭曲的是类条件密度而非单纯先验)，而不是假装首创。**技能包通过真刀真枪做项目、并诚实面对不足，变得更可靠。**
+
+> 本项目是 [Light](../../README.md) 科研技能包的端到端案例展示。
