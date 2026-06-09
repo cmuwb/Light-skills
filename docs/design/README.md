@@ -32,3 +32,4 @@
 |------|------|------|
 | 2026-06-08 | [向 ARS 学习的取舍：学诚实工程，不照搬其拒绝边界](2026-06-08-ars-borrow-boundary.md) | m03 / m04 / 全局定位 |
 | 2026-06-08 | [编排器的引入与"分级编排"边界](2026-06-08-orchestrator-tiered.md) | light-orchestrator / ROUTER / memory-pm |
+| 2026-06-08 | [PRISMA 与文风校准：做成可执行脚本而非纯文档](2026-06-08-prisma-style-scripts.md) | literature-search / paper-polishing |

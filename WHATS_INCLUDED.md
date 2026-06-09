@@ -15,6 +15,8 @@
 | competition | `scripts/market_charts.py` | 渲染市场数据图:TAM/SAM/SOM 同心圆、竞品定位矩阵、五力分级、风险热图 |
 | research-ethics | `scripts/text_overlap.py` | 离线自查重,定位与给定语料的最长逐字重合片段 |
 | data-engineering | `scripts/check_access_level.py` | 数据访问分级守门:校验 raw/redacted/verified_only 数据能否流向某下游环节,raw 流向公开产物即阻断(退出码非零,可当 pipeline 闸门) |
+| literature-search | `scripts/prisma_flow.py` | 系统综述 PRISMA 2020 流程留痕:核对各阶段计数勾稽(前阶段−排除=后阶段),抓出算术错误,产出流程图结构化数据 |
+| paper-polishing | `scripts/style_fingerprint.py` | 文风校准:从用户过往文稿提取文风指纹(句长/被动/第一人称/连接词/标点),润色时校准到作者声音而非通用模板,标出待润色稿偏离最大的维度 |
 | ip-application | `scripts/patent_search.py` | 在先技术检索,支持引用图一跳扩展(`--snowball`) |
 | figure-drawing | `scripts/figure_export.py` | 按目标期刊栏宽精确导出图(矢量+位图),不裁剪尺寸 |
 
