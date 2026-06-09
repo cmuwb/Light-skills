@@ -33,10 +33,16 @@ jobs:
             done
           fi
 
-      - name: Run pytest if tests exist
+      - name: Run pytest if real tests exist
         run: |
-          if [ -d code_assets ] && ls code_assets/*test*.py >/dev/null 2>&1; then
-            pytest -q code_assets
+          # 只有存在 test_*.py / *_test.py（pytest 默认发现规则）才跑。
+          # 注意：code_assets/stats_tests.py 是“统计检验”功能模块，不是单元测试，
+          # 故用精确的 pytest 命名规则匹配，避免把它误当测试。
+          if ls code_assets/test_*.py code_assets/*_test.py >/dev/null 2>&1; then
+            # --exitcode-on-no-tests 不存在；用 || 捕获 exit 5（无测试）视为通过
+            pytest -q code_assets; rc=$?
+            if [ $rc -eq 5 ]; then echo "pytest collected no tests; treating as pass"; exit 0; fi
+            exit $rc
           else
             echo "no pytest targets in code_assets; skipping"
           fi
