@@ -34,8 +34,11 @@
 
 - a07 consistency、a08 self-review、a09 tool-selection、a10 research-ethics 在**所有**任务中后台生效。
 - a01 file-reading、a02 memory-pm 在涉及文件/长期项目时自动触发。
+- **light-orchestrator** 在跨多阶段的大任务（"从X做到Y""全流程"）时启动，规划 pipeline、逐阶段调用下列技能、在阶段间卡强制检查点。单一阶段的轻任务不启动它，直接按下表路由。
 
 ## 组合调用（常见链路）
+
+> 下列链路的**可执行版**（带阶段产出与检查点）见 light-orchestrator/references/pipelines.md。ROUTER 这里只给概览。
 
 - 新项目启动：a02 → m01 → m02 → m03 ⇄ m04 → m05 → a03(实验实现)
 - 写论文：a03(实验) → m06 → m07 ⇄ m08 → m09 → m11 → m10 → m12
