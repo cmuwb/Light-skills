@@ -14,6 +14,7 @@
 | result-analysis | `scripts/explain_shap.py` | 生成 SHAP 可解释性三图(beeswarm / bar / waterfall),无 shap 库时降级 |
 | competition | `scripts/market_charts.py` | 渲染市场数据图:TAM/SAM/SOM 同心圆、竞品定位矩阵、五力分级、风险热图 |
 | research-ethics | `scripts/text_overlap.py` | 离线自查重,定位与给定语料的最长逐字重合片段 |
+| data-engineering | `scripts/check_access_level.py` | 数据访问分级守门:校验 raw/redacted/verified_only 数据能否流向某下游环节,raw 流向公开产物即阻断(退出码非零,可当 pipeline 闸门) |
 | ip-application | `scripts/patent_search.py` | 在先技术检索,支持引用图一跳扩展(`--snowball`) |
 | figure-drawing | `scripts/figure_export.py` | 按目标期刊栏宽精确导出图(矢量+位图),不裁剪尺寸 |
 

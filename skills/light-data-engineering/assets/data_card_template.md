@@ -50,6 +50,16 @@
 - **privacy_risk**: {{privacy_risk}}  (PII present? de-identified how? re-identification risk?)
 - Documented leakage hazards (columns that encode the target / future info).
 
+## 7b. Access Level (访问分级)
+> 给这份数据声明一个访问级别，决定它能流向哪些下游环节。由 `scripts/check_access_level.py` 校验。
+- **access_level**: {{access_level}}  必须是以下之一：
+  - `raw` — 含 PII / 未脱敏 / 受限原始数据。**禁止**进入会公开的产物（论文表格、图、附录、仓库样例）。
+  - `redacted` — 已脱敏 / 去标识，PII 已移除或泛化。可用于内部分析，公开前仍需复核。
+  - `verified_only` — 已核验可公开的派生数据 / 聚合统计。可进入论文与公开产物。
+- **downgrade_from**: {{源数据的 access_level}}  （若本数据由更高敏感级派生而来，记录来源级别与脱敏动作）
+- **redaction_actions**: {{做了哪些脱敏：删列 / 哈希 / 分桶 / 加噪 / k-匿名}}
+- **gated_sinks**: 声明本级别**不可**流向的下游（如 raw → 不可进 paper/figure/public-repo）。
+
 ## 8. Recommended Use & Splits
 - Intended tasks and metrics (`leaderboard_url` if any).
 - **recommended_splits**: scheme + seed (use safe_split.py task = clf/reg/timeseries/group).

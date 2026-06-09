@@ -31,11 +31,11 @@
 
 | 阶段 | 主要闸门 | 阻断条件（Critical） |
 |------|----------|----------------------|
-| 数据评估 | a10 + a08 | 数据泄漏、train/test 污染 |
+| 数据评估 | a10 + a08 + `check_access_level.py` | 数据泄漏、train/test 污染、raw 数据流向公开 sink |
 | 实验 | a08 证据闸门 | 结果不可复现、指标异常高未排查 bug |
 | 结果分析 | a08 | 统计方法错误、过度解读 |
 | 写作 | **诚信门**（m07 integrity_gate）| claim 无源、幻觉引用/结果（M2/M3）|
-| 引用 | m10 verify_citation_edge | 引用查无此文、key/DOI 对但原文不支撑该句 |
+| 引用 | m10 verify_citation_edge + **locator 审计** | 引用查无此文、key/DOI 对但原文不支撑该句（`unsupported`）|
 | 排版 | a08 | 编译报错 |
 | 跨阶段 | a07 consistency | 术语/指标/创新点跨材料不一致 |
 
