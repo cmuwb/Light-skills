@@ -1,6 +1,6 @@
 # db04 — 前沿数据集卡：大模型 / 多模态 / 科学 / 领域（_new_frontier）
 
-> 22 张 dataset_card，schema 见 db04 README：dataset_name, domain, task, data_type, size, format, license, download_url, paper_url, citation, leaderboard_url, known_issues, bias_risk, privacy_risk, preprocessing_steps, recommended_splits。
+> 20 张 dataset_card，schema 见 db04 README：dataset_name, domain, task, data_type, size, format, license, download_url, paper_url, citation, leaderboard_url, known_issues, bias_risk, privacy_risk, preprocessing_steps, recommended_splits。
 > **可核查字段来源**：paper_url / DOI / 被引数来自 OpenAlex 实时 curl（2026-06-06 快照，被引随时间增长）；license / 官方下载页经 WebSearch 定位后标注，不确定者写「待核查」。
 > **license 必填**，并明确：商用？再分发？隐私？需授权？— 隐私授权风险务必写明（联动 a10）。
 > ⚠ 免费源不可得（付费墙）的 JCR IF / Scimago SJR 一律不写；数据集本身无 IF 概念，此处不涉及。
@@ -306,24 +306,6 @@
   recommended_splits: "生成任务常用 ZINC-250k 随机划分; 筛选任务按靶点/性质自定义"
 ```
 
-```yaml
-- dataset_name: "QM9"
-  domain: "量子化学 / 分子性质预测"
-  task: "分子图回归(12+ 量子化学性质: HOMO/LUMO/gap/偶极矩/内能/原子化能等)"
-  data_type: "小有机分子(C/H/O/N/F, ≤9 重原子)的 DFT 优化几何 + 量子性质"
-  size: "133,885 个稳定小分子(GDB-17 子集), B3LYP/6-31G(2df,p) 计算"
-  format: "XYZ(含坐标+性质) / 各 GNN 库内置(PyG QM9 等)"
-  license: "数据以 CC0(公共领域, figshare 发布)提供。商用?是(CC0 无限制); 再分发?是; 需授权?否"
-  download_url: "https://figshare.com/collections/Quantum_chemistry_structures_and_properties_of_134_kilo_molecules/978904"
-  paper_url: "https://openalex.org/W2080635178"  # Quantum chemistry structures and properties of 134 kilo molecules (Sci. Data 2014, DOI:10.1038/sdata.2014.22)
-  citation: "Ramakrishnan et al., 2014, Scientific Data. OpenAlex 被引 2,006 (2026-06-06)"
-  leaderboard_url: "https://paperswithcode.com/sota/formation-energy-on-qm9"
-  known_issues: "仅 ≤9 重原子小分子(化学空间窄)、单一 DFT 泛函精度、约 3k 分子未通过一致性检查(常剔除)、性质单位/参考态需统一"
-  bias_risk: "化学空间偏小有机分子, 难外推到大分子/金属/周期体系"
-  privacy_risk: "无(计算化学数据)"
-  preprocessing_steps: "读取 XYZ / 单位换算与目标归一化 / 移除不一致分子 / 构建分子图(键/距离)"
-  recommended_splits: "常用随机划分(如 110k/10k/剩余 test); 论文需注明划分以可比"
-```
 
 ```yaml
 - dataset_name: "MoleculeNet"
@@ -346,49 +328,7 @@
 
 ---
 
-## 五、语音 (Speech)
-
-```yaml
-- dataset_name: "LibriSpeech"
-  domain: "语音识别 (ASR)"
-  task: "英文自动语音识别 / 声学模型预训练"
-  data_type: "朗读式英文语音(源自 LibriVox 公共领域有声书) + 对齐文本"
-  size: "~1000 小时 16kHz; 子集 train-clean-100/360, train-other-500, dev/test-clean, dev/test-other"
-  format: "FLAC 音频 + 转写 txt + 说话人/章节元数据"
-  license: "CC BY 4.0(可商用/再分发须署名); 音频源自公共领域 LibriVox。商用?是(BY); 再分发?是(须署名); 需授权?否"
-  download_url: "https://www.openslr.org/12"
-  paper_url: "https://openalex.org/W1494198834"  # Librispeech: An ASR corpus based on public domain audio books (ICASSP 2015, DOI:10.1109/icassp.2015.7178964)
-  citation: "Panayotov et al., 2015, ICASSP. OpenAlex 被引 5,972 (2026-06-06)"
-  leaderboard_url: "https://paperswithcode.com/sota/speech-recognition-on-librispeech-test-clean"
-  known_issues: "仅朗读式(非自发对话)、录音质量较好(与真实噪声场景差距)、英语为主、已较饱和(test-clean WER <2%)"
-  bias_risk: "朗读风格/有声书题材偏差、说话人口音以英美为主、缺自发口语现象"
-  privacy_risk: "低 — 源自公共领域有声书, 朗读者自愿录制"
-  preprocessing_steps: "重采样 16kHz / log-mel 或波形输入 / 文本规范化(大写/去标点) / SpecAugment"
-  recommended_splits: "官方 clean/other 的 train/dev/test 标准子集"
-```
-
-```yaml
-- dataset_name: "Common Voice (Mozilla)"
-  domain: "语音识别 / 多语言语音"
-  task: "多语言 ASR / 语音合成 / 口音与语种识别"
-  data_type: "众包朗读语音(志愿者朗读句子) + 文本 + 人口学元数据(可选)"
-  size: "持续增长, 已覆盖 100+ 语言, 累计数万小时(各语种差异大), 含已验证/未验证片段"
-  format: "MP3 音频 + TSV(句子/投票/可选 age/gender/accent)"
-  license: "CC0 1.0(公共领域, 音频与转写均放弃版权)。商用?是(CC0); 再分发?是; 需授权?否(直接下载) → 人口学元数据为志愿者自愿提供"
-  download_url: "https://commonvoice.mozilla.org/datasets"
-  paper_url: "https://openalex.org/W2995929068"  # Common Voice: A Massively-Multilingual Speech Corpus (LREC 2020, arXiv:1912.06670)
-  citation: "Ardila et al., 2020, LREC. OpenAlex 被引 209 (2026-06-06)"
-  leaderboard_url: "https://paperswithcode.com/dataset/common-voice"
-  known_issues: "各语种数据量极不均衡、众包录音质量参差、口音/背景噪声多样、部分片段未经验证"
-  bias_risk: "志愿者人口学偏差(性别/年龄/口音分布不均)、低资源语种样本稀少"
-  privacy_risk: "⚠ 中 — 含真实人声(可识别生物特征)与自愿提供的人口学信息; 虽 CC0 但声纹属敏感数据, 使用须评估合规"
-  preprocessing_steps: "MP3→WAV 重采样 / 仅用 validated 子集 / 文本规范化 / 时长过滤"
-  recommended_splits: "官方 train/dev/test(按说话人不重叠划分, 各语种版本号需注明)"
-```
-
----
-
-## 六、医疗影像与生理信号 (Medical — 隐私/授权高风险)
+## 五、医疗影像与生理信号 (Medical — 隐私/授权高风险)
 
 ```yaml
 - dataset_name: "PhysioNet (PhysioBank / 含 MIT-BIH, MIMIC 等)"
@@ -449,26 +389,8 @@
 
 ---
 
-## 七、农业 / 领域应用 (Agriculture & Domain)
+## 六、农业 / 领域应用 (Agriculture & Domain)
 
-```yaml
-- dataset_name: "PlantVillage"
-  domain: "农业 / 植物病害"
-  task: "叶片图像植物病害分类"
-  data_type: "受控背景的作物叶片照片(健康/患病)"
-  size: "~54,300 张图(常引 ~54k), 14 种作物 / 38 类(作物-病害组合)"
-  format: "JPEG, 按类别分目录"
-  license: "⚠ 原始 PlantVillage 项目数据许可表述不一; 常见镜像标 CC0 或公开研究使用, 官方未提供统一标准许可文本。商用?未明确; 再分发?常见镜像存在; 需授权?否 → 待核查(无统一官方许可文本)"
-  download_url: "https://github.com/spMohanty/PlantVillage-Dataset (及各 Kaggle 镜像)"
-  paper_url: "https://openalex.org/W2473156356"  # Using Deep Learning for Image-Based Plant Disease Detection (Front. Plant Sci. 2016, DOI:10.3389/fpls.2016.01419)
-  citation: "Mohanty et al., 2016, Frontiers in Plant Science. OpenAlex 被引 4,508 (2026-06-06)"
-  leaderboard_url: "https://paperswithcode.com/dataset/plantvillage"
-  known_issues: "实验室受控背景(单叶/纯背景)导致田间泛化差、背景捷径学习、类别不均衡、缺多病害共发"
-  bias_risk: "受控采集偏差(背景/光照/单叶), 难迁移到真实田间复杂背景"
-  privacy_risk: "无(植物叶片图像)"
-  preprocessing_steps: "resize/归一化 / 数据增强(旋转/翻转/色彩抖动) / 背景去偏建议用田间数据微调"
-  recommended_splits: "无官方固定划分; 常分层随机 train/val/test(须注意避免同叶多图泄漏)"
-```
 
 ```yaml
 - dataset_name: "DeepWeeds"
@@ -493,7 +415,7 @@
 
 ## 维护说明
 
-- 本卡片为 db04 前沿扩展集（大模型语料 / 多模态 / 3D 驾驶 / 科学分子 / 语音 / 医疗 / 农业），共 22 张，与 [cards_cv_nlp.md](cards_cv_nlp.md)、[cards_tabular_other.md](cards_tabular_other.md) 互补。
+- 本卡片为 db04 前沿扩展集（大模型语料 / 多模态 / 3D 驾驶 / 科学分子 / 医疗 / 农业），共 20 张，与 [cards_cv_nlp.md](cards_cv_nlp.md)、[cards_tabular_other.md](cards_tabular_other.md)、[cards_physical_sciences.md](cards_physical_sciences.md)、[cards_nlp_speech.md](cards_nlp_speech.md) 互补；QM9/LibriSpeech/Common Voice/PlantVillage 已迁移到对应领域 canonical 文件。
 - paper_url / DOI / 被引数均来自 OpenAlex `cited_by_count` 实时 curl 快照（2026-06-06），仅作量级参考，随时间增长。无专属同行评审论文者（Common Crawl / LAION-COCO）已标「待核查」，不臆造引用。
 - ⚠ **免费源不可得（付费墙）**：Clarivate JCR 精确 IF、Scimago SJR 一律未写；数据集本身无 IF 概念，故不涉及。
 - ⚠ **高隐私/授权风险**（务必合规后使用，联动 a10）：
@@ -504,15 +426,5 @@
   - ScanNet / nuScenes / Waymo / KITTI：街景或私人空间含人脸/车牌；前三者非商业授权，商用须单独签约。
   - PhysioNet（受限库）/ CheXpert / ISIC：真实患者数据（PHI），须 DUA / 伦理审查 / 去标识，禁止重标识与商用（CheXpert 非商业、ISIC 多为 CC BY-NC）。
 - 标「待核查」字段（逐子集/逐图/逐链接许可、底层网页版权）使用前务必到官方页核实，商用/再分发前做合规检查。
-
-
-
-
-
-
-
-
-
-
 
 

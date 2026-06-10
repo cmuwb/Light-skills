@@ -7,6 +7,7 @@ CI scope:
 - db03–db08 real cards must satisfy their README-declared required fields;
 - template blocks with all required fields left blank are allowed and skipped;
 - duplicate YAML keys are rejected instead of silently overwritten;
+- db03 method_name and db04 dataset_name must be unique within each database;
 - every local .md link in a database README must point to an existing file.
 """
 from __future__ import annotations
@@ -30,6 +31,7 @@ yaml_blocks = 0
 readme_links = 0
 schema_checked_cards = 0
 template_cards = 0
+duplicate_name_index: dict[tuple[str, str], list[str]] = {}
 
 SCHEMAS: dict[str, list[str]] = {
     "db03-methods": "method_name, task_type, input_data, output_result, core_assumption, advantages, limitations, common_baselines, evaluation_metrics, suitable_datasets, implementation_repo, representative_papers, possible_innovation_points, maturity".split(", "),
@@ -47,6 +49,11 @@ NAME_FIELDS = {
     "db06-ppt-styles": "scenario",
     "db07-figures": "figure_type",
     "db08-ip-materials": "material_type",
+}
+
+UNIQUE_NAME_FIELDS = {
+    "db03-methods": "method_name",
+    "db04-datasets": "dataset_name",
 }
 
 
@@ -142,6 +149,18 @@ def card_label(db_key: str, item: dict, fallback: str) -> str:
     return fallback
 
 
+def record_unique_name(db_key: str, item: dict, location: str) -> None:
+    """Collect exact db03/db04 card names so duplicates can fail CI."""
+    name_field = UNIQUE_NAME_FIELDS.get(db_key)
+    if not name_field:
+        return
+    value = item.get(name_field)
+    if is_blank(value):
+        return
+    key = (db_key, str(value).strip())
+    duplicate_name_index.setdefault(key, []).append(location)
+
+
 if not DATABASES.exists():
     errors.append("databases/: missing directory")
 else:
@@ -191,6 +210,13 @@ else:
                 if missing:
                     label = card_label(db_key or "", item, fallback)
                     errors.append(f"{rel}: {fallback} ({label}) missing required fields: {', '.join(missing)}")
+                record_unique_name(db_key or "", item, f"{rel}: {fallback}")
+
+    for (db_key, name), locations in sorted(duplicate_name_index.items()):
+        if len(locations) > 1:
+            joined = "; ".join(locations)
+            name_field = UNIQUE_NAME_FIELDS[db_key]
+            errors.append(f"databases/{db_key}: duplicate {name_field} {name!r}: {joined}")
 
     for readme in sorted(DATABASES.glob("db*/README.md")):
         text = readme.read_text(encoding="utf-8")

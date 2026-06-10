@@ -408,7 +408,7 @@
 
 ## 汇总
 
-- 总卡数: **15** 张(含 1 张奶山羊现状评估说明卡)。
+- 总卡数: **19** 张(含 1 张奶山羊现状评估说明卡)。
 - 通用动物(7): Animal Kingdom / AP-10K / APT-36K / Animal-Pose / MammalNet / iWildCam 2021 / Animals-10。
 - 家畜专用(8): Cows2021 / OpenCows2020 / AerialCattle2017 / Pig 双流行为 / Pig 运动攻击 / Sheep 面部表情 / Sheep 面部识别 / Sheep 航拍。
 - 奶山羊专项(4, 含说明卡): GoatABRD / CherryChèvre / DiaryGoatMVT / 现状评估卡。

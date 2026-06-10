@@ -1,6 +1,6 @@
 # db03 方法卡 — 前沿 / 新兴方法（_new_frontier.md）
 
-> 续作入口：本文件补充 cards_dl.md 之外的前沿/新兴方法卡，共 24 张，覆盖自监督、对比学习、元学习、持续学习、NAS/AutoML、蒸馏/剪枝/量化、LLM/指令微调/RLHF/RAG/Agent/MoE/状态空间、多模态大模型、因果推断、可解释 AI、神经渲染、图 Transformer、扩散策略、世界模型。
+> 续作入口：本文件补充 cards_dl.md 之外的前沿/新兴方法卡，共 25 张，覆盖自监督、对比学习、元学习、持续学习、NAS/AutoML、蒸馏/剪枝/量化、LLM/指令微调/RLHF/Agent/MoE/状态空间、多模态大模型、因果推断、可解释 AI、神经渲染、图 Transformer、扩散策略、世界模型。RAG canonical 卡已迁移至 `cards_nlp_speech.md`。
 > 字段 schema 同 db03：`method_name, task_type, input_data, output_result, core_assumption, advantages, limitations, common_baselines, evaluation_metrics, suitable_datasets, implementation_repo, representative_papers, possible_innovation_points, maturity`
 > `maturity`: 经典 | 主流 | 新兴 | 过时 | 不推荐
 >
@@ -241,22 +241,6 @@
 ```
 
 ```yaml
-- method_name: 检索增强生成(RAG)
-  task_type: 知识密集型 NLP(开放域问答、事实生成、企业知识库问答)
-  input_data: 查询 + 外部文档库(向量索引)
-  output_result: 基于检索证据生成的答案(含可溯源引用)
-  core_assumption: 把参数化知识(模型权重)与非参数化知识(可检索文档)结合，生成时先检索相关段落再据其生成，可降幻觉、更新知识无需重训
-  advantages: 降幻觉、知识可更新/可溯源、无需重训即扩知识、适合企业私域、缓解时效问题
-  limitations: 依赖检索质量(检索错→生成错)、长文档/多跳推理弱、分块与重排策略敏感、端到端联合优化难
-  common_baselines: 纯参数化 LLM、闭卷问答、检索式问答(无生成)、微调注入知识
-  evaluation_metrics: 答案 EM/F1、忠实度/可溯源性、检索 Recall@K、RAGAS 指标
-  suitable_datasets: Natural Questions、TriviaQA、HotpotQA、企业私域文档
-  implementation_repo: facebookresearch/faiss(检索)、langchain-ai/langchain、run-llama/llama_index
-  representative_papers:
-    - "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks (RAG, Lewis et al. 2020 NeurIPS) | 2020 | cited:18 | doi:待核查(OpenAlex 主记录 id W3098425262、DOI 为 null 且被引仅 18，明显为拆分/低覆盖记录，原文真实被引达数千，待核查)"
-  possible_innovation_points: 多跳/图 RAG、查询改写与重排、自反思 RAG(Self-RAG)、长上下文 vs RAG 权衡、多模态 RAG、检索-生成联合训练
-  maturity: 主流(LLM 落地企业应用的核心范式)
-
 - method_name: LLM 智能体(LLM Agent：ReAct / 工具调用)
   task_type: 多步推理 + 工具使用 + 与环境交互的自主任务执行
   input_data: 任务目标 + 可用工具/API + 环境观测
@@ -446,21 +430,18 @@
 
 ## 数据来源与核查说明
 
-- 本文件共 **24 张方法卡**（≥22 要求）。representative_papers 的 标题/年份/被引/DOI 全部来自 **OpenAlex API 真实 curl**（`https://api.openalex.org/works`，加 `&mailto` 进礼貌池），查询日期 **2026-06-06**；被引数为当日快照，随时间增长。
+- 本文件共 **25 张方法卡**。representative_papers 的 标题/年份/被引/DOI 全部来自 **OpenAlex API 真实 curl**（`https://api.openalex.org/works`，加 `&mailto` 进礼貌池），查询日期 **2026-06-06**；被引数为当日快照，随时间增长。
 - implementation_repo 均用 **GitHub API**（`https://api.github.com/repos/<org>/<repo>`）核过 HTTP 状态：返回 200 的已标注；`facebookresearch/llama` 返回 301（仓库迁移至 `meta-llama/llama`），`facebookresearch/maml` 返回 404（官方实现为 `cbfinn/maml`），均已在卡内更正。`google-research/simclr` 单次取到 000 为网络瞬时失败，仓库为公开已知仓库。
 - **付费墙诚实声明**：Clarivate JCR 影响因子、Scimago SJR 等付费指标本卡不涉及、不出现（免费源不可得，付费墙）。本库用 OpenAlex 被引作为可核查的热度替代，绝不臆造期刊指标。
 - **标注「待核查」的情况（如实说明，未臆造）**：
   - 多数 arXiv 论文（MoCo/MAE/DARTS/剪枝/量化/FLAN/DPO/MoE/Mamba/LLaVA/Graphormer/World Models/Dreamer 等）：所给被引为 OpenAlex 对应 arXiv 记录的数值；这些高影响论文常存在 arXiv 版与会议/期刊版多条拆分或合并记录，原文聚合后真实被引通常更高，故标「待核查」。
   - **MAE**：OpenAlex 中按标题检索时排序受同名/合并记录干扰，已用 arXiv DOI(2111.06377) 精确定位原文记录，但其被引数(195)明显低于该论文真实影响，判为拆分记录，标「待核查」。
-  - **RAG**（Lewis et al. 2020 NeurIPS）：OpenAlex 主记录 id `W3098425262` 的 DOI 字段为 null 且被引仅 18，明显为低覆盖/拆分记录，原文真实被引达数千，DOI 与被引均标「待核查」。
+
   - **ReAct**（Yao et al. 2022, arXiv:2210.03629）：用该 arXiv DOI 经 OpenAlex 解析到无关条目（"Distributing Accountability..."），按标题 `title.search` 精确检索返回 count=0，免费源无法定位其真实记录，标题/被引/DOI 整体标「待核查」；该 LLM Agent 卡改以可核实的 Toolformer、Tree of Thoughts 作为代表作支撑。
   - **auto-sklearn**（NeurIPS 2015）：OpenAlex 记录 DOI 字段为 null（会议论文无传统 DOI），DOI 标「待核查」。
 - maturity（经典/主流/新兴/过时/不推荐）与 possible_innovation_points 为人工领域判断，非 API 字段。
 - 受版权，全文不收录，仅元数据与公开开源链接。
 
 > 维护建议：新兴卡（LLM Agent、Mamba、3DGS、扩散策略、世界模型、图 Transformer）热度高、迭代快，建议每季度复查被引与成熟度并做升降级；待核查的被引项可在 OpenAlex 记录合并后回填准确聚合值。
-
-
-
 
 

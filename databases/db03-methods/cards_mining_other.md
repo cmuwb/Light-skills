@@ -310,28 +310,9 @@
   maturity: 经典(基线常用，研究主线已转向 RotatE/复数及 GNN 类)
 ```
 
-## 因果推断 / 优化 / 联邦学习
+## 优化 / 联邦学习
 
 ```yaml
-- method_name: 因果推断(潜在结果框架 + 双重机器学习 DML)
-  task_type: 处理效应估计(ATE/CATE)、反事实
-  input_data: 观测数据(处理变量 T、结果 Y、协变量 X)
-  output_result: 平均/异质处理效应 + 置信区间
-  core_assumption: 可忽略性(无未观测混杂)+ 重叠 + SUTVA；DML 用正交化+交叉拟合去偏
-  advantages: DML 允许任意 ML 估计 nuisance、对正则偏差稳健、给出有效推断；框架可解释
-  limitations: 强依赖无混杂假设(不可检验)、需重叠、估计质量受 ML 影响、违背假设则失效
-  common_baselines: 倾向得分匹配、IPW、回归调整、双稳健(AIPW)
-  evaluation_metrics: ATE 偏差 / PEHE(CATE) / 覆盖率 / 半合成基准
-  suitable_datasets: IHDP、Jobs/LaLonde、ACIC、Twins
-  implementation_repo: EconML、DoWhy、CausalML、grf(R)
-  representative_papers: >
-    Estimating causal effects of treatments... (Rubin, 1974,
-    DOI 10.1037/h0037350, OpenAlex 被引≈9439);
-    Double/Debiased Machine Learning for Treatment and Structural Parameters
-    (Chernozhukov et al., 2017, DOI 10.1111/ectj.12097, 被引≈2416)
-  possible_innovation_points: 异质效应(因果森林/元学习器)、敏感性分析、表示学习去混杂、时序/网络因果
-  maturity: 主流
-
 - method_name: 多目标优化 NSGA-II
   task_type: 多目标进化优化(求 Pareto 前沿)
   input_data: 决策变量空间 + 多个(冲突)目标函数 + 约束
