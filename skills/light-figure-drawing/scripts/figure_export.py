@@ -450,4 +450,6 @@ def _demo_and_selfcheck():
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] != "--selftest":
+        raise SystemExit("usage: python figure_export.py [--selftest]")
     _demo_and_selfcheck()

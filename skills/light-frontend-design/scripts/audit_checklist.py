@@ -19,6 +19,7 @@ deps. Runs a synthetic self-test under __main__.
 from __future__ import annotations
 import math
 import re
+import sys
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
 
@@ -182,7 +183,7 @@ _BAD = """
 <section data-layout="bento" data-role="bento" data-items="5" data-cells="6"></section>
 """
 
-if __name__ == "__main__":
+def _selftest() -> None:
     print("=== GOOD doc (expect mostly PASS) ===")
     g = audit(_GOOD)
     print(render(g))
@@ -197,3 +198,9 @@ if __name__ == "__main__":
         assert any(needle in f for f in failed), f"{needle} should FAIL on BAD doc"
 
     print("\nself-test OK")
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] != "--selftest":
+        raise SystemExit("usage: python audit_checklist.py [--selftest]")
+    _selftest()

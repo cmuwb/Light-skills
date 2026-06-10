@@ -17,6 +17,7 @@ Blacklist (all machine-detectable):
 """
 from __future__ import annotations
 import re
+import sys
 from dataclasses import dataclass
 
 
@@ -84,7 +85,7 @@ _CLEAN = """
 <footer>(c) 2026 Acme. All rights reserved.</footer>
 """
 
-if __name__ == "__main__":
+def _selftest() -> None:
     print("=== DIRTY (expect findings T1-T4) ===")
     d = lint(_DIRTY)
     print(render(d))
@@ -98,3 +99,9 @@ if __name__ == "__main__":
     assert not c, "CLEAN doc should have zero findings"
 
     print("\nself-test OK")
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] != "--selftest":
+        raise SystemExit("usage: python ai_tell_lint.py [--selftest]")
+    _selftest()

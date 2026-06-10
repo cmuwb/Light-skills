@@ -13,6 +13,7 @@
 """
 from __future__ import annotations
 import os
+import sys
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
@@ -191,4 +192,6 @@ def _selfcheck():
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] != "--selftest":
+        raise SystemExit("usage: python color_palettes.py [--selftest]")
     _selfcheck()
