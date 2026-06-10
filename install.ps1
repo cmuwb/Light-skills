@@ -11,25 +11,39 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$ExpectedSkills = 28
 $Repo = $PSScriptRoot
 
 function Link-Dir($link, $target) {
-  if (Test-Path $link) { cmd /c rmdir "$link" 2>$null }
-  cmd /c mklink /J "$link" "$target" | Out-Null
+  if (Test-Path -LiteralPath $link) {
+    $item = Get-Item -LiteralPath $link -Force
+    if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0) {
+      throw "Refusing to overwrite non-link path: $link. Remove it manually if it is an old Light install target."
+    }
+    & cmd.exe /c rmdir "`"$link`"" | Out-Null
+    if ($LASTEXITCODE -ne 0 -or (Test-Path -LiteralPath $link)) {
+      throw "Failed to remove existing link: $link"
+    }
+  }
+  New-Item -ItemType Junction -Path $link -Target $target | Out-Null
 }
 
 function Install-Into($skillsDir) {
   $parent = Split-Path $skillsDir -Parent
   New-Item -ItemType Directory -Force -Path $skillsDir | Out-Null
+  $skillDirs = @(Get-ChildItem -Directory "$Repo\skills" -Filter 'light-*' | Sort-Object Name)
   $n = 0
-  Get-ChildItem -Directory "$Repo\skills" -Filter 'light-*' | ForEach-Object {
-    Link-Dir "$skillsDir\$($_.Name)" $_.FullName
-    if (Test-Path "$skillsDir\$($_.Name)\SKILL.md") { $n++ }
+  foreach ($skill in $skillDirs) {
+    Link-Dir "$skillsDir\$($skill.Name)" $skill.FullName
+    if (Test-Path "$skillsDir\$($skill.Name)\SKILL.md") { $n++ }
   }
-  # shared libraries as siblings so skills' relative paths resolve
+  if ($n -ne $ExpectedSkills) {
+    throw "Expected $ExpectedSkills skills, linked $n"
+  }
+  # Shared libraries as siblings so skills' relative paths resolve.
   Link-Dir "$parent\databases"   "$Repo\databases"
   Link-Dir "$parent\code_assets" "$Repo\code_assets"
-  Write-Host "  $skillsDir  ->  $n/28 skills"
+  Write-Host "  $skillsDir  ->  $n/$ExpectedSkills skills"
 }
 
 if ($Client -in 'both','claude') {

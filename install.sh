@@ -6,27 +6,69 @@
 #         ./install.sh codex
 set -euo pipefail
 
+EXPECTED_SKILLS=28
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLIENT="${1:-both}"
+
+usage() {
+  echo "Usage: $0 [both|claude|codex]" >&2
+}
+
+case "$(uname -s 2>/dev/null || true)" in
+  MINGW*|MSYS*|CYGWIN*)
+    echo "install.sh is for macOS/Linux. On Windows, run: powershell -ExecutionPolicy Bypass -File install.ps1 -Client ${CLIENT}" >&2
+    exit 2
+    ;;
+esac
+
+case "$CLIENT" in
+  both|claude|codex) ;;
+  *) usage; exit 2 ;;
+esac
+
+safe_link_dir() {
+  local link="$1"
+  local target="$2"
+  if [ -L "$link" ]; then
+    rm "$link"
+  elif [ -e "$link" ]; then
+    echo "Refusing to overwrite non-symlink path: $link" >&2
+    echo "Remove it manually if it is an old Light install target." >&2
+    return 1
+  fi
+  ln -s "$target" "$link"
+}
 
 install_into() {
   local skills_dir="$1"
   local parent
   parent="$(dirname "$skills_dir")"
   mkdir -p "$skills_dir"
+
+  local skill_dirs=("$REPO"/skills/light-*/)
+  if [ ! -d "${skill_dirs[0]}" ]; then
+    echo "No skills/light-* directories found under $REPO" >&2
+    return 1
+  fi
+
   local n=0
-  for d in "$REPO"/skills/light-*/; do
-    local name
-    name="$(basename "$d")"
-    rm -rf "$skills_dir/$name"
-    ln -s "$d" "$skills_dir/$name"
+  local d name target
+  for d in "${skill_dirs[@]}"; do
+    target="${d%/}"
+    name="$(basename "$target")"
+    safe_link_dir "$skills_dir/$name" "$target"
     [ -f "$skills_dir/$name/SKILL.md" ] && n=$((n+1))
   done
-  # shared libraries as siblings so skills' relative paths resolve
-  rm -rf "$parent/databases" "$parent/code_assets"
-  ln -s "$REPO/databases"   "$parent/databases"
-  ln -s "$REPO/code_assets" "$parent/code_assets"
-  echo "  $skills_dir  ->  $n/28 skills"
+
+  if [ "$n" -ne "$EXPECTED_SKILLS" ]; then
+    echo "Expected $EXPECTED_SKILLS skills, linked $n" >&2
+    return 1
+  fi
+
+  # Shared libraries as siblings so skills' relative paths resolve.
+  safe_link_dir "$parent/databases" "$REPO/databases"
+  safe_link_dir "$parent/code_assets" "$REPO/code_assets"
+  echo "  $skills_dir  ->  $n/$EXPECTED_SKILLS skills"
 }
 
 if [ "$CLIENT" = both ] || [ "$CLIENT" = claude ]; then
