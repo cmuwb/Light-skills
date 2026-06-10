@@ -37,3 +37,4 @@ common_mistakes: 创新点空泛、可行性不足、预算不合理、市场数
 
 ## 真实资源文件
 - [resources_real.md](resources_real.md) — 真实专利检索入口（Google Patents/CNIPA/Espacenet/PATENTSCOPE/PatentsView/The Lens，含 API 现状与可达性实测）、软著申请要点（中国版权保护中心流程、源代码 60 页规则）、专利文书结构与常见驳回理由、竞赛申报官方入口。
+- [material_extended_cards.md](material_extended_cards.md) — 软著/专利/竞赛材料细分卡（技术交底、权利要求、专利附图、在先技术检索报告、软著说明书/源码材料、挑战杯申报书、创新大赛商业计划书等 8 卡，官方入口 HTTP 200 核验）。

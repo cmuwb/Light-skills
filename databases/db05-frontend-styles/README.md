@@ -34,3 +34,4 @@ Mobbin、Awwwards、Dribbble、Behance、Lapa Ninja、Land-book、Godly、Sitein
 
 ## 真实资源文件
 - [resources_real.md](resources_real.md) — 真实可用前端资源清单（shadcn/ui、Tailwind、ECharts、Awwwards、Mobbin 等，带链接与许可）+ 科研场景 design_card。
+- [design_system_cards.md](design_system_cards.md) — 官方设计系统与科研项目落地模式（Carbon、Fluent、Polaris、Atlassian、Primer、USWDS、GOV.UK、Material Design 等 8 卡，站点 HTTP 200 核验）。

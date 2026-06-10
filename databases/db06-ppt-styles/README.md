@@ -34,3 +34,4 @@ Canva、PowerPoint 模板、Slidesgo、Beautiful.ai、Gamma、Pitch、SlideModel
 
 ## 真实资源文件
 - [resources_real.md](resources_real.md) — 真实 PPT 资源清单（Marp/reveal.js/python-pptx 等开源许可经 GitHub/PyPI API 实测，Canva/Slidesgo/Beamer 等带链接）+ 答辩/路演/汇报场景 slide_card。
+- [slide_pattern_cards.md](slide_pattern_cards.md) — 高级 PPT 页型与叙事模式（action-title 结果页、方法 pipeline、文献矩阵、dashboard、路演钩子、商业模式、A0 海报、rebuttal 汇报等 8 卡）。
