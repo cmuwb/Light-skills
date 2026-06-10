@@ -308,6 +308,7 @@
   download_url: "https://nlp.stanford.edu/projects/snli/"  # MNLI: https://cims.nyu.edu/~sbowman/multinli/
   paper_url: "https://openalex.org/W1840435438"  # SNLI: A large annotated corpus for NLI (EMNLP 2015), DOI:10.18653/v1/d15-1075
   citation: "Bowman et al., 2015, EMNLP, 被引 3,440; MNLI = Williams et al., 2018, NAACL (https://openalex.org/W2607892599, DOI:10.18653/v1/n18-1101, 被引 325) (2026-06-06)"
+  leaderboard_url: "无单一官方榜; SNLI/MNLI 常作为 NLI 基准出现在 GLUE/XTREME/模型论文中, 使用前到 Papers with Code 或原项目页复核"
   known_issues: "著名 annotation artifacts(仅看假设即可猜标签, Gururangan 2018)、众包标注偏置、SNLI 单一图像描述领域"
   bias_risk: "假设偏置、性别/社会刻板印象出现在众包文本、SNLI 领域窄"
   privacy_risk: "低(SNLI 基于公开 caption, MNLI 公开语料)"

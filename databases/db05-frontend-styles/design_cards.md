@@ -28,6 +28,7 @@
   component_pattern: 指标卡 + 实时折线 + 地图热力 + 排行榜
   interaction_pattern: 自动轮播 + 悬停明细
   animation_type: 数字滚动 + 渐入
+  screenshot_reference: https://echarts.apache.org/examples/
   implementation_notes: ECharts/D3 + CSS Grid; 注意投影对比度
   suitable_project_scene: 智慧农业/监控/竞赛答辩大屏
 
@@ -39,6 +40,7 @@
   component_pattern: 论文列表卡 + 顶部导航 + 锚点
   interaction_pattern: 平滑滚动 + 锚点高亮
   animation_type: 克制(淡入)
+  screenshot_reference: https://pages.github.com/
   implementation_notes: Next.js + Tailwind; 可用 shadcn 卡片
   suitable_project_scene: 论文项目展示/作品集
 
@@ -49,6 +51,8 @@
   font_style: 无衬线, 表格密排
   component_pattern: 侧导航 + 数据表 + 筛选器 + 图表卡 + 模态框
   interaction_pattern: 分页/筛选/排序 + 表单校验反馈
+  animation_type: 状态反馈微动效 + 筛选/弹窗淡入, 避免装饰性过强
+  screenshot_reference: https://ui.shadcn.com/blocks
   implementation_notes: shadcn/ui + Tailwind + ECharts; token 化主题
   suitable_project_scene: 科研数据平台/软著系统作品
 ```

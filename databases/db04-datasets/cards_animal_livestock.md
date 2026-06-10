@@ -376,6 +376,8 @@
   paper_url: 参考综述 https://openalex.org/W4399830201  # Public Computer Vision Datasets for Precision Livestock Farming: A Systematic Survey, arXiv:2406.10628 (2024, 被引 3)
   citation: 见上述精准畜牧 CV 数据集系统综述(可核查现有家畜 CV 数据集全景)
   leaderboard_url: 不适用
+  known_issues: 说明卡而非单一数据集；结论依赖 2026-06-06 前的公开检索快照，使用前应复核新发布数据集与许可证
+  bias_risk: 说明卡本身无采样偏差；其总结的公开奶山羊数据多为单场景/小规模/许可不明，存在领域覆盖偏差
   现状结论: |
     截至 2026-06-06 真实核查:
     1) 奶山羊"专用"公开数据集确实**稀缺**, 但**非完全空白** —

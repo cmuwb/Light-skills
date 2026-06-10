@@ -55,6 +55,9 @@
   font_pairing: 无衬线统一, 等宽显示数字
   visual_hierarchy: 图 > 结论批注 > 细节
   chart_style: 统一调色板, 突出关键序列
+  icon_style: 简洁线性图标/状态符号, 不抢图表主视觉
+  transition_style: 图表先出现, 关键结论批注淡入; 避免复杂飞入
+  speaker_notes_style: 先讲一句结论, 再解释图中异常/趋势与下一步动作
   reuse_template_notes: 图表风格与论文/前端统一(a07)
 ```
 

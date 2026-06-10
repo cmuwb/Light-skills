@@ -85,9 +85,17 @@
 
 - method_name: 普通 GAN(原始)
   task_type: 图像生成
+  input_data: 噪声向量 + 可选条件标签/图像
+  output_result: 生成图像样本
   core_assumption: 生成器判别器对抗
   advantages: 采样快
   limitations: 训练不稳定、模式崩塌；多数场景已被扩散超越
+  common_baselines: VAE、扩散模型、Flow-based 生成模型
+  evaluation_metrics: FID/IS、人工评估、多样性指标
+  suitable_datasets: MNIST/CIFAR-10/CelebA 等教学或历史对比数据集
+  implementation_repo: PyTorch/TensorFlow GAN 示例、torchvision/DCGAN tutorial
+  representative_papers: "Generative Adversarial Nets (Goodfellow et al., 2014)"
+  possible_innovation_points: 仅作历史基线或教学对照；新研究优先扩散/自回归/现代生成模型
   maturity: 过时(基线可用,新研究不推荐作为主方法)
 ```
 
