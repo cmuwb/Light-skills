@@ -13,8 +13,14 @@ SKILLS = ROOT / "skills"
 
 errors = []
 manual = resident = 0
+expected_manual = 17
+expected_resident = 11
+forbidden_skill_dirs = {"light-miniprogram", "light-software", "light-novel"}
 
 for skill_dir in sorted(SKILLS.glob("light-*")):
+    if skill_dir.name in forbidden_skill_dirs:
+        errors.append(f"{skill_dir.name}: 不属于 Light 科研技能包范围,不得放在 skills/ 下")
+        continue
     md = skill_dir / "SKILL.md"
     if not md.exists():
         errors.append(f"{skill_dir.name}: 缺 SKILL.md")
@@ -36,6 +42,11 @@ for skill_dir in sorted(SKILLS.glob("light-*")):
         manual += 1
 
 print(f"技能总数: {manual + resident}  (手动 {manual} / 常驻 {resident})")
+if (manual, resident) != (expected_manual, expected_resident):
+    errors.append(
+        f"技能数量与 README 约定不一致: 实测 手动 {manual}/常驻 {resident}, "
+        f"期望 手动 {expected_manual}/常驻 {expected_resident}"
+    )
 if errors:
     print("\n校验失败:")
     for e in errors:

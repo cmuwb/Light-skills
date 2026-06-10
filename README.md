@@ -12,7 +12,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/Light0305/Light/actions/workflows/ci.yml/badge.svg)](https://github.com/Light0305/Light/actions/workflows/ci.yml)
-[![Skills](https://img.shields.io/badge/skills-27-5B6FE0.svg)](#-技能总览)
+[![Skills](https://img.shields.io/badge/skills-28-5B6FE0.svg)](#-技能总览)
 [![Knowledge bases](https://img.shields.io/badge/knowledge%20bases-9-3DDC84.svg)](#-知识库)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-ready-8AA0FF.svg)](#-安装)
 [![Codex](https://img.shields.io/badge/Codex-ready-FFA63D.svg)](#-安装)
@@ -32,7 +32,7 @@
 
 ## Light 是什么
 
-Light 把科研全流程拆成 **27 个互相衔接的 AI 技能**,装进你的 Claude Code 和 Codex。从找文献、理数据、想创新点,到写论文、画图、排版、投稿、返修,再到软著专利、答辩 PPT、竞赛申报——每一步都有专门的技能接手,背后还垫着 9 个**可溯源**的知识库。
+Light 把科研全流程拆成 **28 个互相衔接的 AI 技能**,装进你的 Claude Code 和 Codex。从找文献、理数据、想创新点,到写论文、画图、排版、投稿、返修,再到软著专利、答辩 PPT、竞赛申报——每一步都有专门的技能接手,背后还垫着 9 个**可溯源**的知识库。
 
 它不是一堆提示词,也不是 MCP 或插件——而是一套装进客户端的**技能包**:每个技能都带**能跑的脚本、能套的模板、真实的范例**,对外接口经过实测,统计代码与 `scipy`/`sklearn` 逐位对齐。**不编文献、不造数据、不臆想出处和数据来源**——这是不可逾越的底线。
 
@@ -46,7 +46,7 @@ Light 把科研全流程拆成 **27 个互相衔接的 AI 技能**,装进你的 
 |---|---|---|
 | **产出** | 一段文字建议 | 能跑的脚本 + 能套的模板 + 真实范例 |
 | **可信** | 可能编造文献、数据、DOI | 写进规约的硬底线:不编造,核不实标"待核查" |
-| **协同** | 单点回答,前后脱节 | 27 个技能沿一条主线衔接,9 个知识库共享术语与方法 |
+| **协同** | 单点回答,前后脱节 | 28 个技能沿一条主线衔接,9 个知识库共享术语与方法 |
 | **质量** | 一次成型 | 对抗式自检:独立"挑刺" + 权威库交叉验证 |
 | **记忆** | 关掉就忘 | 跨会话项目记忆,记住做到哪一步 |
 
@@ -57,7 +57,7 @@ Light 把科研全流程拆成 **27 个互相衔接的 AI 技能**,装进你的 
 > 前置:已安装 [Claude Code](https://claude.ai/code) 或 Codex,本机有 `git`。
 
 > [!IMPORTANT]
-> 27 个技能共用根目录下的 9 个知识库与 `code_assets/`(靠相对路径引用),所以**整个仓库必须放在一起**。安装脚本会把技能和共享库一并链接到客户端的技能目录,请勿只挪单个技能。
+> 28 个技能共用根目录下的 9 个知识库与 `code_assets/`(靠相对路径引用),所以**整个仓库必须放在一起**。安装脚本会把技能和共享库一并链接到客户端的技能目录,请勿只挪单个技能。
 
 **1. 克隆仓库**(放哪都行):
 
@@ -94,7 +94,7 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 
 ## 🧭 技能总览
 
-27 个技能分两类:**17 个手动技能**可直接用 `/` 点名调用,也会在相关任务里自动触发;**10 个常驻技能**只在后台自动生效(不出现在 `/` 菜单,但照常工作)。
+28 个技能分两类:**17 个手动技能**可直接用 `/` 点名调用,也会在相关任务里自动触发;**11 个常驻技能**只在后台自动生效(不出现在 `/` 菜单,但照常工作)。
 
 ### 手动技能 · 按科研主线(17)
 
@@ -111,7 +111,7 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 | 📮 投稿返修 | [`light-venue-matching`](skills/light-venue-matching/SKILL.md) · [`light-review-rebuttal`](skills/light-review-rebuttal/SKILL.md) | 分层定位投稿(冲刺/稳妥/保底)· 模拟审稿、逐条返修 |
 | 🏆 成果转化 | [`light-ip-application`](skills/light-ip-application/SKILL.md) · [`light-slides`](skills/light-slides/SKILL.md) · [`light-competition`](skills/light-competition/SKILL.md) | 写软著专利 · 做答辩路演 PPT · 备竞赛申报材料 |
 
-### 常驻技能 · 后台自动(10)
+### 常驻技能 · 后台自动(11)
 
 无需调用,在相关任务中自动生效,贯穿全程保障质量:
 
@@ -119,6 +119,7 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 |------|------|
 | [`light-file-reading`](skills/light-file-reading/SKILL.md) | 读 PDF/Word/PPT/Excel/CSV/图片/代码/压缩包,理解结构而非只提字 |
 | [`light-memory-pm`](skills/light-memory-pm/SKILL.md) | 跨会话项目记忆、阶段拆解、里程碑与版本记录 |
+| [`light-orchestrator`](skills/light-orchestrator/SKILL.md) | 跨 ≥3 阶段的大任务编排 pipeline,设置决策点/确认点与产物台账 |
 | [`light-backend-coding`](skills/light-backend-coding/SKILL.md) | 实验/模型/数据/可视化/后端代码,TDD 与系统化调试 |
 | [`light-system-design`](skills/light-system-design/SKILL.md) | 系统架构、数据库、接口、权限、部署设计 |
 | [`light-frontend-design`](skills/light-frontend-design/SKILL.md) | 前端界面与可视化大屏,审美统一、可演示 |
@@ -143,7 +144,7 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
      → ip-application 软著专利 · slides 答辩 PPT · competition 竞赛申报
 ```
 
-全程 10 个常驻技能在后台兜底:`file-reading` 吃进任意材料,`memory-pm` 记住做到哪一步,`consistency` 盯跨材料一致,`self-review` 每次产出前自审,`research-ethics` 守住诚信底线。
+全程 11 个常驻技能在后台兜底:`file-reading` 吃进任意材料,`memory-pm` 记住做到哪一步,`orchestrator` 编排跨阶段 pipeline,`consistency` 盯跨材料一致,`self-review` 每次产出前自审,`research-ethics` 守住诚信底线。
 
 ## 🔬 案例展示:一篇用 Light 从头做到底的论文
 
@@ -223,13 +224,13 @@ key 通过环境变量提供,不要写进代码或提交到仓库。Light 的安
 - **诚实优先** — 不编造文献、数据、出处、数据来源;核不实的明确标注"待核查",并区分"已验证"与"推测";受版权材料只保留元数据与链接。
 - **能跑,不空谈** — 技能内置真实可运行的脚本、可套用的模板、完整的范例,而非一段段抽象指令。
 - **对抗式自检** — 关键产出都经过独立"挑刺"和权威工具的交叉验证(统计结果对照 `scipy`/`sklearn`,对外接口逐一实测)。
-- **全流程协同** — 27 个技能围绕一条科研主线衔接,共享 9 个知识库的术语、方法与投稿信息。
+- **全流程协同** — 28 个技能围绕一条科研主线衔接,共享 9 个知识库的术语、方法与投稿信息。
 
 ## 🗂️ 目录结构
 
 ```
 Light/
-├── skills/             # 27 个技能,每个含 SKILL.md + references,按需带 scripts/templates/examples
+├── skills/             # 28 个技能,每个含 SKILL.md + references,按需带 scripts/templates/examples
 ├── databases/          # 9 个知识库(db01–db09)
 ├── code_assets/        # 经对抗验证、CI 持续校验的统计与指标代码
 ├── projects/           # 端到端示例项目(dairygoat-detect-track,跑通完整链路)
@@ -265,7 +266,7 @@ Light 给的是能跑的脚本、能套的模板和真实范例,且有"不编造
 <details>
 <summary><b>常驻技能为什么在 <code>/</code> 里看不到?</b></summary>
 
-这 10 个技能设计为后台自动生效,无需手动唤起,所以不占用 `/` 菜单。17 个手动技能则照常用 `/` 调用。
+这 11 个技能设计为后台自动生效,无需手动唤起,所以不占用 `/` 菜单。17 个手动技能则照常用 `/` 调用。
 </details>
 
 <details>

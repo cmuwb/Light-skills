@@ -16,7 +16,7 @@ Light 最核心的价值是**可核查**。任何贡献都必须遵守 [CONVENTI
 
 ## 仓库结构速记 / Repo layout
 
-- `skills/light-*/` — 27 个技能,每个一个目录,含 `SKILL.md`(+ `references.md`、`scripts/`、`templates/`、`examples/`)
+- `skills/light-*/` — 28 个技能,每个一个目录,含 `SKILL.md`(+ `references.md`、`scripts/`、`templates/`、`examples/`)
 - `databases/db01–db09/` — 9 个共享知识库
 - `code_assets/` — 经验证的统计/指标代码
 - 技能通过相对路径引用 `databases/` 与 `code_assets/`,**所以整个仓库必须放在一起**
@@ -37,7 +37,7 @@ Light 最核心的价值是**可核查**。任何贡献都必须遵守 [CONVENTI
 1. Fork → 新建分支(如 `feat/xxx`、`fix/xxx`)。
 2. 提交信息讲清"做了什么、为什么"。
 3. 开 PR,按模板勾选自检项。
-4. CI 会校验技能 frontmatter 与 `code_assets/` 是否可编译。
+4. CI 会校验技能 frontmatter、数据库 Markdown/YAML/README 链接与 `code_assets/` 是否可编译。
 
 ## 行为准则 / Code of Conduct
 

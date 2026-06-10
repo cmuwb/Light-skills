@@ -12,7 +12,7 @@ Every step of research, from literature search to rebuttal, has a dedicated skil
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/Light0305/Light/actions/workflows/ci.yml/badge.svg)](https://github.com/Light0305/Light/actions/workflows/ci.yml)
-[![Skills](https://img.shields.io/badge/skills-27-5B6FE0.svg)](#-skills-at-a-glance)
+[![Skills](https://img.shields.io/badge/skills-28-5B6FE0.svg)](#-skills-at-a-glance)
 [![Knowledge bases](https://img.shields.io/badge/knowledge%20bases-9-3DDC84.svg)](#-knowledge-bases)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-ready-8AA0FF.svg)](#-install)
 [![Codex](https://img.shields.io/badge/Codex-ready-FFA63D.svg)](#-install)
@@ -32,7 +32,7 @@ Every step of research, from literature search to rebuttal, has a dedicated skil
 
 ## What is Light
 
-Light breaks the full research pipeline into **27 interlocking AI skills**, installed into your Claude Code and Codex. From finding literature, wrangling data, and generating ideas, to drafting papers, making figures, typesetting, submitting, and rebutting — plus patents, defense decks, and competition materials — every step has a dedicated skill, backed by 9 **traceable** knowledge bases.
+Light breaks the full research pipeline into **28 interlocking AI skills**, installed into your Claude Code and Codex. From finding literature, wrangling data, and generating ideas, to drafting papers, making figures, typesetting, submitting, and rebutting — plus patents, defense decks, and competition materials — every step has a dedicated skill, backed by 9 **traceable** knowledge bases.
 
 It is not a pile of prompts, nor an MCP server or plugin — it is a **skill pack** installed into your client. Each skill ships **runnable scripts, reusable templates, and real worked examples**: external interfaces are tested for real, and statistics code is aligned with `scipy`/`sklearn` down to the last digit. **Never fabricating references, data, sources, or origins** is a line it won't cross.
 
@@ -46,7 +46,7 @@ Most "research AI" stops at chat. Light is different in three hard ways:
 |---|---|---|
 | **Output** | A paragraph of advice | Runnable scripts + fillable templates + real examples |
 | **Trust** | May fabricate refs, data, DOIs | Hard rule: never fabricate; the unverifiable is flagged |
-| **Cohesion** | One-off answers, disjoint | 27 skills along one line, 9 shared knowledge bases |
+| **Cohesion** | One-off answers, disjoint | 28 skills along one line, 9 shared knowledge bases |
 | **Quality** | One pass | Adversarial self-check + authoritative cross-validation |
 | **Memory** | Forgets on close | Cross-session project memory |
 
@@ -57,7 +57,7 @@ For: undergrads, grad students, and independent researchers who want to turn a p
 > Prereq: [Claude Code](https://claude.ai/code) or Codex installed, and `git` available.
 
 > [!IMPORTANT]
-> The 27 skills share the 9 knowledge bases and `code_assets/` at the repo root (via relative paths), so **keep the whole repo together**. The installer links the skills plus shared libraries into your client's skills directory — don't move a single skill out on its own.
+> The 28 skills share the 9 knowledge bases and `code_assets/` at the repo root (via relative paths), so **keep the whole repo together**. The installer links the skills plus shared libraries into your client's skills directory — don't move a single skill out on its own.
 
 **1. Clone** (anywhere):
 
@@ -94,7 +94,7 @@ Matching skills **trigger automatically** (matched to what you ask, no commands 
 
 ## 🧭 Skills at a glance
 
-The 27 skills split in two: **17 manual skills** you can invoke by name with `/`, which also trigger automatically on relevant tasks; and **10 always-on skills** that run in the background only (not in the `/` menu, but still working).
+The 28 skills split in two: **17 manual skills** you can invoke by name with `/`, which also trigger automatically on relevant tasks; and **11 always-on skills** that run in the background only (not in the `/` menu, but still working).
 
 ### Manual skills · along the research line (17)
 
@@ -111,7 +111,7 @@ The 27 skills split in two: **17 manual skills** you can invoke by name with `/`
 | 📮 Submit & rebut | `light-venue-matching` · `light-review-rebuttal` | Target venues by tier (reach/safe/floor) · mock-review, rebut point by point |
 | 🏆 Outputs | `light-ip-application` · `light-slides` · `light-competition` | Write patents/copyright · build defense & pitch decks · prep contest materials |
 
-### Always-on skills · background (10)
+### Always-on skills · background (11)
 
 No need to invoke — they kick in automatically on relevant tasks and guard quality throughout:
 
@@ -119,6 +119,7 @@ No need to invoke — they kick in automatically on relevant tasks and guard qua
 |-------|------|
 | `light-file-reading` | Read PDF/Word/PPT/Excel/CSV/image/code/archives — understand structure, not just text |
 | `light-memory-pm` | Cross-session project memory, stage breakdown, milestones & versions |
+| `light-orchestrator` | Orchestrate ≥3-stage tasks into pipelines, checkpoints, and an artifact passport |
 | `light-backend-coding` | Experiment/model/data/viz/backend code, TDD & systematic debugging |
 | `light-system-design` | Architecture, database, API, auth, deployment design |
 | `light-frontend-design` | Frontend UI & visualization dashboards, polished and demo-ready |
@@ -143,7 +144,7 @@ kickoff → literature-search find direction & gaps → data-engineering health-
         → ip-application patents · slides defense deck · competition contest materials
 ```
 
-Throughout, the 10 always-on skills backstop it: `file-reading` ingests any material, `memory-pm` remembers where you left off, `consistency` keeps materials aligned, `self-review` self-checks before every output, `research-ethics` holds the integrity floor.
+Throughout, the 11 always-on skills backstop it: `file-reading` ingests any material, `memory-pm` remembers where you left off, `orchestrator` plans cross-stage pipelines, `consistency` keeps materials aligned, `self-review` self-checks before every output, `research-ethics` holds the integrity floor.
 
 ## 📚 Knowledge bases
 
@@ -184,13 +185,13 @@ Provide keys via environment variables — never hard-code or commit them. See [
 - **Honesty first** — never invent references, data, sources, or origins; the unverifiable is clearly flagged "to be checked", verified is kept separate from inferred, and copyrighted material is stored as metadata and links only.
 - **Runnable, not hand-wavy** — skills carry scripts that actually run, fillable templates, and complete examples, not paragraphs of abstract advice.
 - **Adversarial self-check** — key outputs pass an independent "refute it" pass and cross-validation against trusted tools (statistics checked against `scipy`/`sklearn`, external interfaces tested for real).
-- **Pipeline cohesion** — 27 skills hand off along one research throughline, sharing 9 knowledge bases for terminology, methods, and venue data.
+- **Pipeline cohesion** — 28 skills hand off along one research throughline, sharing 9 knowledge bases for terminology, methods, and venue data.
 
 ## 🗂️ Layout
 
 ```
 Light/
-├── skills/             # 27 skills, each with SKILL.md + references + scripts/templates/examples
+├── skills/             # 28 skills, each with SKILL.md + references + scripts/templates/examples
 ├── databases/          # 9 knowledge bases (db01–db09)
 ├── code_assets/        # adversarially-verified stats & metrics code, CI-checked
 ├── assets/             # logo, images
@@ -221,7 +222,7 @@ Most features need none — literature search defaults to the free OpenAlex / Cr
 <details>
 <summary><b>Why don't the always-on skills show up under <code>/</code>?</b></summary>
 
-These 10 skills are designed to work in the background automatically, so they don't take up space in the `/` menu. The 17 manual skills work via `/` as usual.
+These 11 skills are designed to work in the background automatically, so they don't take up space in the `/` menu. The 17 manual skills work via `/` as usual.
 </details>
 
 <details>
