@@ -149,12 +149,30 @@ LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
 """
 
 
+
+def _selftest() -> int:
+    findings = scan(SAMPLE_LOG)
+    assert has_fatal(findings), findings
+    for key in ("latex_error", "tex_error", "missing_graphic", "undef_ref", "undef_cite", "multiply_label", "overfull_hbox"):
+        assert key in findings, (key, findings)
+    report = summarize(findings, max_items=3)
+    assert "errors=" in report and "warnings=" in report, report
+    clean = scan("This is a clean LaTeX log.\nOutput written on paper.pdf")
+    assert not has_fatal(clean) and summarize(clean).startswith("OK:"), clean
+    print("[selftest] PASS precheck_log")
+    return 0
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description="扫描 LaTeX .log 汇总编译问题")
     p.add_argument("logfile", nargs="?", help="LaTeX .log 路径；省略则跑内置自测")
     p.add_argument("--json", action="store_true", help="输出 JSON")
     p.add_argument("--max", type=int, default=8, help="每类最多展示条数")
+    p.add_argument("--selftest", action="store_true", help="run built-in log parser self-test")
     args = p.parse_args(argv)
+
+    if args.selftest:
+        return _selftest()
 
     if args.logfile:
         with open(args.logfile, "r", encoding="utf-8", errors="replace") as fh:

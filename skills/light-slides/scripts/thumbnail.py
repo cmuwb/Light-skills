@@ -197,16 +197,50 @@ def make_grid(imgs, cols=4, pad=12, label=True):
     return grid
 
 
+
+def _selftest() -> int:
+    if Presentation is None:
+        print("[selftest] SKIP thumbnail: python-pptx not installed")
+        return 0
+    from pptx.util import Inches
+    from pptx.dml.color import RGBColor
+    prs = Presentation()
+    blank = prs.slide_layouts[6]
+    for idx, color in enumerate(("4472C4", "70AD47", "ED7D31"), 1):
+        slide = prs.slides.add_slide(blank)
+        box = slide.shapes.add_shape(1, Inches(0.7), Inches(0.7), Inches(4.5), Inches(1.2))
+        box.fill.solid(); box.fill.fore_color.rgb = RGBColor.from_string(color)
+        tx = slide.shapes.add_textbox(Inches(0.8), Inches(2.2), Inches(6), Inches(1))
+        tx.text = f"Slide {idx}"
+    with tempfile.TemporaryDirectory(prefix="light_thumb_") as tmp:
+        pptx_path = os.path.join(tmp, "demo.pptx")
+        out = os.path.join(tmp, "grid.png")
+        prs.save(pptx_path)
+        imgs = render_slides_pillow(pptx_path, px_w=240)
+        assert len(imgs) == 3, len(imgs)
+        grid = make_grid(imgs, cols=2)
+        grid.save(out)
+        assert os.path.exists(out) and os.path.getsize(out) > 0, out
+    print("[selftest] PASS thumbnail")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description="把 pptx 渲染成缩略图网格做视觉 QA")
-    ap.add_argument("pptx")
+    ap.add_argument("pptx", nargs="?")
     ap.add_argument("-o", "--out", help="输出 png（默认 <deck>_thumbnails.png）")
     ap.add_argument("--cols", type=int, default=4)
     ap.add_argument("--width", type=int, default=480, help="单页像素宽")
     ap.add_argument("--scale", type=float, default=1.0, help="单页宽缩放系数")
     ap.add_argument("--engine", choices=["auto", "soffice", "pillow"],
                     default="auto")
+    ap.add_argument("--selftest", action="store_true", help="run synthetic pptx thumbnail self-test")
     args = ap.parse_args()
+
+    if args.selftest:
+        raise SystemExit(_selftest())
+    if not args.pptx:
+        ap.error("需要提供 pptx 路径（或使用 --selftest）")
 
     if not os.path.exists(args.pptx):
         sys.exit(f"找不到文件：{args.pptx}")

@@ -70,12 +70,27 @@ def convert(pptx_path, out_path=None, timeout=180):
     return True, f"转换成功（{size_kb:.0f} KB）", produced
 
 
+
+def _selftest() -> int:
+    missing = os.path.join(os.path.dirname(os.path.abspath(__file__)), "__missing__.pptx")
+    ok, msg, pdf = convert(missing)
+    assert ok is False and pdf is None and "找不到" in msg, (ok, msg, pdf)
+    soffice = find_soffice()
+    assert soffice is None or isinstance(soffice, str), soffice
+    print(f"[selftest] PASS to_pdf soffice={'yes' if soffice else 'no'}")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description="pptx -> pdf（LibreOffice 无头转换）")
     ap.add_argument("pptx", nargs="?")
     ap.add_argument("-o", "--out", help="输出 PDF 路径（默认同名同目录）")
     ap.add_argument("--check", action="store_true", help="只探测引擎可用性")
+    ap.add_argument("--selftest", action="store_true", help="run offline conversion precondition self-test")
     args = ap.parse_args()
+
+    if args.selftest:
+        raise SystemExit(_selftest())
 
     if args.check:
         s = find_soffice()

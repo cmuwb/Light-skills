@@ -375,7 +375,7 @@ def self_test():
 def main():
     ap = argparse.ArgumentParser(description="检测项目技术栈并建议工具选型")
     ap.add_argument("project_dir", nargs="?", help="项目目录")
-    ap.add_argument("--self-test", action="store_true", help="合成清单自检")
+    ap.add_argument("--self-test", "--selftest", dest="self_test", action="store_true", help="合成清单自检")
     ap.add_argument("--json", action="store_true", help="输出 JSON")
     args = ap.parse_args()
 
