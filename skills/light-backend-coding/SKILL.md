@@ -28,6 +28,7 @@ user-invocable: false
   - pre-commit：`.pre-commit-config.yaml` 的 `repos` 用 `rev` 锁版本(tag/SHA，勿用浮动分支)；接 `astral-sh/ruff-pre-commit` 的 `ruff`(`args:[--fix]`)+`ruff-format`；`pre-commit install` 启用，CI 跑 `pre-commit run --all-files`。
   - SonarQube(必要时)：`sonar-project.properties` 设 `sonar.sources`/`sonar.tests`/`sonar.python.coverage.reportPaths=coverage.xml`；Quality Gate 卡阈值；token 走 secrets。
 - **CI**：GitHub Actions 放 `.github/workflows/*.yml`；`actions/checkout@v6` + `actions/setup-python@v6`(`cache:"pip"`，缓存默认关须显式开)；`strategy.matrix.python-version` 多版本并行；典型流水线 checkout → 装依赖 → `ruff check` → `pytest`；secrets 用 `${{ secrets.X }}` 注入。
+- **资产清单防漂移**：当仓库有 `WHATS_INCLUDED.md` / 资产索引 / manifest 这类人工清单时，新增脚本或模板不能只更新文件本身；要加 CI 校验防漏登。校验器应解析清单中的 canonical 区段/表格，按精确键（如 `(skill_slug, script_name)`）检查缺失、重复、陈旧项；不要用全文件 basename 字符串匹配，否则模板区的顺手提及或同名脚本会造成假通过。检测入口也要用 AST/结构化方式（如真实 `if __name__ == "__main__"`），不要只搜 `__main__` 字符串。
 - **文档**：README(安装/运行/复现命令)、关键模块注释、运行说明。
 
 ## 调试与审查
@@ -82,3 +83,4 @@ def load_scores(raw):
 ---
 工具硬信息(真实端点/参数/配置/工作流)见同目录 `references.md`。
 深用专题：TDD 红旗与合理化反驳表见 `references/tdd_redflags.md`；系统化调试四阶段+边界埋点见 `references/debug_protocol.md`（配套可跑模板 `assets/project-scaffold/scripts/debug_instrument.sh` 与 `boundary_trace.py`）；自审清单 `assets/project-scaffold/CODE_REVIEW_CHECKLIST.md`。
+资产清单/manifest 防漂移校验模式见 `references/asset_manifest_governance.md`。
