@@ -31,3 +31,7 @@ Papers With Code、Hugging Face Models/Papers、GitHub Trending、Awesome 系列
 - [cards_temporal_action.md](cards_temporal_action.md) — 时序动作检测(TAL) + 序数回归（ActionFormer/BMN/TriDet/CORAL/CORN/QWK 等 14 卡，专供发情爬跨瞬时事件定位与跛行有序评分，代表作 OpenAlex 实拉）
 - [cards_nighttime_multimodal.md](cards_nighttime_multimodal.md) — 夜间红外/热成像检测 + RGB-IR 多模态融合 + 级联误差/端到端联合（Zero-DCE/CFT/ProbEn 等 18 卡，含昼夜预警与四级流水线误差传播适配）
 - [method_cards.md](method_cards.md) — 早期种子卡 + 卡片模板（schema 参考）
+- [cards_biomedical.md](cards_biomedical.md) — 生物医学方法（Cox/KM、U-Net/nnU-Net、GWAS、临床预测、AlphaFold、CheXNet 等 6 卡，OpenAlex 核验）
+- [cards_physical_sciences.md](cards_physical_sciences.md) — 理工跨学科/物理化学材料（MPNN/SchNet/CGCNN、DFT、MLIP、EEGNet、Pangu/GraphCast、CALYPSO/USPEX 等 6 卡）
+- [cards_stats_econ_finance.md](cards_stats_econ_finance.md) — 统计/经济金融/因果推断（DiD、IV/LATE、RDD、PSM/IPW、GARCH/VAR、分位数回归/因果森林等 6 卡）
+- [cards_nlp_speech.md](cards_nlp_speech.md) — NLP/语音（Seq2Seq/Transformer、T5/GPT-3、RAG、CTC/Conformer、wav2vec2/HuBERT、Whisper 等 6 卡）
