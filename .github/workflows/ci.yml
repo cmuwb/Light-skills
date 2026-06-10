@@ -3,9 +3,9 @@ name: CI
 on:
   push:
     branches: [master]
-    paths: ["code_assets/**", "databases/**", "skills/**/SKILL.md", "skills/**/scripts/**", "skills/**/assets/**", "README*.md", "WHATS_INCLUDED.md", "CHANGELOG.md", "CONTRIBUTING.md", "MODE_REGISTRY.md", ".github/workflows/**", ".github/scripts/**"]
+    paths: ["code_assets/**", "databases/**", "skills/**/SKILL.md", "skills/**/scripts/**", "skills/**/assets/**", "README*.md", "WHATS_INCLUDED.md", "CHANGELOG.md", "CONTRIBUTING.md", "MODE_REGISTRY.md", "ROUTER.md", "ROUTER_EXAMPLES.md", "CONVENTIONS.md", ".github/workflows/**", ".github/scripts/**"]
   pull_request:
-    paths: ["code_assets/**", "databases/**", "skills/**/SKILL.md", "skills/**/scripts/**", "skills/**/assets/**", "README*.md", "WHATS_INCLUDED.md", "CHANGELOG.md", "CONTRIBUTING.md", "MODE_REGISTRY.md", ".github/workflows/**", ".github/scripts/**"]
+    paths: ["code_assets/**", "databases/**", "skills/**/SKILL.md", "skills/**/scripts/**", "skills/**/assets/**", "README*.md", "WHATS_INCLUDED.md", "CHANGELOG.md", "CONTRIBUTING.md", "MODE_REGISTRY.md", "ROUTER.md", "ROUTER_EXAMPLES.md", "CONVENTIONS.md", ".github/workflows/**", ".github/scripts/**"]
 
 jobs:
   test:
@@ -63,6 +63,8 @@ jobs:
         run: python .github/scripts/check_databases.py
       - name: Check skill script assets
         run: python .github/scripts/check_skill_assets.py
+      - name: Check entry-point docs
+        run: python .github/scripts/check_entry_docs.py
 
   skill-selftests:
     name: 执行技能脚本自测
