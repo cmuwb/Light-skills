@@ -25,6 +25,7 @@
 | 大创 / 挑战杯 / 互联网+ / 申报书 / 商业计划书 | m17 competition |
 | 读这个文件 / 这个 PDF/PPT/Excel 讲了啥 | a01 file-reading |
 | 记住 / 项目进展 / 我们做到哪了 | a02 memory-pm |
+| 继续 / 刚断了 / 接手 Claude / 恢复上下文 / 上次做到哪（断点恢复/跨轮续接） | a02 memory-pm + light-orchestrator |
 | 写代码 / 实验代码 / 复现 | a03 backend-coding |
 | 系统设计 / 数据库 / 接口 / ER 图 | a04 system-design |
 | 前端 / 界面 / 大屏 / 可视化平台 | a05 frontend-design |
@@ -34,7 +35,7 @@
 
 - a07 consistency、a08 self-review、a09 tool-selection、a10 research-ethics 在**所有**任务中后台生效。
 - a01 file-reading、a02 memory-pm 在涉及文件/长期项目时自动触发。
-- **light-orchestrator** 在跨多阶段的大任务（"从X做到Y""全流程"）时启动，规划 pipeline、逐阶段调用下列技能、在阶段间卡强制检查点。单一阶段的轻任务不启动它，直接按下表路由。
+- **light-orchestrator** 在跨多阶段的大任务（"从X做到Y""全流程"）时启动，规划 pipeline、逐阶段调用下列技能、在阶段间卡强制检查点。用户说"继续/刚断了/接手/恢复上下文"且语义指向断点恢复/跨轮续接时，也优先启动它做断点恢复：先读 git 状态、todo、passport/db09、最近提交/CI，再继续执行；若只是续写当前段落/文本，按写作或润色单技能路由。单一阶段的轻任务不启动它，直接按下表路由。
 
 ## 组合调用（常见链路）
 
