@@ -28,7 +28,8 @@ user-invocable: false
   - pre-commit：`.pre-commit-config.yaml` 的 `repos` 用 `rev` 锁版本(tag/SHA，勿用浮动分支)；接 `astral-sh/ruff-pre-commit` 的 `ruff`(`args:[--fix]`)+`ruff-format`；`pre-commit install` 启用，CI 跑 `pre-commit run --all-files`。
   - SonarQube(必要时)：`sonar-project.properties` 设 `sonar.sources`/`sonar.tests`/`sonar.python.coverage.reportPaths=coverage.xml`；Quality Gate 卡阈值；token 走 secrets。
 - **CI**：GitHub Actions 放 `.github/workflows/*.yml`；`actions/checkout@v6` + `actions/setup-python@v6`(`cache:"pip"`，缓存默认关须显式开)；`strategy.matrix.python-version` 多版本并行；典型流水线 checkout → 装依赖 → `ruff check` → `pytest`；secrets 用 `${{ secrets.X }}` 注入。
-- **资产清单防漂移**：当仓库有 `WHATS_INCLUDED.md` / 资产索引 / manifest 这类人工清单时，新增脚本或模板不能只更新文件本身；要加 CI 校验防漏登。校验器应解析清单中的 canonical 区段/表格，按精确键（如 `(skill_slug, script_name)`）检查缺失、重复、陈旧项；不要用全文件 basename 字符串匹配，否则模板区的顺手提及或同名脚本会造成假通过。检测入口也要用 AST/结构化方式（如真实 `if __name__ == "__main__"`），不要只搜 `__main__` 字符串。
+- **资产清单防漂移**：当仓库有 `WHATS_INCLUDED.md` / 资产索引 / manifest 这类人工清单时，新增脚本或模板不能只更新文件本身；要加 CI 校验防漏登。校验器应解析清单中的 canonical 区段/表格，按精确键（如 `(skill_slug, script_name)`）检查缺失、重复、陈旧项；不要用全文件 basename 字符串匹配，否则模板区的顺手提及或同名脚本会造成假通过。检测入口也要用 AST/结构化方式（如真实 `if __name__ == "__main__"`），不要只搜 `__main__` 字符串。补齐覆盖后及时把“缺 selftest warning”升级为 hard gate，防止后续回退。
+- **脚本自测入口治理**：给技能脚本补自测时优先新增显式 `--selftest`/兼容别名，保持原 CLI 行为不破坏；自测必须离线、用合成数据或 `TemporaryDirectory`，包含真实断言，并清理生成物。对可选依赖（如外部二进制、网络服务、重型解释库）采用“可用则验证、不可用则断言降级路径”的策略，不把缺环境当作失败。
 - **文档**：README(安装/运行/复现命令)、关键模块注释、运行说明。
 
 ## 调试与审查

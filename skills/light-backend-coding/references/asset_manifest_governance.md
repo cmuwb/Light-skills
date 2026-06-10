@@ -30,9 +30,15 @@
 
 5. **分阶段收紧质量门**
    - 第一阶段：缺登记/不可编译/无真实入口 hard fail；selftest 缺口 warning。
-   - 第二阶段：补齐 selftest 后再把 selftest 覆盖转为 hard fail。
+   - 第二阶段：补齐 selftest 后立刻把 selftest 覆盖转为 hard fail，避免后续新增脚本只登记不自测。
+   - 第三阶段（可选）：CI 不只检查 selftest marker，还按成本分层实际运行 `--selftest`：stdlib/纯函数脚本每次跑，重依赖/慢图形脚本可定时或矩阵跑。
 
-6. **CI 触发范围要包含清单本身**
+6. **自测入口设计**
+   - 入口统一用显式 `--selftest`（可保留历史 `--self-test` alias），不要靠“无参数 demo”冒充自测。
+   - 自测使用合成数据、临时目录、真实断言；不要依赖网络、账号、LibreOffice 等外部状态。
+   - 可选依赖缺失时，断言降级路径（skip/degraded record）而不是失败；可用时再验证实际产物。
+
+7. **CI 触发范围要包含清单本身**
    - 如果 `WHATS_INCLUDED.md` 改动不会触发 CI，校验器就无法防止清单漂移。
 
 ## 常见坑
