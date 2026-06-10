@@ -3,11 +3,11 @@
 
 CI scope:
 - every fenced ```yaml/```yml block under databases/ must parse as YAML;
-- database card files must contain non-empty list[dict] YAML blocks;
+- database card-bearing files must contain non-empty list[dict] YAML blocks;
 - db03–db08 real cards must satisfy their README-declared required fields;
 - template blocks with all required fields left blank are allowed and skipped;
 - duplicate YAML keys are rejected instead of silently overwritten;
-- db03 method_name and db04 dataset_name must be unique within each database;
+- db03 method_name, db04 dataset_name, db05 project_type and db06 scenario must be unique within each database;
 - every local .md link in a database README must point to an existing file.
 """
 from __future__ import annotations
@@ -54,6 +54,8 @@ NAME_FIELDS = {
 UNIQUE_NAME_FIELDS = {
     "db03-methods": "method_name",
     "db04-datasets": "dataset_name",
+    "db05-frontend-styles": "project_type",
+    "db06-ppt-styles": "scenario",
 }
 
 
@@ -91,6 +93,14 @@ YAML_FENCE_RE = re.compile(
 def is_card_file(path: pathlib.Path) -> bool:
     name = path.name.lower()
     return name.startswith("cards") or name.endswith("_cards.md")
+
+
+def is_schema_card_file(path: pathlib.Path) -> bool:
+    """Files whose fenced YAML blocks are database cards and must satisfy schema checks."""
+    db_key = db_key_for(path)
+    if is_card_file(path):
+        return True
+    return db_key in {"db05-frontend-styles", "db06-ppt-styles"} and path.name == "resources_real.md"
 
 
 def db_key_for(path: pathlib.Path) -> str | None:
@@ -150,7 +160,7 @@ def card_label(db_key: str, item: dict, fallback: str) -> str:
 
 
 def record_unique_name(db_key: str, item: dict, location: str) -> None:
-    """Collect exact db03/db04 card names so duplicates can fail CI."""
+    """Collect exact card names for databases where duplicate names fail CI."""
     name_field = UNIQUE_NAME_FIELDS.get(db_key)
     if not name_field:
         return
@@ -180,8 +190,9 @@ else:
         db_key = db_key_for(md)
         schema = SCHEMAS.get(db_key or "")
         blocks = list(YAML_FENCE_RE.finditer(text))
-        if is_card_file(md) and not blocks:
-            errors.append(f"{rel}: card file has no fenced YAML blocks")
+        schema_card_file = is_schema_card_file(md)
+        if schema_card_file and not blocks:
+            errors.append(f"{rel}: card-bearing file has no fenced YAML blocks")
         for idx, match in enumerate(blocks, start=1):
             block = match.group(1)
             yaml_blocks += 1
@@ -190,7 +201,7 @@ else:
             except Exception as exc:  # noqa: BLE001 - report parser detail in CI
                 errors.append(f"{rel}: yaml block #{idx} does not parse: {exc}")
                 continue
-            if not is_card_file(md):
+            if not schema_card_file:
                 continue
             if not isinstance(data, list) or not data:
                 errors.append(f"{rel}: yaml block #{idx} must be a non-empty list")
