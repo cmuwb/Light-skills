@@ -31,6 +31,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 import os
 import json
 import argparse
+import tempfile
 from datetime import datetime
 
 import matplotlib
@@ -205,6 +206,28 @@ def draw_roadmap(plan, out_path):
     return out_path
 
 
+
+def _selftest() -> int:
+    """离线自测：在临时目录生成甘特图与路线图并验证输入校验。"""
+    _setup_cjk_font()
+    _validate(SAMPLE)
+    assert _month_index("2026-11", "2026-09") == 2
+    with tempfile.TemporaryDirectory(prefix="light_roadmap_gen_") as tmp:
+        gantt = draw_gantt(SAMPLE, os.path.join(tmp, "gantt.png"))
+        roadmap = draw_roadmap(SAMPLE, os.path.join(tmp, "roadmap.png"))
+        for out in (gantt, roadmap):
+            assert os.path.exists(out) and os.path.getsize(out) > 0, out
+    bad = {"milestones": [{"phase": "bad", "start": "2026-09", "months": 0}]}
+    try:
+        _validate(bad)
+    except ValueError as exc:
+        assert "months" in str(exc), exc
+    else:
+        raise AssertionError("non-positive months should fail")
+    print("[selftest] PASS roadmap_gen")
+    return 0
+
+
 def main():
     p = argparse.ArgumentParser(description="里程碑 JSON -> 甘特图/技术路线图")
     p.add_argument("plan", nargs="?", help="里程碑 JSON 路径；省略则跑合成自测")
@@ -213,7 +236,11 @@ def main():
     p.add_argument("--out", help="输出文件名（单图时用）")
     p.add_argument("--emit-sample", metavar="PATH",
                    help="导出样例 JSON 模板到指定路径后退出")
+    p.add_argument("--selftest", action="store_true", help="run offline synthetic self-test")
     args = p.parse_args()
+
+    if args.selftest:
+        return _selftest()
 
     if args.emit_sample:
         with open(args.emit_sample, "w", encoding="utf-8") as f:
@@ -249,4 +276,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

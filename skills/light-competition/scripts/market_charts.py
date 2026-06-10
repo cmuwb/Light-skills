@@ -27,6 +27,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 import os
 import json
 import argparse
+import tempfile
 
 import matplotlib
 matplotlib.use("Agg")
@@ -319,6 +320,30 @@ KINDS = {
 }
 
 
+
+def _selftest() -> int:
+    """离线自测：在临时目录生成四类图并验证输入校验。"""
+    _setup_cjk_font()
+    _validate(SAMPLE)
+    with tempfile.TemporaryDirectory(prefix="light_market_charts_") as tmp:
+        outputs = []
+        for kind, (field, fn, suffix) in KINDS.items():
+            out = os.path.join(tmp, f"{kind}_{suffix}.png")
+            outputs.append(fn(SAMPLE, out))
+        for out in outputs:
+            assert os.path.exists(out) and os.path.getsize(out) > 0, out
+    bad = json.loads(json.dumps(SAMPLE, ensure_ascii=False))
+    bad["tam_sam_som"]["SAM"]["value"] = 999
+    try:
+        _validate(bad)
+    except ValueError as exc:
+        assert "TAM" in str(exc), exc
+    else:
+        raise AssertionError("invalid TAM/SAM/SOM hierarchy should fail")
+    print("[selftest] PASS market_charts")
+    return 0
+
+
 def main():
     p = argparse.ArgumentParser(description="市场分析 JSON -> 四类市场数据图")
     p.add_argument("data", nargs="?", help="市场分析 JSON 路径；省略则跑合成自测")
@@ -327,7 +352,11 @@ def main():
     p.add_argument("--out", help="输出文件名（单图时用）")
     p.add_argument("--emit-sample", metavar="PATH",
                    help="导出样例 JSON 模板到指定路径后退出")
+    p.add_argument("--selftest", action="store_true", help="run offline synthetic self-test")
     args = p.parse_args()
+
+    if args.selftest:
+        return _selftest()
 
     if args.emit_sample:
         with open(args.emit_sample, "w", encoding="utf-8") as f:
@@ -369,4 +398,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

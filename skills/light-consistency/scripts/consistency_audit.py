@@ -391,7 +391,11 @@ def main():
     ap.add_argument("--db09", help="db09 源:含三份 yaml 的目录,或真实项目的 terminology.md(Markdown 表)")
     ap.add_argument("--materials", nargs="*", help="材料文本文件(支持 glob)")
     ap.add_argument("--json", help="同时把发现写入该 JSON 文件")
+    ap.add_argument("--selftest", action="store_true", help="run built-in offline synthetic self-test")
     args = ap.parse_args()
+
+    if args.selftest:
+        return selftest()
 
     if not args.db09 or not args.materials:
         return selftest()

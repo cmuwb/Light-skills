@@ -212,28 +212,52 @@ def main(argv=None):
 
 
 def _selftest():
-    """__main__ 自测：1 真 DOI + 1 假 DOI，验证报告结构与 HTTP 码记录。"""
-    print("### verify_refs 自测")
-    dois = ["10.1038/s41597-023-02555-8", "10.9999/this-doi-does-not-exist-xyz"]
-    rep = build_report(dois, self_authors=["Vayssade"])
-    print(json.dumps(rep, ensure_ascii=False, indent=2)[:1400])
+    """离线自测：猴子补丁 verify_one，验证报告汇总/OA 字段/告警边界。"""
+    print("### verify_refs 离线自测")
+    global verify_one
+    orig_verify_one = verify_one
+
+    def fake_verify_one(doi: str, self_authors=None):
+        if "missing" in doi:
+            return {
+                "doi": doi, "found_crossref": False, "found_openalex": False,
+                "http": {"crossref": 404, "openalex": 404}, "title": None, "year": None,
+                "cited_by_count": None, "is_cn": False, "is_self_cite": False,
+                "is_oa": None, "oa_status": None, "venue": None, "is_in_doaj": None,
+                "oa_type": None, "version": None,
+                "errors": [{"severity": "high", "msg": "synthetic missing DOI"}], "warnings": [],
+            }
+        return {
+            "doi": doi, "found_crossref": True, "found_openalex": True,
+            "http": {"crossref": 200, "openalex": 200},
+            "title": "Synthetic Dataset", "year": THIS_YEAR,
+            "cited_by_count": 12, "is_cn": False, "is_self_cite": True,
+            "is_oa": False, "oa_status": "closed", "venue": "Synthetic Journal",
+            "is_in_doaj": False, "oa_type": "journal-article", "version": "publishedVersion",
+            "errors": [], "warnings": [],
+        }
+
+    try:
+        verify_one = fake_verify_one
+        rep = build_report(["10.1234/ok", "10.0000/missing"], self_authors=["Smith"])
+    finally:
+        verify_one = orig_verify_one
+
     s = rep["summary"]
-    assert rep["items"][0]["found_crossref"], "真 DOI 应被 Crossref 命中"
-    assert rep["items"][0]["http"]["crossref"] == 200, "真 DOI Crossref 应 HTTP 200"
-    assert rep["items"][1]["errors"], "假 DOI 应产 high severity error"
-    assert s["self_citation_rate"] > 0, "应识别自引"
-    assert "preprint_count" in s, "summary 应含 preprint_count"
-    assert "is_oa" in rep["items"][0], "rec 应含 OA 字段"
-    # 闭源不得仅因 closed 而告警（误报防线）
-    r0 = rep["items"][0]
-    if r0.get("oa_status") == "closed":
-        assert not any("closed" in w for w in r0["warnings"]), "闭源不得产 warning"
-    print("\n[OK] verify_refs 自测通过：真 DOI HTTP200 命中、假 DOI 标 high error、"
-          "自引率/中外占比已算、OA 字段已纳入、闭源不误报")
+    assert s["total"] == 2 and s["verified_ok"] == 1, s
+    assert s["high_severity_errors"] == 1, s
+    assert s["self_citation_rate"] == 0.5, s
+    assert "preprint_count" in s and "authority_note" in s, s
+    ok = rep["items"][0]
+    assert ok["oa_status"] == "closed" and not ok["warnings"], ok
+    assert _title_match("A reliable dataset", "Reliable dataset") > 0.6
+    print("[selftest] PASS verify_refs offline")
+
+
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 1:
+    if len(sys.argv) == 1 or sys.argv[1] == "--selftest":
         _selftest()
     else:
         sys.exit(main())

@@ -106,4 +106,6 @@ if __name__ == "__main__":
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
         pass
+    if len(sys.argv) > 2 or (len(sys.argv) == 2 and sys.argv[1] != "--selftest"):
+        raise SystemExit(f"usage: python {sys.argv[0]} [--selftest]")
     _selftest()

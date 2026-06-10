@@ -160,6 +160,46 @@ def report_text(batch: dict) -> str:
     return "\n".join(lines)
 
 
+
+def _selftest() -> int:
+    """离线自测：猴子补丁 DOI 元数据获取，覆盖四类 verdict。"""
+    print("[SELFTEST] verify_citations offline", file=sys.stderr)
+    global fetch_doi_csl
+    orig_fetch = fetch_doi_csl
+
+    def fake_fetch(doi: str):
+        doi = _norm_doi(doi)
+        if doi == "10.1234/real":
+            return 200, {
+                "title": "Reliable citation verification",
+                "container-title": "Journal of Testing",
+                "issued": {"date-parts": [[2024]]},
+                "author": [{"family": "Smith"}, {"family": "Wang"}],
+            }
+        return 404, None
+
+    try:
+        fetch_doi_csl = fake_fetch
+        batch = verify_batch([
+            {"doi": "10.1234/real", "title": "Reliable citation verification", "year": 2024, "first_author": "Smith"},
+            {"doi": "10.1234/real", "title": "Fabricated goat title", "year": 1999, "first_author": "Nobody"},
+            {"doi": "10.0000/missing", "title": "Phantom paper", "year": 2024},
+            {"doi": "", "title": "No DOI"},
+        ])
+    finally:
+        fetch_doi_csl = orig_fetch
+
+    summary = batch["summary"]
+    assert summary.get("VERIFIED") == 1, summary
+    assert summary.get("METADATA_MISMATCH") == 1, summary
+    assert summary.get("DOI_NOT_FOUND") == 1, summary
+    assert summary.get("NO_DOI") == 1, summary
+    txt = report_text(batch)
+    assert "[OK]" in txt and "[幻觉?]" in txt and "[需人工]" in txt, txt
+    print("[selftest] PASS verify_citations offline")
+    return 0
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="DOI 引用核验与幻觉标记")
     ap.add_argument("doi", nargs="?", default="")
@@ -167,7 +207,11 @@ def main() -> None:
     ap.add_argument("--year", default="")
     ap.add_argument("--first-author", default="")
     ap.add_argument("--json-out", default="")
+    ap.add_argument("--selftest", action="store_true", help="run offline synthetic self-test")
     args = ap.parse_args()
+
+    if args.selftest or not args.doi:
+        raise SystemExit(_selftest())
 
     if args.doi:
         claims = [{"doi": args.doi, "title": args.title or None,

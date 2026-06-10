@@ -186,17 +186,12 @@ def main(argv=None):
 
 
 def _selftest():
-    """__main__ 自测：真 DOI 实测，记 HTTP 码。"""
-    doi = "10.1038/s41597-023-02555-8"
-    print("### doi_to_any 自测 DOI:", doi)
-    code_b, bib = negotiate(doi, "bibtex")
-    print("BibTeX HTTP", code_b)
-    assert code_b == 200 and "@" in bib, "bibtex 协商失败"
-    bib_tagged = inject_langid(bib.strip())
-    print(bib_tagged[:240], "...\n")
-    assert "langid={english}" in bib_tagged, "英文条目应注入 langid=english"
+    """离线自测：验证 DOI 格式化核心逻辑，不访问 doi.org/Crossref。"""
+    print("### doi_to_any 离线自测")
+    en_entry = "@article{smith2024demo, title={A Reliable Dataset}, author={Smith, John}, year={2024}}"
+    en_tagged = inject_langid(en_entry)
+    assert "langid={english}" in en_tagged, en_tagged
 
-    # langid 注入断言：含中文的条目应得到 langid=chinese
     cn_entry = (
         "@article{zhang2024shenjing,\n"
         "  title = {深度神经网络研究},\n"
@@ -204,26 +199,30 @@ def _selftest():
         "  year = {2024},\n}"
     )
     cn_tagged = inject_langid(cn_entry)
-    print("--- 中文条目 langid 注入 ---")
-    print(cn_tagged)
-    assert "langid={chinese}" in cn_tagged, "含中文条目应得到 langid=chinese"
-    # 幂等：已含 langid 不重复注入
+    assert "langid={chinese}" in cn_tagged, cn_tagged
     assert inject_langid(cn_tagged).count("langid") == 1, "langid 注入应幂等"
-    print("[OK] langid 注入断言通过\n")
 
-    code_c, csl = negotiate(doi, "csljson")
-    print("CSL JSON HTTP", code_c)
-    assert code_c == 200, "csljson 协商失败"
-    obj = json.loads(csl)
-    print("title:", (obj.get("title") or "")[:60])
+    csl = {
+        "type": "article-journal",
+        "author": [{"family": "Smith", "given": "John Michael"}, {"family": "Wang", "given": "Li"}, {"family": "Brown", "given": "A"}, {"family": "Zhang", "given": "Wei"}],
+        "title": "A Reliable Dataset.",
+        "container-title": "Data Journal",
+        "issued": {"date-parts": [[2024]]},
+        "volume": "12",
+        "issue": "3",
+        "page": "10-20",
+        "DOI": "10.1234/demo",
+    }
+    gbt = csljson_to_gbt7714(csl)
+    assert "Smith J. M." in gbt and ", 等" in gbt, gbt
+    assert "A Reliable Dataset[J]." in gbt and "DOI: 10.1234/demo." in gbt, gbt
+    print("[selftest] PASS doi_to_any offline")
 
-    print("\n--- GB/T 7714 排版 ---")
-    print(csljson_to_gbt7714(obj))
-    print("\n[OK] doi_to_any 自测通过（3 格式均产出，HTTP 200）")
+
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 1:
+    if len(sys.argv) == 1 or sys.argv[1] == "--selftest":
         _selftest()
     else:
         sys.exit(main())

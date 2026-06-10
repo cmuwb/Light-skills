@@ -185,41 +185,50 @@ def main(argv=None):
 
 
 def _selftest():
-    """__main__ 自测：无网络则走合成/打印跳过，不报错（exit 0）。"""
-    print("### verify_citation_edge 自测")
-    # 一对已知开放引用的真 DOI：OpenCitations 实测 A 的 references 含 B
-    pair_confirmed = ("10.1186/1756-8722-6-59", "10.1056/nejmoa1306220")
-    # 一对无关 DOI（不应存在 A→B 边）
-    pair_unrelated = ("10.1038/s41597-023-02555-8", "10.1186/1756-8722-6-59")
+    """离线自测：猴子补丁开放索引函数，验证三态裁决与 DOI 解析。"""
+    print("### verify_citation_edge 离线自测")
+    global _oc_check, _s2_check
+    orig_oc, orig_s2 = _oc_check, _s2_check
 
-    r1 = verify_edge(*pair_confirmed)
-    print("[confirmed 用例]", json.dumps(r1, ensure_ascii=False))
-    r2 = verify_edge(*pair_unrelated)
-    print("[not_in_open_index 用例]", json.dumps(r2, ensure_ascii=False))
+    def fake_oc(citing: str, cited: str):
+        if citing == "10.a/citing" and cited == "10.b/cited":
+            return True, True, {"opencitations_references": 200, "opencitations_citations": 200}
+        if citing == "10.a/citing" and cited == "10.z/missing":
+            return False, True, {"opencitations_references": 200, "opencitations_citations": 200}
+        return False, False, {"opencitations_references": 0, "opencitations_citations": 0}
 
-    # 离线/限速判定：任一记录 status==unknown 说明无网络，打印跳过而非失败
-    if r1["status"] == "unknown" and r2["status"] == "unknown":
-        print("\n[SKIP] 无网络或全部端点限速，跳过断言（合成校验逻辑）。")
-        # 合成校验：纯逻辑层（不依赖网络）确认三态裁决与解析正确
+    def fake_s2(citing: str, cited: str):
+        if citing == "10.s2/citing" and cited == "10.s2/cited":
+            return True, True, 200
+        if citing == "10.a/citing" and cited == "10.z/missing":
+            return False, True, 200
+        return False, False, 0
+
+    try:
+        _oc_check, _s2_check = fake_oc, fake_s2
+        confirmed = verify_edge("https://doi.org/10.A/CITING", "doi:10.B/CITED")
+        assert confirmed["status"] == "confirmed" and "opencitations" in confirmed["sources"], confirmed
+        assert "edge_exists" not in confirmed, confirmed
+
+        s2_confirmed = verify_edge("10.s2/citing", "10.s2/cited")
+        assert s2_confirmed["status"] == "confirmed" and "semanticscholar" in s2_confirmed["sources"], s2_confirmed
+
+        absent = verify_edge("10.a/citing", "10.z/missing")
+        assert absent["status"] == "not_in_open_index", absent
+        assert "未覆盖 ≠ 未引用" in absent["note"], absent["note"]
+
+        unknown = verify_edge("10.offline/a", "10.offline/b")
+        assert unknown["status"] == "unknown", unknown
         assert _split_dois("doi:10.1/a doi:10.2/b") == ["10.1/a", "10.2/b"]
-        synth = {"sources": ["opencitations"]}
-        assert synth["sources"], "合成 confirmed 逻辑校验"
-        print("[OK] 离线合成逻辑校验通过（DOI 解析 + 三态裁决）。")
-        return
+    finally:
+        _oc_check, _s2_check = orig_oc, orig_s2
+    print("[selftest] PASS verify_citation_edge offline")
 
-    # 有网络：断言三态正确，且绝不出现裸 edge_exists 字段
-    assert r1["status"] in ("confirmed", "not_in_open_index", "unknown"), "状态须为三态之一"
-    assert "edge_exists" not in r1 and "edge_exists" not in r2, "绝不输出裸 edge_exists 布尔"
-    if r1["status"] != "unknown":
-        assert r1["status"] == "confirmed", "已知真引用边应被开放索引 confirmed"
-        assert r1["sources"], "confirmed 必须有 sources 佐证"
-    # 无关对在开放索引响应时应为 not_in_open_index（或 unknown 若限速）
-    assert r2["status"] in ("not_in_open_index", "unknown"), "无关对不应 confirmed"
-    print("\n[OK] verify_citation_edge 自测通过：三态裁决正常、有据可查、无裸布尔。")
+
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 1:
+    if len(sys.argv) == 1 or sys.argv[1] == "--selftest":
         _selftest()
     else:
         sys.exit(main())
