@@ -3,9 +3,9 @@ name: CI
 on:
   push:
     branches: [master]
-    paths: ["code_assets/**", "databases/**", "skills/**/SKILL.md", "skills/**/scripts/**", "skills/**/assets/**", "README*.md", "CHANGELOG.md", "CONTRIBUTING.md", "MODE_REGISTRY.md", ".github/workflows/**", ".github/scripts/**"]
+    paths: ["code_assets/**", "databases/**", "skills/**/SKILL.md", "skills/**/scripts/**", "skills/**/assets/**", "README*.md", "WHATS_INCLUDED.md", "CHANGELOG.md", "CONTRIBUTING.md", "MODE_REGISTRY.md", ".github/workflows/**", ".github/scripts/**"]
   pull_request:
-    paths: ["code_assets/**", "databases/**", "skills/**/SKILL.md", "skills/**/scripts/**", "skills/**/assets/**", "README*.md", "CHANGELOG.md", "CONTRIBUTING.md", "MODE_REGISTRY.md", ".github/workflows/**", ".github/scripts/**"]
+    paths: ["code_assets/**", "databases/**", "skills/**/SKILL.md", "skills/**/scripts/**", "skills/**/assets/**", "README*.md", "WHATS_INCLUDED.md", "CHANGELOG.md", "CONTRIBUTING.md", "MODE_REGISTRY.md", ".github/workflows/**", ".github/scripts/**"]
 
 jobs:
   test:
@@ -61,3 +61,5 @@ jobs:
         run: python .github/scripts/check_skills.py
       - name: Check database YAML blocks and README links
         run: python .github/scripts/check_databases.py
+      - name: Check skill script assets
+        run: python .github/scripts/check_skill_assets.py
