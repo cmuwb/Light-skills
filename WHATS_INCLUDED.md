@@ -2,7 +2,7 @@
 
 本仓库各技能内置的可运行脚本与可套用模板，按技能归类。脚本以纯 Python/常见科学计算库为主，均应至少可 `py_compile`、带真实 `__main__` 入口，并覆盖显式离线 `--selftest`。
 
-> 本清单由 `.github/scripts/check_skill_assets.py` 防漂移：新增/删除 `skills/light-*/scripts/*.py` 后必须同步本表，否则 CI 失败。
+> 本清单由 `.github/scripts/check_skill_assets.py` 防漂移：新增/删除 `skills/light-*/scripts/*.py` 后必须同步本表，否则 CI 失败；`.github/scripts/run_skill_selftests.py` 会实际执行全部脚本的 `--selftest`。
 
 ## 可运行脚本
 
@@ -60,7 +60,8 @@
 |------|------|------|
 | `.github/scripts/check_skills.py` | 技能 frontmatter 校验 | 检查 28 个 Light 技能的 `name` / `description` 与手动/常驻数量 |
 | `.github/scripts/check_databases.py` | 数据库 YAML/schema/link 校验 | 检查 db03–db08 schema、重复卡片、YAML 解析与 README 本地链接 |
-| `.github/scripts/check_skill_assets.py` | 脚本资产清单校验 | 检查 45 个技能脚本均登记到本文件、可编译、带真实 `__main__` 且覆盖 `--selftest` |
+| `.github/scripts/check_skill_assets.py` | 脚本资产清单校验 | 检查 45 个技能脚本均登记到本文件、可编译、带真实 `__main__` 且覆盖显式 `--selftest` |
+| `.github/scripts/run_skill_selftests.py` | 技能脚本自测执行器 | 按 stdlib/science/documents 分层发现脚本并实际运行 `python <script> --selftest`，失败或超时即 CI 失败 |
 
 ## 可套用模板与数据文件
 

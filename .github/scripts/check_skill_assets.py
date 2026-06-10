@@ -139,8 +139,8 @@ for script in script_paths:
         continue
     if not has_main_guard(tree):
         errors.append(f"{rel}: missing real if __name__ == \"__main__\" guard")
-    if "--selftest" not in text and "selftest" not in text.lower():
-        missing_selftests.append(f"{rel}: no selftest marker")
+    if "--selftest" not in text:
+        missing_selftests.append(f"{rel}: no explicit --selftest marker")
 
 print(
     "技能脚本资产: "

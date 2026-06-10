@@ -63,3 +63,22 @@ jobs:
         run: python .github/scripts/check_databases.py
       - name: Check skill script assets
         run: python .github/scripts/check_skill_assets.py
+
+  skill-selftests:
+    name: 执行技能脚本自测
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install skill selftest dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            numpy scipy pandas scikit-learn statsmodels matplotlib pyyaml \
+            pillow python-pptx python-docx openpyxl \
+            pypdf PyPDF2 reportlab pdfplumber pymupdf
+      - name: Run all skill script selftests
+        run: python .github/scripts/run_skill_selftests.py --group all --timeout 120
