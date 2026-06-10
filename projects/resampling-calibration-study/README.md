@@ -10,7 +10,7 @@
 
 ## 📄 论文展示
 
-**[📖 阅读完整 IEEE PDF 论文](paper/main.pdf)** · [Raw PDF](https://raw.githubusercontent.com/Light0305/Light/master/projects/resampling-calibration-study/paper/main.pdf) · [LaTeX 源码](paper/main.tex)
+**[📖 阅读完整 IEEE PDF 论文](paper/main.pdf)** · [Raw PDF](https://raw.githubusercontent.com/Light0305/Light-skills/master/projects/resampling-calibration-study/paper/main.pdf) · [LaTeX 源码](paper/main.tex)
 
 <p align="center">
   <a href="paper/main.pdf">

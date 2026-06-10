@@ -11,7 +11,7 @@ Every step of research, from literature search to rebuttal, has a dedicated skil
 <br/>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![CI](https://github.com/Light0305/Light/actions/workflows/ci.yml/badge.svg)](https://github.com/Light0305/Light/actions/workflows/ci.yml)
+[![CI](https://github.com/Light0305/Light-skills/actions/workflows/ci.yml/badge.svg)](https://github.com/Light0305/Light-skills/actions/workflows/ci.yml)
 [![Skills](https://img.shields.io/badge/skills-28-5B6FE0.svg)](#-skills-at-a-glance)
 [![Knowledge bases](https://img.shields.io/badge/knowledge%20bases-9-3DDC84.svg)](#-knowledge-bases)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-ready-8AA0FF.svg)](#-install)
@@ -26,7 +26,7 @@ Every step of research, from literature search to rebuttal, has a dedicated skil
 
 ## Contents
 
-[What is Light](#what-is-light) · [Why use it](#why-use-it) · [Quick start](#-install) · [Skills](#-skills-at-a-glance) · [Project flow](#a-full-project-flow) · [Knowledge bases](#-knowledge-bases) · [API keys](#-about-api-keys) · [FAQ](#-faq) · [Contributing](#-contributing) · [Citation](#-citation)
+[What is Light](#what-is-light) · [Why use it](#why-use-it) · [Quick start](#-install) · [Skills](#-skills-at-a-glance) · [Project flow](#a-full-project-flow) · [Case study](#-case-study) · [Figure gallery](#-figure-gallery) · [Knowledge bases](#-knowledge-bases) · [API keys](#-about-api-keys) · [FAQ](#-faq) · [Contributing](#-contributing) · [Citation](#-citation)
 
 ---
 
@@ -62,8 +62,8 @@ For: undergrads, grad students, and independent researchers who want to turn a p
 **1. Clone** (anywhere):
 
 ```bash
-git clone https://github.com/Light0305/Light.git
-cd Light
+git clone https://github.com/Light0305/Light-skills.git
+cd Light-skills
 ```
 
 **2. Run the installer:**
@@ -146,21 +146,60 @@ kickoff → literature-search find direction & gaps → data-engineering health-
 
 Throughout, the 11 always-on skills backstop it: `file-reading` ingests any material, `memory-pm` remembers where you left off, `orchestrator` plans cross-stage pipelines, `consistency` keeps materials aligned, `self-review` self-checks before every output, `research-ethics` holds the integrity floor.
 
+## 🔬 Case study
+
+[**Resampling Silently Degrades Probability Calibration in Tree Ensembles**](projects/resampling-calibration-study/) is an end-to-end empirical study built with Light: literature search, idea generation, adversarial critique, real experiments, figures, and a **6-page IEEE-style paper**. **Every number comes from actual runs — no synthetic or invented results.**
+
+<p align="center">
+  <a href="projects/resampling-calibration-study/paper/main.pdf">
+    <img src="projects/resampling-calibration-study/paper/main-preview.png" alt="Paper first-page preview" width="520">
+  </a><br>
+  <sub>Click the first-page preview to open the full PDF · <a href="projects/resampling-calibration-study/paper/main.pdf">Read PDF</a> · <a href="projects/resampling-calibration-study/paper/main.tex">LaTeX source</a></sub>
+</p>
+
+- **5** OpenML datasets (imbalance ratio 1.9–70) · **2** tree ensembles · **7** conditions · **10** random seeds · paired statistical tests
+- Core finding: resampling (SMOTE / over-sampling / under-sampling) can **systematically damage probability calibration**, while common headline metrics such as F1 and AUC barely move — the cost is hidden
+- A simple post-hoc calibration step cuts ECE by roughly 66%, with only about 0.003 AUC loss
+
+> The project also improved Light itself: it openly documents overlap with prior work and led to stronger novelty-collision checks in the idea, review, and self-review stages. See the [project README](projects/resampling-calibration-study/README.md) for the full trail.
+
+## 📊 Figure gallery
+
+One real dataset, nine different views — each chart tells one part of the story. See the [project README](projects/resampling-calibration-study/#-figure-gallery) for the full-size gallery.
+
+<table>
+  <tr>
+    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g1_radar.png" alt="Radar chart" width="250"><br><sub>🕸 Five-metric trade-off radar</sub></td>
+    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g2_violin.png" alt="Violin plot" width="250"><br><sub>🎻 ECE distribution violin</sub></td>
+    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g3_slope.png" alt="Slope chart" width="250"><br><sub>📉 Calibration-repair slope chart</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g4_bubble.png" alt="Bubble chart" width="250"><br><sub>🫧 Imbalance ratio × damage bubble</sub></td>
+    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g5_diverge.png" alt="Diverging bars" width="250"><br><sub>↔️ Two-model diverging bars</sub></td>
+    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g6_heatmap.png" alt="Heatmap" width="250"><br><sub>🔥 Condition × dataset heatmap</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g7_ridge.png" alt="Ridgeline plot" width="250"><br><sub>🏔 ECE density ridgeline</sub></td>
+    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g8_ecdf.png" alt="ECDF" width="250"><br><sub>📈 ECDF cumulative distribution</sub></td>
+    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g9_lollipop.png" alt="Lollipop chart" width="250"><br><sub>🍭 Dataset damage ranking</sub></td>
+  </tr>
+</table>
+
 ## 📚 Knowledge bases
 
 Behind the skills sit 9 shared knowledge bases (`databases/`), all verified and traceable:
 
 | Base | Contents |
 |------|----------|
-| `db01` venues | Journal/conference metadata, review cycles, representative papers, tiers (real ISSNs + proxy metrics) |
-| `db02` templates | Reusable templates for each pipeline stage |
-| `db03` methods | Method cards: task/IO/pros-cons/baselines/metrics/papers & repos |
-| `db04` datasets | Dataset cards: scale/license/known issues/download |
-| `db05` design system | Frontend/visualization design specs |
-| `db06` slide themes | PPT themes & palettes |
-| `db07` figures | Top-venue figure cases: aesthetics/layout/palette/panel logic |
-| `db08` IP & contests | Patents, contest material skeletons & rubric dimensions |
-| `db09` project state | Cross-session project memory: project cards/glossary/decision log |
+| [`db01` venues](databases/db01-venues-templates/README.md) | Journal/conference metadata, review cycles, representative papers, tiers (real ISSNs + proxy metrics) |
+| [`db02` templates](databases/db02-paper-writing/README.md) | Reusable templates for each pipeline stage |
+| [`db03` methods](databases/db03-methods/README.md) | Method cards: task/IO/pros-cons/baselines/metrics/papers & repos |
+| [`db04` datasets](databases/db04-datasets/README.md) | Dataset cards: scale/license/known issues/download |
+| [`db05` design system](databases/db05-frontend-styles/README.md) | Frontend/visualization design specs |
+| [`db06` slide themes](databases/db06-ppt-styles/README.md) | PPT themes & palettes |
+| [`db07` figures](databases/db07-figures/README.md) | Top-venue figure cases: aesthetics/layout/palette/panel logic |
+| [`db08` IP & contests](databases/db08-ip-materials/README.md) | Patents, contest material skeletons & rubric dimensions |
+| [`db09` project state](databases/db09-projects/README.md) | Cross-session project memory: project cards/glossary/decision log |
 
 Plus `code_assets/` — adversarially-verified statistics and metrics code (Cohen's κ/QWK vs `sklearn`, Welch t/BH-FDR/Wilson vs `scipy`, MOTA/IDF1, CORAL ordinal loss, long-tail resampling), aligned to authoritative libraries down to the last digit and continuously checked by CI.
 
@@ -190,17 +229,22 @@ Provide keys via environment variables — never hard-code or commit them. See [
 ## 🗂️ Layout
 
 ```
-Light/
+Light-skills/
 ├── skills/             # 28 skills, each with SKILL.md + references + scripts/templates/examples
 ├── databases/          # 9 knowledge bases (db01–db09)
 ├── code_assets/        # adversarially-verified stats & metrics code, CI-checked
-├── assets/             # logo, images
+├── projects/           # end-to-end showcase projects
+├── _verification_log/  # secondary verification trail (API fields, tool behavior, source checks)
+├── assets/             # logo and images
 ├── install.ps1 / .sh   # one-command installer (idempotent)
 ├── CONVENTIONS.md      # global conventions (honesty floor, output norms)
 ├── ROUTER.md           # skill routing logic
 ├── AGENTS.snippet.md   # Codex routing block
-├── CONTRIBUTING.md     # contribution guide
-├── CHANGELOG.md        # changelog
+├── .claude-plugin/     # Claude plugin manifest
+├── .codex-plugin/      # Codex plugin manifest
+├── CONTRIBUTING.md · CODE_OF_CONDUCT.md · SECURITY.md   # contribution/conduct/security
+├── CHANGELOG.md · CITATION.cff · LICENSE                # changelog/citation/license
+├── README.md · README.en.md                            # Chinese / English docs
 ├── .github/            # issue/PR templates, CI, funding config
 └── .codex/INSTALL.md   # Codex install guide
 ```
@@ -259,8 +303,8 @@ Light is built and polished by one person in spare time. If it saves you time or
 
 ## 💬 Feedback
 
-- **Bugs / feature requests** — open an [Issue](https://github.com/Light0305/Light/issues) (bug / feature templates)
-- **Usage & discussion** — head to [Discussions](https://github.com/Light0305/Light/discussions)
+- **Bugs / feature requests** — open an [Issue](https://github.com/Light0305/Light-skills/issues) (bug / feature templates)
+- **Usage & discussion** — head to [Discussions](https://github.com/Light0305/Light-skills/discussions)
 - **Contributions** — fork and send a Pull Request
 - **Email** — 1833058953@qq.com
 
