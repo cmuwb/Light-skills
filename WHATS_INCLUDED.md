@@ -62,6 +62,7 @@
 | `.github/scripts/check_databases.py` | 数据库 YAML/schema/link 校验 | 检查 db03–db08 schema、重复卡片、YAML 解析与 README 本地链接 |
 | `.github/scripts/check_skill_assets.py` | 脚本资产清单校验 | 检查 45 个技能脚本均登记到本文件、可编译、带真实 `__main__` 且覆盖显式 `--selftest` |
 | `.github/scripts/check_entry_docs.py` | 入口文档一致性校验 | 检查 README/ROUTER/MODE_REGISTRY/ROUTER_EXAMPLES 的技能数量、mode 数量、路由样例与范围边界 |
+| `.github/scripts/check_installation_assets.py` | 安装与客户端集成校验 | 检查 install.sh/install.ps1、Codex 路由片段、插件 JSON、安装文档与 CI 触发路径不漂移 |
 | `.github/scripts/run_skill_selftests.py` | 技能脚本自测执行器 | 按 stdlib/science/documents 分层发现脚本并实际运行 `python <script> --selftest`，失败或超时即 CI 失败 |
 
 ## 可套用模板与数据文件
