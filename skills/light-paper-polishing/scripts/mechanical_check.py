@@ -49,6 +49,22 @@ HEDGES = ["may", "might", "could", "possibly", "perhaps", "seem", "seems",
           "appear", "appears", "suggest", "suggests", "potentially",
           "arguably", "likely", "probably", "somewhat", "relatively"]
 
+# Hedging 校准阶梯：强主张词 → 建议的降级替换（证据不足时往右降）。
+# 见 references/argument_review.md 第 2 节。只在出现这些强词时提示，
+# 是否真该降级仍需看证据强度，由作者判断。
+CLAIM_DOWNGRADE = {
+    "prove": "show / demonstrate（除非是数学证明，否则别用 prove）",
+    "proves": "shows / demonstrates",
+    "proven": "shown",
+    "conclusively": "（删，或换 the results indicate）",
+    "definitively": "（删，或换 indicate）",
+    "unprecedented": "to our knowledge the first",
+    "guarantees": "is expected to / typically",
+    "always": "in our experiments / consistently",
+    "never": "in no observed case",
+    "proves that": "suggests that / indicates that",
+}
+
 # passive: form of "be" + past participle (heuristic, accepts -ed and common irregulars)
 PASSIVE_RE = re.compile(
     r"\b(is|are|was|were|be|been|being|am)\s+(\w+ed|done|made|shown|given|"
@@ -142,6 +158,16 @@ def check_hedge_stack(text, out):
                     "Keep at most one hedge; commit to the finding.")
 
 
+def check_claim_strength(text, out):
+    """Hedging 校准阶梯：强主张词给出建议的降级替换（见 argument_review.md §2）。"""
+    for word, repl in CLAIM_DOWNGRADE.items():
+        pat = re.compile(r"\b" + re.escape(word) + r"\b", re.IGNORECASE)
+        for m in pat.finditer(text):
+            add(out, text, m.start(), m.end(), "claim_strength",
+                f"Strong claim '{m.group(0)}' — match assertion strength to evidence.",
+                f"If evidence is not conclusive, downgrade: {repl}")
+
+
 def run(text):
     out = []
     scan_phrases(text, out, OVERCLAIM, "overclaim",
@@ -151,6 +177,7 @@ def run(text):
                  "AI-tone / filler phrase '{w}'.",
                  "Cut or rewrite directly; reviewers read it as boilerplate.")
     check_hedge_stack(text, out)
+    check_claim_strength(text, out)
     check_passive(text, out)
     check_punctuation(text, out)
     out.sort(key=lambda f: (f["line"], f["col"]))

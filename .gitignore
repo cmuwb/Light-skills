@@ -29,3 +29,6 @@ build/
 scratch/
 
 # Lock files that are environment-specific (keep uv.lock when present intentionally)
+
+# figure_export.py 自检产物
+skills/light-figure-drawing/examples/_export_demo/
