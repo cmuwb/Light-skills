@@ -84,4 +84,4 @@ def load_scores(raw):
 ---
 工具硬信息(真实端点/参数/配置/工作流)见同目录 `references.md`。
 深用专题：TDD 红旗与合理化反驳表见 `references/tdd_redflags.md`；系统化调试四阶段+边界埋点见 `references/debug_protocol.md`（配套可跑模板 `assets/project-scaffold/scripts/debug_instrument.sh` 与 `boundary_trace.py`）；自审清单 `assets/project-scaffold/CODE_REVIEW_CHECKLIST.md`。
-资产清单/manifest 防漂移校验模式见 `references/asset_manifest_governance.md`。
+资产清单/manifest 防漂移校验模式见 `references/asset_manifest_governance.md`；技能脚本 `--selftest` 与 CI 实际执行门模式见 `references/skill_selftest_ci.md`。
