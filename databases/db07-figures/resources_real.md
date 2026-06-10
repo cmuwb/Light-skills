@@ -64,7 +64,7 @@
 ## 第二部分 · figure_card 扩充卡片（db07 schema）
 
 > schema：`figure_type, paper_source, research_field, purpose, data_required, layout, color_scheme, annotation_style, caption_style, possible_code_tool, replication_notes, where_to_place_in_paper`
-> 与 seed 卡（figure_cards.md：主结果/消融/框架图/可解释性）互补，此处补满 8+ 张并强化"claim×工具×位置"。
+> 本文件是 db07 通用图表卡的 canonical 实体位置，覆盖主结果、消融、框架图、可解释性与常见性能/错误分析图；`figure_cards.md` 仅保留模板与索引。
 
 ```yaml
 - figure_type: 参数敏感性折线图(多曲线)
@@ -159,7 +159,7 @@
   where_to_place_in_paper: 实验-主结果(开篇大图)
 ```
 
-### 补充卡片（覆盖消融 / 框架 / 可解释性，与 seed 卡呼应、字段写满）
+### 补充卡片（覆盖消融 / 框架 / 可解释性，字段写满）
 
 ```yaml
 - figure_type: 消融实验图(分组柱/累加折线)
