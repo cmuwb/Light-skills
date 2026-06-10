@@ -7,7 +7,7 @@ CI scope:
 - db03–db08 real cards must satisfy their README-declared required fields;
 - template blocks with all required fields left blank are allowed and skipped;
 - duplicate YAML keys are rejected instead of silently overwritten;
-- db03 method_name, db04 dataset_name, db05 project_type and db06 scenario must be unique within each database;
+- db03 method_name, db04 dataset_name, db05 project_type, db06 scenario and db07 figure_type must be unique within each database;
 - every local .md link in a database README must point to an existing file.
 """
 from __future__ import annotations
@@ -56,6 +56,7 @@ UNIQUE_NAME_FIELDS = {
     "db04-datasets": "dataset_name",
     "db05-frontend-styles": "project_type",
     "db06-ppt-styles": "scenario",
+    "db07-figures": "figure_type",
 }
 
 
@@ -100,7 +101,7 @@ def is_schema_card_file(path: pathlib.Path) -> bool:
     db_key = db_key_for(path)
     if is_card_file(path):
         return True
-    return db_key in {"db05-frontend-styles", "db06-ppt-styles"} and path.name == "resources_real.md"
+    return db_key in {"db05-frontend-styles", "db06-ppt-styles", "db07-figures"} and path.name == "resources_real.md"
 
 
 def db_key_for(path: pathlib.Path) -> str | None:
