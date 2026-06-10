@@ -239,6 +239,7 @@ Light-skills/
 ├── install.ps1 / .sh   # one-command installer (idempotent)
 ├── CONVENTIONS.md      # global conventions (honesty floor, output norms)
 ├── ROUTER.md           # skill routing logic
+├── ROUTER_EXAMPLES.md  # routing example regression set (continuation/recovery/figure boundaries)
 ├── AGENTS.snippet.md   # Codex routing block
 ├── .claude-plugin/     # Claude plugin manifest
 ├── .codex-plugin/      # Codex plugin manifest

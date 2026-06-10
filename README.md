@@ -239,6 +239,7 @@ Light-skills/
 ├── install.ps1 / .sh   # 一键安装脚本(幂等可重跑)
 ├── CONVENTIONS.md      # 全局规约(诚实底线、产出规范)
 ├── ROUTER.md           # 技能路由逻辑
+├── ROUTER_EXAMPLES.md  # 路由样例回归集（防止继续/断点恢复/图表边界等入口漂移）
 ├── AGENTS.snippet.md   # Codex 路由片段
 ├── .claude-plugin/     # Claude 插件清单(plugin.json)
 ├── .codex-plugin/      # Codex 插件清单
