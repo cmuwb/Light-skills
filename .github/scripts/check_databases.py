@@ -2,15 +2,13 @@
 """Validate Light database markdown files.
 
 CI scope:
-- strict modern card files must have parseable fenced ```yaml blocks;
-- legacy YAML-like card files are reported as warnings, not failed immediately;
+- every fenced ```yaml block under databases/ must parse as YAML;
 - every local .md link in a database README must point to an existing file.
 
-Some early database cards were authored as YAML-looking Markdown prose rather
-than strict YAML (for example, unquoted colons inside natural-language fields).
-Failing CI on the entire legacy backlog would block unrelated database work, so
-this script fails strictly on new standardized card files and on README links,
-while printing legacy parse problems for future cleanup.
+This gate prevents broken database cards and stale README indexes from landing.
+It does not yet require every historical card to fill every schema field; schema
+completeness can be tightened later per-db once the full legacy corpus is
+normalized.
 """
 from __future__ import annotations
 
@@ -18,9 +16,10 @@ import io
 import pathlib
 import re
 import sys
-from collections import Counter
 
 import yaml
+from yaml.constructor import ConstructorError
+from yaml.nodes import MappingNode
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
@@ -28,57 +27,67 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 DATABASES = ROOT / "databases"
 
 errors: list[str] = []
-warnings: list[str] = []
 yaml_blocks = 0
-strict_yaml_blocks = 0
 readme_links = 0
-strict_seen: dict[str, int] = {}
 
-STRICT_YAML_FILES = {
-    # db03/db04 领域扩充（2026-06-10）
-    "databases/db03-methods/cards_biomedical.md",
-    "databases/db03-methods/cards_nlp_speech.md",
-    "databases/db03-methods/cards_physical_sciences.md",
-    "databases/db03-methods/cards_stats_econ_finance.md",
-    "databases/db04-datasets/cards_biomedical.md",
-    "databases/db04-datasets/cards_nlp_speech.md",
-    "databases/db04-datasets/cards_physical_sciences.md",
-    "databases/db04-datasets/cards_stats_econ_finance.md",
-    # db05-db08 场景扩充（2026-06-10）
-    "databases/db05-frontend-styles/design_system_cards.md",
-    "databases/db06-ppt-styles/slide_pattern_cards.md",
-    "databases/db07-figures/figure_advanced_cards.md",
-    "databases/db08-ip-materials/material_extended_cards.md",
-}
+
+class UniqueKeyLoader(yaml.SafeLoader):
+    """SafeLoader variant that rejects duplicate keys instead of overwriting."""
+
+
+def construct_unique_mapping(loader: UniqueKeyLoader, node: MappingNode, deep: bool = False):
+    seen = set()
+    for key_node, _ in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        if key in seen:
+            raise ConstructorError(
+                "while constructing a mapping",
+                node.start_mark,
+                f"found duplicate key {key!r}",
+                key_node.start_mark,
+            )
+        seen.add(key)
+    return yaml.SafeLoader.construct_mapping(loader, node, deep=deep)
+
+
+UniqueKeyLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+    construct_unique_mapping,
+)
+
+
+YAML_FENCE_RE = re.compile(
+    r"^[ \t]{0,3}```[ \t]*(?:ya?ml)(?:[ \t].*)?[ \t]*\n(.*?)\n^[ \t]{0,3}```[ \t]*$",
+    flags=re.S | re.I | re.M,
+)
+
+
+def is_card_file(path: pathlib.Path) -> bool:
+    name = path.name.lower()
+    return name.startswith("cards") or name.endswith("_cards.md")
 
 if not DATABASES.exists():
     errors.append("databases/: missing directory")
 else:
-    for rel in sorted(STRICT_YAML_FILES):
-        path = ROOT / rel
-        if not path.exists():
-            errors.append(f"{rel}: strict YAML file is missing")
-            continue
-        strict_seen[rel] = 0
-
     for md in sorted(DATABASES.rglob("*.md")):
         text = md.read_text(encoding="utf-8")
         rel = md.relative_to(ROOT)
-        rel_posix = rel.as_posix()
-        for idx, block in enumerate(re.findall(r"```yaml\n(.*?)\n```", text, flags=re.S), start=1):
+        blocks = list(YAML_FENCE_RE.finditer(text))
+        if is_card_file(md) and not blocks:
+            errors.append(f"{rel}: card file has no fenced YAML blocks")
+        for idx, match in enumerate(blocks, start=1):
+            block = match.group(1)
             yaml_blocks += 1
-            strict = rel_posix in STRICT_YAML_FILES
-            if strict:
-                strict_yaml_blocks += 1
-                strict_seen[rel_posix] = strict_seen.get(rel_posix, 0) + 1
             try:
-                yaml.safe_load(block)
+                data = yaml.load(block, Loader=UniqueKeyLoader)
             except Exception as exc:  # noqa: BLE001 - report parser detail in CI
-                msg = f"{rel}: yaml block #{idx} does not parse: {exc}"
-                if strict:
-                    errors.append(msg)
-                else:
-                    warnings.append(msg)
+                errors.append(f"{rel}: yaml block #{idx} does not parse: {exc}")
+                continue
+            if is_card_file(md):
+                if not isinstance(data, list) or not data:
+                    errors.append(f"{rel}: yaml block #{idx} must be a non-empty list")
+                elif not all(isinstance(item, dict) for item in data):
+                    errors.append(f"{rel}: yaml block #{idx} must contain only mappings")
 
     for readme in sorted(DATABASES.glob("db*/README.md")):
         text = readme.read_text(encoding="utf-8")
@@ -102,21 +111,7 @@ else:
             if not path.exists():
                 errors.append(f"{rel_readme}: missing linked file {target}")
 
-    for rel, count in sorted(strict_seen.items()):
-        if count == 0:
-            errors.append(f"{rel}: strict YAML file has no fenced ```yaml block")
-
-print(
-    "数据库 Markdown: "
-    f"yaml_blocks={yaml_blocks}, strict_yaml_blocks={strict_yaml_blocks}, "
-    f"legacy_yaml_warnings={len(warnings)}, readme_md_links={readme_links}"
-)
-if warnings:
-    print("\n历史 YAML 风格卡片警告（暂不阻断 CI）:")
-    by_file = Counter(warn.split(": yaml block", 1)[0] for warn in warnings)
-    for filename, count in sorted(by_file.items()):
-        print(f"  ! {filename}: {count} legacy YAML-style block(s)")
-    print("  ! 这些旧卡保留为未来清理债务；严格校验只作用于新标准卡文件。")
+print(f"数据库 Markdown: yaml_blocks={yaml_blocks}, readme_md_links={readme_links}")
 if errors:
     print("\n数据库校验失败:")
     for err in errors:
