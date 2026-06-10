@@ -5,6 +5,7 @@
   - save_publication_figure(fig, basename, formats, dpi, ...)  多格式 + DPI 导出
   - save_for_journal(fig, basename, journal, column, ...)      按刊规格设尺寸并导出
   - check_figure_size(fig, max_width_mm, ...)                  校验栏宽(mm)是否合规
+  - check_scaled_fonts(fig, journal, column, ...)             校验缩放到栏宽后的有效字号
   - JOURNAL_SPECS                                              逐刊硬规格表(mm/DPI/字号)
 
 设计:无外部数据;matplotlib Agg 后端;__main__ 产 demo 图并自检。
@@ -236,6 +237,62 @@ def _collect_small_fonts(fig, min_font_pt):
         if fs < min_font_pt - 1e-6:
             small.append(fs)
     return small
+
+
+def check_scaled_fonts(fig, journal=None, column="single",
+                       target_width_mm=None, min_font_pt=None, verbose=True):
+    """校验"大尺寸画再缩小到栏宽"后的有效字号是否仍达下限。
+
+    顶刊常见工作流：先按大画布作图（如 180mm 宽），投稿时整体缩放到栏宽
+    （如单栏 89mm）。缩放系数 = 目标栏宽 / 当前画布宽，所有文字字号等比缩小。
+    一个画布上 10pt 的字，缩到一半栏宽后实际只有 ~5pt——check_figure_size
+    看的是原始字号，会漏掉这种缩放后失真。本函数补这个盲点。
+
+    给 journal 自动取该刊栏宽与 min_font_pt；或显式传 target_width_mm/min_font_pt。
+    返回报告：scale(缩放系数)、每处文字缩放后有效字号、低于下限的项。
+    """
+    if journal is not None:
+        spec = JOURNAL_SPECS[journal.lower()]
+        if target_width_mm is None:
+            target_width_mm = spec.get(f"{column}_mm")
+        if min_font_pt is None:
+            min_font_pt = spec["min_font_pt"]
+    if target_width_mm is None or min_font_pt is None:
+        raise ValueError("需要 journal，或同时给 target_width_mm 与 min_font_pt")
+
+    cur_w_mm = inch_to_mm(fig.get_size_inches()[0])
+    scale = target_width_mm / cur_w_mm if cur_w_mm else 1.0
+    report = {"current_width_mm": round(cur_w_mm, 2),
+              "target_width_mm": round(target_width_mm, 2),
+              "scale": round(scale, 4), "min_font_pt": min_font_pt,
+              "ok": True, "violations": []}
+
+    if scale >= 0.999:
+        # 不缩小（或放大）则无失真风险，仅提示
+        report["note"] = "画布未缩小到栏宽以下，无缩放失真风险"
+    for txt in fig.findobj(plt.Text):
+        try:
+            s = txt.get_text()
+        except Exception:
+            continue
+        if not s or not s.strip() or not txt.get_visible():
+            continue
+        eff = txt.get_fontsize() * scale
+        if eff < min_font_pt - 1e-6:
+            report["ok"] = False
+            report["violations"].append(
+                {"text": s[:30], "raw_pt": round(txt.get_fontsize(), 1),
+                 "effective_pt": round(eff, 2)})
+    if verbose:
+        status = "OK" if report["ok"] else "FAIL"
+        msg = (f"[check_scaled_fonts] {status}  scale={report['scale']} "
+               f"({report['current_width_mm']}→{report['target_width_mm']}mm)")
+        if report["violations"]:
+            worst = min(v["effective_pt"] for v in report["violations"])
+            msg += f"  {len(report['violations'])} 处缩放后 <{min_font_pt}pt(最小 {worst}pt)"
+        print(msg)
+    return report
+
 
 
 def _measure_file_width_mm(path):
