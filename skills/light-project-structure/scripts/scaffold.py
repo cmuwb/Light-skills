@@ -114,15 +114,39 @@ def make_tree(root: Path) -> None:
         (p / ".gitkeep").write_text("", encoding="utf-8")
 
 
+
+def _selftest() -> int:
+    import tempfile
+    with tempfile.TemporaryDirectory(prefix="light_scaffold_") as tmp:
+        target = Path(tmp) / "demo-project"
+        rc = main([str(target), "--name", "demo-project", "--module", "demo_project", "--poetry"])
+        assert rc == 0, rc
+        required = [target / "README.md", target / "CHANGELOG.md", target / "PROJECT_PLAN.md",
+                    target / ".pre-commit-config.yaml", target / "src" / "demo_project" / "__init__.py",
+                    target / "pyproject.toml", target / "data" / "raw" / ".gitkeep"]
+        missing = [str(p) for p in required if not p.exists()]
+        assert not missing, missing
+        rc2 = main([str(target)])
+        assert rc2 == 2, rc2
+    print("[selftest] PASS scaffold")
+    return 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="生成规范科研项目骨架")
-    ap.add_argument("target", help="目标目录")
+    ap.add_argument("target", nargs="?", help="目标目录")
     ap.add_argument("--name", help="项目名称 (默认取目标目录名)")
     ap.add_argument("--module", help="源码包名 (默认由 name 推断, 连字符转下划线)")
     ap.add_argument("--dvc", action="store_true", help="写 dvc.yaml 并尝试 dvc init")
     ap.add_argument("--poetry", action="store_true", help="写 pyproject.toml (Poetry+Ruff)")
     ap.add_argument("--force", action="store_true", help="目标非空时仍继续")
+    ap.add_argument("--selftest", action="store_true", help="run offline scaffold self-test")
     args = ap.parse_args(argv)
+
+    if args.selftest:
+        return _selftest()
+    if not args.target:
+        ap.error("需要提供目标目录（或使用 --selftest）")
 
     root = Path(args.target).resolve()
     name = args.name or root.name

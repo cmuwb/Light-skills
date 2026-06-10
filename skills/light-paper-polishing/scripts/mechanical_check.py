@@ -187,13 +187,32 @@ def run(text):
     return {"_meta": {"n_findings": len(out), "by_category": cats}, "findings": out}
 
 
+
+def _selftest() -> int:
+    sample = ("In conclusion, our novel method significantly outperforms all baselines. "
+              "It is worth noting that the results was obtained and were evaluated . "
+              "This may possibly suggest a remarkable improvement ， which proves that the method is state-of-the-art.")
+    result = run(sample)
+    meta = result["_meta"]
+    cats = meta["by_category"]
+    assert meta["n_findings"] >= 6, meta
+    for cat in ("overclaim", "ai_tone", "hedge_stacking", "punctuation", "claim_strength"):
+        assert cats.get(cat, 0) >= 1, cats
+    print(f"[selftest] PASS mechanical_check findings={meta['n_findings']}")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description="Offline mechanical paper check.")
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--text")
     g.add_argument("--file")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--selftest", action="store_true", help="run offline synthetic self-test")
     args = ap.parse_args()
+
+    if args.selftest:
+        sys.exit(_selftest())
 
     if args.text is not None:
         text = args.text

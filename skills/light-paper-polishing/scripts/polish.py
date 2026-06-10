@@ -165,6 +165,21 @@ def run(text, language, level, mother_tongue):
     }
 
 
+
+def _selftest() -> int:
+    sample = "This sentence have a error.  The approach was used used and dont fail ."
+    findings = local_check(sample)
+    rules = {f["rule"] for f in findings}
+    assert "DUP_WORD" in rules, rules
+    assert "DOUBLE_SPACE" in rules or "SPACE_BEFORE_PUNCT" in rules, rules
+    chunks = split_chunks(sample, max_chunk=12)
+    assert len(chunks) > 1, chunks
+    line, col = offset_to_linecol("a\nbc", 3)
+    assert (line, col) == (2, 2), (line, col)
+    print(f"[selftest] PASS polish local_findings={len(findings)} chunks={len(chunks)}")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description="LanguageTool-backed academic polish.")
     g = ap.add_mutually_exclusive_group()
@@ -174,7 +189,11 @@ def main():
     ap.add_argument("--level", default="picky", choices=["default", "picky"])
     ap.add_argument("--mother-tongue", default="zh-CN")
     ap.add_argument("--json", action="store_true", help="emit raw JSON")
+    ap.add_argument("--selftest", action="store_true", help="run offline local-rule self-test")
     args = ap.parse_args()
+
+    if args.selftest:
+        sys.exit(_selftest())
 
     if args.text is not None:
         text = args.text
