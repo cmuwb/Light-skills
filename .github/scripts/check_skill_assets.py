@@ -7,7 +7,7 @@ CI scope:
 - every documented executable script table row points to an existing script;
 - every script compiles with py_compile;
 - every script has a real ``if __name__ == "__main__"`` guard;
-- selftest coverage is reported as WARN, not a hard failure yet.
+- every script exposes an explicit selftest marker/entry; missing selftests fail CI.
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ SKILLS = ROOT / "skills"
 WHATS_INCLUDED = ROOT / "WHATS_INCLUDED.md"
 
 errors: list[str] = []
-warnings: list[str] = []
+missing_selftests: list[str] = []
 
 
 def extract_section(markdown: str, heading: str) -> str:
@@ -140,18 +140,17 @@ for script in script_paths:
     if not has_main_guard(tree):
         errors.append(f"{rel}: missing real if __name__ == \"__main__\" guard")
     if "--selftest" not in text and "selftest" not in text.lower():
-        warnings.append(f"{rel}: no selftest marker yet")
+        missing_selftests.append(f"{rel}: no selftest marker")
 
 print(
     "技能脚本资产: "
     f"scripts={len(script_paths)}, executable_table_rows={len(documented_keys)}, "
-    f"with_selftest={len(script_paths) - len(warnings)}, missing_selftest={len(warnings)}"
+    f"with_selftest={len(script_paths) - len(missing_selftests)}, "
+    f"missing_selftest={len(missing_selftests)}"
 )
 
-if warnings:
-    print("\n资产校验警告（当前不阻断 CI，后续逐步补 selftest）:")
-    for warning in warnings:
-        print(f"  ! {warning}")
+if missing_selftests:
+    errors.extend(missing_selftests)
 
 if errors:
     print("\n脚本资产校验失败:")
@@ -159,4 +158,4 @@ if errors:
         print(f"  ✗ {error}")
     sys.exit(1)
 
-print("✓ 技能脚本均已在可运行脚本表登记、可编译且具备真实 __main__ 入口")
+print("✓ 技能脚本均已登记、可编译、具备真实 __main__ 入口且覆盖 selftest")
