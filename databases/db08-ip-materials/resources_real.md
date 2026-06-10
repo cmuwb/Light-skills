@@ -101,7 +101,7 @@
 | 全国大学生数学建模竞赛（CUMCM） | http://www.mcm.edu.cn （中国工业与应用数学学会 CSIAM 主办） | 国内最大数模赛事，9 月开赛 | 入口经 WebSearch/常识确认，未当场 curl【建议核查当年通知】 |
 | 美国大学生数学建模竞赛 MCM/ICM（美赛） | https://www.comap.com/contests/mcm-icm （主办方 COMAP；竞赛站 https://www.contest.comap.org ） | 国际数模赛，2 月开赛，COMAP 组织 | WebSearch 命中官方 comap.com |
 
-申报书通用要点（详见 [material_cards.md](material_cards.md) 竞赛卡片）：
+申报书通用要点（实体细分卡见 [material_extended_cards.md](material_extended_cards.md)，预算与结构骨架见 [budget_template.md](budget_template.md) / [case_skeletons.md](case_skeletons.md)）：
 - 必备模块：项目摘要 / 背景意义 / 研究内容 / 技术路线 / 创新点 / 可行性 / 研究基础 / 预期成果 / 进度 / 经费预算 / 团队分工。
 - **创业类的市场规模、财务、用户数等数据必须可核查来源，禁止臆造**；学术类创新点应可量化、与技术路线一一对应。
 - 模板以**各校/各赛事当年官方通知**为准，本库不缓存受版权的官方模板原文，仅总结结构。
