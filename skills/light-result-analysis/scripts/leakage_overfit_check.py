@@ -156,6 +156,18 @@ def _synth():
     return train, test
 
 
+
+def _selftest() -> int:
+    tr, te = _synth()
+    report = run(target="y", scores=(0.99, 0.85, 0.71), train_df=tr, test_df=te)
+    types = {flag["type"] for flag in report["flags"]}
+    for expected in ("overfit", "val_test_shift", "feature_leakage", "train_test_duplicate", "near_constant"):
+        assert expected in types, (expected, types, report)
+    assert report["verdict"] == "FLAGS RAISED", report
+    print(f"[selftest] PASS leakage_overfit_check flags={report['n_flags']}")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description="Train/val/test gap + leakage screen")
     ap.add_argument("--train"); ap.add_argument("--test"); ap.add_argument("--target", default="y")
@@ -163,7 +175,11 @@ def main():
     ap.add_argument("--val-score", type=float, default=None)
     ap.add_argument("--test-score", type=float, default=None)
     ap.add_argument("--out", default=None)
+    ap.add_argument("--selftest", action="store_true", help="run synthetic leakage self-test")
     a = ap.parse_args()
+
+    if a.selftest:
+        raise SystemExit(_selftest())
 
     if not a.train:
         print("[demo] no --train given: synthetic data with a planted leak + dup rows + dead col")

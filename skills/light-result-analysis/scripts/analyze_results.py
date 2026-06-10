@@ -234,13 +234,35 @@ def _synth_csv(path, seed=0):
     return path
 
 
+
+def _selftest() -> int:
+    import tempfile
+    with tempfile.TemporaryDirectory(prefix="light_analyze_results_") as tmp:
+        csv_path = _synth_csv(os.path.join(tmp, "results.csv"))
+        outdir = os.path.join(tmp, "analysis_out")
+        report, jp, mp = run(csv_path, "method", ["acc", "f1"], outdir)
+        assert os.path.exists(jp) and os.path.exists(mp), (jp, mp)
+        assert report["n_rows"] == 24, report["n_rows"]
+        assert report["metrics"] == ["acc", "f1"], report["metrics"]
+        assert len(report["results"]) == 2, report["results"]
+        for res in report["results"]:
+            assert res["eda"] and res["pairwise"], res
+            assert res["omnibus"].get("test") in {"anova_oneway", "kruskal_wallis"}, res["omnibus"]
+    print("[selftest] PASS analyze_results")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description="Auto result-table statistical analysis")
     ap.add_argument("csv", nargs="?", help="results CSV (omit to run synthetic demo)")
     ap.add_argument("--group", default="method")
     ap.add_argument("--metric", nargs="+", default=None, help="metric column(s)")
     ap.add_argument("--outdir", default=None)
+    ap.add_argument("--selftest", action="store_true", help="run synthetic offline self-test")
     a = ap.parse_args()
+
+    if a.selftest:
+        sys.exit(_selftest())
 
     if not a.csv:
         here = os.path.dirname(os.path.abspath(__file__))

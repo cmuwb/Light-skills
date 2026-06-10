@@ -16,6 +16,8 @@ Usage as library: import the functions, pass a matplotlib Axes or let it make on
 Run standalone:  python make_figs.py   -> writes demo_figure.png/.pdf/.svg
 """
 import os
+import sys
+import tempfile
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")  # headless-safe
@@ -162,7 +164,22 @@ def demo(outdir=None):
     return paths
 
 
+
+def _selftest() -> int:
+    with tempfile.TemporaryDirectory(prefix="light_make_figs_") as tmp:
+        paths = demo(tmp)
+        assert len(paths) == 3, paths
+        for path in paths:
+            assert os.path.exists(path) and os.path.getsize(path) > 0, path
+    print("[selftest] PASS make_figs")
+    return 0
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        if sys.argv[1] != "--selftest":
+            raise SystemExit("usage: python make_figs.py [--selftest]")
+        raise SystemExit(_selftest())
     paths = demo()
     for p in paths:
         print("wrote", p)

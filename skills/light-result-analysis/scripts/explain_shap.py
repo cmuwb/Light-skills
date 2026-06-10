@@ -206,7 +206,29 @@ def _synth_model(seed=0):
     return model, Xdf
 
 
+
+def _selftest() -> int:
+    import tempfile
+    with tempfile.TemporaryDirectory(prefix="light_explain_shap_") as tmp:
+        if not _shap_available():
+            res = explain(None, None, outdir=tmp)
+            assert res["skipped"] is True and res["available"] is False, res
+        else:
+            model, X = _synth_model(seed=1)
+            res = explain(model, X.iloc[:30], outdir=tmp, prefix="selftest_shap", max_display=6)
+            assert res["available"] is True and res["figures"], res
+            for paths in res["figures"].values():
+                for path in paths:
+                    assert os.path.exists(path) and os.path.getsize(path) > 0, path
+    print("[selftest] PASS explain_shap")
+    return 0
+
+
 def main():
+    if len(sys.argv) > 1:
+        if sys.argv[1] != "--selftest":
+            raise SystemExit("usage: python explain_shap.py [--selftest]")
+        raise SystemExit(_selftest())
     here = os.path.dirname(os.path.abspath(__file__))
     if not _shap_available():
         explain(None, None, outdir=here)  # prints the skip notice, returns cleanly

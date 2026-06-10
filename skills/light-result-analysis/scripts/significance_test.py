@@ -139,7 +139,7 @@ def compare_two(a, b, conf=0.95, hedges=True):
     }
 
 
-if __name__ == "__main__":
+def _selftest() -> int:
     from scipy import stats
     print(f"[primitives source: {_SRC}]")
     rng = np.random.default_rng(7)
@@ -194,5 +194,15 @@ if __name__ == "__main__":
         print("BH-FDR     statsmodels absent")
 
     print("ALL PASS" if ok else "FAIL")
+    return 0 if ok else 1
 
 
+def main(argv=None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    if argv and argv != ["--selftest"]:
+        raise SystemExit("usage: python significance_test.py [--selftest]")
+    return _selftest()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
