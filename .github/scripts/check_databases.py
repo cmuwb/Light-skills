@@ -7,7 +7,7 @@ CI scope:
 - db03–db08 real cards must satisfy their README-declared required fields;
 - template blocks with all required fields left blank are allowed and skipped;
 - duplicate YAML keys are rejected instead of silently overwritten;
-- db03 method_name, db04 dataset_name, db05 project_type, db06 scenario and db07 figure_type must be unique within each database;
+- db03 method_name, db04 dataset_name, db05 project_type, db06 scenario, db07 figure_type and db08 material_type must be unique within each database;
 - every local .md link in a database README must point to an existing file.
 """
 from __future__ import annotations
@@ -57,6 +57,7 @@ UNIQUE_NAME_FIELDS = {
     "db05-frontend-styles": "project_type",
     "db06-ppt-styles": "scenario",
     "db07-figures": "figure_type",
+    "db08-ip-materials": "material_type",
 }
 
 
