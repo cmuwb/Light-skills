@@ -24,5 +24,5 @@ All notable changes are documented here.
 - 双端安装脚本 `install.ps1` / `install.sh`(Claude Code 与 Codex)。
 - 全局规约 `CONVENTIONS.md` 与技能路由 `ROUTER.md`。
 
-[Unreleased]: https://github.com/Light0305/Light/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/Light0305/Light/releases/tag/v1.0.0
+[Unreleased]: https://github.com/Light0305/Light-skills/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Light0305/Light-skills/releases/tag/v1.0.0

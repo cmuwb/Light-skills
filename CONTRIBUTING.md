@@ -43,4 +43,4 @@ Light 最核心的价值是**可核查**。任何贡献都必须遵守 [CONVENTI
 
 参与即同意遵守 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)。
 
-有任何疑问:开 [Issue](https://github.com/Light0305/Light/issues) 或邮件 1833058953@qq.com。
+有任何疑问:开 [Issue](https://github.com/Light0305/Light-skills/issues) 或邮件 1833058953@qq.com。
