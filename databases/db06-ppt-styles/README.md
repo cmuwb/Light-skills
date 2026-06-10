@@ -30,7 +30,7 @@ Canva、PowerPoint 模板、Slidesgo、Beautiful.ai、Gamma、Pitch、SlideModel
 ## 排版原则（贯穿）
 一页一观点、对齐、留白、视觉层次(标题>要点>细节)、图大字少、统一图标线型、克制转场。答辩 8–12 min ≈ 10–15 页。
 
-种子卡片见 [slide_cards.md](slide_cards.md)。
+模板与 canonical 索引见 [slide_cards.md](slide_cards.md)（0 张实体卡，避免重复 `scenario`）。
 
 ## 真实资源文件
 - [resources_real.md](resources_real.md) — 真实 PPT 资源清单（Marp/reveal.js/python-pptx 等开源许可经 GitHub/PyPI API 实测，Canva/Slidesgo/Beamer 等带链接）+ 答辩/路演/汇报场景 slide_card。
