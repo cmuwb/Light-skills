@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Light installer (macOS / Linux)
-# Links Light's 27 skills + shared knowledge bases into Claude Code and/or Codex.
+# Links Light's 28 skills + shared knowledge bases into Claude Code and/or Codex.
 # Usage:  ./install.sh            # installs into both clients
 #         ./install.sh claude
 #         ./install.sh codex
@@ -26,7 +26,7 @@ install_into() {
   rm -rf "$parent/databases" "$parent/code_assets"
   ln -s "$REPO/databases"   "$parent/databases"
   ln -s "$REPO/code_assets" "$parent/code_assets"
-  echo "  $skills_dir  ->  $n/27 skills"
+  echo "  $skills_dir  ->  $n/28 skills"
 }
 
 if [ "$CLIENT" = both ] || [ "$CLIENT" = claude ]; then

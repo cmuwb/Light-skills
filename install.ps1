@@ -1,6 +1,6 @@
 #!/usr/bin/env pwsh
 # Light installer (Windows / PowerShell)
-# Links Light's 27 skills + shared knowledge bases into Claude Code and/or Codex.
+# Links Light's 28 skills + shared knowledge bases into Claude Code and/or Codex.
 # Usage:  pwsh install.ps1            # installs into both clients found
 #         pwsh install.ps1 -Client claude
 #         pwsh install.ps1 -Client codex
@@ -29,7 +29,7 @@ function Install-Into($skillsDir) {
   # shared libraries as siblings so skills' relative paths resolve
   Link-Dir "$parent\databases"   "$Repo\databases"
   Link-Dir "$parent\code_assets" "$Repo\code_assets"
-  Write-Host "  $skillsDir  ->  $n/27 skills"
+  Write-Host "  $skillsDir  ->  $n/28 skills"
 }
 
 if ($Client -in 'both','claude') {
