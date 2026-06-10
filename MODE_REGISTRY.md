@@ -35,4 +35,4 @@ Light 绝大多数技能是"一个技能 = 一条固定流程"的流程型技能
 
 ---
 
-其余技能（m01–m03、m05、m06、m08–m13、m15–m17、a01–a10、light-software、light-miniprogram）均无显式 mode，走各自固定流程。如需为某技能新增 mode，在该技能内定义后，把它登记到本表。
+其余 Light 科研技能（m01–m03、m05、m06、m08–m13、m15–m17、a01–a10 与 light-orchestrator）均无显式 mode，走各自固定流程。如需为某技能新增 mode，在该技能内定义后，把它登记到本表。
