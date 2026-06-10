@@ -354,6 +354,17 @@ def to_markdown(result: dict) -> str:
     return "\n".join(lines)
 
 
+
+def _selftest() -> int:
+    result = snowball("10.1016/j.compag.2021.100001", hops=1, provider="openalex", limit=5, offline_sample=True)
+    assert result["offline"] is True, result
+    assert result["raw_count"] >= 1 and result["merged_count"] >= 1, result
+    md = to_markdown(result)
+    assert "10.1016/j.compag.2021.100001" in md and result.get("merged_count", 0) >= 1, md
+    print("[selftest] PASS snowball")
+    return 0
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="引用滚雪球（前向被引+后向参考）")
     ap.add_argument("seed", nargs="?", default="10.1016/j.compag.2021.100001",
@@ -363,9 +374,13 @@ def main() -> None:
                     choices=["openalex", "s2"])
     ap.add_argument("--limit", type=int, default=50)
     ap.add_argument("--offline", action="store_true", help="强制用合成样本")
+    ap.add_argument("--selftest", action="store_true", help="run offline synthetic self-test")
     ap.add_argument("--json-out", default="")
     ap.add_argument("--md-out", default="")
     args = ap.parse_args()
+
+    if args.selftest:
+        sys.exit(_selftest())
 
     result = snowball(args.seed, hops=args.hops, provider=args.provider,
                       limit=args.limit, offline_sample=args.offline)

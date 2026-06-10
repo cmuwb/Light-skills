@@ -105,13 +105,39 @@ def run(csv_path: str, sleep: float = 0.2, offline: bool = False) -> dict:
     return {"offline": offline, "total": len(results), "ok": ok, "results": results}
 
 
+
+def _selftest() -> int:
+    import tempfile
+    fd, csv_path = tempfile.mkstemp(prefix="cn_journal_probe_", suffix=".csv")
+    os.close(fd)
+    try:
+        with open(csv_path, "w", encoding="utf-8", newline="") as f:
+            f.write("issn,journal_cn\n0254-4164,计算机学报\n")
+        out = run(csv_path, sleep=0, offline=True)
+    finally:
+        try:
+            os.unlink(csv_path)
+        except OSError:
+            pass
+    assert out["offline"] is True, out
+    assert out["total"] == 1 and out["ok"] == 1, out
+    md = to_markdown(out["results"])
+    assert "计算机学报" in md and "Chinese Journal of Computers" in md, md
+    print("[selftest] PASS cn_journal_probe")
+    return 0
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="批量探中文核心刊 OpenAlex 体量")
     ap.add_argument("--csv", default=DEFAULT_CSV)
     ap.add_argument("--sleep", type=float, default=0.2)
     ap.add_argument("--offline", action="store_true")
     ap.add_argument("--json-out", default="")
+    ap.add_argument("--selftest", action="store_true", help="run offline synthetic self-test")
     args = ap.parse_args()
+
+    if args.selftest:
+        sys.exit(_selftest())
 
     out = run(args.csv, args.sleep, args.offline)
     md = to_markdown(out["results"])

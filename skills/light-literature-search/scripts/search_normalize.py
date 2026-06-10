@@ -243,14 +243,31 @@ _SYNTHETIC = [
 ]
 
 
+
+def _selftest() -> int:
+    result = run("dairy goat behavior", per_page=3, offline_sample=True)
+    assert result["offline"] is True, result
+    assert result["raw_count"] >= 2 and result["merged_count"] >= 2, result
+    dois = {r.get("doi") for r in result["records"]}
+    assert "10.1016/j.compag.2021.100001" in dois, dois
+    md = to_markdown(result["records"], "dairy goat behavior")
+    assert "10.1016/j.compag.2021.100001" in md and "dairy goats" in md.lower(), md
+    print("[selftest] PASS search_normalize")
+    return 0
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="多源文献检索与规范化")
     ap.add_argument("query", nargs="?", default="dairy goat behavior")
     ap.add_argument("--per-page", type=int, default=10)
     ap.add_argument("--offline", action="store_true", help="强制用合成样本")
+    ap.add_argument("--selftest", action="store_true", help="run offline synthetic self-test")
     ap.add_argument("--json-out", default="")
     ap.add_argument("--md-out", default="")
     args = ap.parse_args()
+
+    if args.selftest:
+        sys.exit(_selftest())
 
     result = run(args.query, args.per_page, offline_sample=args.offline)
     md = to_markdown(result["records"], args.query)
