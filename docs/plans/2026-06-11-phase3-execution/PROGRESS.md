@@ -9,7 +9,7 @@
 |---|---|---|---|---|---|---|
 | R1 | P0 与卫生修复 | 已完成 | 2026-06-11 | 2026-06-11 | `1520d93..056165c`（8 commit） | 本地 7 门禁全绿；待推送确认 CI |
 | R2 | 会话衔接协议 | 已完成 | 2026-06-11 | 2026-06-11 | `dd00835..7b60de3`（5 commit） | 绿（run 27341424084 三任务全 success） |
-| R3 | 中文链路专项 | 未开始 | | | | |
+| R3 | 中文链路专项 | 已完成 | 2026-06-11 | 2026-06-11 | `89627e2..74a1bb0`（4 commit） | 绿（run 27346343103 三任务全 success） |
 | R4 | 合规与生态吸收 | 未开始 | | | | |
 | R5 | 资产补全 | 未开始 | | | | |
 | R6 | PPT 生图流水线 | 未开始 | | | | |
@@ -45,6 +45,9 @@
 - [2026-06-11] R2 全程 — 计划要求 a02 新模板放 templates/、细则下沉 references/；orchestrator §5 引用这些跨技能文件时，check_skill_links.py 会把裸 `templates/x.md` / `references/x.md` 反引号路径当成 orchestrator 自身内部路径校验而报缺失。处理：orchestrator 内一律写全 `light-memory-pm/templates/...`、`light-memory-pm/references/...` 前缀，链接门转绿。后续轮跨技能引用模板/参考时同此写法。
 - [2026-06-11] R2.4-4 — 计划只说 a06 scaffold 纳入 `.light/`；执行中明确 `.light/`（passport + handoff 卡）是跨会话续跑真相源，应**纳入版本控制而非忽略**，故在 python-research.gitignore 末尾加注释显式声明不忽略 .light/，并在 scaffold selftest 断言两目录生成。
 - [2026-06-11] R2.5 演练 — 示例项目 dairygoat 演练前无 `.light/`（轻项目靠 db09 卡承载）。按协议新建 .light/handoff 并落 S01/S02 两张真实卡作为工作示例；B 会话恢复用 `pytest tests/test_infer_track.py`(2 passed)实证 S01"已完成"声明无损，非口头比对。
+- [2026-06-11] R3.5 — 计划说把实测栏宽写入 db01"新增字段/列"；现实 venues.csv 为固定 19 列 schema，check_databases.py 按列校验，新增列会破坏既有 332 卡。按现实处理：栏宽实测值追加进末列 catch-all `risk_note`（带来源+日期+方法），不改 schema，与 README"新增条目追加"惯例一致。
+- [2026-06-11] R3.5 — 农业机械学报(j-csam.org)版心栏宽未取得：站点 PDF 入口返回反爬 JS 守卫页(`_guard/html.js`，59 字节)而非 PDF，三次重试均被拦。按诚信纪律标 GAP、db01 该刊栏宽留"待核查"，不从记忆/英文刊类比硬填。其余三刊(农业工程学报/中国农业科学/作物学报)均从发表 PDF 实测成功。
+- [2026-06-11] R3.2 — 可选项 lint_gbt7714.py(GB/T 7714 中文条目 lint 脚本)本轮未实现：核验兜底以"人工浏览器比对检索结果页"为主路径(CNKI 执行环境直连不通，见验证日志§4)，脚本化 lint 价值有限且会新增 selftest 负担，判定为非必需，降级跳过。如后续要做，归 R8 CI 门禁范畴。
 
 ## 留给下一轮的话
 
@@ -54,6 +57,9 @@
 - R3 注意：会话衔接协议已就位——CONVENTIONS §9 全局纪律 + a02 两件套模板/细则 + orchestrator §5 收编 + a06 scaffold .light/ + 路由触发 + README FAQ + A/B 演练（_verification_log/session_handoff_drill.md）。后续任何轮长任务收尾都应主动留衔接卡 + 打印启动提示词（含执行本计划的轮间交接，11 号文件模板可与 handoff_prompt.md 互参）。
 - R3 注意：跨技能引用别的技能的 templates//references/ 文件，反引号路径必须带 `light-<skill>/` 前缀，否则 check_skill_links.py 误判为本技能内部路径报缺失（R2 已踩，见偏差日志）。
 - R3 注意：中文链路专项独立于 R2，无新增硬依赖；ROUTER_EXAMPLES 现 47 例(R2 +3 主动交接正例)，check_entry_docs 必覆盖集仍含 light-orchestrator。
+- R4 注意：R3 未增减技能数(仍 28)、未加脚本、未动路由，故 WHATS_INCLUDED/MODE_REGISTRY/ROUTER_EXAMPLES 本轮无需同步(check_entry_docs 已绿)。R4 若收编外部生态技能会动技能数，记得四件套(README/ROUTER/MODE_REGISTRY/ROUTER_EXAMPLES)同步 + ROUTER_EXAMPLES 必覆盖集。
+- R4 注意：db01 venues.csv 是 19 列固定 schema，任何"补字段"需求一律追加进 risk_note catch-all，勿加列(check_databases 按列校验 332 卡)。中文刊实测栏宽语义=版心栏宽(非官方图宽硬规格)，已在 db01 备注注明，引用时别当成出版商 author-guide 的 figure width。
+- R4 注意：EI 收录权威源=Engineering Village 的 Compendex Source List(从产品页 View source list 现取当期 Excel，CDN 链接随版本变动，勿硬编码)；m13 已禁引第三方"EI 源刊"站。
 - 全程门禁请带 `PYTHONUTF8=1`（Windows GBK 否则 selftest runner 打印 `✓` 报 UnicodeEncodeError，非测试失败）。校验器在 `.github/scripts/`，非 `tools/`。
 - 安装链接已扩到 4 文档；R2 若动 CONVENTIONS/ROUTER 结构，记得 install 与 check_installation_assets.py 已对这些文件名有依赖。
 
