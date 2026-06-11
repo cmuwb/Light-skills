@@ -271,7 +271,7 @@
 | **IEEE**（IEEEtran 双栏版式，含 TPAMI/TIP/TGRS 等） | ≈88.9 (3.5 in) | — | 文本宽 ≈181.9 (7.16 in) | — | ⚠️付费墙未实测；以 \columnwidth/\textwidth 为准 |
 | **MDPI**（含 db01 Animals、Agronomy、Sensors、Remote Sensing） | 单列版式正文宽 ≈170，图按此宽或整数分数 | — | ≈170 | — | ⚠️付费墙未实测；线稿/组合图建议 1000 DPI、照片 ≥300 DPI、TIFF/PNG/EPS |
 
-【db01 目标刊补充】db01 收录的畜牧/农业刊多为上述出版商旗下：Computers and Electronics in Agriculture、Biosystems Engineering、Journal of Dairy Science、Animal、Animal Feed Science and Technology、Poultry Science 等→按 **Elsevier** 规格（单栏 90/1.5 栏 140/双栏 190）；Animals、Agronomy→按 **MDPI**（≈170 单列宽）；中文刊（农业工程学报、农业机械学报）通常 A4 双栏，正文栏宽约 84 mm、整页约 175 mm，但官网未给精确图宽硬规格，标**待核查**，以投稿系统模板为准。
+【db01 目标刊补充】db01 收录的畜牧/农业刊多为上述出版商旗下：Computers and Electronics in Agriculture、Biosystems Engineering、Journal of Dairy Science、Animal、Animal Feed Science and Technology、Poultry Science 等→按 **Elsevier** 规格（单栏 90/1.5 栏 140/双栏 190）；Animals、Agronomy→按 **MDPI**（≈170 单列宽）；中文刊以 db01 实测栏宽为准（2026-06-11 从各刊发表 PDF 实测，pdfplumber 词边聚类）：**农业工程学报** A4 双栏，单栏≈86 mm / 整页≈180 mm；**中国农业科学**、**作物学报** A4 双栏，单栏≈81 mm / 整页≈170 mm；**农业机械学报** 官网 PDF 入口被反爬拦截，仍标**待核查**。导出时用 `save_for_journal(..., journal="custom", custom_width_mm=86.0)` 逃生通道按实测值出图（见 m11 figure_export.py），并以投稿系统模板为最终准绳。
 
 【单位换算备忘】1 in = 25.4 mm；3.5 in = 88.9 mm；7.16 in = 181.9 mm；常用导出 `ggsave(width=90, units='mm', dpi=300)` 或 mpl `figsize=(90/25.4, h/25.4)`。
 
