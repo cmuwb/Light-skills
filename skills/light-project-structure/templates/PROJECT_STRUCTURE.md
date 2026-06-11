@@ -30,6 +30,9 @@ project-name/
 ├── software-copyright/    软著材料
 ├── assets/                图标/模板/素材
 ├── tests/                 单元/集成测试（pytest）
+├── .light/                编排台账与会话衔接（纳入版本控制，勿忽略）
+│   ├── passport.yaml      产物台账（orchestrator 维护，跨阶段续跑真相源）
+│   └── handoff/           会话衔接卡 S<NN>-<slug>.md（CONVENTIONS §9 主动交接）
 ├── README.md              项目说明（用 README.template.md）
 ├── CHANGELOG.md           变更记录（用 CHANGELOG.template.md）
 ├── PROJECT_PLAN.md        实现计划（用 PROJECT_PLAN.template.md）

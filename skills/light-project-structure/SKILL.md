@@ -26,6 +26,7 @@ project-name/
 ├── references/      文献库（Zotero 导出/.bib）
 ├── assets/          图标/模板/素材
 ├── notebooks/       探索性分析
+├── .light/          编排台账 passport.yaml + handoff/ 会话衔接卡（纳入版本控制）
 ├── README.md  CHANGELOG.md  .gitignore  pyproject.toml/environment.yml
 ```
 
@@ -49,7 +50,7 @@ project-name/
 ## 整理动作
 1. 盘点已有项目（借 repo-intake-and-plan 思路）：先读 README→扫 setup 脚本与文档化命令→把工作流归类为 推理/训练/评估，再据此给散落文件归位。
 2. 新项目骨架：**首选 `scripts/scaffold.py`**——一条命令建全树 + 拷模板 + 可选 `--dvc/--poetry`：
-   `python scripts/scaffold.py ./my-proj --name my-proj --poetry --dvc`（生成 data 四分层 + notebooks 探索/报告分流 + src 包 + 落地 6 模板；目标非空需 `--force`）。或用 CCDS（`pipx install cookiecutter-data-science` 后 `ccds`）；或按上面骨架手工生成。无论哪种，都要落 README/CHANGELOG/PROJECT_PLAN/.gitignore/.editorconfig/pyproject.toml。
+   `python scripts/scaffold.py ./my-proj --name my-proj --poetry --dvc`（生成 data 四分层 + notebooks 探索/报告分流 + src 包 + `.light/`（passport 台账 + handoff/ 衔接卡目录，纳入版本控制）+ 落地 6 模板；目标非空需 `--force`）。或用 CCDS（`pipx install cookiecutter-data-science` 后 `ccds`）；或按上面骨架手工生成。无论哪种，都要落 README/CHANGELOG/PROJECT_PLAN/.gitignore/.editorconfig/pyproject.toml。
 3. 重命名规范化→补 README/CHANGELOG→产出"文件归位说明"（借 handoff 结构：Key Decisions 表 + 失败尝试 + 警告）。
 
 ## 版本与依赖

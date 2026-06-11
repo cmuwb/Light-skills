@@ -132,3 +132,7 @@ lightning_logs/
 # 系统垃圾文件
 .DS_Store
 Thumbs.db
+
+# ---- .light/ 编排台账与会话衔接卡：刻意纳入版本控制，勿忽略 ----
+# .light/passport.yaml（产物台账）与 .light/handoff/S*.md（会话衔接卡）是
+# 跨会话续跑的真相源，必须随仓库走，因此此处不加任何 .light/ 忽略规则。

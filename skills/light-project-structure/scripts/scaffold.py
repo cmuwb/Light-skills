@@ -37,6 +37,7 @@ DIRS = [
     "notebooks/exploratory", "notebooks/reports",
     "configs", "logs", "references", "docs",
     "paper", "ppt", "patent", "software-copyright", "assets", "tests",
+    ".light", ".light/handoff",  # 编排器台账 passport.yaml + 会话衔接卡 (CONVENTIONS §9)
 ]
 
 # 模板 -> 项目根目标文件名 (去 .template 后缀; gitignore/editorconfig 特殊改名)
@@ -123,7 +124,8 @@ def _selftest() -> int:
         assert rc == 0, rc
         required = [target / "README.md", target / "CHANGELOG.md", target / "PROJECT_PLAN.md",
                     target / ".pre-commit-config.yaml", target / "src" / "demo_project" / "__init__.py",
-                    target / "pyproject.toml", target / "data" / "raw" / ".gitkeep"]
+                    target / "pyproject.toml", target / "data" / "raw" / ".gitkeep",
+                    target / ".light" / ".gitkeep", target / ".light" / "handoff" / ".gitkeep"]
         missing = [str(p) for p in required if not p.exists()]
         assert not missing, missing
         rc2 = main([str(target)])
