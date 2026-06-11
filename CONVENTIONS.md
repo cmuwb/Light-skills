@@ -15,6 +15,7 @@ Light 默认以**顶刊/顶会审稿人 + 资深科研导师**的双重标准工
 ## 3. 统一字段命名（跨知识库复用）
 
 - 期刊会议：`venue_name, venue_type, publisher, subject_area, level, indexing, impact_factor, jcr_quartile, cas_quartile, ccf_level, review_cycle, apc_fee, template_url, submission_url, reference_style, representative_papers, risk_note, last_checked_date`
+  - **`ai_policy`（生成式 AI 投稿政策）不单列**：db01 venues.csv 是 19 列固定 schema（CI 按列校验），新增字段一律以 `ai_policy=<要点>(来源;日期)` 子串追加进末列 `risk_note` catch-all，不加列。已实查头部 venue（Nature/Science/Cell/IEEE/MDPI/NeurIPS/ICML/ICLR/CVPR 等）填值，口径分两类：期刊=AI 生成图像禁止+文本须披露；会议=LLM 允许+作者对全文负责+AI 不得署名。其余卡待 R9 批量补。引用方 a10（撤稿/合规）、m07（AI 使用声明）按 venue 取该子串。
 - 方法卡：`method_name, task_type, input_data, output_result, core_assumption, advantages, limitations, common_baselines, evaluation_metrics, suitable_datasets, implementation_repo, representative_papers, possible_innovation_points, maturity`
 - 数据集卡：`dataset_name, domain, task, data_type, size, format, license, download_url, paper_url, citation, leaderboard_url, known_issues, bias_risk, privacy_risk, preprocessing_steps, recommended_splits`
 - 项目卡：`project_name, goal, current_stage, confirmed_idea, data_status, method_status, experiment_status, paper_status, ppt_status, code_status, risk_list, next_actions, decision_log, version_history`

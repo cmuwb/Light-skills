@@ -32,6 +32,8 @@ Conceptualization, Methodology, Software, Validation, Formal analysis, Investiga
 ## 3. AI 使用声明模板（按 venue 取用）
 
 > 通用原则：声明用了哪个工具、用在哪个环节（措辞润色 / 代码 / 文献检索 / 生成内容）、作者对全部内容负责。AI **不得**列为作者。
+>
+> **先查目标 venue 政策**：取稿模板前先查 db01 该 venue 的 `risk_note` 里 `ai_policy=` 子串（R4 已实查头部 venue），按其口径定声明范围——期刊普遍**禁止 AI 生成图像**（图像若涉 AI 须落 methods 可复现披露，见 light-figure-drawing `light-figure-drawing/references/figure_integrity.md`）、文本须披露；会议（NeurIPS/ICLR/CVPR 等）普遍允许 LLM 但要求作者对全文负责、AI 不得署名、未验证的 LLM 生成引用会被拒/撤稿。venue 无 ai_policy 值时回查其官网最新作者须知。
 
 **通用 / 多数期刊（Elsevier/Springer 风格）**
 > During the preparation of this work the author(s) used [TOOL] in order to [improve language and readability / assist with code]. After using this tool, the author(s) reviewed and edited the content as needed and take(s) full responsibility for the content of the publication.
