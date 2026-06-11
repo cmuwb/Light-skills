@@ -10,7 +10,7 @@
 | R1 | P0 与卫生修复 | 已完成 | 2026-06-11 | 2026-06-11 | `1520d93..056165c`（8 commit） | 本地 7 门禁全绿；待推送确认 CI |
 | R2 | 会话衔接协议 | 已完成 | 2026-06-11 | 2026-06-11 | `dd00835..7b60de3`（5 commit） | 绿（run 27341424084 三任务全 success） |
 | R3 | 中文链路专项 | 已完成 | 2026-06-11 | 2026-06-11 | `89627e2..74a1bb0`（4 commit） | 绿（run 27346343103 三任务全 success） |
-| R4 | 合规与生态吸收 | 未开始 | | | | |
+| R4 | 合规与生态吸收 | 已完成 | 2026-06-11 | 2026-06-11 | `5c7d2e1..a5a088e`（7 commit） | 绿（run 27353169946 success） |
 | R5 | 资产补全 | 未开始 | | | | |
 | R6 | PPT 生图流水线 | 未开始 | | | | |
 | R7 | 横切机制与瘦身 | 未开始 | | | | |
@@ -48,6 +48,11 @@
 - [2026-06-11] R3.5 — 计划说把实测栏宽写入 db01"新增字段/列"；现实 venues.csv 为固定 19 列 schema，check_databases.py 按列校验，新增列会破坏既有 332 卡。按现实处理：栏宽实测值追加进末列 catch-all `risk_note`（带来源+日期+方法），不改 schema，与 README"新增条目追加"惯例一致。
 - [2026-06-11] R3.5 — 农业机械学报(j-csam.org)版心栏宽未取得：站点 PDF 入口返回反爬 JS 守卫页(`_guard/html.js`，59 字节)而非 PDF，三次重试均被拦。按诚信纪律标 GAP、db01 该刊栏宽留"待核查"，不从记忆/英文刊类比硬填。其余三刊(农业工程学报/中国农业科学/作物学报)均从发表 PDF 实测成功。
 - [2026-06-11] R3.2 — 可选项 lint_gbt7714.py(GB/T 7714 中文条目 lint 脚本)本轮未实现：核验兜底以"人工浏览器比对检索结果页"为主路径(CNKI 执行环境直连不通，见验证日志§4)，脚本化 lint 价值有限且会新增 selftest 负担，判定为非必需，降级跳过。如后续要做，归 R8 CI 门禁范畴。
+- [2026-06-11] R4.1 — 计划说"复用 a10 脚本接线"。现实：装到 ~/.claude/skills 后两技能平级、Python 无法跨技能 import。按现实处理：在 verify_refs.py **内联**同源判定逻辑(相同 FLAG_TYPES + update-to[] 判定)，注释指认 check_retractions.py 为同源真相，两脚本口径一致；不新增 HTTP(update-to 在已取的 Crossref 响应里)。另发现经典撤稿论文(STAP/Wakefield)本身 update-to 多为空、仅标题带 RETRACTED 前缀，故补标题前缀作补充信号。实查撤稿样例 `10.1016/j.micpro.2020.103768`(Elsevier，update-to 暴露 retraction)留痕。
+- [2026-06-11] R4.3 — 计划说"db01 增 ai_policy 字段 / check_databases 认识新字段"。核查真相：check_databases.py 只 rglob databases/**/*.md 校验 db03–db08 的 YAML 卡，**根本不读 venues.csv**(db01/02 是 CSV，不在 schema 校验范围)，故"加列破坏 332 卡校验"的技术理由不准确。但用户硬约束(不加列、追加 risk_note)是明确产品意志且有独立合理性(204 卡加列需逐行补值)，遵守之：ai_policy 以 `ai_policy=` 子串追加进 risk_note。**两个坑**：①venues.csv 含多行字段，禁用 csv 模块全量重写(会把多行压成单行，205→186 行)；②追加文本禁含英文逗号(目标字段无外层引号，逗号会拆列)，改用中文分号/顿号 + 文本级唯一锚点替换，最终 diff 仅 12 增 12 删。
+- [2026-06-11] R4.3 — 发现 R3 遗留瑕疵(不在 R4 范围)：venues.csv 物理行 186/187(中国农业科学、作物学报)在 HEAD 版即为 22 列(非 19)——R3 填栏宽实测时 risk_note 写入未加引号的英文逗号(如 `81mm/整页约170mm(A4双栏,来源:...,2026-06-11),2026-06`)被 CSV 解析器拆成多列。check_databases 不读 CSV 故 CI 不报。修复=给 risk_note 加引号，零风险但属扩大范围，**留 R9(db01 规模化)统一处理**。
+- [2026-06-11] R4.2/R4.12/R4.13 — 实查诚信记录：①AI 图像政策 Elsevier 取得逐字原文，Nature(登录墙 303)/Science(403) 仅政策立场多源核实、确切引文标 GAP；②latexdiff 本机 MiKTeX 缺 Perl 模块 Algorithm::Diff，`latexdiff --version` 即报错，diff 输出未跑通标 GAP，流程按公开文档写并注明未本机验证；③飞书实查澄清官方云文档**无独立演示文稿 OpenAPI**，lark-slides 是 larksuite/cli 社区工具非官方 API，未凭"飞书有幻灯片"印象硬填。
+- [2026-06-11] R4 跨技能引用 — 再次踩 check_skill_links 陷阱：在 A 技能 SKILL/references 用反引号写 B 技能的 `scripts/x.py`、`references/x.md` 会被当 A 自身路径报缺失。已全部加 `light-<skill>/` 前缀修正(citation↔research-ethics 脚本互引、figure-drawing/slides↔其他、typesetting↔review-rebuttal)。另：技能正文引用 `databases/db01...` 完整路径属安装后断链风险，改纯文字"db01"提及(与全仓库惯例一致)。
 
 ## 留给下一轮的话
 
@@ -62,6 +67,10 @@
 - R4 注意：EI 收录权威源=Engineering Village 的 Compendex Source List(从产品页 View source list 现取当期 Excel，CDN 链接随版本变动，勿硬编码)；m13 已禁引第三方"EI 源刊"站。
 - 全程门禁请带 `PYTHONUTF8=1`（Windows GBK 否则 selftest runner 打印 `✓` 报 UnicodeEncodeError，非测试失败）。校验器在 `.github/scripts/`，非 `tools/`。
 - 安装链接已扩到 4 文档；R2 若动 CONVENTIONS/ROUTER 结构，记得 install 与 check_installation_assets.py 已对这些文件名有依赖。
+- **R4 已完成（给 R5 的话）**：R4 未增减技能数(仍 28)、未加新脚本(只改 citation/verify_refs.py 现有脚本加撤稿检测)、未动路由，故四件套(README/ROUTER/MODE_REGISTRY/ROUTER_EXAMPLES)本轮无需同步，check_entry_docs 已绿。R5(资产补全)独立于 R4，按 05 号文件做。
+- **R4.16(H11 图谱可视化)登记入 backlog，本轮不做**：计划 04 号文件明确 H-11 入 backlog；若未来要做，归 m01/m11 的引文网络/主题图谱可视化方向，非本期范围。
+- **给 R9 的话(db01 规模化)**：①ai_policy 字段已定义为 risk_note 内 `ai_policy=` 子串口径(见 CONVENTIONS §3)，已实查填 12 家头部 venue，其余卡待 R9 批量补；②R4 发现 venues.csv 有 2 行(中国农业科学/作物学报，物理行 186/187)是 22 列(R3 填栏宽时 risk_note 含未加引号英文逗号被拆列)，R9 重做 db01 时给这两行 risk_note 加引号修回 19 列；③改 venues.csv 切记：含多行字段，禁用 csv 模块全量重写(会压平多行)，禁在无引号字段追加含英文逗号的文本(会拆列)，安全做法是文本级唯一锚点替换或给字段加引号。
+- **R4 现场口径(供 a10/m07/m11/m16 后续轮引用一致性)**：AI 政策两类口径——期刊=AI 生成图像禁止+文本须披露；会议=LLM 允许+作者全责+不得署名。论文图严禁生成式 AI(figure_integrity「AI 生成图像政策」节为真相源)，R6 PPT 生图流水线只服务 PPT/前端、严禁进论文图链路(figure_integrity↔slides 已双向互指)。撤稿判定真相源=research-ethics/check_retractions.py 的 FLAG_TYPES，citation/verify_refs.py 内联同源(改判定常量须两处同步)。
 
 ## 用户决策项登记（出现一个登记一个，R10 统一找用户拍板）
 
