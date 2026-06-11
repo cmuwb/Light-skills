@@ -22,6 +22,26 @@
 
 【已知坑】默认 `font.family` 不含 Times/Arial 需自行注册字体否则回退；`bbox_inches="tight"` 会改变最终物理尺寸（与精确栏宽要求冲突，二选一）；EPS 不支持透明，需透明背景用 PDF/SVG。
 
+### SciencePlots vs 自有 mplstyle（对照与选用）
+SciencePlots（garrettj403）是流行的 matplotlib 期刊风格包；本 skill 的 `assets/` 自带 `nature.mplstyle`/`science.mplstyle`/`publication.mplstyle` 三套。两者解决同一问题（统一论文图风格），但取舍不同：
+
+| 维度 | SciencePlots | 本 skill 自有 mplstyle |
+|---|---|---|
+| 安装 | `pip install SciencePlots`，`import scienceplots` 注册 | 无需安装，`plt.style.use("assets/nature.mplstyle")` 直接用 |
+| 风格 | `science`(核心)+`ieee`/`nature`+修饰 `scatter`/`notebook`/`grid`/`high-vis`+Paul Tol 色环+`no-latex`+`cjk-*` | nature/science/publication 三套，对齐 `figure_export.py` 的 `JOURNAL_SPECS` |
+| **LaTeX 依赖** | **默认需本机装 LaTeX**，没装要显式加 `no-latex`（高频踩坑） | 不依赖 LaTeX，开箱即用 |
+| 物理栏宽 | 风格不锁 figsize，栏宽要自己设 | `figure_export.py` 的 `save_for_journal` 按刊锁死物理 mm+最小字号 |
+| 组合 | `plt.style.use(['science','ieee','grid'])` 可叠加 | 单文件，需叠加自行合并 rcParams |
+
+**何时用哪个**：
+- 直接 `pip install scienceplots` 用——快速出图、要 IEEE/高可视色环/scatter 等现成变体、且本机有 LaTeX（或加 `no-latex`）；风格多、社区活跃。
+- 用自有 mplstyle——需要**精确栏宽+最小字号锁定**（走 `figure_export.py` 的导出校验链路 `check_figure_size`/`check_scaled_fonts`）、无 LaTeX 环境、或要与本 skill 的诚实性 lint/db07 模式衔接。
+- 一行安装+引用：`pip install SciencePlots`；`import matplotlib.pyplot as plt; import scienceplots; plt.style.use(['science','nature'])`（无 LaTeX 改 `['science','nature','no-latex']`）。两者可混用：用 SciencePlots 出风格、仍用 `figure_export.py` 做栏宽/字号终检。
+
+【链接】SciencePlots Gallery https://github.com/garrettj403/SciencePlots/wiki/Gallery ；Using the Styles https://github.com/garrettj403/SciencePlots/wiki/Using-the-Styles ；PyPI https://pypi.org/project/SciencePlots/
+
+
+
 ## Seaborn
 
 【是什么】基于 matplotlib 的统计可视化高层封装，强在分类/分布/回归图和"一行出图 + 默认好看"。

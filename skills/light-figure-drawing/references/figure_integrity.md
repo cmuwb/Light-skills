@@ -26,7 +26,31 @@
 - 显微图/凝胶/影像类：不允许选择性删除、拼接、过度调整对比度/亮度造成误导。任何裁剪/拼接要在 caption 标明，并保留原图。
 - 调整亮度对比度必须**全图均匀**，不针对局部。
 
-## 与显著性标注的关系
+## AI 生成图像政策（2026 投稿硬红线）
+
+生成式 AI（DALL·E/Midjourney/Stable Diffusion/GPT Image/Nanobanana/Seedream 等）**直接生成或篡改论文图像，主流出版商一律禁止**。这是投稿即被拒/撤稿级别的红线，与上文「图像完整性」同属诚信底线。
+
+### 三家头部出版商红线（执行时逐家官网复查最新版本，政策持续更新）
+
+| 出版商 | 对 AI 生成图像/图表 | 例外 | 一手来源 |
+|---|---|---|---|
+| **Elsevier** | 不允许用生成式 AI 创建或修改投稿图像（含增强/遮盖/移动/移除/引入特征）；亮度对比度色彩调整仅限不消除原图信息 | AI 成像本身是研究设计/方法时，须在 methods 可复现描述（工具名/版本/厂商），并可能被要求交调整前原图 | [完整原文实查](https://www.elsevier.com/about/policies-and-standards/the-use-of-generative-ai-and-ai-assisted-technologies-in-writing-for-elsevier) ✓ |
+| **Nature / Springer Nature** | 不发表生成式 AI 制作的图像、视频、插图（general rule，理由：integrity/consent/隐私/IP） | 论文以 AI 为研究对象时另议 | [2023-06-07 社论](https://www.nature.com/articles/d41586-023-01546-4) · [编辑政策页](https://www.nature.com/nature-portfolio/editorial-policies/ai) ⚠️ |
+| **Science / AAAS** | 2023-01 全面禁止；2023-11 修订后放松 AI 辅助文本（须披露），但图像/图表限制仍更严，AI 生成图形一般仍禁止除非编辑明确许可 | 获编辑明确许可，或 AI 是研究主题 | [AAAS 2023-11 政策更新](https://www.science.org/content/blog-post/change-policy-use-generative-ai-and-large-language-models) ⚠️ |
+
+> ✓=逐字原文实查；⚠️=政策立场经官方社论标题+多源（Ars Technica/THE 等）一致核实，但原文页登录墙/403 未取得逐字引文，引用前请登录复查。三家共性：**AI 生成图像禁止**，唯一普遍例外是「AI 本身是研究对象/方法」（须 methods 可复现披露）；AI 辅助**文本**则普遍可在披露前提下使用。
+
+### 例外的口径差异（别一刀切）
+- **数据图 vs 示意图**：实验数据图（显微/凝胶/影像/统计图）绝对禁止 AI 生成或篡改。纯示意图（schematic/流程图）各家口径不一，但即便允许也须披露且不得含虚构数据——保守做法是用 m11 自有 mplstyle/矢量工具手绘。
+- **AI 辅助排版 vs AI 生成内容**：用 AI 工具做布局/配色建议（不产生最终像素）与 AI 直接生成图像是两回事；前者一般可接受，后者禁止。
+
+### 与 AI 使用声明对接（m07）
+凡论文用过任何 AI（含本规范允许的方法学例外），须在 m07（light-paper-drafting）`light-paper-drafting/references/mandatory_inclusions.md` 第 3 节「AI 使用声明模板」按 venue 取用对应声明，scope 与实际一致——别声明没做的，也别瞒做了的。图像若属方法学例外，声明须落到 methods 节可复现描述。
+
+### 与 R6 生图流水线的边界（严格隔离）
+Light 的 m16（light-slides）R6 PPT 生图流水线**只服务 PPT/路演/前端灵感图**，**严禁任何产物进入论文图链路**——这是本规范与 m16 互相指认的硬边界（m16 references 工具清单同条声明）。论文图一律走 m11（light-figure-drawing）的数据驱动绘制，不碰生成式模型。
+
+
 - 显著性星标（*/**/***）要在 caption 给出对应的 p 阈值和检验方法。
 - 不"only show the comparison that worked"——该展示的对比组别要完整，不挑能出显著性的那几对。
 
