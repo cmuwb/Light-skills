@@ -7,7 +7,7 @@
 
 | 轮 | 名称 | 状态 | 开始 | 完成 | commit 区间 | CI |
 |---|---|---|---|---|---|---|
-| R1 | P0 与卫生修复 | 未开始 | | | | |
+| R1 | P0 与卫生修复 | 已完成 | 2026-06-11 | 2026-06-11 | `1520d93..056165c`（8 commit） | 本地 7 门禁全绿；待推送确认 CI |
 | R2 | 会话衔接协议 | 未开始 | | | | |
 | R3 | 中文链路专项 | 未开始 | | | | |
 | R4 | 合规与生态吸收 | 未开始 | | | | |
@@ -30,16 +30,29 @@
 
 > 格式：`- [日期] R几.第几项 — 计划说什么 / 现实是什么 / 怎么处理的（自行修正|降级|跳过待用户）`
 
-（暂无）
+- [2026-06-11] 总纲§5 — 计划写校验器在 `tools/`；现实在 `.github/scripts/`（check_*.py + run_skill_selftests.py）。自行修正：全程用 `.github/scripts/` 路径，后续轮同。
+- [2026-06-11] 总纲§5 — selftest 在 Windows 默认 GBK 控制台打印 `✓` 抛 UnicodeEncodeError（退出码1，非测试失败，45 脚本全 PASS）。处理：全程用 `PYTHONUTF8=1` 跑门禁；本身是真实可移植性隐患，但修 runner 编码属 R8 CI 范畴，本轮未改 runner，仅记录。
+- [2026-06-11] R1.1 — 计划点名限流口径在 m04/m13/m10/a09；现实具体数字在 m01(literature-search)、m03(idea-generation)、venue-matching、citation、ip-application。按现实处理：m01 设真相源，其余全部指向并删数字。另发现 ip-application 有 2026-06-06 curl 实测"匿名仍 200"与官网"需 key"冲突——联网核实官网现行需 key+$1/天，保留实测为诚实存档并判定为过渡期现象。附带修正：OpenAlex 文档域名已迁 docs.openalex.org→developers.openalex.org，相关链接同步。
+- [2026-06-11] R1.2 — 计划说 MDPI 栏宽"以 m09 SKILL.md 已核实表格为准"；现实 m09 表无 MDPI 行，真实来源是 m11(figure-planning) references.md「出版商图宽核查表」MDPI 行(170mm,⚠️付费墙未实测通行值)。按现实处理：figure_export.py mdpi 键 note 注明来源为 m11，verified=False。
+- [2026-06-11] R1.3 — 联网核实 Science 三档为 5.5/12/18.3cm，即双栏 120mm，121mm 系换算误差。额外发现 science.mplstyle 把 121mm 写死进默认 figsize(真实出图偏差)，一并订正为 120mm(4.724in)。science.org 仍 403，数值经 WebSearch 多源一致核实。
+- [2026-06-11] R1.4 — m05 模板实际文件名是连字符 experiment-matrix.md，与 orchestrator 下划线契约不符；按计划统一为下划线(git mv + 3 处引用)。仓库内 m 编号与计划标签偶有错位(如 figure-planning 内部自称 m11 指执行器)，按文件路径作业，不按编号。
+- [2026-06-11] R1.5 — 计划假设 11 个 SKILL.md 有 `../../docs/design`/CONVENTIONS 硬路径会断；现实只有 orchestrator:121 一处 `../../docs/design` 硬链接(已改弱引用)，其余 16 处 CONVENTIONS 均为纯文字提及(不算断链)。仍按计划把 4 文档随装链接(sh symlink / ps1 hardlink)并加校验，使纯文字引用装后可达。已在临时/真实 ~/.claude 实测链接生成成功、内容可读。
+- [2026-06-11] R1.5 — install.ps1 原为纯 ASCII；首次加中文注释触发 PowerShell 5.1 GBK 解析错误(真实 Windows 用户会中招)。修正：install.ps1 注释保持 ASCII-only。
+- [2026-06-11] R1.6 — 计划假设 README:9 写"三端(Claude/Codex/Hermes)"与 install 两端冲突；现实 README 已是"Claude Code 与 Codex"两端表述，无三端硬冲突。仍按方案 B 在中英 README 补 Hermes 复用 ~/.claude 说明，标 `GAP:待 Hermes 环境实测`(本机无 Hermes)。
+- [2026-06-11] R1.8 — 计划说 a03 已实测 v6；现实 a03(backend-coding)确已全 v6 且有 GitHub API 实测记录。真正残留 v4/v5 在 system-design(a04 模板+references)与 tool-selection(references+detect_stack.py fixture)，已升 v6 并指向 a03 真相源。
+- [2026-06-11] R1.10 — 计划说无参 selftest 落 5 PNG 到技能根；现实 `--selftest` 路径已用 tempfile(不污染)，真正污染是"无参无 JSON 的 demo 路径"(tag=selftest 落 CWD)。修正该 demo 路径改临时目录，并把 tag 由 selftest 改 demo。
+- [2026-06-11] R1.12 — .gitignore 已含 __pycache__//*.py[cod]，无 tracked 缓存；out_multipanel 由 examples/example_matplotlib_multipanel.py 落 HERE 造成。改为默认临时目录(--outdir 可选)，删残留 PNG/PDF，清本地缓存目录。
 
 ## 留给下一轮的话
 
 > 每轮收尾写 1-3 行：下一轮要注意什么、有什么现场发现。
 
-（暂无）
+- R2 注意：orchestrator §5 已有 Handoff 格式、§0 断点恢复协议、§2 契约表(本轮已声明 CONVENTIONS §6.1 为真相源)；R2 收编 handoff 为单一口径时直接基于现有 §5，勿另起一套。
+- 全程门禁请带 `PYTHONUTF8=1`（Windows GBK 否则 selftest runner 打印 `✓` 报 UnicodeEncodeError，非测试失败）。校验器在 `.github/scripts/`，非 `tools/`。
+- 安装链接已扩到 4 文档；R2 若动 CONVENTIONS/ROUTER 结构，记得 install 与 check_installation_assets.py 已对这些文件名有依赖。
 
 ## 用户决策项登记（出现一个登记一个，R10 统一找用户拍板）
 
 - [ ] skills.sh 发布与否（审计 I-5）
 - [ ] db08 脱敏高分申报书全文样例来源（用户提供或公开样例，R9）
-- [ ] Hermes 安装目标方案确认（R1 采用默认方案 B 后请用户追认）
+- [ ] Hermes 安装目标方案确认（R1 已采用默认方案 B：Hermes 复用 `~/.claude/skills/`，装 Claude 端即可被发现，已写入中英 README；本机无 Hermes 环境，标 `GAP:待 Hermes 实测`。**请用户追认方案 B**，或要求加独立安装目标）
