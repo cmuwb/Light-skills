@@ -41,6 +41,8 @@
 | paper-polishing | `scripts/polish.py` | LanguageTool 云端/本地降级的语法风格检查，输出结构化发现与 HTTP 元数据 |
 | paper-polishing | `scripts/style_fingerprint.py` | 从用户过往文稿提取文风指纹，润色时校准作者声音而非通用模板 |
 | project-structure | `scripts/scaffold.py` | 一条命令生成规范科研项目骨架，含 data/src/docs/experiments/figures/paper 等目录 |
+| research-plan | `scripts/plan_lint.py` | 实验矩阵四要素齐全性检查：假设/变量/指标/停止条件，缺一即提示，离线只读可接 CI |
+| system-design | `scripts/er_diagram.py` | 表结构定义(YAML/JSON) → Mermaid erDiagram 文本，支持 PK/FK/UK 与关系基数，纯离线 |
 | research-ethics | `scripts/check_retractions.py` | 批量撤稿/更正检查，通过 Crossref 等公开元数据标记 retraction risk |
 | research-ethics | `scripts/text_overlap.py` | 离线自查重，定位与给定语料最长逐字重合片段，辅助学术规范审查 |
 | result-analysis | `scripts/analyze_results.py` | 一条命令分析结果表：指标汇总、分组比较、排序与异常模式初筛 |
@@ -53,6 +55,7 @@
 | slides | `scripts/to_pdf.py` | PPTX 转 PDF，优先 LibreOffice `soffice` 无头转换，用于后续视觉审查 |
 | tool-selection | `scripts/detect_stack.py` | 读取项目清单文件识别技术栈，给出工具/技能选型建议 |
 | typesetting | `scripts/precheck_log.py` | 扫描 LaTeX `.log`，汇总编译错误、警告、undefined citation/reference 等问题 |
+| venue-matching | `scripts/venue_signal.py` | 投稿 venue 五信号对照：发文量趋势/自引率粗查/审稿周期/作者匹配度/APC 分区，OpenAlex + db01 卡，失败优雅降级 |
 
 ## 仓库级资产校验
 
