@@ -36,11 +36,14 @@ JOURNAL_SPECS = {
                 "Helvetica/Arial; 照片300-600dpi; 文字勿转曲",
     },
     "science": {
-        "single_mm": 55.0, "double_mm": 121.0, "full_mm": 183.0,
+        "single_mm": 55.0, "double_mm": 120.0, "full_mm": 183.0,
         "min_dpi_line": 600, "min_dpi_halftone": 300, "min_dpi_combo": 500,
         "min_font_pt": 5.0, "preferred_formats": ("eps", "pdf", "ai", "tiff"),
-        "font_family": "sans-serif", "verified": False,
-        "note": "Science/AAAS 作图规格;单栏约 55mm,整版 183mm;细则未逐项实测",
+        "font_family": "sans-serif", "verified": True,
+        "note": "Science/AAAS 三档栏宽(联网核实 2026-06-11, science.org 作者指南三档制): "
+                "1栏 5.5cm=55mm / 2栏 12cm=120mm / 整页 18.3cm=183mm。"
+                "science.org 页对 curl/WebFetch 返回 403, 数值经 WebSearch 多源一致核实"
+                "(5.5/12/18.3 cm); 细则 DPI 未逐项实测。原 121mm 系换算误差, 已订正为 120mm。",
     },
     "cell": {
         "single_mm": 85.0, "double_mm": 174.0,
@@ -71,6 +74,16 @@ JOURNAL_SPECS = {
         "min_font_pt": 7.0, "preferred_formats": ("pdf", "eps", "tiff"),
         "font_family": "sans-serif", "verified": False,
         "note": "Elsevier 艺术指南:线条 1000dpi, 灰/彩 300dpi, 组合 500dpi;未逐项实测",
+    },
+    "mdpi": {
+        "single_mm": 170.0, "full_mm": 170.0,
+        "min_dpi_line": 1000, "min_dpi_halftone": 300, "min_dpi_combo": 1000,
+        "min_font_pt": 8.0, "preferred_formats": ("tiff", "png", "eps"),
+        "font_family": "sans-serif", "verified": False,
+        "note": "MDPI 单列版式正文宽 ≈170mm(图按此宽或其整数分数排); 线稿/组合图建议"
+                "1000dpi, 照片>=300dpi; TIFF/PNG/EPS。数据来源: m11 light-figure-planning "
+                "references.md「出版商图宽硬规格核查表」MDPI 行(含 db01 Animals/Agronomy/"
+                "Sensors/Remote Sensing); ⚠️付费墙未逐项实测, 投稿前以目标刊当期官网为准。",
     },
 }
 
@@ -123,23 +136,36 @@ def save_publication_figure(fig, basename, formats=("pdf", "png", "svg"),
 
 
 def save_for_journal(fig, basename, journal="nature", column="single",
-                     height_mm=None, formats=None, dpi=None, **kwargs):
+                     height_mm=None, formats=None, dpi=None,
+                     custom_width_mm=None, **kwargs):
     """按目标刊规格设置物理尺寸并导出。
 
-    - journal: JOURNAL_SPECS 的键。
+    - journal: JOURNAL_SPECS 的键, 或 "custom"(配合 custom_width_mm 用)。
     - column: 'single' / 'double' / 'full' / 'onehalf' (依该刊有的键)。
     - height_mm: 不给则保持当前宽高比缩放到目标宽度。
+    - custom_width_mm: 逃生通道。journal="custom" 时直接用此物理栏宽(mm),
+      绕开 JOURNAL_SPECS 键名限制。用于尚未进 JOURNAL_SPECS 的刊(如中文刊),
+      数据须有来源(db01 卡或实测记录), 禁止臆测。此时 dpi/formats 不给则取通用默认
+      (600dpi, pdf+png), min_font 不强制。
     返回 (written_paths, info_dict)。
     """
     j = journal.lower()
-    if j not in JOURNAL_SPECS:
-        raise ValueError(f"未知期刊 '{journal}', 可选: {list(JOURNAL_SPECS)}")
-    spec = JOURNAL_SPECS[j]
-    key = f"{column}_mm"
-    if key not in spec:
-        avail = [k.replace("_mm", "") for k in spec if k.endswith("_mm")]
-        raise ValueError(f"{journal} 无 '{column}' 栏宽, 可选: {avail}")
-    width_mm = spec[key]
+    if j == "custom" or custom_width_mm is not None:
+        if custom_width_mm is None:
+            raise ValueError("journal='custom' 需传 custom_width_mm(mm)")
+        width_mm = float(custom_width_mm)
+        spec = {"min_font_pt": None, "verified": False,
+                "note": f"custom 栏宽 {width_mm}mm(调用方提供,数据须有来源,禁止臆测)",
+                "preferred_formats": ("pdf", "png"), "min_dpi_line": 600}
+    else:
+        if j not in JOURNAL_SPECS:
+            raise ValueError(f"未知期刊 '{journal}', 可选: {list(JOURNAL_SPECS)} 或 'custom'+custom_width_mm")
+        spec = JOURNAL_SPECS[j]
+        key = f"{column}_mm"
+        if key not in spec:
+            avail = [k.replace("_mm", "") for k in spec if k.endswith("_mm")]
+            raise ValueError(f"{journal} 无 '{column}' 栏宽, 可选: {avail}")
+        width_mm = spec[key]
     width_in = mm_to_inch(width_mm)
     cur_w, cur_h = fig.get_size_inches()
     if height_mm is None:
@@ -172,11 +198,14 @@ def save_for_journal(fig, basename, journal="nature", column="single",
 
 
 def check_figure_size(fig, max_width_mm=None, journal=None, column="single",
-                      tol_mm=0.5, verbose=True, measured=False, path=None):
+                      tol_mm=0.5, verbose=True, measured=False, path=None,
+                      custom_width_mm=None):
     """校验图形物理宽度(mm)是否符合栏宽。返回 dict 报告。
 
     给 journal 则用该刊该栏宽作为上限; 否则用 max_width_mm。
-    同时检查可见文字字号是否 >= 该刊下限(若给 journal)。
+    journal="custom"(配合 custom_width_mm) 走逃生通道: 用 custom_width_mm 作目标栏宽,
+      不强制最小字号(中文刊等尚未进 JOURNAL_SPECS 时用; 数据须有来源, 禁止臆测)。
+    同时检查可见文字字号是否 >= 该刊下限(若给 journal 且该刊有下限)。
 
     measured=True: 不信任 fig.get_size_inches()(那是裁剪前画布尺寸),
       改为读回已落盘文件的真实物理宽度复核——这才能抓出 bbox_inches="tight"
@@ -184,6 +213,11 @@ def check_figure_size(fig, max_width_mm=None, journal=None, column="single",
       PNG: 用 PIL 读像素宽/dpi 反推 mm(零额外重依赖)。
       PDF/SVG: 有 pypdf/PdfReader 走真实读取, 缺则降级跳过(report 标注)。
     """
+    if journal is not None and journal.lower() == "custom":
+        if custom_width_mm is None:
+            raise ValueError("journal='custom' 需传 custom_width_mm(mm)")
+        max_width_mm = float(custom_width_mm)
+        journal = None  # 后续按 max_width_mm 路径走, 不查 JOURNAL_SPECS
     if measured:
         if path is None:
             raise ValueError("measured=True 需传 path(已写出的文件)")
@@ -444,6 +478,28 @@ def _demo_and_selfcheck():
     rep_bad = check_figure_size(fig3, journal="nature", column="single", verbose=False)
     assert not rep_bad["ok"], rep_bad
     print("[demo] check_figure_size: 合规图 OK, 超宽图正确判 FAIL")
+
+    # R1.2: MDPI 单栏(170mm)导出并读回实测复核
+    fig4, ax4 = plt.subplots(figsize=(6.0, 4.0))
+    ax4.plot([0, 1, 2], [1, 3, 2])
+    ax4.set_xlabel("x"); ax4.set_ylabel("y")
+    mdpi_base = os.path.join(outdir, "demo_mdpi")
+    w4, info4 = save_for_journal(fig4, mdpi_base, journal="mdpi", column="single",
+                                 formats=("pdf", "png"))
+    assert abs(info4["width_mm"] - 170.0) < 0.6, info4
+    print("[demo] save_for_journal mdpi/single ->", info4["width_mm"], "mm")
+
+    # R1.2: custom_mm 逃生通道(中文刊场景, 如农业工程学报正文栏宽 84mm)
+    fig5, ax5 = plt.subplots(figsize=(5.0, 3.5))
+    ax5.bar(["甲", "乙"], [2, 4])
+    cust_base = os.path.join(outdir, "demo_custom")
+    w5, info5 = save_for_journal(fig5, cust_base, journal="custom",
+                                 custom_width_mm=84.0, formats=("pdf", "png"))
+    assert abs(info5["width_mm"] - 84.0) < 0.6, info5
+    rep5 = check_figure_size(fig5, journal="custom", custom_width_mm=84.0,
+                             verbose=False)
+    assert rep5["ok"] and rep5["max_width_mm"] == 84.0, rep5
+    print("[demo] custom_width_mm=84 (中文刊逃生通道) ->", info5["width_mm"], "mm, check OK")
 
     plt.close("all")
     print("[selfcheck] ALL PASS, 输出目录:", os.path.abspath(outdir))

@@ -9,9 +9,11 @@
   - 用 figure_export.save_for_journal 按 Nature 双栏导出并校验
 
 合成数据自带; matplotlib Agg; 直接 python 运行产 png/pdf。
+默认输出到临时目录（不污染仓库 examples/）；如需留存到指定目录，传 `--outdir <dir>`。
 """
 import os
 import sys
+import tempfile
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
@@ -38,7 +40,9 @@ def sig_bar(ax, x1, x2, y, text, h=None):
     ax.text((x1 + x2) / 2, y + h, text, ha="center", va="bottom", fontsize=8)
 
 
-def main():
+def main(outdir=None):
+    outdir = outdir or tempfile.mkdtemp(prefix="light_multipanel_demo_")
+    os.makedirs(outdir, exist_ok=True)
     plt.style.use(os.path.join(HERE, "..", "assets", "publication.mplstyle"))
     rng = np.random.default_rng(7)
     colors = cp.OKABE_ITO_LIST
@@ -95,16 +99,21 @@ def main():
               fontsize=7)
     panel_tag(ax_c, "c")
 
-    out = os.path.join(HERE, "out_multipanel")
+    out = os.path.join(outdir, "out_multipanel")
     written, info = fx.save_for_journal(fig, out, journal="nature",
                                         column="double", height_mm=120,
                                         formats=("pdf", "png"))
     rep = fx.check_figure_size(fig, journal="nature", column="double")
-    print("[example] 导出:", [os.path.basename(p) for p in written])
+    print("[example] 导出:", [os.path.basename(p) for p in written], "->", outdir)
     print("[example] 规格:", info)
     print("[example] 校验:", "OK" if rep["ok"] else f"FAIL {rep['problems']}")
     plt.close(fig)
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    ap = argparse.ArgumentParser(description="GridSpec 多面板组图示例（默认输出临时目录）")
+    ap.add_argument("--outdir", default=None,
+                    help="输出目录；缺省落临时目录，不污染 examples/")
+    a = ap.parse_args()
+    main(a.outdir)

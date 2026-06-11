@@ -1,9 +1,10 @@
 # science.mplstyle — Science (AAAS) 系列刊风格 (一行套用)
 # 用法: plt.style.use(["assets/publication.mplstyle", "assets/science.mplstyle"])
-# 依据 Science 作图规格: 单栏约 55mm(2.24in) / 双栏约 121mm(4.76in) /
-#   整版约 183mm(7.2in); 正文无衬线 Helvetica/Arial; 字号最终 >=5pt(常用 6-9pt)。
-# 本文件默认 figsize 设成 Science 双栏 121mm 宽。
-# (规格来源见 SKILL.md 逐刊表, 付费墙页面已标注未实测)
+# 依据 Science 作图规格: 单栏 5.5cm=55mm(2.165in) / 双栏 12cm=120mm(4.724in) /
+#   整版 18.3cm=183mm(7.2in); 正文无衬线 Helvetica/Arial; 字号最终 >=5pt(常用 6-9pt)。
+# 本文件默认 figsize 设成 Science 双栏 120mm 宽。
+# (栏宽数字唯一真相源见 scripts/figure_export.py JOURNAL_SPECS["science"];
+#  联网核实 2026-06-11, science.org 三档制 5.5/12/18.3cm)
 
 font.family        : sans-serif
 font.sans-serif    : Helvetica, Arial, DejaVu Sans
@@ -15,8 +16,8 @@ ytick.labelsize    : 6.0
 legend.fontsize    : 6.0
 figure.titlesize   : 8.0
 
-# Science 双栏 121mm = 4.76in
-figure.figsize     : 4.76, 3.20
+# Science 双栏 120mm = 4.724in
+figure.figsize     : 4.724, 3.18
 figure.dpi         : 150
 savefig.dpi        : 600
 

@@ -265,7 +265,7 @@
 | 出版商/刊 | 单栏 | 中间档 | 双栏/整页 | 最大高 | 核查状态 |
 |---|---|---|---|---|---|
 | **Nature** | 89 | — | 183 | 170 | ✅ curl 实测 www.nature.com/nature/for-authors/final-submission（HTTP 200，"89 mm" / "183 mm" / 字号 "5 pt"–"7 pt" 逐字命中；最大高 170 mm 留题注空间） |
-| **Science (AAAS)** | ≈55 (5.5 cm) | 双栏 ≈120 (12 cm) | 整页 ≈183 (18.3 cm) | 约 240(版心) | ⚠️付费墙未实测；三档制，**无"175"档**（原笔记 175 系错值） |
+| **Science (AAAS)** | 55 (5.5 cm) | 双栏 120 (12 cm) | 整页 183 (18.3 cm) | 约 240(版心) | ✅ 三档制经 WebSearch 多源核实(2026-06-11，5.5/12/18.3cm)；science.org 页仍 403 故 DPI 细则未逐项实测；栏宽真相源=figure_export.py。**无"175"档**（原笔记 175 系错值） |
 | **Cell Press** | 85 | 1.5 栏 114 | 整页 174 | 约 240 | ⚠️付费墙未实测；整页 **174 非 178**（原笔记 178 系错值） |
 | **Elsevier**（含 db01 Computers and Electronics in Agriculture、Biosystems Engineering、Animal 等） | 90 | 1.5 栏 140 | 双栏 190；最小图 30 | — | ⚠️付费墙未实测；线稿矢量或 ≥300 DPI |
 | **IEEE**（IEEEtran 双栏版式，含 TPAMI/TIP/TGRS 等） | ≈88.9 (3.5 in) | — | 文本宽 ≈181.9 (7.16 in) | — | ⚠️付费墙未实测；以 \columnwidth/\textwidth 为准 |
