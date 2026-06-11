@@ -261,6 +261,34 @@
 
 ---
 
+## 15. 期刊句式方法论（按语义功能采集，只记结构不搬句）
+
+【是什么】学术写作有稳定的"语步（move）+ 句式骨架"。母语写作者靠读够多论文形成肌肉记忆，非母语/新手则常卡在"知道要说什么、不知道用什么句式说"。Writefull Sentence Palette、Academic Phrasebank（曼大）走的就是"按写作功能给句式骨架"的思路。本节给**采集与使用方法论**，不内置成品句库（句库会过时、且有抄袭风险）。
+
+【按语义功能归类（采集时的分类轴）】
+采集目标期刊真实句式时，按**写作功能**而非主题归档，常用功能桶：
+- **背景引入**：领域重要性、研究脉络起手（"Recent advances in X have… / X has emerged as…" 类骨架）。
+- **缺口陈述**：指出前人不足、引出本文动机（"However, … remains underexplored / little attention has been paid to…"）。
+- **方法宣告**：声明本文做法（"We propose / In this work, we…"）。
+- **结果陈述与让步**：报告发现并诚实让步（"… outperforms … by X%, although …"）——让步句式是非母语写作弱项，重点采。
+- **局限承认**：discussion 里坦陈边界（"One limitation is… / These findings should be interpreted with caution because…"）。
+- 其他：图表指引、对比转折、因果归因、未来工作。
+
+【采集方法（可操作）】
+1. 选 3-5 篇**目标期刊近年高质量论文**（同子领域、同文章类型）。
+2. 逐篇按上面功能桶**标注句式骨架**——抽出"功能词 + 句法结构"，把领域名词挖空成占位符（如 `[方法] achieves [指标] on [数据集], outperforming [baseline] by [幅度]`）。
+3. 同一功能下汇集多个骨架，比较其语气强度（强主张 vs 保守），按目标刊调性选用。
+
+【双红线（硬约束）】
+- **只记结构，不整句搬运**：采集的是"挖空占位符的句法骨架"，不是原句。整句或长片段照搬=抄袭（即便改几个词，连续 ≥ 一定词数的雷同仍会被 Turnitin 类工具命中，见 light-research-ethics「离线自查重」>40 词红旗）。
+- **版权**：他人论文受版权，句库供**学习句法**用，不得成段复制其表达。生成正文时用自己的话填占位符，写完过 m08/a08 自审 + light-citation 查重。
+
+【链接】Academic Phrasebank（曼彻斯特大学，公开）https://www.phrasebank.manchester.ac.uk/ ；Writefull Sentence Palette（产品页）https://www.writefull.com/
+
+【已知坑/局限】句式骨架有领域/期刊调性差异（CS 直接、生医保守），跨领域套用会水土不服；保守与强主张的边界按目标刊与审稿文化定；句库只解决"怎么说"，不解决"说得对不对"（内容真实性仍归 a10/自审）。
+
+---
+
 ## 未能核实的工具
 
 - **PACSOMATIC**：多次检索(含 "PACS-O-MATIC" 变体)未找到可靠的公开文档/仓库/论文。检索结果均为通用"研究论文结构/大纲"教学页，与一个名为 PACSOMATIC 的具体工具无法对应。**故不收录其功能/端点，避免编造。** 若指的是某内部/小众工具，需用户提供链接再补。

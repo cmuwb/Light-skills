@@ -65,6 +65,17 @@
 【链接】https://mg.readthedocs.io/latexmk.html ；手册 https://man.archlinux.org/man/latexmk.1
 【已知坑】中文/特殊字体务必用 `-xelatex`/`-lualatex`，否则字体报错；minted 需配合 `-shell-escape`；biber 工程要确保 `.bcf` 触发 biber 而非 bibtex。
 
+## latexdiff（返修标红 / tracked changes）
+【是什么】对比 LaTeX 源的新旧两版，生成"标红 diff"——新增文字加下划线、删除文字加删除线，编译出可视化修订稿。返修（m14 light-review-rebuttal）要给审稿人"改前改后"对照时的标准工具。
+【可复用方法（核心命令）】
+- 基本：`latexdiff old.tex new.tex > diff.tex`，再 `latexmk -pdf diff.tex`（中文用 `-xelatex`）得标红 PDF。
+- 多文件项目：先 `--flatten` 展开 `\input`/`\include` 再 diff：`latexdiff --flatten old_main.tex new_main.tex > diff.tex`。
+- 与 git 配合（最省事）：`latexdiff-vc --git -r <旧tag/commit> main.tex` 自动取旧版对比当前；或 `latexdiff-vc -r REV1 -r REV2 main.tex` 比两个修订。
+- 中文/复杂公式炸点（高频）：中文宏包（ctex/xeCJK）或复杂公式环境下，逐符号标记常破坏编译——降级 `--math-markup=0`（公式整体当一块不逐符号标）、加 `--encoding=utf8`；仍炸可试 `--type=CFONT` 或对公式段用 `%DIF` 手动豁免。
+【链接】CTAN https://ctan.org/pkg/latexdiff ；手册 https://mirrors.ctan.org/support/latexdiff/doc/latexdiff-man.pdf
+【已知坑/局限】**latexdiff 是 Perl 脚本，依赖 Perl 模块 `Algorithm::Diff`**——本机 MiKTeX 自带 latexdiff 但缺该模块，`latexdiff --version` 即报 `Can't locate Algorithm/Diff.pm`，**本机未跑通输出（2026-06-11 实测，标 GAP）**；TeX Live 通常自带完整 Perl 依赖，MiKTeX 需 `cpan Algorithm::Diff` 或装 Strawberry Perl。命令流程为公开文档整理，使用前确认本机 Perl 环境。复杂宏包/自定义命令可能使标记编译失败，先小范围试。
+【与 m14 返修互引】light-review-rebuttal 要求"正文改动用 tracked changes/颜色标注、给改前改后页码"，LaTeX 项目即用 latexdiff 生成该标红稿（见 light-review-rebuttal `light-review-rebuttal/references.md` 的 revision_response_template）；Word 流程的 tracked changes 见本文件「Word 学术排版」节。
+
 ## TinyTeX
 【是什么】基于 TeX Live 的精简发行版，主打"够用 + 缺包自动装"，由 R 的 `tinytex` 包维护，亦可独立安装。
 【可复用方法】

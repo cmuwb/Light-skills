@@ -28,7 +28,7 @@
 - **编辑决定明确阈值**（综合后判定）：Accept = 各维均分≥4.0 且无维度<3.0 且≥3/4 审稿人推荐 Accept/Minor；Minor = 均分≥3.5 且无维度<2.5，2–4 周可解决，不动核心论点/方法；Major = 有潜力但需大改后重审；Reject。另有 0–100 加权映射：≥80 Accept / 65–79 Minor / 50–64 Major / <50 Reject。
 - **re-review（验证性复审）模式**：输入"返修路线图 + 修改稿 + response letter"，逐条判定 `FULLY_ADDRESSED / PARTIALLY_ADDRESSED / NOT_ADDRESSED / MADE_WORSE`。Priority 1 必须全部 FULLY_ADDRESSED 才能 Accept。**可溯源规则**：对每条 P1，复审者须①读作者声称②跳到声称的修改位置③独立核实声称与实际改动一致；若作者声称为空或含糊（"已按建议修改"）则标 `🔍 Cannot verify`。
 - **承诺账本(commitment ledger)**：把每条审稿意见解析出的"承诺"逐条核验 `fulfilled / partial / not-fulfilled / explicitly-rejected-with-rationale`，证据类型决定核验位置（new_section/figure/table/citation 在修改稿核验；acknowledgment_only 在 response letter 核验；prose_edit 核验具体句子）。非 fulfilled 必须带 rationale，否则报 `COMMITMENT_GAP`。
-- **revision_response_template（R→A→C 格式）**：Reviewer Comment → Author Response → Changes Made。规则：每条都回不许跳过；不同意须给理由不能只写"disagree"；改动用 tracked changes/颜色标注；提供改前改后页码交叉引用。结构：稿件信息 → 变更摘要(300–500 字，列 Major/结构/新增) → 逐 reviewer 分段（先 "Strengths Acknowledged" 致谢，再 R1-W1/W2… 逐条）。
+- **revision_response_template（R→A→C 格式）**：Reviewer Comment → Author Response → Changes Made。规则：每条都回不许跳过；不同意须给理由不能只写"disagree"；改动用 tracked changes/颜色标注；提供改前改后页码交叉引用。**生成标红稿的工具**：LaTeX 项目用 latexdiff（`latexdiff old.tex new.tex` 或 `latexdiff-vc --git -r <旧tag>`，多文件加 `--flatten`，中文/公式炸点降级 `--math-markup=0`，详见 light-typesetting `light-typesetting/references.md`「latexdiff」节）；Word 项目用修订模式（OOXML `<w:ins>`/`<w:del>`）。结构：稿件信息 → 变更摘要(300–500 字，列 Major/结构/新增) → 逐 reviewer 分段（先 "Strengths Acknowledged" 致谢，再 R1-W1/W2… 逐条）。
 - **calibration（校准）模式**（独到）：用 5–20 篇已知录用结果的金标准论文，测本审稿人自身的假阴率 FNR/假阳率 FPR/平衡准确率，作为置信披露附到后续评审。要点：金标准集须同时含 ≥1 accept 和 ≥1 reject，n<10 时结果仅供参考；误差画像是领域特定的。
 
 【链接】

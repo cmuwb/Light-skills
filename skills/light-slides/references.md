@@ -226,4 +226,14 @@
 
 【已知坑/局限】免费层每月限 3 个、高级模板需 Premium；免费模板的署名/许可条款见其 Terms(本次未逐条核实，商用前须确认授权)；本质是模板源，不是可调 API。
 
+## 飞书 / Lark（国内协作场景）
 
+【是什么】飞书云文档平台，国内团队协作高频。**注意区分**：官方开放平台云文档体系（实查 open.feishu.cn）只开放**文档 Docx / 电子表格 / 多维表格 / 知识库**等资源类型的服务端 API，**不含独立的"演示文稿/Slides"开放资源类型**——截至 2026-06 实查，无官方 OpenAPI 可程序化创建/编辑飞书演示文稿。
+
+【可复用方法/适用场景】
+- **内容协同**：用飞书文档/多维表格协作写 PPT 大纲与数据表（`tenant_access_token`/`user_access_token` 可程序化读写文档/表格），定稿后导出，再用本 skill 自带 python-pptx 资产渲染成品 PPT。飞书适合"协作写内容"，不适合"程序化出 PPT"。
+- **lark-slides**：WebSearch 命中的 `larksuite/cli` 仓库 skills 目录下有 `lark-slides`（含 SKILL.md / xml-schema-quick-ref.md），是 **Lark CLI 的社区工具 skill，非飞书开放平台官方 OpenAPI**，借鉴其 XML schema 思路可，勿当官方 API 引用。
+
+【链接】云文档概述 https://open.feishu.cn/document/server-docs/docs/docs-overview?lang=zh-CN ；lark-slides（社区，非官方 API）https://github.com/larksuite/cli/tree/main/skills/lark-slides
+
+【已知坑/局限】演示文稿无官方开放 API（实查口径，引用前复查最新版本，飞书 API 持续扩展）；程序化出 PPT 仍走 python-pptx/PptxGenJS/Marp；飞书文档导出的格式保真度有限，复杂版式需在成品端重排。
