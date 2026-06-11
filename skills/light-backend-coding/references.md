@@ -135,7 +135,7 @@
 
 【可复用方法】
 - 结构：`name`、`on`（push/pull_request 等触发）、`jobs`、`runs-on`（如 ubuntu-latest）、`steps`（`run` 跑命令 / `uses` 用 action）。
-- 关键 action（截至 2026-06 均为 v6）：`actions/checkout@v6`（拉代码）、`actions/setup-python@v6`（装指定 Python，`with: python-version: '3.13'` + `cache: "pip"`/`pipenv`/`poetry` 缓存依赖；缓存默认关闭，须显式开）。
+- **【GitHub Actions 版本真相源】**关键 action（截至 2026-06 均为 v6，经本 references 顶部「版本实测」GitHub API curl HTTP 200 核验）：`actions/checkout@v6`（拉代码）、`actions/setup-python@v6`（装指定 Python，`with: python-version: '3.13'` + `cache: "pip"`/`pipenv`/`poetry` 缓存依赖；缓存默认关闭，须显式开）。a04（system-design）模板/references 与 a06、tool-selection 等处的 action 版本均以本节为准，不各自复写版本号。
 - `strategy.matrix.python-version: ["3.11","3.12","3.13"]` 并行多版本测试。
 - 最小 Python CI：checkout → setup-python(cache) → 装依赖 → `ruff check .` → `pytest`。
 - 缓存 pre-commit：`actions/cache@v4` path `~/.cache/pre-commit`，key 含 Python 版本 + `hashFiles('.pre-commit-config.yaml')`。

@@ -275,15 +275,15 @@
   - `on`：触发事件——`push`（推送）、`pull_request`（PR，含 fork）、`workflow_dispatch`（Actions 页手动触发）。
   - `jobs.<id>.runs-on`：跑在哪个 runner，如 `ubuntu-latest`。
   - `steps`：依次执行，`uses:` 调 action、`run:` 跑命令。
-- 关键 action：`actions/checkout@v4` 拉代码；`actions/setup-python@v5`（或 `setup-node`）装运行时，配 `cache: pip`/`npm` 复用依赖缓存提速。
+- 关键 action（版本真相源见 light-backend-coding a03 references.md「版本实测」段，2026-06 均为 v6）：`actions/checkout@v6` 拉代码；`actions/setup-python@v6`（或 `setup-node`）装运行时，配 `cache: pip`/`npm` 复用依赖缓存提速。
 - 闭合 SKILL 迁移铁律的最小 job 骨架：
   ```yaml
   jobs:
     test:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v4
-        - uses: actions/setup-python@v5
+        - uses: actions/checkout@v6
+        - uses: actions/setup-python@v6
           with: { python-version: "3.12", cache: pip }
         - run: pip install -r requirements.txt
         - run: ruff check .        # lint

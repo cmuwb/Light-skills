@@ -43,7 +43,7 @@ user-invocable: false
 创建网络暴露的接口/服务时，若无鉴权必须主动指出安全影响(security_awareness)，不静默上线无认证服务。
 
 ## 产出
-可运行代码 + 测试 + 依赖/环境说明 + README + 运行命令。结构交 a06 规整。
+可运行代码 + 测试 + 依赖/环境说明 + README + 运行命令。结构交 a06 规整。**作 a03 实验代码阶段时的标准交接工件：`run_manifest.md`**（记录运行命令/环境/产物路径/关键指标，交 m06；命名见 CONVENTIONS §6.1）。
 起步可直接复制同目录 `assets/project-scaffold/`（含 `pyproject.toml`/`.pre-commit-config.yaml`/CI/示例模块+测试 + `CODE_REVIEW_CHECKLIST.md` + `scripts/`(边界调试埋点)，版本号已实测、`pytest` 实跑通过）。
 推荐 TDD(test-driven-development)：先写最小失败测试并**亲眼看它失败**(确认是功能缺失而非拼写错)→ 写最简实现转绿 → 绿灯后才重构；无失败测试不写生产代码。
 

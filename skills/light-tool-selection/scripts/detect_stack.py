@@ -341,7 +341,7 @@ def self_test():
         with open(os.path.join(wf_dir, "ci.yml"), "w", encoding="utf-8") as f:
             f.write("name: ci\non: [push]\njobs:\n  test:\n"
                     "    runs-on: ubuntu-latest\n    steps:\n"
-                    "      - uses: actions/checkout@v4\n")
+                    "      - uses: actions/checkout@v6\n")
 
         rep = build_report(tmp)
         print_report(rep)

@@ -81,7 +81,7 @@
   - `name`：workflow 名。
   - `on`：触发条件——`push`/`pull_request`(可按 branches/paths 过滤)、`schedule`(cron 定时，如 `- cron: '0 6 * * *'` 每日 06:00 UTC)、`workflow_dispatch`(手动/带输入参数触发)、`release`/`issues` 等。
   - `jobs`：并行的作业，每个含 `runs-on`(如 ubuntu-latest)与有序 `steps`。
-  - `steps`：每步要么 `uses`(调现成 action)要么 `run`(跑 shell)。常用 action：`actions/checkout@v4`(拉代码)、`actions/setup-python@v5`(装 Python)、`astral-sh/setup-uv@v5`(装 uv，配 `uv sync` 复现)、`actions/cache@v4`(缓存依赖/~/.cache 提速)、`actions/upload-artifact@v4` / `download-artifact`(传产物如 PDF/图/数据)。
+  - `steps`：每步要么 `uses`(调现成 action)要么 `run`(跑 shell)。常用 action(checkout/setup-python 版本真相源见 light-backend-coding a03 references「版本实测」段，2026-06 为 v6)：`actions/checkout@v6`(拉代码)、`actions/setup-python@v6`(装 Python)、`astral-sh/setup-uv@v5`(装 uv，配 `uv sync` 复现)、`actions/cache@v4`(缓存依赖/~/.cache 提速)、`actions/upload-artifact@v4` / `download-artifact`(传产物如 PDF/图/数据)。
   - `strategy.matrix`：多版本/多环境笛卡尔积复现，如 `matrix: {python-version: ['3.10','3.11','3.12'], os: [ubuntu-latest, macos-latest]}`，配 `runs-on: ${{ matrix.os }}`。
   - `secrets`：敏感值经 `${{ secrets.NAME }}` 注入(仓库/环境级配置，绝不写进 YAML)。
   - `permissions`：收窄 `GITHUB_TOKEN` 权限(如发 release/写 pages 才给 `contents: write`)，最小权限原则。
