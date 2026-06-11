@@ -8,7 +8,7 @@
 | 轮 | 名称 | 状态 | 开始 | 完成 | commit 区间 | CI |
 |---|---|---|---|---|---|---|
 | R1 | P0 与卫生修复 | 已完成 | 2026-06-11 | 2026-06-11 | `1520d93..056165c`（8 commit） | 本地 7 门禁全绿；待推送确认 CI |
-| R2 | 会话衔接协议 | 未开始 | | | | |
+| R2 | 会话衔接协议 | 已完成 | 2026-06-11 | 2026-06-11 | `dd00835..7b60de3`（5 commit） | 绿（run 27341424084 三任务全 success） |
 | R3 | 中文链路专项 | 未开始 | | | | |
 | R4 | 合规与生态吸收 | 未开始 | | | | |
 | R5 | 资产补全 | 未开始 | | | | |
@@ -42,12 +42,18 @@
 - [2026-06-11] R1.8 — 计划说 a03 已实测 v6；现实 a03(backend-coding)确已全 v6 且有 GitHub API 实测记录。真正残留 v4/v5 在 system-design(a04 模板+references)与 tool-selection(references+detect_stack.py fixture)，已升 v6 并指向 a03 真相源。
 - [2026-06-11] R1.10 — 计划说无参 selftest 落 5 PNG 到技能根；现实 `--selftest` 路径已用 tempfile(不污染)，真正污染是"无参无 JSON 的 demo 路径"(tag=selftest 落 CWD)。修正该 demo 路径改临时目录，并把 tag 由 selftest 改 demo。
 - [2026-06-11] R1.12 — .gitignore 已含 __pycache__//*.py[cod]，无 tracked 缓存；out_multipanel 由 examples/example_matplotlib_multipanel.py 落 HERE 造成。改为默认临时目录(--outdir 可选)，删残留 PNG/PDF，清本地缓存目录。
+- [2026-06-11] R2 全程 — 计划要求 a02 新模板放 templates/、细则下沉 references/；orchestrator §5 引用这些跨技能文件时，check_skill_links.py 会把裸 `templates/x.md` / `references/x.md` 反引号路径当成 orchestrator 自身内部路径校验而报缺失。处理：orchestrator 内一律写全 `light-memory-pm/templates/...`、`light-memory-pm/references/...` 前缀，链接门转绿。后续轮跨技能引用模板/参考时同此写法。
+- [2026-06-11] R2.4-4 — 计划只说 a06 scaffold 纳入 `.light/`；执行中明确 `.light/`（passport + handoff 卡）是跨会话续跑真相源，应**纳入版本控制而非忽略**，故在 python-research.gitignore 末尾加注释显式声明不忽略 .light/，并在 scaffold selftest 断言两目录生成。
+- [2026-06-11] R2.5 演练 — 示例项目 dairygoat 演练前无 `.light/`（轻项目靠 db09 卡承载）。按协议新建 .light/handoff 并落 S01/S02 两张真实卡作为工作示例；B 会话恢复用 `pytest tests/test_infer_track.py`(2 passed)实证 S01"已完成"声明无损，非口头比对。
 
 ## 留给下一轮的话
 
 > 每轮收尾写 1-3 行：下一轮要注意什么、有什么现场发现。
 
 - R2 注意：orchestrator §5 已有 Handoff 格式、§0 断点恢复协议、§2 契约表(本轮已声明 CONVENTIONS §6.1 为真相源)；R2 收编 handoff 为单一口径时直接基于现有 §5，勿另起一套。
+- R3 注意：会话衔接协议已就位——CONVENTIONS §9 全局纪律 + a02 两件套模板/细则 + orchestrator §5 收编 + a06 scaffold .light/ + 路由触发 + README FAQ + A/B 演练（_verification_log/session_handoff_drill.md）。后续任何轮长任务收尾都应主动留衔接卡 + 打印启动提示词（含执行本计划的轮间交接，11 号文件模板可与 handoff_prompt.md 互参）。
+- R3 注意：跨技能引用别的技能的 templates//references/ 文件，反引号路径必须带 `light-<skill>/` 前缀，否则 check_skill_links.py 误判为本技能内部路径报缺失（R2 已踩，见偏差日志）。
+- R3 注意：中文链路专项独立于 R2，无新增硬依赖；ROUTER_EXAMPLES 现 47 例(R2 +3 主动交接正例)，check_entry_docs 必覆盖集仍含 light-orchestrator。
 - 全程门禁请带 `PYTHONUTF8=1`（Windows GBK 否则 selftest runner 打印 `✓` 报 UnicodeEncodeError，非测试失败）。校验器在 `.github/scripts/`，非 `tools/`。
 - 安装链接已扩到 4 文档；R2 若动 CONVENTIONS/ROUTER 结构，记得 install 与 check_installation_assets.py 已对这些文件名有依赖。
 
