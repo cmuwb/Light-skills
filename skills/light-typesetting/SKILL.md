@@ -30,6 +30,7 @@ description: 根据目标期刊/会议/学校/比赛要求做 LaTeX 或 Word 排
 - 检查：字体一致、编号连续、图表位置、域更新。
 - 生成/转换：Pandoc md→docx 套样式 `pandoc in.md -o out.docx --reference-doc=ref.docx`(ref.docx 提供标题/正文/题注样式)，参考文献 `--citeproc --bibliography=refs.bib --csl=style.csl`(CSL 体系，非 .bst)。编辑既有 docx 可解包改 `word/document.xml`/`styles.xml` 再打包(保留原结构不重排)；修订红线用 OOXML `<w:ins>/<w:del>`。复杂公式转 docx 走 OMML 可能走样。
 - 内容提取(非还原版式)：MarkItDown 把 pdf/docx/pptx 转 markdown 喂下游；python-docx 批处理。
+- 详细可执行清单见 [references.md](references.md) "Word 学术排版"大节：核心 checklist(样式/多级列表/题注交叉引用/域 F9 刷新/分节符/自动目录/插件/文档检查器)、22 条常见错误对照表(现象→原因→修法)、中文学位论文模板纪律(以本校研究生院官方 .docx 为准)。
 
 ## 端到端 walkthrough（内容+引用+图 → 模板 → 编译 → precheck → PDF）
 以 IEEE 会议双栏为例，其它 venue 把模板文件名替换即可：
