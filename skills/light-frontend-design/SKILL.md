@@ -1,6 +1,6 @@
 ---
 name: light-frontend-design
-description: 独特吸睛、审美好、有特色、美观全面的前端设计。当任务涉及前端界面、项目展示页、系统演示、大屏可视化、可视化平台时使用。不只是能用，而是好看、统一、清晰、有亮点、有视觉记忆点，适合展示/答辩/演示/落地。按主题选风格：科技感、学术感、农业智慧化、数据可视化、极简、玻璃拟态、卡片式、大屏、管理系统、移动端等。
+description: 独特吸睛、审美好、有特色、美观全面的前端设计。当任务涉及前端界面、项目展示页、系统演示、大屏可视化、可视化平台、微信小程序 UI、移动端界面、设计系统、Tailwind v4、shadcn/ui、Next.js、React、Vite、可访问性、动效、重设计审计时使用。不只是能用，而是好看、统一、清晰、有亮点、有视觉记忆点，适合展示/答辩/演示/落地。按主题选风格：科技感、学术感、农业智慧化、数据可视化、极简、玻璃拟态、卡片式、大屏、管理系统、移动端、小程序等。
 user-invocable: false
 ---
 
@@ -29,10 +29,12 @@ user-invocable: false
 - **样式 Tailwind v4**：CSS-first(`@import "tailwindcss"`)，@theme 暴露 token 为 CSS 变量；变体可叠(dark:/sm:/group-hover:/data-*:)，移动优先(sm=40rem)；复用用组件/循环而非滥抽 class；注意 class 顺序不决定优先级(样式表靠后者胜)。
 - **组件 API 设计(vercel-composition-patterns)**：按优先级修——先架构(别用布尔属性定制行为，用组合 `architecture-avoid-boolean-props`；复杂组件用 compound + 共享 context `architecture-compound-components`)，再状态(状态上提到 Provider 供兄弟共享，只暴露 `{state, actions, meta}` 泛型接口隐藏实现)，最后实现细节(显式变体 PrimaryButton/GhostButton 优于 primary/secondary 布尔；children 优于 renderX props)。典型重构：Toggle 一堆布尔 → ToggleProvider + Toggle.On/Toggle.Off；Modal → Modal/ModalHeader/ModalBody + 共享 open/close context。React 19+ 才用 use() 替代 forwardRef/useContext。
 - **移动端**：触控目标 iOS ≥44pt / Android ≥48dp；正文 ≥16；导航 iOS 底 tab(3-5)、Android bottom nav/FAB；交互元素带 accessibilityLabel/Role。
+- **微信小程序 UI**：移动优先、`rpx`、安全区、首屏轻、tabBar 3-5 项；简单 tab 可用 text-only custom tabBar；组件库在 TDesign/Vant/WeUI/Ant Design Mini/NutUI Taro/custom 中选一条，不混搭。
 - **可视化**：ECharts/D3/Plotly/大屏方案，色板统一、信息密度与可读性平衡。
-- 参考实践见 references.md：frontend-design、web-design-guidelines、ui-ux-pro-max、canvas-design、taste-skill 等。
+- 参考实践见 references.md 与 `references/ecosystem-2026.md`：frontend-design、web-design-guidelines、ui-ux-pro-max、canvas-design、taste-skill、shadcn、Tailwind、Next.js 等。
 
 ## 灵感来源（学版式不抄袭）
+- **热门 skill 雷达**：需要更新技能或选择外部设计能力时，先看 `references/ecosystem-2026.md`，优先吸收官方/高安装量/可验证的 workflow，而不是安装未知低信号包。
 - **Mobbin**：真实生产 App(iOS/Android/web)的截图与用户流程——定信息架构/交互顺序前，先找 2-3 个同类真实 flow 对照。
 - **Awwwards**：高水准网页创意，并直接借用其评审 rubric 自评(见下)。
 - 其余：Dribbble、Behance、Land-book、Godly、Siteinspire、Figma Community、Tailwind UI、Vercel templates。总结"为什么好看、适合什么场景、需要哪些组件"，沉淀进 db05。
@@ -93,4 +95,5 @@ user-invocable: false
 
 ---
 逐工具核查笔记(真实端点/命令/参数/坑)见同目录 references.md。
+热门技能/前端栈版本快照见 `references/ecosystem-2026.md`。
 机械门禁脚本见 scripts/；可运行代码骨架见 assets/；字体色彩/设计系统/redesign 协议见 references/ 目录。
