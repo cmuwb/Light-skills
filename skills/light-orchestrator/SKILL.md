@@ -87,6 +87,8 @@ user-invocable: false
 
 确认点的证据必须是新鲜的：当前轮命令输出、文件 diff、CI run、脚本 selftest、人工确认记录之一；不能只写“已检查”。
 
+**阶段切换默认触发会话衔接（T3）**：每过一个检查点、进入新阶段前，按 §5 主动留衔接卡 + 打印启动提示词，不等上下文耗尽。
+
 ## 4. 维护产物台账
 
 全程维护一份**产物台账**（passport），记录每阶段：产出了什么、过了哪些闸门、哪些标了 GAP、用户在决策点选了什么。格式与存储位置见 `references/passport.md`（固定存项目根目录 `.light/passport.yaml`）。启动时先查该文件是否存在——存在即续跑、不存在即新建。台账纳入 a02 memory-pm 的项目记忆，**任务中断后可据此续跑**。
@@ -98,22 +100,16 @@ user-invocable: false
 - 用户决策写 `choice` 与 `by: user`。
 - GAP / known_limitations 如实记录。
 
-## 5. 断点交接输出（handoff）
+## 5. 阶段交接输出（handoff → 会话衔接协议两件套）
 
-长任务每次暂停、提交、等待用户/CI/实验、或上下文可能压缩前，必须留下这段交接摘要。可以写入聊天、passport 的 notes，或项目 `version_history.md`：
+长任务每次暂停、提交、等待用户/CI/实验、或上下文可能压缩前，必须主动交接（CONVENTIONS §9 的 T1/T2/T3 触发）。**交接格式收编为 a02 会话衔接协议的两件套，本技能不再自带摘要格式**（避免口径分裂）：
 
-```md
-## Handoff
-- 当前阶段：<pipeline 阶段 / 当前 skill>
-- 已完成：<产物路径 + 验证摘要>
-- 工作区状态：<clean / 未提交文件 / 已提交未推送 / 等 CI>
-- 最新提交/CI：<sha / run id / conclusion>
-- 未完成：<下一步最小动作，不超过 3 条>
-- 阻塞/风险：<需要用户决策 / 数据缺口 / 诚信风险 / 无>
-- 续接命令/入口：<下一位 agent 应先读哪些文件或跑哪些命令>
-```
+1. **衔接卡落盘**：按 a02 `light-memory-pm/templates/handoff_card.md` 填好，存项目根 `.light/handoff/S<NN>-<slug>.md`（与 `.light/passport.yaml` 同级，`<NN>` 两位递增，`parent_session` 接上一张卡）。卡里"当前阶段/已完成/工作区状态/下一步/阻塞/必读文件/禁止"即原 handoff 摘要的全部字段。
+2. **打印启动提示词**：按 a02 `light-memory-pm/templates/handoff_prompt.md` 填值后打印在聊天里，用户复制→新开对话→粘贴即续。
 
-用户后续说“继续”时，先读这段 handoff 作为入口，但**不能把 handoff 当作当前事实**；仍要刷新 `git status`、todo、passport/db09、CI/远端等当前证据。没有 handoff 才退回“断点恢复协议”。
+落盘细节、四类触发判据、自包含/自传播原则见 a02 `light-memory-pm/references/session_handoff.md` 与 CONVENTIONS §9。无项目目录的轻对话只打印提示词、不落卡。
+
+用户后续说"继续"时，先读最新衔接卡作为入口，但**不能把衔接卡当作当前事实**；仍要刷新 `git status`、todo、passport/db09、CI/远端等当前证据。没有衔接卡才退回 §0「断点恢复协议」。
 
 ## 边界（重要）
 
@@ -130,4 +126,4 @@ user-invocable: false
 - [ ] 是否为每个跨技能交接产物写了落盘路径？
 - [ ] 是否在决策点停下让用户选，而不是替用户决定？
 - [ ] 是否在确认点给出真实验证证据，而不是口头说通过？
-- [ ] 是否更新 `.light/passport.yaml` 或留下 handoff，保证下次能续接？
+- [ ] 是否更新 `.light/passport.yaml`，并在暂停/阶段切换/上下文将尽时按 §5 留下衔接卡 + 启动提示词，保证下次能续接？
