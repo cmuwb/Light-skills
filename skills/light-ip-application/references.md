@@ -163,17 +163,14 @@
 
 ## OpenAlex
 
-【是什么】开放学术知识图谱（替代已停服的 Microsoft Academic Graph），覆盖 works/authors/sources/institutions/concepts/topics/publishers/funders 等实体，完全免费、无需 API key。用于专利场景的"非专利文献(NPL)在先技术"与作者机构关联检索。
+【是什么】开放学术知识图谱（替代已停服的 Microsoft Academic Graph），覆盖 works/authors/sources/institutions/concepts/topics/publishers/funders 等实体。用于专利场景的"非专利文献(NPL)在先技术"与作者机构关联检索。**接入口径（是否需 key、限流、计费）以 m01（light-literature-search）references「OpenAlex 接入真相源」节为全仓库唯一真相源**，本技能不复写数字。
 
-【认证现状（curl 实测 2026-06-06）】OpenAlex **仍然免费、不强制 API key**：
-- 无 key 无 mailto：`GET https://api.openalex.org/works?per_page=2` → **HTTP 200**（正常返回）。
-- 带 mailto（polite pool）：`...?per_page=5&mailto=test@example.com` → **HTTP 200**，`mailto` **仍有效、未废弃**，建议带上进入 polite pool。
-- `api_key` 为**可选**：若提供则会被校验，传伪造 key（`?api_key=BOGUSKEY123`）→ **HTTP 401**；不传 key 完全不影响访问。
-- 因此"必须注册 key 才能用、mailto 写法已废"的说法**不成立**，已据实测改正。OpenAlex 官方确曾公布过 premium/付费档与按量额度计划，但其具体折算数值本次未能从免费源逐字核实，**标待核查**，不写入产出当作事实。文档站 `developers.openalex.org`、旧站 `docs.openalex.org` 均在用。
+【认证现状（以 m01 真相源为准；下为历史 curl 实测存档）】现行政策：OpenAlex 2026 起**需免费 API key**（官网 2026-06-11 核实，额度/限流见 m01 真相源节）。生产代码一律按"需 key"实现，到 https://openalex.org/settings/api 免费申请。
+- 历史存档：本技能 2026-06-06 curl 实测曾记到——无 key 无 mailto `GET /works?per_page=2` → HTTP 200；带 mailto 仍有效；传伪造 key → 401。合理解释：key 强制处于灰度/过渡期，匿名当时仍被放行但额度受限、不保证。**以官网现行口径为准，不要据此实测认定匿名长期可用。**
 
 【可复用方法/真实端点/参数】
 - Base：`https://api.openalex.org`，实体端点 `/works`、`/authors`、`/sources`、`/institutions`、`/concepts`、`/topics`。
-- 认证：可选。免费匿名即可访问；建议带 `?mailto=you@example.com` 进入 polite pool（更稳定的限速）。若注册了 key 可加 `?api_key=YOUR_KEY`（不传也能用；传错 key 反而 401）。免费注册见 openalex.org。
+- 认证：**2026 起需免费 API key**（口径见 m01 真相源节），放 `?api_key=YOUR_KEY`；建议同时带 `?mailto=you@example.com` 进入 polite pool。免费注册见 https://openalex.org/settings/api 。
 - 单条：`/works/W2741809807` 或用外部 ID `/works/doi:10.7717/peerj.4375`。
 - 过滤：`?filter=` 逗号分隔即 AND，如 `?filter=publication_year:2020,title.search:graphene,authorships.institutions.country_code:CN`；行内运算符如 `cited_by_count:>100`；全文/标题搜索用 `?search=`。
 - 分页：浅页 `per_page`（1–200，**上限 200**，默认 25）+ `page`；深分页/全量用游标 `cursor=*`（响应 `meta.next_cursor` 续传）。`page`+`per_page` 方式最多翻到第 10,000 条，更深必须用 `cursor`。
@@ -181,7 +178,7 @@
 - 聚合统计：`?group_by=publication_year`（或任意可分组字段）直接出计数分布。
 - 字段裁剪：`?select=id,title,publication_year,doi,cited_by_count`。
 
-【限流/配额】匿名/polite pool 默认约 **10 万次/天、10 次/秒**（带 `mailto` 进 polite pool 更稳）。OpenAlex 另有付费 premium 档与额度，具体折算本次未从免费源逐字核实，**标待核查**。用量限制与定价详情见 developers.openalex.org。
+【限流/配额】见 m01 references「OpenAlex 接入真相源」节（全仓库唯一存具体口径处：现行为需免费 key + 按量额度）。本技能不复写数字。
 
 【链接】
 - https://developers.openalex.org/（新文档站）

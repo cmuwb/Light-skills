@@ -209,11 +209,11 @@
 - **按概念/主题取代表作**：`/works?filter=concepts.id:C41008148`（C 开头是 concept id）。`/concepts?search=neural network` 查概念 id 与 `works_count`、`level`。
 - **省流量**：`&select=id,display_name,cited_by_count` 只取需要字段；返回里有 `cited_by_count`、`fwci`、`referenced_works`、`related_works`、`abstract_inverted_index` 等可用于找高影响/相关/对标工作。
 - **分页**：超过 page*per-page=10000 必须用游标——首次 `&cursor=*`，之后用响应 `meta.next_cursor` 续传；`per-page` 最大 200。
-- **认证/限流（2026 现状，已核实）**：API 免费但**现在需要免费 API key**（openalex.org/settings/api），免费额度 **\$1/天**（不同操作不同成本，响应里直接带 `cost_usd` 字段，实测一次 works 查询约 \$0.001）。仍建议带 `&mailto=you@example.com`（礼貌池）。更高额度/月度快照需付费联系 sales@openalex.org。注意：早期文档常说的"10 req/s、10 万/天、无需 key"已被新的 \$1/天计费模型取代。
+- **认证/限流/计费**：OpenAlex 2026 起**需免费 API key**，响应带成本字段；具体 key 申请、限流、计费、退避口径以 **m01（light-literature-search）references「OpenAlex 接入真相源」节为唯一真相源**，本技能不复写数字（改接入策略只改那一处）。仍建议带 `&mailto=you@example.com`（礼貌池）。
 
-**【链接】** https://api.openalex.org ｜ https://docs.openalex.org ｜ https://docs.openalex.org/how-to-use-the-api/rate-limits-and-authentication
+**【链接】** https://api.openalex.org ｜ https://developers.openalex.org ｜ 接入口径见 m01 references「OpenAlex 接入真相源」节
 
-**【已知坑/局限】** `concepts` 字段官方逐步让位给 `topics`，新项目优先用 `topics`/`primary_topic`。计费模型近期变动，跑大批量前先看响应 `cost_usd` 估算每日预算。
+**【已知坑/局限】** `concepts` 字段官方逐步让位给 `topics`，新项目优先用 `topics`/`primary_topic`。计费模型 2026 改为按量额度（口径见 m01 真相源节），跑大批量前先看响应成本字段估算每日预算。
 
 
 

@@ -10,7 +10,7 @@
 
 ## 中文文献检索途径（CNKI / 万方 / 维普 / CSCD + 免 key 替代）
 
-【是什么】中文核心成果主要沉淀在知网(CNKI)、万方(Wanfang)、维普(VIP)、CSCD 等库，但它们**均无对外免费 API**。可免 key 落地的真相是：OpenAlex 与 Crossref 已收录大量中文期刊，按 ISSN 可直接命中，应作为中文检索的免 key 主力。
+【是什么】中文核心成果主要沉淀在知网(CNKI)、万方(Wanfang)、维普(VIP)、CSCD 等库，但它们**均无对外免费 API**。可落地的真相是：OpenAlex 与 Crossref 已收录大量中文期刊，按 ISSN 可直接命中，应作为中文检索的低门槛主力（OpenAlex 2026 起需免费 key，额度/限流口径见下「OpenAlex 接入真相源」；Crossref 免 key）。
 
 【本环境 curl 实测记录（2026-06，加 &mailto= 进礼貌池）】
 - 例刊：计算机学报（Chinese Journal of Computers，ISSN `0254-4164`，CSCD/北大核心）。
@@ -20,7 +20,7 @@
 - `GET https://api.crossref.org/journals/0254-4164` → 200，title="Chinese Journal of Computers"，publisher="China Science Publishing & Media Ltd."，`counts.total-dois`=1264。**存活，实测可用。**
 - `GET https://api.openalex.org/works?filter=language:zh` → 200，`meta.count`≈5,003,273（zh 语种海量）。**坑**：对 S4210175330 做 `group_by=language` 实测显示 1263 篇标 `en`（OpenAlex 把中文标题/摘要存成英译），故**按 source.id/ISSN 检索比按 `language:zh` 过滤更可靠**。
 
-【可复用方法（免 key 主力：OpenAlex + Crossref 按 ISSN 检中文期刊）】
+【可复用方法（低门槛主力：OpenAlex + Crossref 按 ISSN 检中文期刊；OpenAlex 需免费 key，口径见下真相源节）】
 1. 建目标中文核心刊的 ISSN 清单（北大核心/CSCD/CSSCI 范围）。
 2. 逐刊 `OpenAlex /sources/issn:{ISSN}` 取 OpenAlex source id 与体量，再 `/works?filter=primary_location.source.id:{Sid}` + `sort=`/`from_publication_date:` 拉题录。
 3. 用 `Crossref /journals/{ISSN}/works?query=&filter=from-pub-date:` 在刊内做 DOI 级检索与去重核实。
@@ -65,7 +65,7 @@
 
 ## OpenAlex API
 
-【是什么】免费、开放、无需 key 的学术知识图谱（Works/Authors/Sources/Institutions/Concepts/Topics/Publishers/Funders），可视为 MAG 继任者。覆盖跨学科 2.5 亿+ works，含引用关系、开放获取状态、机构/作者消歧。
+【是什么】免费、开放的学术知识图谱（Works/Authors/Sources/Institutions/Concepts/Topics/Publishers/Funders），可视为 MAG 继任者。覆盖跨学科 2.5 亿+ works，含引用关系、开放获取状态、机构/作者消歧。**2026 起接入需免费 API key**，key/限流/计费的唯一口径见下「OpenAlex 接入真相源」。
 
 【可复用方法/真实端点/参数】
 - Base：`https://api.openalex.org`，主端点 `/works` `/authors` `/sources` `/institutions` `/concepts` `/topics`。
@@ -77,12 +77,30 @@
   - `group_by=`：按某字段做分面统计（如年度/期刊计数），适合快速画领域分布。
 - 分页：`per-page`（≤200）+ `page`（仅前 1 万条）；超过则用游标 `cursor=*`，每次响应里 `meta.next_cursor` 续翻，可遍历全集。
 - 礼貌池(polite pool)：加 `mailto=you@example.com`（query 参或 User-Agent），获得更稳定更快的速率。
-- 限流：约 100,000 次/天、10 次/秒（共享池）；可注册更高配额。
+- 限流/计费：见下「OpenAlex 接入真相源」节（全仓库唯一存具体口径的地方，别处只放指针）。
 - 返回字段：`id`(OpenAlex ID)、`doi`、`title`、`publication_year`、`cited_by_count`、`authorships`、`primary_location`/`best_oa_location`、`open_access`、`referenced_works`、`related_works`、`abstract_inverted_index`（倒排索引需还原成摘要）。
 
-【链接】https://docs.openalex.org ；API 根 https://api.openalex.org/works
+【链接】docs（2026 起新域名）https://developers.openalex.org （旧 docs.openalex.org 已 301 跳转至此）；API 根 https://api.openalex.org/works ；key 申请 https://openalex.org/settings/api
 
 【已知坑/局限】摘要是 inverted index 需重建；`page` 翻页硬上限 1 万条，深翻必须用 cursor；机构/作者消歧偶有误并；concepts 已逐步被 topics 取代，新代码优先用 `primary_topic`。
+
+---
+
+## OpenAlex 接入真相源（key / 限流 / 计费 · 全仓库唯一口径）
+
+> 研究日期：2026-06-11（联网核实 developers.openalex.org 官方文档 + 历史 curl 记录）。
+> **全仓库关于 OpenAlex 是否需要 key、限流、计费的具体数字只能出现在本节**；其余技能（m03/m04/m10/m13、a09、citation/venue/ip 等）一律改为"接入口径见 m01 references『OpenAlex 接入真相源』"的一行指针，不复写数字。改 OpenAlex 接入策略时只改这里。
+
+【现状（2026-06-11 官网核实）】OpenAlex REST API **免费，但 2026 起需要一个免费 API key**。官方原文："The REST API is free but requires an API key (also free)"，"you get $1/day of free usage"。
+- **认证**：到 https://openalex.org/settings/api 注册免费 key，放查询参 `?api_key=YOUR_KEY` 或请求头。
+- **计费模型**：免费额度 **$1/天**；不同操作成本不同，响应直接带成本字段（历史 curl 实测一次 works 查询约 $0.001，即每天约可发数百至上千次普通查询）。跑大批量前先看响应成本字段估算预算。
+- **礼貌池**：仍建议带 `&mailto=you@example.com`，更稳定。
+- **更高额度**：月度快照/变更文件/更高配额需付费，联系 sales@openalex.org。
+- **退避策略**：遇 429/配额耗尽时指数退避；优先用 `select=` 减字段、`group_by=` 做聚合统计以省成本；能批量则批量，避免逐条高频请求。
+
+【口径冲突存档（诚实标注，勿删）】历史上仓库内有两套说法：
+- 旧口径（已废弃）："10 req/s、10 万次/天、无需 key"——这是新计费模型上线前的政策，**不再适用**。
+- ip 技能 2026-06-06 的 curl 实测曾记到"无 key `GET /works` 仍 HTTP 200"。合理解释：key 强制处于灰度/过渡期，匿名请求当时仍被放行但额度受限且不保证。**以官网现行 $1/天 + 需 key 为准**；生产代码一律按"需 key"实现，不要依赖匿名可用。若某次实测发现匿名仍可用，记 `GAP：OpenAlex 匿名放行状态待复核（日期）`，不改本节结论。
 
 ---
 

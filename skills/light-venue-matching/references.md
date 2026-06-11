@@ -16,7 +16,7 @@
 - 搜索：`?search=` 按名称模糊匹配；排序 `?sort=cited_by_count:desc`。
 - 分面统计：`?group_by=` 得到分桶计数（如按 country_code 统计某方向期刊分布）。
 - 分页：游标 `?cursor=*`（首页），用返回的 `meta.next_cursor` 翻页；`per_page` 最大 200。深翻只能用 cursor，不能用 page。
-- 认证/限流：礼貌池加 `?mailto=you@example.com`（免 key，更稳）；正式高频用免费 API key（openalex.org/settings/api，约 $1/day 免费额度）。
+- 认证/限流/计费：OpenAlex 2026 起**需免费 API key**；礼貌池仍可加 `?mailto=you@example.com` 更稳。key 申请、限流、计费、退避的唯一口径见 **m01（light-literature-search）references「OpenAlex 接入真相源」节**，本技能不复写数字。
 - 典型组合：`?filter=topics.id:T10883,is_oa:true&sort=summary_stats.2yr_mean_citedness:desc&per_page=50&mailto=...` → 按方向取 OA 期刊并按引用强度排序。
 
 【链接】https://api.openalex.org/sources ｜ 文档 https://docs.openalex.org/api-entities/sources （现重定向至 https://developers.openalex.org/）
@@ -27,7 +27,7 @@
 
 ## OpenAlex Authors API（录用可能性 rubric 的"作者相对实力"信号源）
 
-【是什么】OpenAlex 的 Authors 实体，免费 REST，给每位作者 `works_count`、`cited_by_count`、`summary_stats.h_index`、`summary_stats.2yr_mean_citedness`、`summary_stats.i10_index`、ORCID 等。是 rubric 中"作者 h-index 相对该刊典型作者"这一可核查信号的免费数据来源，免 key（加 `mailto` 进礼貌池）。
+【是什么】OpenAlex 的 Authors 实体，REST，给每位作者 `works_count`、`cited_by_count`、`summary_stats.h_index`、`summary_stats.2yr_mean_citedness`、`summary_stats.i10_index`、ORCID 等。是 rubric 中"作者 h-index 相对该刊典型作者"这一可核查信号的数据来源（OpenAlex 2026 起需免费 key，接入口径见 m01 真相源节；加 `mailto` 进礼貌池）。
 
 【可复用方法/真实端点/参数】
 - 按名检索：`GET https://api.openalex.org/authors?search=<姓名>&mailto=<email>`（返回 `results[].summary_stats.h_index`）。

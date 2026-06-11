@@ -51,4 +51,4 @@
 - 附图标记清单：
 
 ---
-检索工具：scripts/patent_search.py（OpenAlex NPL 免 key；专利库请求构造见 --print-adapters）。
+检索工具：scripts/patent_search.py（OpenAlex NPL，2026 起需免费 key，接入口径见 m01 真相源；专利库请求构造见 --print-adapters）。

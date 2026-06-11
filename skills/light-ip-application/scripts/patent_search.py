@@ -4,13 +4,15 @@
 patent_search.py — 在先技术(prior-art)检索辅助。
 
 诚实声明(d:/skill/Light/CONVENTIONS.md):
-  * OpenAlex 是本脚本唯一"免费、免 key、可程序化"的真实数据源(curl 实测 HTTP 200),
-    用于"非专利文献(NPL)"型在先技术。
+  * OpenAlex 是本脚本唯一"可程序化的真实公开数据源",用于"非专利文献(NPL)"型在先技术。
+    2026 起 OpenAlex 接入需免费 API key(接入口径以 m01 light-literature-search
+    references「OpenAlex 接入真相源」节为准)。注:本脚本当前仅传 mailto 进 polite pool,
+    尚未透传 api_key,过渡期匿名请求或仍可用但不保证;显式 key 支持为已知缺口(待 R5 资产轮补)。
   * 专利数据库(EPO OPS / The Lens / USPTO ODP)均需注册凭证,本脚本提供
     "构造请求"的适配器(build_*_request),便于用户带 key 时直接发起;不内置任何
     伪造 key,也不臆造返回。
   * 端点状态(2026-06 curl 实测,见 references.md):
-      - OpenAlex            GET  api.openalex.org/works                 -> 200 (免 key)
+      - OpenAlex            GET  api.openalex.org/works                 -> 200 (现行需免费 key)
       - EPO OPS  auth       POST ops.epo.org/3.2/auth/accesstoken       -> 401 (需 key)
       - The Lens patent     POST api.lens.org/patent/search             -> 401 (需 token)
       - USPTO 程序化 API    POST api.uspto.gov/api/v1/patent/.../search -> 401 (需 X-Api-Key)
@@ -92,13 +94,13 @@ def _normalize_work(w: dict, origin: str = "seed") -> dict:
 
 
 def search_openalex_npl(query: str, **kw) -> list[dict]:
-    """实发 OpenAlex 检索,归一化为 prior-art 候选记录。免 key。"""
+    """实发 OpenAlex 检索,归一化为 prior-art 候选记录。OpenAlex 2026 起需免费 key(见 m01 真相源)。"""
     url = build_openalex_url(query, **kw)
     data = _http_get_json(url)
     return [_normalize_work(w, origin="seed") for w in data.get("results", [])]
 
 
-# ---- 引用图一跳扩展(snowballing,免 key,OpenAlex)----
+# ---- 引用图一跳扩展(snowballing,OpenAlex,2026 起需免费 key)----
 
 def _openalex_short_id(work_id: str) -> str:
     """把 https://openalex.org/W123 或 W123 归一为短 id 'W123'。"""
@@ -160,7 +162,7 @@ def merge_dedup(records: list[dict]) -> list[dict]:
 def expand_openalex_citations(seeds: list[dict], *, direction: str = "both",
                               per_seed: int = 200,
                               mailto: str | None = None) -> list[dict]:
-    """对种子候选做一跳引用图扩展(免 key)。
+    """对种子候选做一跳引用图扩展(OpenAlex,2026 起需免费 key)。
     backward: 种子的 referenced_works(它引用的在先文献)。
     forward : filter=cites:{id}(后续引用它的文献)。
     单跳为限,避免指数爆炸;每种子配额由 per_seed 钳制。

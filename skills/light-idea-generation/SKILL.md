@@ -38,7 +38,7 @@ Level 2 立项时，每个候选先填一张**立项卡**（借 AI Scientist v2 
 提"创新点/相对哪些工作"前，实际检索对标工作，避免"自以为新"和引用幻觉：
 - **OpenAlex**（无 S2 key 时首选，免费）：`https://api.openalex.org/works?search=<关键词>&select=id,display_name,cited_by_count,publication_year&mailto=you@example.com`。
   - 看一个方向被哪些子主题占满、哪里稀疏：`/works?filter=title.search:<方向>,from_publication_date:2023-01-01&group_by=primary_topic.id`。
-  - 趋势：`group_by=publication_year`。取代表作按 `cited_by_count` 排序。分页超 1 万条用游标 `&cursor=*` + `meta.next_cursor`。注意 2026 起需免费 API key、按 `cost_usd` 计费（约 $1/天免费额度）。
+  - 趋势：`group_by=publication_year`。取代表作按 `cited_by_count` 排序。分页超 1 万条用游标 `&cursor=*` + `meta.next_cursor`。**2026 起需免费 API key，接入口径见 m01 references「OpenAlex 接入真相源」节。**
 - **Semantic Scholar**：`GET https://api.semanticscholar.org/graph/v1/paper/search`，参数 `query/limit/fields`，header `X-API-KEY`（可选），每次查后 sleep ~1s 防限流（AI Scientist 做法）。
 检索结论决定"创新点"措辞：若已有高度相似工作，回到发散重选角度，别硬说新。
 
@@ -71,7 +71,7 @@ Level 2 立项时，每个候选先填一张**立项卡**（借 AI Scientist v2 
 - 可选多视角互怼（Consciousness Council）：让"对标派 / 可行性派 / 新颖性派 / 工程派"各自挑刺再综合。
 
 ## 产出
-3–6 个分层 idea（高风险高回报 / 稳妥 / 保底），按潜力排序，附对比表。每个标注成熟度与差异化强度，并带上自检的五维/三维分。
+3–6 个分层 idea（高风险高回报 / 稳妥 / 保底），按潜力排序，附对比表。每个标注成熟度与差异化强度，并带上自检的五维/三维分。**标准工件：`idea_candidates.md`**（交 m04 的交接工件，命名见 CONVENTIONS §6.1）。
 
 ## 强制衔接
 所有 idea **必须**送 m04 idea-critique 严审。被毙的 idea 带着 m04 给的方向回到本技能再生成，形成循环。通过的 idea 才进 m05。写入项目库 db09 的 decision_log。

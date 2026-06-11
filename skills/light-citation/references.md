@@ -112,12 +112,13 @@ DataCite https://datacite.readme.io/docs/what-is-the-best-way-to-make-a-content-
 
 ## OpenAlex
 
-【是什么】免费开放学术图谱（接替已关停的 Microsoft Academic Graph），覆盖 works/authors/sources/institutions/concepts/topics 全实体，无需 key，适合大规模检索与计量。
+【是什么】开放学术图谱（接替已关停的 Microsoft Academic Graph），覆盖 works/authors/sources/institutions/concepts/topics 全实体，适合大规模检索与计量。**2026 起接入需免费 API key**，key/限流/计费的唯一口径见 m01（light-literature-search）references「OpenAlex 接入真相源」节。
 
-【✅ 已验证 2026-06-06】
+【✅ 已验证 2026-06-06；接入口径以 m01 真相源为准】
 - `GET /works/https://doi.org/{doi}?mailto=...` → **HTTP 200**，返回 `id/doi/title/publication_year/cited_by_count/authorships`。
 - `GET /works?filter=title.search:goat detection&per_page=1&mailto=...` → **HTTP 200**。
 - 不存在的 DOI → **HTTP 404**。由 `scripts/verify_refs.py` 自测覆盖（与 Crossref 交叉核对标题/年份）。
+- 注：上述 6-06 实测为匿名（仅 mailto）放行，属 key 强制过渡期现象；现行政策需免费 key，生产代码按"需 key"实现（口径见 m01 真相源节）。
 
 【可复用方法/真实端点/参数】
 - Base：`https://api.openalex.org`，实体端点 `/works`、`/authors`、`/sources`、`/institutions`、`/concepts`、`/topics`。
@@ -128,7 +129,7 @@ DataCite https://datacite.readme.io/docs/what-is-the-best-way-to-make-a-content-
   - `search=` 全文相关性检索；`select=` 限定返回字段；`sort=cited_by_count:desc`。
   - `group_by=` 做聚合统计（如按年、按机构计数），是做引用计量分析的利器。
 - 分页：`per_page`（≤200）+ `page`（仅前 10000 条）；超过用游标 `cursor=*`，从响应 `meta.next_cursor` 续取。
-- **Polite pool**：query 带 `mailto=you@example.com`（或 `api_key`）进入更快的池。日限约 10 万次/天、~10 req/s。
+- **Polite pool / 接入**：query 带 `mailto=you@example.com` 进入更快的池；OpenAlex 2026 起需免费 `api_key`。限流/计费具体口径见 m01 references「OpenAlex 接入真相源」节，本处不复写数字。
 - 摘要以 `abstract_inverted_index`（倒排词位）存储，需自行重建为正文。
 - 核心字段：`id, doi, title, publication_year, authorships, primary_location.source, cited_by_count, referenced_works, related_works, open_access`。
 
