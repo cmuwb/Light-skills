@@ -253,6 +253,48 @@
 
 ---
 
+## EI 核查路径（Compendex Source List，研究日期 2026-06-11）
+
+【是什么】EI（工程索引）现由 Elsevier 的 Engineering Village 平台承载，核心库即 **Compendex**。判定"某刊/某会是否被 EI 收录"的权威依据是 Engineering Village 官方发布的 **Compendex Source List**（收录刊单 Excel），而非任何第三方"EI 源刊查询"站。
+
+【可复用方法/真实路径/实查留痕（2026-06-11，curl）】
+- Engineering Village 入口 `https://www.engineeringvillage.com` → **HTTP 302**（跳登录，库内检索需机构订阅）。
+- Compendex 产品页 `https://www.elsevier.com/products/engineering-village/databases/compendex` → **HTTP 200**；页内 "View source list" 链接指向官方收录刊单 Excel。
+- 实测：该 "View source list" 当前指向 Contentful CDN 资产 `https://assets.ctfassets.net/.../CPXSourceList_052026__1_.xlsx` → **HTTP 200，约 5.6 MB**（文件名 `CPXSourceList_052026` = 2026 年 5 月版）。**此 CDN 链接会随版本更新而变，务必每次从产品页 "View source list" 现取，不要硬编码 CDN 路径。**
+- 间接核查法（无订阅时）：① 下载 Compendex Source List Excel，按刊名/ISSN 在表内查是否在列；② 看出版方/会议官网是否声明 "Indexed by Ei Compendex"，再回 source list 复核；③ 会议论文集多经 IEEE Xplore/ACM DL/Springer 出版后被 EI 收录，可结合出版方确认。Source List 产品页说明其内容来自数千家出版方，含 IEEE、ASME、SAE、ACM 等主要工程学会。
+
+【已知坑/局限】
+- **严禁引用过期的第三方"EI 源刊目录"站**（大量 `ei*.com`/个人整理表已多年不更新或为营销站），收录状态只认 Engineering Village 官方 source list 的当期版本。
+- 收录是动态的，刊/会可能被移除；投稿前须现查最新版 source list，并标 last_checked。
+- 本轮只验证了 source list **下载入口活性**，未对具体中文刊做逐条收录核对——逐条查是投稿前动作（下载 5.6 MB Excel 按 ISSN 检索）。
+
+【链接】产品页 https://www.elsevier.com/products/engineering-village/databases/compendex ｜ 平台 https://www.engineeringvillage.com （收录刊单从产品页 "View source list" 现取）
+
+---
+
+## 国内会议信号源（CCF 目录 / 一级学会官网 / 假会议识别，研究日期 2026-06-11）
+
+【是什么】国内（含中文）学术会议没有像 SCI/EI 那样的单一权威库，正规性要靠多信号交叉判断：CCF 推荐目录（限计算机）、主办方是否为一级学会、出版与检索去向。
+
+【可复用方法/真实路径/实查留痕（2026-06-11）】
+- **CCF 推荐目录**（计算机方向首选档位）：`https://www.ccf.org.cn/Academic_Evaluation/By_category/` → **HTTP 200**；分 A/B/C 三档、十大领域，详见上文 "CCF 推荐国际学术会议和期刊目录"节。计算机方向的国内/国际会议先对 CCF 档；非计算机方向 CCF 不适用。
+- **一级学会官网**：正规国内会议多由全国性一级学会（及其专委会）主办，如中国计算机学会(ccf.org.cn)、中国电子学会、中国自动化学会、中国人工智能学会等。核查办法：到学会官网"学术活动/会议通知"栏目核对该会是否在官方议程内，主办/承办单位是否与会议征稿启事一致。
+- **出版与检索去向**：正规会议会明确说明论文集出版方（IEEE/ACM/Springer LNCS/EI 会议集等）与检索去向，且可在出版方平台或 Compendex Source List（见上节）复核；只承诺"录用即 EI/SCI 检索"却拿不出出版方信息的，视为危险信号。
+
+【假会议识别三红线（命中任一即高度警惕）】
+1. **"交钱包录、几天给录用"**：承诺极短周期录用、无实质同行评议、强调缴费即出版。
+2. **检索承诺无出处**：声称"100% EI/Scopus 检索"却不给出版方与刊号/会议集信息，或所列检索源查无实据（回 source list / 出版方官网查不到）。
+3. **主办方身份含糊或冒名**：主办单位查无此学会、盗用知名学会/高校名义、官网域名与正规学会无关、同一壳子每年换名批量办会、广撒约稿邮件。
+
+【已知坑/局限】
+- CCF 目录只覆盖计算机领域，其他学科无对应统一目录，更依赖"一级学会主办 + 出版检索去向"两项判断。
+- 学会官网信息更新有滞后，承办信息以学会官方通知为准，不轻信第三方会议聚合站/约稿邮件。
+- "EI/Scopus 检索"是投稿后、出版后的结果，征稿阶段的检索承诺只能作参考、不能当保证，须按上文 EI 核查路径回官方源复核。
+
+【链接】CCF 目录 https://www.ccf.org.cn/Academic_Evaluation/By_category/ ｜ 各一级学会官网（按方向查），出版检索去向回出版方平台 + Compendex Source List 复核。
+
+---
+
 ## 交叉使用要点（写报告必记）
 
 - 三套分区不可混：JCR 分区(科睿唯安) / SJR 分区(Scopus) / 中科院分区(国产，1 区门槛最高) 口径完全不同，每次标注来源+年份。
