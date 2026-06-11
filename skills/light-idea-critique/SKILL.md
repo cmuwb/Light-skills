@@ -59,7 +59,7 @@ m03 在立项卡里自报了"核心撞车检查"四问的检索证据——**你
 - **通过**：说明强在哪、可冲层次，放行 m05。
 - **有条件通过**：填 `templates/Revision_Roadmap.md`，列 must-fix。
 - **不通过**：给原因 + ≥3 个具体改进方向，回 m03。
-判决用 `templates/verdict_template.md` 成文。
+判决用 `templates/verdict_template.md` 成文。**标准工件：判决落盘为 `critique_verdict.md`**（交 m05 / 回 m03 的交接工件，命名见 CONVENTIONS §6.1）。
 
 ### Step 7 — 强制衔接与写回
 不通过/有条件通过的 idea 带 Roadmap 回 m03 重新生成，循环到无 block、无未化解 CRITICAL、Weighted≥80 才放行 m05（仿 ResearchAgent/AI Scientist 评审→再 ideation 闭环）。判决与理由写入 db09 的 decision_log。

@@ -38,6 +38,25 @@ Light 默认以**顶刊/顶会审稿人 + 资深科研导师**的双重标准工
 
 m03 与 m04 构成循环：idea 不过关就回到 m03。
 
+### 6.1 阶段工件契约（跨技能交接的单一真相源）
+
+跨技能交接必须有可落盘工件，不能只靠聊天总结。下表是**全仓库工件命名的真相源**：编排器（light-orchestrator）按此调度，每个产出技能在自己 SKILL.md 的「产出」节须逐字声明同名工件（双向声明，避免单向挂载）。文件名统一**下划线**风格。项目已有约定时以项目约定为准，但须在 `.light/passport.yaml` 记录路径。
+
+| 阶段 | 产出技能 | 标准工件（落盘名） | 下游消费 |
+|---|---|---|---|
+| 调研 | m01 literature-search | `docs/literature_review.md` | m03/m04/m07/m10 |
+| 数据工程 | m02 data-engineering | `data_card.md` + `quality_report.md` | m05/a03/m06 |
+| idea 生成 | m03 idea-generation | `idea_candidates.md` | m04 |
+| idea 审查 | m04 idea-critique | `critique_verdict.md` | m05 |
+| 研究方案 | m05 research-plan | `PROJECT_PLAN.md` + `experiments/experiment_matrix.md` | a03/m06 |
+| 实验代码 | a03 backend-coding | `run_manifest.md` + 可运行代码/测试/日志 | m06 |
+| 结果分析 | m06 result-analysis | `claim_evidence_table.md` | m07/m09 |
+| 图表 | m09/m11 figure | `projects/<project_name>/figures/manifest.md` + 图文件 | m07/m12 |
+| 引用 | m10 citation | `refs.bib` + `citation_audit.md` | m12 |
+| 返修 | m14 review-rebuttal | `response_matrix.md` + response letter | m12/提交 |
+
+> 改动工件名只改本表，再同步对应技能「产出」节与 orchestrator §2 契约表（该表声明本表为真相源）。
+
 ## 7. 输出纪律
 
 - 先自审再输出（见 a08）：逻辑、事实、格式、创新、引用、夸大、审美、重复、可执行性。
