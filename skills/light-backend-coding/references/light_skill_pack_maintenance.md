@@ -68,6 +68,8 @@ _selftest()
 - **硬校验范围**：`SKILL.md` 里的具体反引号路径必须能在该技能目录下解析到真实文件/目录；`SKILL.md`、`references.md`、`references/*.md`、`templates/*.md`、`examples/*.md` 中显式 Markdown/HTML 本地链接也要验证。
 - **避免误报**：研究笔记里的第三方仓库结构（如 `scripts/foo.py`）不应按本技能资产硬校验；泛称目录 `scripts/`、通配符 `scripts/*.py`、占位符 `examples/xxx.py`、自测生成目录要跳过。
 - **接入点**：新增 `check_skill_links.py` 后同步更新 `WHATS_INCLUDED.md` 与 CI lint job，并把 `skills/**/references.md`、`skills/**/references/**`、`skills/**/templates/**`、`skills/**/examples/**` 加入 CI 触发路径，防止非 SKILL.md 文档改动绕过链接校验。
+- **负例验证**：链接/manifest 类校验器不能只证明“当前仓库通过”。临时注入一个应通过的相对 sibling link 样例和一个应失败的逃逸/断链（如 `references/../SKILL.md`），确认脚本分别 pass/fail；测试后必须恢复文件并跑 `git diff --check`，防止临时写回造成 CRLF/整文件换行污染。
+- **审查日志可读性**：如果变量名或 diff 片段触发平台脱敏（如把正则变量误显示成 `***`），优先改成不似密钥的中性命名，避免独立 reviewer 基于被遮蔽 diff 误判语法错误。
 
 ## 提交习惯
 
