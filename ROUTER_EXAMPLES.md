@@ -41,6 +41,9 @@
 | `我们上次做到哪了？` | `a02` | 项目状态恢复 |
 | `继续，刚断了` | `a02` `light-orchestrator` | 断点恢复/跨轮续接，先读状态再继续 |
 | `接手 Claude 之前做的这个技能包优化` | `a02` `light-orchestrator` | 接手上下文与跨阶段维护 |
+| `这个对话快满了，给我一段衔接提示词开新对话继续` | `a02` `light-orchestrator` | 主动交接：留衔接卡 + 打印启动提示词（T1/T4） |
+| `这段告一段落了，帮我准备开新对话继续下一步` | `a02` `light-orchestrator` | 任务完成主动留种（T2），非被动等"继续" |
+| `上下文要不够了，先把状态存成衔接卡` | `a02` `light-orchestrator` | 上下文水位触发（T1），落 .light/handoff 衔接卡 |
 | `继续写刚才那一段 discussion` | `m07` | 只是续写文本，不启动 orchestrator |
 | `继续润色上一段` | `m08` | 只是单段润色，不启动 orchestrator |
 | `从文献调研到实验设计帮我全流程规划` | `light-orchestrator` `m01` `m05` | ≥3 阶段 pipeline |

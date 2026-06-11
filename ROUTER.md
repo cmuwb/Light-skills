@@ -26,6 +26,7 @@
 | 读这个文件 / 这个 PDF/PPT/Excel 讲了啥 | a01 file-reading |
 | 记住 / 项目进展 / 我们做到哪了 | a02 memory-pm |
 | 继续 / 刚断了 / 接手 Claude / 恢复上下文 / 上次做到哪（断点恢复/跨轮续接） | a02 memory-pm + light-orchestrator |
+| 给我衔接提示词 / 开新对话继续 / 这个对话快满了（主动交接，留衔接卡+启动提示词） | a02 memory-pm + light-orchestrator |
 | 写代码 / 实验代码 / 复现 | a03 backend-coding |
 | 系统设计 / 数据库 / 接口 / ER 图 | a04 system-design |
 | 前端 / 界面 / 大屏 / 可视化平台 | a05 frontend-design |

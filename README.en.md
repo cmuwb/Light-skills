@@ -257,6 +257,12 @@ Light-skills/
 ## ❓ FAQ
 
 <details>
+<summary><b>What if a conversation gets too long and runs out of context?</b></summary>
+
+Light has a **session handoff protocol**: when context is running low or a chunk of work wraps up, it proactively gives you two things — a self-contained handoff card written to the project's `.light/handoff/`, and a printed Chinese "new-conversation startup prompt". Copy the prompt, open a fresh conversation, paste it in, and the next Light picks up "where we are / what's next" by reading just the latest card — and can walk the handoff chain back to any parent conversation. The prompt's first line suggests naming the conversation like `[project] S04 ...` so your conversation list stays ordered. You can also trigger it anytime by saying "give me a handoff prompt".
+</details>
+
+<details>
 <summary><b>How is this different from just chatting with ChatGPT/Claude?</b></summary>
 
 Light gives runnable scripts, fillable templates, and real examples, with a hard "no fabrication" rule and adversarial self-check — plus cross-session project memory. Not one-off Q&A.
