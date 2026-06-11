@@ -53,6 +53,7 @@ m03 在立项卡里自报了"核心撞车检查"四问的检索证据——**你
 
 ### Step 5 — 反谄媚反驳环节
 作者反驳时，按 contract.md B 节给每条反驳 1–5 分（5 撤回/4 降级/3 保持/2 重述/1 加强）：让步必须挂新证据；禁连续让步；用 `scripts/sycophancy_guard.py` 算 concession-rate，>50% 输出 `⚠ SYCOPHANCY-ALERT`。未被 5 分新证据撤回的 CRITICAL 仍有效。
+- **开场即上强度（grill 规则）**：评判**首句就直接给出三个最致命弱点**，禁止"总体不错/思路有意思"式客套开场与缓冲——缓冲句本身就是谄媚信号。三个弱点按严重度排序，每个一句话点到要害，再展开。
 
 ### Step 6 — 聚合与判决
 用 `scripts/score_aggregate.py` 算 Weighted 与 Overall，按 rubric.md 否决项（创新性<45 直接不通过 / 未化解 CRITICAL 最高有条件通过 / 核心四维两项<45 不通过）与 decision mapping 表**取更严者**定档：
