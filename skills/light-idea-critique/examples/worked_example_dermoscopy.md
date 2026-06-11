@@ -1,7 +1,8 @@
 # Worked Example — 一个 idea 的完整严审走查
 
 演示 SKILL.md 全流程：BLIND 契约 → 检索取证 → 八维度打分 → 五视角对抗 → 反谄媚反驳 → 判决 + Roadmap。
-本例为**教学用合成案例**，分数与理由展示"该怎么写"，检索条目标注为示意（真实运行须 curl 实测记 HTTP 码）。
+本例为**教学用合成案例**：待审 idea、八维度分数、五视角理由、反驳演练均为示意，展示"该怎么写"。
+**唯一的例外是「检索取证」表**——其 HTTP 码与 OpenAlex `meta.count` 为 2026-06-06 真实 curl 实测（标注"实测"者即真值）；而该表"最像的工作/年份"列仍是示意（真实评审须逐条抓标题/年份核对）。即：标"实测"者为真实记录，其余为示意值。
 
 ---
 
@@ -26,19 +27,19 @@
 ---
 
 ## 检索取证（新颖性）— HTTP 码 2026-06-06 实测
-| 库 | 端点 | HTTP | 最像的工作（标题/年份） | delta |
+| 库 | 端点 | HTTP | 最像的工作（标题/年份，**示意**） | delta |
 |---|---|---|---|---|
-| OpenAlex | `https://api.openalex.org/works?search=contrastive%20learning%20dermoscopy&mailto=...` | **200(实测, meta.count≈3796)** | 大量"深度学习/自监督皮肤镜分类"已发表(2016 起) | 本 idea 仅换 backbone 为 ViT，无机理新意 |
-| Semantic Scholar | `.../graph/v1/paper/search/bulk?query=contrastive+ViT+dermoscopy` | **200(实测)** | "SSL+ViT 医学影像"实证已存在 | 同上 |
+| OpenAlex | `https://api.openalex.org/works?search=contrastive%20learning%20dermoscopy&mailto=...` | **200（实测，meta.count≈3796）** | （示意）大量"深度学习/自监督皮肤镜分类"已发表(2016 起) | 本 idea 仅换 backbone 为 ViT，无机理新意 |
+| Semantic Scholar | `.../graph/v1/paper/search/bulk?query=contrastive+ViT+dermoscopy` | **200（实测）** | （示意）"SSL+ViT 医学影像"实证已存在 | 同上 |
 
-> 注：以上 HTTP 码为本次构建时真实 curl 所得；具体"最像 3 篇"在真实评审中应抓取标题/年份逐条比对并记录。OpenAlex count≈3796 说明该方向远非空白，"首次"宣称需检索证否。
+> 注：HTTP 码与 OpenAlex `meta.count≈3796` 为本次构建时真实 curl 所得（实测）；"最像 3 篇"为示意，真实评审中应抓取标题/年份逐条比对并记录。count≈3796 说明该方向远非空白，"首次"宣称需检索证否。
 
 ---
 
 ## Phase 2 — 八维度打分
 | # | 维度 | 权重 | 分 | 理由 |
 |---|---|---|---|---|
-| 1 | 创新性 | 0.20 | 42 | 命中 block#1：三件成熟工具拼接，检索到同构工作；"首次"为未检索宣称（anti-pattern#4）。给反例：2022 已有对比预训练皮肤镜分类。 |
+| 1 | 创新性 | 0.20 | 42 | 命中 block#1：三件成熟工具拼接，检索到同构工作；"首次"为未检索宣称（anti-pattern#4）。给反例（示意）：2022 已有对比预训练皮肤镜分类。 |
 | 2 | 理论深度 | 0.18 | 50 | 无机理说明为何对比预训练在皮肤镜小样本更优；纯试错堆叠。 |
 | 3 | 数据支撑 | 0.14 | 55 | 3,000 张自有数据规模偏小且无公开基准(ISIC)对照；类别平衡/标注一致性未说明。命中 block#2。 |
 | 4 | 实验可控性 | 0.14 | 48 | 未说明 baseline 是否用同等数据/超参；无消融分离"对比预训练"vs"ViT 容量"贡献(warn#1)。 |
