@@ -78,7 +78,11 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # Claude C
 ./install.sh claude    # a single client
 ```
 
-Idempotent and re-runnable; links into Claude Code's `~/.claude/skills/` and Codex's `~/.agents/skills/`.
+Idempotent and re-runnable; links into Claude Code's `~/.claude/skills/` and Codex's `~/.agents/skills/`, and links `databases/`, `code_assets/` plus `CONVENTIONS.md`/`ROUTER.md`/`ROUTER_EXAMPLES.md`/`MODE_REGISTRY.md` as siblings so each skill's "see CONVENTIONS" references resolve after install.
+
+> **Claude Code needs no routing snippet**: it auto-discovers skills from each `~/.claude/skills/<skill>/SKILL.md` frontmatter (`name`/`description`), unlike Codex which appends `AGENTS.snippet.md` to `~/.codex/AGENTS.md`. So the repo ships a snippet for Codex only; Claude Code works right after install.
+
+> **Hermes users**: Hermes reuses Claude's `~/.claude/skills/` directory — install the Claude side (`install.sh claude` / `install.ps1 -Client claude`) and Hermes will discover the skills; no separate target needed. (Not yet verified on a live Hermes setup — `GAP: pending Hermes verification`; if your Hermes uses a different skills dir, link the repo's `skills/light-*` there.)
 
 **3. Restart your client and just ask:**
 
@@ -90,7 +94,9 @@ Run significance tests on my results and make a publication-grade figure
 
 Matching skills **trigger automatically** (matched to what you ask, no commands to memorize); or invoke any of the 17 manual skills by name with `/`. Codex needs one small extra step — see [.codex/INSTALL.md](.codex/INSTALL.md).
 
-**Uninstall**: delete the links under your client's skills directory; the source repo is untouched.
+**Uninstall**: delete the links Light created under your client's skills directory; the source repo is untouched.
+
+> ⚠️ **Windows users must delete directory links with `rmdir` (cmd)**: e.g. `rmdir "%USERPROFILE%\.claude\skills\light-xxx"`, `rmdir "%USERPROFILE%\.claude\databases"`. **Do NOT** use `Remove-Item -Recurse` or Explorer Shift+Del on a junction — that **follows the link through and deletes the source repo itself**. The shared docs (`CONVENTIONS.md` etc.) are hardlinks; remove that copy with `del` and the source is unaffected. A safe full uninstall script (checks ReparsePoint, uses `cmd /c rmdir`) is in [.codex/INSTALL.md](.codex/INSTALL.md). On macOS/Linux, `rm` on the symlink is fine.
 
 ## 🧭 Skills at a glance
 

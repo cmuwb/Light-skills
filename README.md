@@ -78,7 +78,11 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 ./install.sh claude    # 只装某一端
 ```
 
-脚本幂等、可重跑,把技能链接进 Claude Code 的 `~/.claude/skills/` 与 Codex 的 `~/.agents/skills/`。
+脚本幂等、可重跑,把技能链接进 Claude Code 的 `~/.claude/skills/` 与 Codex 的 `~/.agents/skills/`,并把 `databases/`、`code_assets/` 与 `CONVENTIONS.md`/`ROUTER.md`/`ROUTER_EXAMPLES.md`/`MODE_REGISTRY.md` 作为同级共享资源一并链接过去(技能内"见 CONVENTIONS §5"等引用装后仍可达)。
+
+> **Claude Code 无需路由片段**:它按 `~/.claude/skills/<skill>/SKILL.md` 的 frontmatter(`name`/`description`)自动发现并触发技能,不像 Codex 需要把 `AGENTS.snippet.md` 追加进 `~/.codex/AGENTS.md`。所以本仓库只为 Codex 端提供 snippet,Claude Code 端装完即用。
+
+> **Hermes 用户**:Hermes 复用 Claude 的 `~/.claude/skills/` 技能目录,装 Claude 端(`install.sh claude` / `install.ps1 -Client claude`)即可被 Hermes 发现,无需单独的安装目标。(本机暂无 Hermes 环境实测,`GAP:待 Hermes 环境实测`;若你的 Hermes 用别的技能目录,把仓库的 `skills/light-*` 链接过去即可。)
 
 **3. 重启客户端,开说:**
 
@@ -90,7 +94,9 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 
 相关技能会**自动触发**(根据你的需求智能匹配,无需记命令);也可以用 `/` 点名调用 17 个手动技能。Codex 端还需一步小配置,详见 [.codex/INSTALL.md](.codex/INSTALL.md)。
 
-**卸载**:删掉客户端技能目录下对应的链接即可,不影响源仓库。
+**卸载**:删掉客户端技能目录下 Light 创建的链接即可,不影响源仓库。
+
+> ⚠️ **Windows 用户务必用 `rmdir`(cmd)删除目录链接**:`rmdir "%USERPROFILE%\.claude\skills\light-xxx"`、`rmdir "%USERPROFILE%\.claude\databases"` 等。**不要**用 `Remove-Item -Recurse` 或资源管理器 Shift+Del 删 junction——那会**穿透链接删掉源仓库本体**。共享文档(`CONVENTIONS.md` 等)是硬链接,用 `del` 删除该副本不影响源文件。安全的整套卸载脚本(已正确判 ReparsePoint、用 `cmd /c rmdir`)见 [.codex/INSTALL.md 卸载节](.codex/INSTALL.md)。macOS/Linux 用 `rm` 删符号链接即可。
 
 ## 🧭 技能总览
 
