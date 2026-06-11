@@ -11,7 +11,7 @@
 | R2 | 会话衔接协议 | 已完成 | 2026-06-11 | 2026-06-11 | `dd00835..7b60de3`（5 commit） | 绿（run 27341424084 三任务全 success） |
 | R3 | 中文链路专项 | 已完成 | 2026-06-11 | 2026-06-11 | `89627e2..74a1bb0`（4 commit） | 绿（run 27346343103 三任务全 success） |
 | R4 | 合规与生态吸收 | 已完成 | 2026-06-11 | 2026-06-11 | `5c7d2e1..a5a088e`（7 commit） | 绿（run 27353169946 success） |
-| R5 | 资产补全 | 未开始 | | | | |
+| R5 | 资产补全 | 已完成 | 2026-06-11 | 2026-06-11 | `94f237e..cc3fd19`（9 commit） | 本地 5 门禁全绿；48 脚本 selftest 全 PASS；待推送确认 CI |
 | R6 | PPT 生图流水线 | 未开始 | | | | |
 | R7 | 横切机制与瘦身 | 未开始 | | | | |
 | R8 | CI 门禁扩建 | 未开始 | | | | |
@@ -53,6 +53,13 @@
 - [2026-06-11] R4.3 — 发现 R3 遗留瑕疵(不在 R4 范围)：venues.csv 物理行 186/187(中国农业科学、作物学报)在 HEAD 版即为 22 列(非 19)——R3 填栏宽实测时 risk_note 写入未加引号的英文逗号(如 `81mm/整页约170mm(A4双栏,来源:...,2026-06-11),2026-06`)被 CSV 解析器拆成多列。check_databases 不读 CSV 故 CI 不报。修复=给 risk_note 加引号，零风险但属扩大范围，**留 R9(db01 规模化)统一处理**。
 - [2026-06-11] R4.2/R4.12/R4.13 — 实查诚信记录：①AI 图像政策 Elsevier 取得逐字原文，Nature(登录墙 303)/Science(403) 仅政策立场多源核实、确切引文标 GAP；②latexdiff 本机 MiKTeX 缺 Perl 模块 Algorithm::Diff，`latexdiff --version` 即报错，diff 输出未跑通标 GAP，流程按公开文档写并注明未本机验证；③飞书实查澄清官方云文档**无独立演示文稿 OpenAPI**，lark-slides 是 larksuite/cli 社区工具非官方 API，未凭"飞书有幻灯片"印象硬填。
 - [2026-06-11] R4 跨技能引用 — 再次踩 check_skill_links 陷阱：在 A 技能 SKILL/references 用反引号写 B 技能的 `scripts/x.py`、`references/x.md` 会被当 A 自身路径报缺失。已全部加 `light-<skill>/` 前缀修正(citation↔research-ethics 脚本互引、figure-drawing/slides↔其他、typesetting↔review-rebuttal)。另：技能正文引用 `databases/db01...` 完整路径属安装后断链风险，改纯文字"db01"提及(与全仓库惯例一致)。
+- [2026-06-11] R5.4 — 功效分析算例数值不凭记忆：本机 statsmodels 0.14.5 实跑 `TTestIndPower().solve_power`，d=0.3/0.5/0.8 → 每组 175.38/63.77/25.52(取 176/64/26)，反查 d=0.5 n=5 → power 仅 0.108。逐字留痕 `_verification_log/R5-04-power-analysis.md`，references 表数值与之一致并注明留痕路径。结论写实"3~5 种子只够检大效应"这一对用户最有用的功效缺口。
+- [2026-06-11] R5.4 — plan_lint.py 首版在 Python 字符串里用了中文引号包"对应假设"导致 SyntaxError(全角引号≠ASCII)；改用「」书名号修复。教训:脚本内中文文案避免与 Python 语法字符冲突的全角标点。
+- [2026-06-11] R5.5 — 计划要"先查有无现成 bootstrap 工具勿重写"：现实 significance_test.py 已有 `bootstrap_ci`，analyze_results 的配对差值 CI 直接 import 复用，未重写。配对识别复用合成 CSV 本就共享 seed 列(天然配对陷阱)，selftest 同时验配对/独立/共享<2 跳过/缺键四路径。
+- [2026-06-11] R5.7 — er_diagram selftest 初版断言 `out.count("{")==2` 误判:Mermaid 关系符号 `||--o{` 自带花括号，把关系行也数进去了。改为只数"以 { 结尾的行"判实体块数。教训:对含特殊符号的 DSL 输出做结构断言要按行语义数，别全文 count 字符。
+- [2026-06-11] R5.7 — a04 references 是 7 个常驻技能里唯一没有研究日期时效锚标头的(计划点名)，已补"研究日期 2026-06 + 落地前以所装版本官方文档为准"。
+- [2026-06-11] R5.8 — m15↔m11 专利附图断链:m15 原本只写"交 m11 绘制"无具体规范、m11 无对应节。已在 m11 references 新增「专利附图规范」节(图号/标记线/黑白线条/流程图框图)作真相源，m15 SKILL 两处 + m11 SKILL 衔接段双向互指该节。专利附图规范以 CNIPA 现行审查指南为准,本节为通用要点未逐条核对最新版次(已注明),最终须代理师审。
+- [2026-06-11] R5.9 — scaffold 目录有本地 `.pytest_cache/`(被 .gitignore:7 覆盖、未追踪),属跑测试的本地产物非仓库内容,未提交。pyproject 加 [tool.mypy] 后用 tomllib 实测可解析。
 
 ## 留给下一轮的话
 
@@ -71,6 +78,8 @@
 - **R4.16(H11 图谱可视化)登记入 backlog，本轮不做**：计划 04 号文件明确 H-11 入 backlog；若未来要做，归 m01/m11 的引文网络/主题图谱可视化方向，非本期范围。
 - **给 R9 的话(db01 规模化)**：①ai_policy 字段已定义为 risk_note 内 `ai_policy=` 子串口径(见 CONVENTIONS §3)，已实查填 12 家头部 venue，其余卡待 R9 批量补；②R4 发现 venues.csv 有 2 行(中国农业科学/作物学报，物理行 186/187)是 22 列(R3 填栏宽时 risk_note 含未加引号英文逗号被拆列)，R9 重做 db01 时给这两行 risk_note 加引号修回 19 列；③改 venues.csv 切记：含多行字段，禁用 csv 模块全量重写(会压平多行)，禁在无引号字段追加含英文逗号的文本(会拆列)，安全做法是文本级唯一锚点替换或给字段加引号。
 - **R4 现场口径(供 a10/m07/m11/m16 后续轮引用一致性)**：AI 政策两类口径——期刊=AI 生成图像禁止+文本须披露；会议=LLM 允许+作者全责+不得署名。论文图严禁生成式 AI(figure_integrity「AI 生成图像政策」节为真相源)，R6 PPT 生图流水线只服务 PPT/前端、严禁进论文图链路(figure_integrity↔slides 已双向互指)。撤稿判定真相源=research-ethics/check_retractions.py 的 FLAG_TYPES，citation/verify_refs.py 内联同源(改判定常量须两处同步)。
+- **R5 已完成（给 R6 的话）**：R5 新增 3 个脚本(plan_lint/venue_signal/er_diagram)，技能数仍 28、未动路由，故只需同步 WHATS_INCLUDED(已登记)，四件套其余无需动(check_entry_docs/check_skill_assets 已绿，48 脚本全 selftest)。零脚本技能(m13/a04)与零模板关键交付物(m03/m09)均已清零。R6(PPT 生图流水线)按 06 号文件做，注意 R4 现场口径"PPT 生图严禁进论文图链路"。
+- **R5 现场口径(供后续轮引用一致性)**：①功效分析数值是 statsmodels 0.14.5 实跑(d=0.3/0.5/0.8 → 每组 176/64/26)，留痕 `_verification_log/R5-04-power-analysis.md`，改动须重跑核验；②paper2code 已按 I-1 以 references 形式并入 m05(复现五步协议)，非独立技能；③配对检验识别(m06 analyze_results --paired-by)与切片分析是结果分析两大新纪律，配对效应量用 d_z 不可与独立 d 混比；④数据增强红线"先划分再增强、只增训练折"，标注 IAA 复用 code_assets/agreement.py、标签错误检测用 cleanlab(找候选→人工裁定不全自动删)；⑤专利附图规范真相源在 m11 references「专利附图规范」节(m15↔m11 双向互引)，黑白线条不套论文配色；⑥静态类型档位:科研代码 pyright basic 起步/库代码 mypy --strict，scaffold pyproject 已带 [tool.mypy]。
 
 ## 用户决策项登记（出现一个登记一个，R10 统一找用户拍板）
 
