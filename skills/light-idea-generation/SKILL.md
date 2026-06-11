@@ -41,6 +41,7 @@ Level 2 立项时，每个候选先填一张**立项卡**（借 AI Scientist v2 
   - 趋势：`group_by=publication_year`。取代表作按 `cited_by_count` 排序。分页超 1 万条用游标 `&cursor=*` + `meta.next_cursor`。**2026 起需免费 API key，接入口径见 m01 references「OpenAlex 接入真相源」节。**
 - **Semantic Scholar**：`GET https://api.semanticscholar.org/graph/v1/paper/search`，参数 `query/limit/fields`，header `X-API-KEY`（可选），每次查后 sleep ~1s 防限流（AI Scientist 做法）。
 检索结论决定"创新点"措辞：若已有高度相似工作，回到发散重选角度，别硬说新。
+- **候选间防伪多样性（量化）**：一次生成多个候选 idea 时，两两算语义相似度防"换皮凑数"的伪多样性——复用 m01(light-literature-search) references「SPECTER2 语义嵌入」节的方法（S2 `embedding.specter_v2` 768 维向量算余弦）。SPECTER2 余弦整体偏高（实测 0.85~0.93），按**相对差**判定：一批候选里相似度显著高于其余对的，视为同一 idea 的变体，合并或重发散，别当独立候选凑数。无 embedding 时降级标题/摘要文本相似度。
 
 ### 核心撞车检查（最高优先级，一票否决）
 **血泪教训**：曾把一个"重采样破坏概率校准"的 idea 评到新颖性≈70，做完整套实验、写完论文后才检索到 Dal Pozzolo 2015 已专门做过同一核心，新颖性实为 35-45——核心结论被前人发表过，投稿必被一句"已做过"拒掉。为根除此类"做完才发现撞车"，提 idea 时**必须**回答下面四问，任一答错即打回重选方向，**不准跳过、不准用"应该没人做"搪塞**：

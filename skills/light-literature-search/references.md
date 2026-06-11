@@ -145,6 +145,15 @@
 
 【已知坑/局限】匿名限速很严，批量必须申请 key；部分新论文延迟入库；`influentialCitationCount` 是模型估计；search 端点 relevance 排序对小众词偶尔不稳。
 
+### SPECTER2 语义嵌入：去重 / 相似检索 / idea 多样性（实测）
+S2 的 `embedding` 字段是 SPECTER2 论文级语义向量，可用于"语义"层面的去重与相似检索（补关键词检索的盲区——标题措辞不同但语义重复/相近的工作）。
+- **取向量（2026-06-11 实测 HTTP 200）**：单篇 `GET /paper/DOI:{doi}?fields=embedding.specter_v2` → `embedding.model=specter_v2`、`embedding.vector`=**768 维**；批量 `POST /paper/batch?fields=title,embedding.specter_v2`，body `{"ids":["DOI:...","ARXIV:..."]}`。
+- **相似度**：对两篇向量算余弦。实测三篇经典论文：BERT vs GPT-3（同为 NLP 语言模型）=**0.9308**、BERT vs ResNet（NLP vs CV）=0.8971、GPT-3 vs ResNet=0.8558——语义排序符合直觉（同主题 > 跨主题）。
+- **⚠️ 不能用绝对阈值**：SPECTER2 余弦整体偏高（实测 0.85~0.93），判同异要看**相对差**（同一批内排序、或相对同主题 baseline 的偏移），别拿 0.9 当"重复"硬卡。
+- **用途**：①跨库**语义去重**（DOI/标题去重后，再用向量抓"换标题的同一工作"）；②**相似检索**（以种子论文找语义最近邻，补关键词盲区，配合 snowball 用）。
+- **降级**：部分论文 S2 无 embedding（未收录/未生成，实测确有 DOI 返回空 embedding）→ 回退标题/摘要文本相似度，不假装有向量。匿名限速高峰 429，批量须申请 `x-api-key`。
+- **被 m03 消费（双向）**：light-idea-generation 候选 idea 防伪多样性检查复用此法——候选两两算 SPECTER2 相似度，过高者视为同一 idea 的变体（防"换皮凑数"）。m03 侧已写对应消费声明。
+
 ---
 
 ## PubMed E-utilities (NCBI Entrez)
@@ -183,6 +192,29 @@
 【链接】REST 文档 https://europepmc.org/RestfulWebService ；检索语法 https://europepmc.org/searchsyntax ；Articles API https://www.ebi.ac.uk/europepmc/webservices/rest/
 
 【已知坑/局限】`citedByCount` 是 Europe PMC 自有口径（基于其聚合的引文数据），与 OpenAlex/Crossref/S2 不可直接比，入表须标来源库；PPR(预印本)质量参差需另判；全文检索仅限 PMC 开放获取部分，订阅期刊仅有题录/摘要。
+
+---
+
+## bioRxiv / medRxiv API（预印本最前沿源）
+
+【是什么】bioRxiv（生物学）/medRxiv（医学）预印本平台的官方 API，免 key。补"最新未发表成果"盲区——很多工作先上预印本再发期刊，比 OpenAlex/PubMed 早数月到一年。
+
+【可复用方法/真实端点/参数（2026-06-11 实测均 HTTP 200）】
+- Base：`https://api.biorxiv.org`（medRxiv 把 server 段换成 `medrxiv`）。
+- 按日期区间拉元数据：`/details/biorxiv/{YYYY-MM-DD}/{YYYY-MM-DD}/{cursor}`（每页 30，`messages[0].total` 给总数，cursor 翻页）。实测 2024-01-01~02 = 220 条。
+- 按 DOI 取单篇：`/details/biorxiv/{doi}`（如 `10.1101/2020.09.09.289769`）。
+- **预印本→正式发表映射**：`/pubs/biorxiv/{from}/{to}/{cursor}`，返回 `preprint_doi → published_doi + published_journal`（实测样例：某 bioRxiv 预印本 → `10.1371/journal.pbio.3001961` / PLOS Biology）。
+- 关键字段：`/details/` 给 `doi/title/authors/date/version/category/published`（`published=NA`=尚未正式发表）；`/pubs/` 给正式发表 DOI 与期刊。
+
+【预印本可信度分级（必标，与 db01/light-citation 联动）】
+1. **未发表**（`published=NA` 且 pubs 无映射）：未经同行评审，引用须显式标注"预印本"，结论作线索非定论。
+2. **已发表**（pubs 查到 `published_doi`）：换引正式发表版 DOI——与 light-citation `verify_refs.py` 对 `type=preprint`/非 `publishedVersion` 产 warning 同源口径。
+3. **多版本**（`version>1`）：注明引用的具体版本，结论可能随版本变。
+- 与 db01 联动：预印本平台非传统 venue，db01 不单列；文献表"可信度"列按上述分级标注，风险口径与 light-citation 统一。
+
+【链接】API 文档 https://api.biorxiv.org/ ；bioRxiv https://www.biorxiv.org/ ；medRxiv https://www.medrxiv.org/
+
+【已知坑/局限】只覆盖 bioRxiv/medRxiv（生医方向），CS/其他领域走 arXiv；`published=NA` 不绝对（API 回填有延迟，已发表但未及时映射的存在）；预印本未经同行评审，**四源并查时**（OpenAlex+Europe PMC+PubMed+bioRxiv）它补"最前沿未发表"、PubMed 补"MeSH 规范检索"、Europe PMC 补"免 key 全文+引用端点"、OpenAlex 补"覆盖广+被引"，互补盲区。
 
 ---
 
@@ -304,6 +336,125 @@
 5. 综合成脉络叙事 + 对比表 + gap，全程绑定可核查引用。
 
 【链接】Anthropic 用例 https://claude.com/resources/use-cases/plan-your-literature-review ；社区 skill 索引 https://playbooks.com/skills/openclaw/skills/literature-review ；https://www.claudepluginhub.com/skills/sundial-org-sundial-org-awesome-openclaw-skills-4/literature-review
+
+---
+
+## 系统综述协议：筛选（screen）与抽取（extract）两阶段
+
+> SKILL.md 的检索策略产出"命中清单"，`scripts/prisma_flow.py` 核对各阶段计数勾稽。本节补两阶段之间**研究者要做的判断协议**——screen（决定哪些进）与 extract（从纳入的逐篇抽什么），让 PRISMA 数字背后的决定可复现、可被审稿人复核。对齐 PRISMA 2020 + Cochrane Handbook 思想。
+
+### 阶段 0：纳排标准（先定，后筛——不可边筛边改）
+检索前先写死纳入/排除标准，建议用 PICO（或方向+方法+数据+时间范围）。每条标准必须**可二元判定**（能明确 yes/no），避免"质量较高"这种主观词。
+- 纳入示例（奶山羊行为识别方向）：研究对象=奶山羊（Saanen/Alpine/努比亚等奶用品种）；任务=行为识别/分类/检测（采食/反刍/站卧/发情等）；含原始实验与定量结果；2015 年至今；中英文。
+- 排除示例：非奶用山羊（肉羊/绒山羊）或奶牛；仅生产性能无行为；纯综述/观点；无全文；预印本未经同行评审（单列计数，不直接并入正式发表）。
+- 标准定稿后**冻结**；筛选中若发现标准有漏洞，记录修订理由与时点（protocol amendment），不偷偷改。
+
+### 阶段 1：screen（筛选，两轮）
+1. **第一轮 题摘筛（title/abstract）**：只看标题+摘要，对每条记录按纳排标准打 `include / exclude / maybe`。`maybe` 一律进下一轮（宁松勿严，召回优先）。每条 exclude 记一个主排除理由。
+2. **第二轮 全文筛（full-text）**：对题摘筛通过者取全文，逐篇按纳排标准复核，exclude 必须记**具体理由**（对齐 prisma_flow.py 的 `excluded_by_reason`，理由分类要可加总）。
+3. **双人复核（高利害综述必做）**：两人独立筛，算 Cohen's κ 一致性（κ<0.6 说明标准模糊，回去校准纳排标准再重筛）；分歧由第三人裁决。单人做时至少对 `maybe` 与边界案例留判定笔记。
+4. **计数落盘**：每库命中数、去重数、题摘排除数、全文按理由排除数、最终纳入数，喂 `scripts/prisma_flow.py --counts` 核对勾稽（前阶段−排除=后阶段），数字对不上先修再写综述。
+
+### 阶段 2：extract（逐篇抽取）
+对最终纳入的每篇，按统一**抽取表**填值（一篇一行/一卡），字段先定后抽，保证跨篇可比、可汇总：
+
+| 抽取字段 | 说明 |
+|---|---|
+| study_id | 第一作者+年份（与 .bib citekey 同源，见 light-citation） |
+| PICO/对象 | 研究对象、样本量、品种/人群、场景 |
+| 方法 | 模型/算法/装置、关键超参或设计、数据来源 |
+| 数据规模 | 样本/标注量、时长、类别数 |
+| 主结果 | 关键指标值（准确率/F1/相关系数等，带单位与置信） |
+| 对照/baseline | 与谁比、是否显著 |
+| 局限 | 作者自陈 + 你读出的（数据偏倚/不可复现/过拟合风险） |
+| 可复现 | 有无开源代码/数据、许可 |
+| 与本课题关系 | 支撑/对比/gap 来源 |
+
+- **抽取纪律**：数值逐条回原文核对（不靠摘要转述）；"作者没说但审稿人会问"的点单列（见下「单篇深读」节）；定制字段按方向加（如行为识别加"标注协议/类别定义"）。
+- **与 prisma_flow.py 衔接**：纳入数 = 抽取表行数（两者必须相等，对不上说明漏抽或重复）；抽取表是综述对比表与 gap 分析的数据底座，直接喂 m03 找空白、m07 写 related work。
+
+### Worked example：奶山羊行为识别小综述（五阶段走通，prisma_flow.py 真实调用）
+
+以"奶山羊行为识别"为题，走通 检索→去重→题摘筛→全文筛→纳入 五阶段，并用 `scripts/prisma_flow.py` 核对计数自洽（2026-06-11 本机真实运行，输出见下）。
+
+1. **纳排标准**：纳入=奶用品种山羊 + 行为识别任务 + 原始定量研究 + 2015 至今 + 中英文；排除=非奶山羊/奶牛、仅生产性能、纯综述、无全文。
+2. **检索（identification）**：OpenAlex 137 + Crossref 88 + Europe PMC 41 + 知网浏览器取元数据 26 + 滚雪球其他来源 9 = 301。
+3. **去重**：按 DOI/标题归并，移除 121 → 待筛 180。
+4. **题摘筛（screen 轮1）**：排除 131（多为奶牛/肉羊、非行为）→ 全文评估 49。
+5. **全文筛（screen 轮2）+ 纳入**：按理由排除 36（非奶山羊 18 / 仅生产性能 11 / 全文不可得 4 / 综述 3）→ 最终纳入 13；逐篇按上表 extract。
+
+运行核对（`python scripts/prisma_flow.py --counts dg_counts.json`）：
+```
+识别：数据库 292 + 其他来源 9 = 301
+去重：移除 121 → 待筛 180
+标题摘要筛选：排除 131 → 全文评估 49
+全文评估：排除 36（非奶山羊18/仅生产性能11/全文不可得4/综述3）
+最终纳入研究：13
+[reconcile] OK 计数自洽
+```
+→ 计数勾稽通过（301−121=180，180−131=49，49−36=13），纳入 13 = 抽取表 13 行。任一阶段数字对不上 prisma_flow.py 会报错并拒绝出图数据。counts JSON 为本 example 临时构造（不落盘进仓库），数值为方法演示用的合理量级，非真实检索统计。
+
+---
+
+## 单篇深读协议（深读卡）
+
+> 区别于上文 extract（综述里逐篇抽**可比字段**做汇总）与判级表（快筛重要性）：深读针对**少数核心论文**（奠基/最相关/直接对标），逐节拆解到能复现、能挑刺的程度，产出供 m03 找 gap、m04 审 idea、m14 返修对线。一篇核心论文值得一张深读卡。
+
+### 三步法
+1. **逐节结构化读**：按 Intro/Related/Method/Exp/Discussion 逐节，每节只提炼三件——本节**主张**（claim）、支撑**证据**（数据/定理/实验）、**方法细节**（能据此复现的关键设定）。读不出证据的主张标记为"空断言"。
+2. **抽 假设-方法-证据 三元组**：把全文压成若干 `(隐含假设 → 所用方法 → 证据强度)` 链。重点暴露**隐含假设**（作者默认成立但没验证的前提，如"训练分布=部署分布""标注无偏"）——这是创新点与攻击点的高发区。
+3. **记"作者没说但审稿人会问"**：列出论文回避或未充分回应的问题（消融缺失、baseline 不公平、统计不显著被淡化、泛化未验证、伦理/成本未谈）。每条就是潜在 gap 或返修火力点。
+
+### 深读卡模板
+```
+# 深读卡：<study_id 第一作者+年份>
+- 一句话主张：<全文最核心的 claim>
+- 核心方法：<模型/算法/装置 + 关键设定，能据此复现的粒度>
+- 关键证据：<最强的 1-2 个实验/数据，带指标值与对照>
+- 隐含假设（逐条）：<作者默认成立、未验证的前提>
+- 三元组：<假设→方法→证据强度> × N
+- 作者没说但审稿人会问：<回避点/缺失消融/不公平对比/泛化存疑> × N
+- 可复现性：<开源? 数据? 许可? 复现障碍>
+- 对本课题：<可借鉴 / 可对标 / gap 来源（喂 m03/m04）>
+- 存疑待核：<需进一步查证的点>
+```
+
+- **与综述 extract 的分工**：extract 字段是"横向可比的表"（多篇汇总），深读卡是"纵向拆透的卡"（单篇钻深）；综述里只对 top 核心几篇做深读卡，其余走 extract 即可，别对所有纳入文献都深读（成本不划算）。
+- **防重复**：本节是"如何深读单篇"的协议；`examples/worked_example_dairy_goat.md` 是端到端检索留痕实例，二者不重叠。
+
+---
+
+## 灰色文献检索路径（标准 / 政策 / 行业报告 / 竞赛方案）
+
+> 灰色文献=非正式出版、非同行评审的资料，补学术库盲区（国标动态、政策导向、产业数据、工程实践）。SKILL.md 只罗列了这四类源，本节给**逐类检索方法 + 实查入口 + 可信度警示**（2026-06-11 实查）。通则：引用须标原始来源+日期、核现行有效性、不当同行评审证据，关键结论回学术源交叉验证。
+
+### 1. 标准（国标/行标/团标）
+- **入口**：全国标准信息公共服务平台——目录查询（标准号+状态）`https://std.samr.gov.cn/gb/gbQuery`；高级检索（多字段组合）`https://std.samr.gov.cn/gb/search/gbAdvancedSearch?type=std`；国标全文公开（在线读强制性+部分推荐性国标）`https://openstd.samr.gov.cn/bzgk/gb/indexgf`。行标/地标/团标在 `https://std.sacinfo.org.cn/home/query`。
+- **方法**：输完整标准号检索 → 结果列表读**状态字段**（现行/即将实施/已废止/被代替）→ 被代替的查代替标准号。引用前必核现行/废止状态与代替关系（引废止标准是硬错）。
+- **实查示例**：在 gbQuery 输标准号即返回该标状态与全文公开链接（强制性国标多可在线读全文）。
+
+### 2. 政策（国务院/部委文件）
+- **入口**：国务院政策文件库 `https://sousuo.www.gov.cn/zcwjk/`，检索接口 `policyDocumentLibrary?q=<关键词>&t=zhengcelibrary`（`q`=关键词、`t`=类型）；中国政府网政府文件检索 `https://www.gov.cn/zfwj/search.htm`；国务院公报高级检索 `https://www.gov.cn/search/gbsousuo.htm`；部委自建库（例：发改委 `https://www.ndrc.gov.cn/xxgk/wjk/` 按年份）。
+- **方法**：权威域名是 `sousuo.www.gov.cn`（政府网搜索子站，别误用其他）；部委文件两条路径——国务院库统一检索 或 各部委"政策法规/文件库"栏目。引用须核发文字号、成文日期、是否现行有效（政策常被新文件废止/修订）。
+- **实查示例**：`policyDocumentLibrary?q=人工智能&t=zhengcelibrary` 返回含"人工智能"的政策文件列表。
+
+### 3. 行业报告（咨询机构）
+- **入口/免费源**：一手机构（方法论透明、可信度最高）——IDC（完整报告付费，但**新闻稿/Press Release 含核心数据摘要免费**，`my.idc.com`）、Gartner（`gartner.com/cn/publications` 公开摘要+部分免费）、信通院（公开白皮书）；本土咨询（中国细分市场、免费多）——艾瑞 `report.iresearch.cn`、36氪研究院 `pitchhub.36kr.com/research`。
+- **方法**：完整报告多付费，优先取机构**新闻稿/公开摘要**的核心数据；本土咨询适合趋势与市场规模，引用核对数据口径与样本说明。
+- **可信度警示**：行业报告**非同行评审**，数据口径/样本常不透明；可信度分层 = 一手机构（IDC/Gartner/信通院）> 本土咨询（艾瑞/36氪）> 第三方聚合平台（水滴研报/发现报告，属典型灰色文献，**须回溯原始发布方核实**，不直接引二手版）。引用优先标原始机构+发布日期。
+- **实查示例**：IDC 中国大语言模型市场新闻稿（`my.idc.com/getdoc.jsp?containerId=...`）免费给市场格局核心数据，完整报告付费。
+
+### 4. 竞赛方案（Kaggle/天池）
+- **入口**：Kaggle——竞赛 Discussion 区获奖者 writeup + Code/Notebooks 区开源方案；聚合索引站 `farid.one/kaggle-solutions/`（按竞赛检索历届方案）；GitHub 合集 `apachecn/awesome-data-comp-solution`。天池——技术圈论坛 `tianchi.aliyun.com/forum` 赛后方案分享帖。
+- **方法**：按"竞赛名 + solution/writeup/方案/top"检索 Discussion 区与技术博客；金牌方案常附 GitHub 复现仓库，可直接读代码。
+- **可信度警示**：竞赛方案是工程 trick 富矿但**非学术同行评审**，过拟合 leaderboard、缺理论论证常见；借鉴方法 ≠ 可直接写进论文当 SOTA，须复现验证 + 回学术文献找理论支撑。
+- **实查示例**：`farid.one/kaggle-solutions/` 按竞赛列出历届 top 方案与 writeup 链接；天池论坛"AI 工业界值得参加的比赛"等帖汇集赛事与方案。
+
+
+
+
+
+
 
 【已知坑/局限】不同实现质量参差；**具体 skill 正文未逐字核实**；综述 skill 的最大风险是幻觉引用与过度概括，须叠加引用核查(对应 Light m10/light-citation)。
 
