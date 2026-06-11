@@ -82,8 +82,6 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 
 > **Claude Code 无需路由片段**:它按 `~/.claude/skills/<skill>/SKILL.md` 的 frontmatter(`name`/`description`)自动发现并触发技能,不像 Codex 需要把 `AGENTS.snippet.md` 追加进 `~/.codex/AGENTS.md`。所以本仓库只为 Codex 端提供 snippet,Claude Code 端装完即用。
 
-> **Hermes 用户**:Hermes 复用 Claude 的 `~/.claude/skills/` 技能目录,装 Claude 端(`install.sh claude` / `install.ps1 -Client claude`)即可被 Hermes 发现,无需单独的安装目标。(本机暂无 Hermes 环境实测,`GAP:待 Hermes 环境实测`;若你的 Hermes 用别的技能目录,把仓库的 `skills/light-*` 链接过去即可。)
-
 **3. 重启客户端,开说:**
 
 ```

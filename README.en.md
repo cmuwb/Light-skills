@@ -82,8 +82,6 @@ Idempotent and re-runnable; links into Claude Code's `~/.claude/skills/` and Cod
 
 > **Claude Code needs no routing snippet**: it auto-discovers skills from each `~/.claude/skills/<skill>/SKILL.md` frontmatter (`name`/`description`), unlike Codex which appends `AGENTS.snippet.md` to `~/.codex/AGENTS.md`. So the repo ships a snippet for Codex only; Claude Code works right after install.
 
-> **Hermes users**: Hermes reuses Claude's `~/.claude/skills/` directory — install the Claude side (`install.sh claude` / `install.ps1 -Client claude`) and Hermes will discover the skills; no separate target needed. (Not yet verified on a live Hermes setup — `GAP: pending Hermes verification`; if your Hermes uses a different skills dir, link the repo's `skills/light-*` there.)
-
 **3. Restart your client and just ask:**
 
 ```

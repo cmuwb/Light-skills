@@ -38,7 +38,7 @@
 - [2026-06-11] R1.4 — m05 模板实际文件名是连字符 experiment-matrix.md，与 orchestrator 下划线契约不符；按计划统一为下划线(git mv + 3 处引用)。仓库内 m 编号与计划标签偶有错位(如 figure-planning 内部自称 m11 指执行器)，按文件路径作业，不按编号。
 - [2026-06-11] R1.5 — 计划假设 11 个 SKILL.md 有 `../../docs/design`/CONVENTIONS 硬路径会断；现实只有 orchestrator:121 一处 `../../docs/design` 硬链接(已改弱引用)，其余 16 处 CONVENTIONS 均为纯文字提及(不算断链)。仍按计划把 4 文档随装链接(sh symlink / ps1 hardlink)并加校验，使纯文字引用装后可达。已在临时/真实 ~/.claude 实测链接生成成功、内容可读。
 - [2026-06-11] R1.5 — install.ps1 原为纯 ASCII；首次加中文注释触发 PowerShell 5.1 GBK 解析错误(真实 Windows 用户会中招)。修正：install.ps1 注释保持 ASCII-only。
-- [2026-06-11] R1.6 — 计划假设 README:9 写"三端(Claude/Codex/Hermes)"与 install 两端冲突；现实 README 已是"Claude Code 与 Codex"两端表述，无三端硬冲突。仍按方案 B 在中英 README 补 Hermes 复用 ~/.claude 说明，标 `GAP:待 Hermes 环境实测`(本机无 Hermes)。
+- [2026-06-11] R1.6 — 计划假设 README:9 写"三端(Claude/Codex/Hermes)"与 install 两端冲突；现实 README 已是"Claude Code 与 Codex"两端表述，无三端硬冲突。曾按方案 B 在中英 README 补 Hermes 说明，**后经用户确认对外只支持两端，已删除该 Hermes 段**（见用户决策项，此项关闭，install 不加第三目标）。
 - [2026-06-11] R1.8 — 计划说 a03 已实测 v6；现实 a03(backend-coding)确已全 v6 且有 GitHub API 实测记录。真正残留 v4/v5 在 system-design(a04 模板+references)与 tool-selection(references+detect_stack.py fixture)，已升 v6 并指向 a03 真相源。
 - [2026-06-11] R1.10 — 计划说无参 selftest 落 5 PNG 到技能根；现实 `--selftest` 路径已用 tempfile(不污染)，真正污染是"无参无 JSON 的 demo 路径"(tag=selftest 落 CWD)。修正该 demo 路径改临时目录，并把 tag 由 selftest 改 demo。
 - [2026-06-11] R1.12 — .gitignore 已含 __pycache__//*.py[cod]，无 tracked 缓存；out_multipanel 由 examples/example_matplotlib_multipanel.py 落 HERE 造成。改为默认临时目录(--outdir 可选)，删残留 PNG/PDF，清本地缓存目录。
@@ -55,4 +55,4 @@
 
 - [ ] skills.sh 发布与否（审计 I-5）
 - [ ] db08 脱敏高分申报书全文样例来源（用户提供或公开样例，R9）
-- [ ] Hermes 安装目标方案确认（R1 已采用默认方案 B：Hermes 复用 `~/.claude/skills/`，装 Claude 端即可被发现，已写入中英 README；本机无 Hermes 环境，标 `GAP:待 Hermes 实测`。**请用户追认方案 B**，或要求加独立安装目标）
+- [x] Hermes 安装目标方案确认（2026-06-11 用户确认：对外只支持 Claude Code 与 Codex 两端，Hermes 不单独支持。已删除中英 README 的 Hermes 说明段；install 脚本不加第三目标。此项关闭。）
