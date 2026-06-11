@@ -92,3 +92,32 @@
 - 【可复用方法】认证：在账户页生成 API token 得 `kaggle.json`，放 `~/.kaggle/kaggle.json`（权限 600）或设环境变量 `KAGGLE_USERNAME`/`KAGGLE_KEY`。CLI：`kaggle datasets list -s <关键词>` 搜索；`kaggle datasets download -d <owner>/<dataset> [-f file] [--unzip]` 下载；竞赛数据 `kaggle competitions download -c <comp>`。发布：建 `dataset-metadata.json` 后 `kaggle datasets create -p <dir>`，更新版本 `kaggle datasets version -p <dir> -m "msg"`。
 - 【链接】https://www.kaggle.com/docs/api ；https://github.com/Kaggle/kaggle-api/blob/main/docs/README.md
 - 【已知坑】需接受数据集/竞赛规则页条款后才能下载，否则 403；`kaggle.json` 是密钥不可入库；下载有速率与配额限制；许可各数据集不同，二次使用/发表前务必核对 license。
+
+## 数据增强（按模态分工，附跨 split 泄漏红线）
+> **红线：增强只在训练折内做，绝不跨 split 泄漏。** 先划分再增强；验证/测试集保持原始分布不增强（否则评测失真、指标虚高）。增强变换的随机性要固定种子；过采样/SMOTE 类必须只在训练折拟合（放进 Pipeline，参见 scikit-learn 节防泄漏铁律）。
+
+### 图像 — albumentations
+- 【是什么】高性能图像增强库（OpenCV 后端，比 torchvision transform 快），支持 bbox/mask/keypoint 随图同步变换，检测/分割任务首选。
+- 【可复用方法】`import albumentations as A`；`A.Compose([A.RandomResizedCrop(h,w), A.HorizontalFlip(p=0.5), A.RandomBrightnessContrast(p=0.2), A.Normalize()], bbox_params=A.BboxParams(format="yolo", label_fields=["cls"]))`；调用 `aug(image=img, bboxes=bb, cls=labels)` 返回同步变换后的字典。几何变换会自动同步标注框/掩膜。
+- 【链接】https://albumentations.ai/docs/ ；https://github.com/albumentations-team/albumentations
+- 【已知坑】bbox_params 的 format 要与标注格式严格对应（coco/pascal_voc/yolo），错配静默产出错框；过强的颜色/遮挡增强会破坏小目标；mask 任务用 `additional_targets` 同步多掩膜。
+
+### 文本 — nlpaug
+- 【是什么】文本数据增强库，覆盖字符/词/句级：同义词替换、词嵌入近邻替换、上下文词（BERT MLM）插入/替换、回译（back-translation）。
+- 【可复用方法】`import nlpaug.augmenter.word as naw`；同义词 `naw.SynonymAug(aug_src="wordnet")`、上下文 `naw.ContextualWordEmbsAug(model_path="bert-base-uncased", action="substitute")`、回译 `naw.BackTranslationAug(from_model_name=..., to_model_name=...)`；`aug.augment(text, n=3)` 出多条。
+- 【链接】https://github.com/makcedward/nlpaug ；https://nlpaug.readthedocs.io/
+- 【已知坑】同义词替换可能改变语义/情感标签（情感分类任务慎用，会翻转标签）；上下文/回译依赖下载大模型，离线环境失败；回译质量受中间语种影响；中文需对应中文模型与分词。
+
+### 时序 — tsaug
+- 【是什么】时间序列专用增强库，变换设计保持时序结构：抖动、缩放、时间扭曲（TimeWarp）、幅度扭曲、加噪、Drift、Pool、Quantize、Reverse、Crop。
+- 【可复用方法】`import tsaug`；`my_aug = (tsaug.TimeWarp() * 5 + tsaug.Drift(max_drift=0.1) @ 0.5 + tsaug.AddNoise(scale=0.01))`；`X_aug = my_aug.augment(X)`（X 形状 (N, T) 或 (N, T, C)），`*` 重复、`@p` 以概率施加、`+` 串联。
+- 【链接】https://tsaug.readthedocs.io/ ；https://github.com/arundo/tsaug
+- 【已知坑】TimeWarp/Drift 会破坏严格周期性，预测任务慎用；多变量序列要保通道间同步变换；增强后若改变了与未来标签的因果关系会引入泄漏；分类任务确认变换不改类别语义。
+
+## cleanlab（置信学习找标签错误）
+- 【是什么】基于置信学习（confident learning）的标签质量库，用模型的交叉验证预测概率反推哪些样本**可能标错**，给出按"标错可能性"排序的样本清单。补"质量评估有标注质量指标却无检测手段"的缺口。
+- 【可复用方法】关键输入是**out-of-sample 预测概率**（交叉验证得到，避免用训练样本自身预测）：`from sklearn.model_selection import cross_val_predict; pred_probs = cross_val_predict(clf, X, y, cv=5, method="predict_proba")`；找错 `from cleanlab.filter import find_label_issues; issues = find_label_issues(labels=y, pred_probs=pred_probs, return_indices_ranked_by="self_confidence")`；高层接口 `from cleanlab.classification import CleanLearning; CleanLearning(clf).fit(X, y)` 自动剔噪再训。多标注者一致性/众包真值估计用 `cleanlab.multiannotator`。
+- 【链接】https://docs.cleanlab.ai/ ；https://github.com/cleanlab/cleanlab
+- 【已知坑】pred_probs 必须 out-of-sample（用训练集自身概率会严重低估错误，违背置信学习前提）；模型太弱则"找出的错"多是模型自身偏差而非真标错，需人工复核 top-K 而非全盘删除；找出后的处置（重标/删除/降权）是数据决策，删样本要记录并评估对分布的影响。cleanlab 找候选 → 人工裁定，二者配合，不可全自动删。
+- 【与一致性指标衔接】cleanlab 解决"单一标注与模型预测不一致"的标签错误检测；多标注者之间的一致性（IAA）用 `code_assets/agreement.py`（Cohen's κ / 加权 κ / Fleiss' κ / ICC(2,1)，已对齐 sklearn）。两者互补：IAA 评标注流程整体可靠度，cleanlab 定位具体可疑样本。
+
