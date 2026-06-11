@@ -14,7 +14,7 @@ user-invocable: false
 2. **数据造假**：编造实验结果、挑选性报告、p-hacking、隐瞒不利结果。
 3. **图片不当**：图片重复使用、不当拼接/修饰、跨论文复用(对应 COPE image manipulation flowchart)。
 4. **引用规范**：虚假引用、无关引用、堆砌、遗漏关键工作、引低质量/掠夺性来源(联动 m10)。**撤稿核查**：参考文献 DOI 批量查 Crossref `https://api.crossref.org/v1/works?filter=update-type:retraction` 或单篇 `/works/<DOI>`，命中 `update-to[].source=retraction-watch/publisher` 即标红；撤稿原因用 `record-id` 回查 Retraction Watch CSV。
-5. **署名规范**：以 ICMJE 四条标准判断"够不够署名"(全部满足:实质贡献+起草/评审+终稿批准+对整体负责;仅部分→致谢)；用 CRediT 14 角色生成贡献声明；AI 不得列为作者，须按用途披露(写作辅助入致谢、数据/分析/作图入方法)。
+5. **署名规范**：以 ICMJE 四条标准判断"够不够署名"(全部满足:实质贡献+起草/评审+终稿批准+对整体负责;仅部分→致谢)；用 CRediT 14 角色生成贡献声明；AI 不得列为作者，须按用途披露(写作辅助入致谢、数据/分析/作图入方法)。**AI 政策按 venue 取值**：投稿前查 db01 `venues.csv` 该 venue `risk_note` 的 `ai_policy=` 子串(R4 已实查头部 venue)——期刊普遍禁 AI 生成图像+文本须披露，会议普遍允许 LLM 但作者对全文负责、未验证 LLM 引用会被拒/撤稿；AI 生成图像红线细则见 m11(light-figure-drawing) figure_integrity，AI 声明模板见 m07(light-paper-drafting) mandatory_inclusions。
 6. **隐私/伦理审查**：涉人或敏感数据按 IRB/Common Rule(45 CFR 46)三级审查定位——Exempt/Expedited/Full Board；用 46.111 八项标准自查(风险最小化、风险受益比、公平选样、知情同意及其文档、数据安全监测、隐私保密、脆弱人群保障)；知情同意须含目的/程序/风险/受益/保密/自愿退出/联系方式。中国项目按本地伦理办法走。PII 不回显(联动 a01)。
 7. **版权/许可合规**：受版权全文/模板不违规收集，只存元数据/链接(联动 CONVENTIONS §5)。代码许可用 ScanCode(`scancode --license --copyright --package <path> --json-pp out.json`，可出 SPDX/CycloneDX)；依赖漏洞用 `snyk test`；供应链恶意包警惕 install script/异常外联/混淆/仿名(Socket 行为维度)。作品授权用 CC Chooser 四问选许可(署名/商用/改编/相同共享)，提醒 CC 不可撤销、不用于软件。
 8. **结论夸大/过度包装**：声称超出证据、滥用 SOTA/novel(联动 a08/m08)。
@@ -27,7 +27,7 @@ user-invocable: false
 - **署名**：ICMJE 四条标准定"够不够署名"，CRediT 14 角色定"各做了什么"。
 - **不端口径**：ORI/42 CFR Part 93 FFP 三要件，避免把诚实错误当不端。
 - **撤稿核查**：Crossref REST API + Retraction Watch CSV(见清单第4条端点)。
-- **相似度/AI 检测**：Turnitin 类——文本匹配≠抄袭，先排除引文/参考文献/小段匹配，再看"大段未标注"文本。AI 检测官方误报率：文档级 <1%、句子级 ~4%，且整篇 AI 占比 <20% 不出标记；故单句标红不可靠，AI 分数只作"对话起点"非定罪依据，须人工复核+与作者沟通，对非母语写作误报偏高，不作高利害判定唯一依据。**自查重落地**：Turnitin 本体闭源不可复刻，但本地自我抄袭/重复发表筛查可做——用 `scripts/text_overlap.py` 把目标文与自己旧论文语料比对，找最长逐字连续重合(对应红旗 >40 词)，仅限所给语料、不得对外宣称相似度%(见 references.md「离线自查重」)。
+- **相似度/AI 检测**：Turnitin 类——文本匹配≠抄袭，先排除引文/参考文献/小段匹配，再看"大段未标注"文本。AI 检测**厂商自报**误报率：文档级 <1%、句子级 ~4%，且整篇 AI 占比 <20% 不出标记（数字源自 Turnitin 官方发布说明，非独立第三方评测，引用前回查最新页，见 references.md）；故单句标红不可靠，AI 分数只作"对话起点"非定罪依据，须人工复核+与作者沟通，对非母语写作误报偏高，不作高利害判定唯一依据。**自查重落地**：Turnitin 本体闭源不可复刻，但本地自我抄袭/重复发表筛查可做——用 `scripts/text_overlap.py` 把目标文与自己旧论文语料比对，找最长逐字连续重合(对应红旗 >40 词)，仅限所给语料、不得对外宣称相似度%(见 references.md「离线自查重」)。
 - **代码/许可/供应链**：ScanCode(许可+版权+SBOM)、Snyk(漏洞)、Socket(恶意包行为分析)分工互补。
 - **作品授权**：Creative Commons Chooser 四问选 CC 许可。
 - **涉人研究**：IRB/Common Rule(45 CFR 46.111/46.116)三级审查与知情同意要素。
@@ -39,7 +39,7 @@ user-invocable: false
 - **审查报告模板** `assets/ethics_review_template.md`：风险表(阻断/警示/提示 三级 | 类别 | 为什么是风险 | 合规做法 | 是否需第三方) + ICMJE/CRediT 署名与贡献声明 + AI 披露 + 结论。做合规审查直接填这张表。
 - **红旗自查清单** `assets/risk_checklist.md`：11 类风险逐条 checkbox，每条带红旗信号与默认起评级，命中即到模板登记定级。
 - **高利害决策树** `references/decision_trees.md`：A 疑似不端→FFP 三要件→COPE flowchart；B IRB Exempt/Expedited/Full Board + 46.111 八标准；C 引用前撤稿核查(Crossref，端点已实测 HTTP 200)。
-- **批量撤稿核查脚本** `scripts/check_retractions.py`：把决策树 C 落地为可跑工具——传一组 DOI(或 `--file`)逐条查 Crossref `update-to[]`，标出 🛑撤稿/⚠️更正或关注/✅未见信号，产 markdown 或 `--json` 报告，`--selftest` 离线自测。已实测两个真 DOI HTTP 200。诚实限制:Crossref 未必暴露所有撤稿,高利害文献再交叉 Retraction Watch。
+- **批量撤稿核查脚本** `scripts/check_retractions.py`：把决策树 C 落地为可跑工具——传一组 DOI(或 `--file`)逐条查 Crossref `update-to[]`，标出 🛑撤稿/⚠️更正或关注/✅未见信号，产 markdown 或 `--json` 报告，`--selftest` 离线自测。已实测两个真 DOI HTTP 200。诚实限制:Crossref 未必暴露所有撤稿,高利害文献再交叉 Retraction Watch。**被 m10 消费**：light-citation `light-citation/scripts/verify_refs.py` 已内联同源判定逻辑（相同 FLAG_TYPES，Crossref `update-to[]` + 标题 RETRACTED 前缀），引用核验时随每条 DOI 自动查撤稿、命中报 high；本脚本供批量预筛或需更正/关注三态全表时直接调用。两处口径必须一致，改判定常量须同步。
 - **离线自查重脚本** `scripts/text_overlap.py`：把"连续 >40 词逐字相同"红旗落地为可跑工具(纯 stdlib 无依赖)——传目标文 + 一组对比文件/glob(自己旧论文/课程报告语料),归一化后用 `difflib.SequenceMatcher` 找最长逐字连续重合片段(词数+原文+两份文件行定位)与整体重合比例(词重合率/Jaccard),超 `--min-run`(默认 40)阈值标 🛑;`--exclude-refs` 丢弃参考文献段避免书目误报,`--json`/`--selftest`。诚实限制:只比对所给语料,不含 Turnitin 期刊/网页/学生库,仅用于自我抄袭与重复文本筛查,不得对外宣称"抄袭率/相似度%"。
 
 ## 合规审查产出

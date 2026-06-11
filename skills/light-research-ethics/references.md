@@ -102,12 +102,12 @@ Conceptualization、Data curation、Formal analysis、Funding acquisition、Inve
 - Similarity Report 给相似百分比并高亮匹配来源。关键原则：**文本匹配≠抄袭**，匹配高也可能是正常引用；匹配为零也不证明无不端。
 - 封面/标题、带引号的引文、参考文献列表通常会被高亮，属正常匹配，可在设置中排除（exclude quotes / bibliography / small matches）。真正风险信号是"大段未加引号且未高亮"的文本。
 - 审查复用：把"相似度分数"当线索而非判决，逐条看匹配来源与上下文。
-- AI 写作检测（官方公布数字，已核实）：
+- AI 写作检测（**厂商自报数字**，源自 Turnitin 官方博客/发布说明，非独立第三方评测；链接已核实可达）：
   - **文档级误报率 <1%**（人写文档被误判为 AI 的比例）。
   - **句子级误报率约 4%**，明显更高。
   - 因此 Turnitin 设了安全阈值：**整篇 AI 占比低于 20% 时不出 AI 指标/不标红**，专为降低低分文档的误指控。
   - 官方一再强调：AI 分数是"对话起点"而非定罪依据，不应作为学术不端裁定的唯一证据，须人工复核 + 与作者沟通。
-- 实务提醒：上述数字主要源自 2023 年发布说明；模型已多次更新，引用前回查 Turnitin Guides 最新页。公开研究与多校反映 AI 检测器对非母语英语写作误报偏高。
+- 实务提醒：上述数字是**厂商自报、利益相关方**，且主要源自 2023 年发布说明；模型已多次更新，引用前回查 Turnitin Guides 最新页。公开研究与多校反映 AI 检测器对非母语英语写作误报偏高，独立评测的误报率常高于厂商自报值——对外引用时务必注明"厂商自报"性质，勿当客观基准。
 
 【链接】
 - 句子级误报率官方说明: https://www.turnitin.com/blog/understanding-the-false-positive-rate-for-sentences-of-our-ai-writing-detection-capability

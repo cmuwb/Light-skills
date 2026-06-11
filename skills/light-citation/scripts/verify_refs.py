@@ -3,9 +3,15 @@
 """verify_refs.py — 一批 DOI 的真实性 + 元数据一致性核验，产机读 JSON 报告。
 
 对每个 DOI 同时查 Crossref `/works/{doi}` 与 OpenAlex `/works/https://doi.org/{doi}`，
-核对：是否存在、标题/年份是否一致、被引数、是否自引、出版年龄。
+核对：是否存在、标题/年份是否一致、被引数、是否自引、出版年龄、**是否被撤稿**。
 另从 OpenAlex 同一响应读开放性字段（is_oa/oa_status/venue/is_in_doaj/type/version，不新增 HTTP）。
-汇总：中外文献占比、自引率、缺近 2 年标志、预印本数、errors[].severity / warnings[]。
+汇总：中外文献占比、自引率、缺近 2 年标志、预印本数、撤稿数、errors[].severity / warnings[]。
+
+撤稿检测复用 light-research-ethics/check_retractions.py 的判定口径（同源真相，见其 FLAG_TYPES）：
+读同一份 Crossref message 的 update-to[] 字段，type 命中 retraction/withdrawal 报 high severity；
+另把标题 `RETRACTED` 前缀作补充信号（经典撤稿论文本身常不暴露 update-to[]，仅标题带前缀）。
+不新增 HTTP（update-to 就在已取的 Crossref 响应里）。诚实局限：无信号 != 保证未撤稿，
+高风险引用须交叉查 Retraction Watch（见 check_retractions.py 注释）。
 
 OA 字段定位"开放性/可访问性"，非权威性；权威性须人工查 DOAJ/分区/预警名单。
 warning 只对预印本或非正式版本产生；闭源(oa_status=closed)绝不告警（顶刊多闭源）。
@@ -41,6 +47,12 @@ THIS_YEAR = datetime.date.today().year
 
 CN_RE = re.compile(r"[一-鿿]")
 
+# 撤稿/更正判定类型，与 light-research-ethics/check_retractions.py FLAG_TYPES 同源（单一口径）。
+# update-to[].type 命中 retraction/withdrawal -> 撤稿(high)；correction/EoC -> 仅 warning。
+RETRACTION_TYPES = {"retraction", "withdrawal"}
+CONCERN_TYPES = {"correction", "expression_of_concern"}
+RETRACTED_TITLE_RE = re.compile(r"^\s*retracted\b", re.I)
+
 
 def _get_json(url: str, timeout: int = 30):
     """返回 (http_code, obj_or_None)。"""
@@ -75,6 +87,7 @@ def verify_one(doi: str, self_authors=None):
            "cited_by_count": None, "is_cn": False, "is_self_cite": False,
            "is_oa": None, "oa_status": None, "venue": None,
            "is_in_doaj": None, "oa_type": None, "version": None,
+           "is_retracted": False, "retraction_flags": [],
            "errors": [], "warnings": []}
 
     # --- Crossref ---
@@ -95,6 +108,23 @@ def verify_one(doi: str, self_authors=None):
         auth = m.get("author", []) or []
         authors_str = " ".join((a.get("family", "") + " " + a.get("given", "")) for a in auth)
         rec["is_cn"] = bool(CN_RE.search(cr_title or "")) or "China" in authors_str
+        # --- 撤稿检测（复用 check_retractions.py 口径，同一份 message，不新增 HTTP）---
+        for u in (m.get("update-to") or []):
+            utype = (u.get("type") or "").lower().replace("-", "_")
+            if utype in RETRACTION_TYPES:
+                rec["retraction_flags"].append({"type": utype, "doi": u.get("DOI"),
+                                                "label": u.get("label"), "source": "crossref:update-to"})
+            elif utype in CONCERN_TYPES:
+                rec["warnings"].append(
+                    f"该文献有 {utype}（更正/关注声明，Crossref update-to）：引用前确认是否影响所引结论")
+        # 经典撤稿论文本身常不暴露 update-to，仅标题带 RETRACTED 前缀，作补充信号
+        if RETRACTED_TITLE_RE.match(cr_title or ""):
+            rec["retraction_flags"].append({"type": "retraction", "doi": doi,
+                                            "label": "title-prefixed RETRACTED", "source": "crossref:title"})
+        if rec["retraction_flags"]:
+            rec["is_retracted"] = True
+            rec["errors"].append({"severity": "high",
+                                  "msg": "该文献已被撤稿（Crossref 撤稿信号），严禁作为有效证据引用，须删除或换源"})
     else:
         rec["errors"].append({"severity": "high",
                               "msg": f"Crossref 查不到该 DOI（HTTP {code}）——疑似臆造或 DOI 错误，需核查"})
@@ -168,6 +198,7 @@ def build_report(dois, self_authors=None):
     recent = sum(1 for r in items if (r["year"] or 0) >= THIS_YEAR - 2)
     n_err = sum(len(r["errors"]) for r in items)
     preprint_n = sum(1 for r in items if r.get("oa_type") == "preprint")
+    retracted_n = sum(1 for r in items if r.get("is_retracted"))
     summary = {
         "total": n,
         "verified_ok": sum(1 for r in items if r["found_crossref"] and not r["errors"]),
@@ -178,6 +209,8 @@ def build_report(dois, self_authors=None):
         "recent_2y_count": recent,
         "missing_recent_2y": recent == 0 and n > 0,
         "preprint_count": preprint_n,
+        "retracted_count": retracted_n,
+        "retraction_note": "撤稿判定复用 check_retractions.py 口径（Crossref update-to + 标题 RETRACTED 前缀）；无信号≠保证未撤稿，高风险引用须交叉查 Retraction Watch",
         "authority_note": "权威性/掠夺性判定需人工+查 DOAJ/分区/预警名单；脚本仅给 OA 线索，oa_status 反映开放性≠权威性",
         "checked_at": datetime.date.today().isoformat(),
     }
@@ -225,6 +258,7 @@ def _selftest():
                 "cited_by_count": None, "is_cn": False, "is_self_cite": False,
                 "is_oa": None, "oa_status": None, "venue": None, "is_in_doaj": None,
                 "oa_type": None, "version": None,
+                "is_retracted": False, "retraction_flags": [],
                 "errors": [{"severity": "high", "msg": "synthetic missing DOI"}], "warnings": [],
             }
         return {
@@ -234,6 +268,7 @@ def _selftest():
             "cited_by_count": 12, "is_cn": False, "is_self_cite": True,
             "is_oa": False, "oa_status": "closed", "venue": "Synthetic Journal",
             "is_in_doaj": False, "oa_type": "journal-article", "version": "publishedVersion",
+            "is_retracted": False, "retraction_flags": [],
             "errors": [], "warnings": [],
         }
 
@@ -248,9 +283,42 @@ def _selftest():
     assert s["high_severity_errors"] == 1, s
     assert s["self_citation_rate"] == 0.5, s
     assert "preprint_count" in s and "authority_note" in s, s
+    assert "retracted_count" in s and "retraction_note" in s, s
     ok = rep["items"][0]
     assert ok["oa_status"] == "closed" and not ok["warnings"], ok
     assert _title_match("A reliable dataset", "Reliable dataset") > 0.6
+
+    # --- 撤稿检测分支：mock _get_json 让 verify_one 真跑 update-to / 标题前缀解析 ---
+    global _get_json
+    orig_get_json = _get_json
+
+    def fake_get_json(url, timeout=30):
+        if "crossref" not in url:
+            return 404, None  # 不查 OpenAlex，聚焦撤稿分支
+        if "retr.updateto" in url:  # update-to 暴露 retraction
+            return 200, {"message": {"title": ["A flawed study"], "issued": {"date-parts": [[2020]]},
+                                     "update-to": [{"type": "retraction", "DOI": "10.x/notice"}]}}
+        if "retr.title" in url:  # 仅标题带 RETRACTED 前缀（经典案例，update-to 空）
+            return 200, {"message": {"title": ["RETRACTED: An old retracted paper"],
+                                     "issued": {"date-parts": [[2020]]}}}
+        if "concern" in url:  # correction/EoC -> 仅 warning，不算撤稿
+            return 200, {"message": {"title": ["A corrected paper"], "issued": {"date-parts": [[2021]]},
+                                     "update-to": [{"type": "correction", "DOI": "10.x/corr"}]}}
+        return 200, {"message": {"title": ["A clean paper"], "issued": {"date-parts": [[2024]]}}}
+
+    try:
+        _get_json = fake_get_json
+        r_ut = verify_one("10.0000/retr.updateto")
+        r_ti = verify_one("10.0000/retr.title")
+        r_co = verify_one("10.0000/concern")
+        r_cl = verify_one("10.0000/clean")
+    finally:
+        _get_json = orig_get_json
+
+    assert r_ut["is_retracted"] and any(e["severity"] == "high" for e in r_ut["errors"]), r_ut
+    assert r_ti["is_retracted"] and r_ti["retraction_flags"][0]["source"] == "crossref:title", r_ti
+    assert not r_co["is_retracted"] and any("更正" in w or "correction" in w for w in r_co["warnings"]), r_co
+    assert not r_cl["is_retracted"] and not any(e.get("msg", "").startswith("该文献已被撤稿") for e in r_cl["errors"]), r_cl
     print("[selftest] PASS verify_refs offline")
 
 
