@@ -39,6 +39,19 @@ safe_link_dir() {
   ln -s "$target" "$link"
 }
 
+safe_link_file() {
+  local link="$1"
+  local target="$2"
+  if [ -L "$link" ]; then
+    rm "$link"
+  elif [ -e "$link" ]; then
+    echo "Refusing to overwrite non-symlink path: $link" >&2
+    echo "Remove it manually if it is an old Light install target." >&2
+    return 1
+  fi
+  ln -s "$target" "$link"
+}
+
 install_into() {
   local skills_dir="$1"
   local parent
@@ -68,6 +81,11 @@ install_into() {
   # Shared libraries as siblings so skills' relative paths resolve.
   safe_link_dir "$parent/databases" "$REPO/databases"
   safe_link_dir "$parent/code_assets" "$REPO/code_assets"
+  # Shared top-level docs as siblings so skills' "见 CONVENTIONS §5" / 路由文档引用装后仍可达。
+  local doc
+  for doc in CONVENTIONS.md ROUTER.md ROUTER_EXAMPLES.md MODE_REGISTRY.md; do
+    safe_link_file "$parent/$doc" "$REPO/$doc"
+  done
   echo "  $skills_dir  ->  $n/$EXPECTED_SKILLS skills"
 }
 

@@ -208,6 +208,9 @@ require("safe_link_dir" in install_sh, "install.sh: missing safe_link_dir helper
 require("Refusing to overwrite non-symlink path" in install_sh, "install.sh: must refuse non-symlink targets")
 require("rm -rf" not in install_sh, "install.sh: must not use rm -rf for install targets")
 require("$parent/databases" in install_sh and "$parent/code_assets" in install_sh, "install.sh: missing shared sibling links")
+require("safe_link_file" in install_sh, "install.sh: missing safe_link_file helper for shared docs")
+for _doc in ("CONVENTIONS.md", "ROUTER.md", "ROUTER_EXAMPLES.md", "MODE_REGISTRY.md"):
+    require(_doc in install_sh, f"install.sh: missing shared doc link for {_doc}")
 run_command(["bash", "-n", "install.sh"], "install.sh syntax")
 run_posix_idempotency_check()
 
@@ -219,6 +222,9 @@ require("Refusing to overwrite non-link path" in install_ps1, "install.ps1: must
 require("cmd.exe /c rmdir" in install_ps1, "install.ps1: must remove existing junctions with cmd.exe /c rmdir")
 require("New-Item -ItemType Junction" in install_ps1, "install.ps1: should create junctions")
 require("$parent\\databases" in install_ps1 and "$parent\\code_assets" in install_ps1, "install.ps1: missing shared sibling links")
+require("Link-File" in install_ps1, "install.ps1: missing Link-File helper for shared docs")
+for _doc in ("CONVENTIONS.md", "ROUTER.md", "ROUTER_EXAMPLES.md", "MODE_REGISTRY.md"):
+    require(_doc in install_ps1, f"install.ps1: missing shared doc link for {_doc}")
 ps_cmd = shutil.which("pwsh") or shutil.which("powershell")
 if ps_cmd:
     run_command(
