@@ -16,9 +16,11 @@ user-invocable: false
   - **Django REST**：serializer + `ModelViewSet` + `DefaultRouter` 三件套；权限/认证/分页/限流在 `REST_FRAMEWORK` settings 集中配。
   - **Spring Boot**：`@RestController→@Service→@Repository(JpaRepository)` 分层，构造器注入，`application-{profile}.yml` 多环境。
 - 非功能性：性能(缓存/索引/分页)、可扩展、可观测。
+- **向量检索选型**（科研 RAG/语义检索常用）：百万级以内优先 **pgvector + HNSW**（一套 Postgres 管关系+向量，运维简单），算子类与查询距离要一致（cosine→`vector_cosine_ops`）；千万~亿级、高 QPS 或需分布式才上专用向量库（Milvus/Qdrant/Weaviate）。选型对照见 references「pgvector + HNSW」节。
+- **可观测**：科研 AI 服务用 **OpenTelemetry** 统一采 trace/metric/log（`opentelemetry-instrument` 零改代码自动埋点，OTLP 导出到 Jaeger/Prometheus），定位"一次推理耗时花在哪、哪步报错"，别用 print 调试；注意采样率与别把密钥/PII 写进 span。详见 references「OpenTelemetry」节。
 
 ## 数据库设计
-- **ER 图**：实体、关系、基数。
+- **ER 图**：实体、关系、基数。可用 `scripts/er_diagram.py` 把表结构定义（YAML/JSON：entities + columns(PK/FK/UK) + relationships(基数)）一键转成 Mermaid `erDiagram` 文本，粘进 Markdown/软著文档或 mermaid.live 预览（`python scripts/er_diagram.py --in schema.yaml`，纯离线）。
 - **表结构**：字段、类型、约束、主外键、范式 vs 反范式权衡。刻意选型，别无脑 text/超大 numeric。
 - **索引**：按查询模式选型——B-Tree(等值/范围/排序/前缀 `LIKE 'x%'`)、GIN(数组/JSONB/全文/trigram)、BRIN(超大表+物理有序时间列)、GiST(几何/最近邻)、Hash(纯等值)。**外键必须建索引**(最常见漏建)；生产建索引用 `CREATE INDEX CONCURRENTLY` 避免锁表；上线前 `EXPLAIN ANALYZE` 验证计划。
 - **迁移**：

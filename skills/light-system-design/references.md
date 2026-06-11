@@ -1,6 +1,6 @@
 # 后端系统设计 · 工具参考笔记
 
-逐工具核查笔记，配合 SKILL.md 使用。所有要点来自官方文档/仓库，链接可点。
+逐工具核查笔记，配合 SKILL.md 使用。所有要点来自官方文档/仓库，链接可点。研究日期 2026-06；版本/端点随上游演进，落地前以所装版本官方文档为准，标「未能完整核实」者不臆造。
 
 ## Supabase RLS（行级安全）
 
@@ -298,3 +298,31 @@
 - https://docs.github.com/actions/security-guides/security-hardening-for-github-actions
 
 【已知坑 / 进阶（科研一般不展开）】第三方 action 钉 commit SHA 而非 tag（防供应链投毒，官方 `actions/*` 用版本 tag 可接受）；多版本测试用 `strategy.matrix`；build-push 镜像到仓库 / 部署 K8s、`environments` 配审批与回滚、OIDC 免密换云凭证（不存长期 secret）——这些属发布/部署链，按需再加，别让 CI 一上来就背全套 DevOps。
+
+## pgvector + HNSW（向量检索选型，科研 RAG / 语义检索常用）
+
+【是什么】pgvector 是 PostgreSQL 的向量扩展，让"已有 Postgres"直接存 embedding 做相似检索，省去单独引入向量数据库。科研系统里做语义检索、RAG、近重复去重时，数据量不大（百万级以内）优先 pgvector——一套库管关系数据 + 向量，运维与事务一致性都简单。
+
+【可复用方法 / 真实语法】
+- 建扩展与列：`CREATE EXTENSION vector;` → 列 `embedding vector(768)`（维度写死，与模型输出对齐）。
+- 距离算子：`<->` L2、`<=>` 余弦距离、`<#>` 负内积；查询 `ORDER BY embedding <=> $1 LIMIT 10`。
+- **HNSW 索引（首选，查询快、召回高）**：`CREATE INDEX ON items USING hnsw (embedding vector_cosine_ops);` 算子类要与查询距离一致（cosine→`vector_cosine_ops`）。建参 `m`（每节点连接数，默认 16）/`ef_construction`（建图候选数，默认 64，调高更准更慢建）；查询期 `SET hnsw.ef_search = 40;` 调召回/延迟。
+- **IVFFlat 替代**：`USING ivfflat (...) WITH (lists=N)`，建索引快、占内存小，但召回通常不如 HNSW，且必须在有代表性数据后再建（lists≈行数/1000）。
+
+【链接】https://github.com/pgvector/pgvector
+
+【选型对照 / 已知坑】HNSW 召回好、查询快但**建索引慢、占内存大**；IVFFlat 反之且需先有数据才能建。何时该上专用向量库（Milvus/Qdrant/Weaviate）：向量量级到千万~亿、需分布式水平扩展、需要高 QPS 或丰富的过滤+混合检索时——pgvector 在亿级与高并发下吃力。HNSW 索引不支持精确，`ef_search` 太小会漏召回；维度过高（>2000）pgvector 有上限，需降维。
+
+## OpenTelemetry（可观测，科研 AI 服务的 trace/metric/log 统一）
+
+【是什么】厂商中立的可观测性标准 + SDK，统一采集三类信号：**traces**（一次请求跨服务的调用链）、**metrics**（计数/直方图等数值）、**logs**。科研 AI 系统里用于看清"一次推理请求耗时花在哪、哪步报错、GPU/队列指标"，避免 print 调试。
+
+【可复用方法 / 真实用法（Python）】
+- 自动埋点最省力：`pip install opentelemetry-distro opentelemetry-exporter-otlp` → `opentelemetry-bootstrap -a install`（按已装库装对应 instrumentation，如 FastAPI/requests/SQLAlchemy）→ `opentelemetry-instrument python app.py` 零改代码出 trace。
+- 手动埋点：`from opentelemetry import trace; tracer = trace.get_tracer(__name__)`；`with tracer.start_as_current_span("inference"): ...` 包住关键段，`span.set_attribute("model.name", m)`。
+- 导出：OTLP 协议（`OTEL_EXPORTER_OTLP_ENDPOINT`）发到 Collector，再转 Jaeger/Tempo（trace）、Prometheus（metric）、Loki（log）等后端；`OTEL_SERVICE_NAME` 标服务名。
+- 关联：trace_id 注入日志即可把 log 与调用链对齐，定位"哪次请求的哪一步"。
+
+【链接】https://opentelemetry.io/docs/languages/python/
+
+【已知坑】采样率默认全采，高 QPS 下开销大，生产按比例采样（`OTEL_TRACES_SAMPLER`）；instrumentation 包与被测库版本要匹配，不匹配静默不出 span；metrics/logs 的 SDK 比 traces 成熟度略低，认版本；别把敏感数据（密钥/PII）写进 span attribute（会进可观测后端）。
