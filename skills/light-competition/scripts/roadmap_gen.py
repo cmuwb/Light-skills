@@ -255,23 +255,35 @@ def main():
         with open(args.plan, "r", encoding="utf-8") as f:
             plan = json.load(f)
         tag = os.path.splitext(os.path.basename(args.plan))[0]
+        demo_mode = False
     else:
         plan = SAMPLE
-        tag = "selftest"
+        tag = "demo"
+        demo_mode = True
         print("[自测] 未提供 JSON，使用内置合成里程碑")
 
     _validate(plan)
 
+    # 无 JSON 的 demo 路径：默认落临时目录，不污染技能根/当前目录（除非用户显式 --out）。
+    demo_dir = tempfile.mkdtemp(prefix="light_roadmap_gen_demo_") if (demo_mode and not args.out) else None
+
+    def _resolve(default_name):
+        if demo_dir:
+            return os.path.join(demo_dir, default_name)
+        return default_name
+
     outputs = []
     if args.kind in ("gantt", "both"):
-        out = args.out if (args.out and args.kind == "gantt") else f"{tag}_gantt.png"
+        out = args.out if (args.out and args.kind == "gantt") else _resolve(f"{tag}_gantt.png")
         outputs.append(draw_gantt(plan, out))
     if args.kind in ("roadmap", "both"):
-        out = args.out if (args.out and args.kind == "roadmap") else f"{tag}_roadmap.png"
+        out = args.out if (args.out and args.kind == "roadmap") else _resolve(f"{tag}_roadmap.png")
         outputs.append(draw_roadmap(plan, out))
 
     for o in outputs:
         print(f"[已生成] {o}  ({os.path.getsize(o)} bytes)")
+    if demo_dir:
+        print(f"[demo] 合成图写入临时目录 {demo_dir}（不污染仓库；真实用法传 --plan/--out）。")
     print("[完成] 图为可再生产物，评审材料用完后可删除，仓库只留脚本。")
 
 

@@ -371,12 +371,17 @@ def main():
         with open(args.data, "r", encoding="utf-8") as f:
             data = json.load(f)
         tag = os.path.splitext(os.path.basename(args.data))[0]
+        demo_mode = False
     else:
         data = SAMPLE
-        tag = "selftest"
+        tag = "demo"
+        demo_mode = True
         print("[自测] 未提供 JSON，使用内置合成市场数据（占位，非真实调研）")
 
     _validate(data)
+
+    # 无 JSON 的 demo 路径：默认落临时目录，不污染技能根/当前目录（除非用户显式 --out）。
+    demo_dir = tempfile.mkdtemp(prefix="light_market_charts_demo_") if (demo_mode and not args.out) else None
 
     todo = list(KINDS) if args.kind == "all" else [args.kind]
     outputs = []
@@ -385,8 +390,10 @@ def main():
         if field not in data:
             print(f"[跳过] 缺字段 '{field}'，不画 {kind}")
             continue
-        out = (args.out if (args.out and args.kind == kind)
-               else f"{tag}_{suffix}.png")
+        default_name = f"{tag}_{suffix}.png"
+        if demo_dir:
+            default_name = os.path.join(demo_dir, default_name)
+        out = (args.out if (args.out and args.kind == kind) else default_name)
         outputs.append(fn(data, out))
 
     if not outputs:
@@ -394,6 +401,8 @@ def main():
         sys.exit(0)
     for o in outputs:
         print(f"[已生成] {o}  ({os.path.getsize(o)} bytes)")
+    if demo_dir:
+        print(f"[demo] 合成图写入临时目录 {demo_dir}（不污染仓库；真实用法传 data.json/--out）。")
     print("[完成] 图为可再生产物，评审材料用完后可删除，仓库只留脚本。")
 
 
