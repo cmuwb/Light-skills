@@ -91,3 +91,12 @@ jobs:
             pypdf PyPDF2 reportlab pdfplumber pymupdf
       - name: Run all skill script selftests
         run: python .github/scripts/run_skill_selftests.py --group all --timeout 120
+
+  install-windows:
+    name: Windows 安装幂等与卸载安全
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: install.ps1 幂等 + junction 指向 + 卸载不伤源
+        shell: pwsh
+        run: ./.github/scripts/check_install_windows.ps1
