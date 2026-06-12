@@ -302,6 +302,8 @@ No. It assists your research and expression but enforces academic ethics (`light
 
 Bug fixes, new skills, knowledge-base entries, and docs are all welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and [CONVENTIONS.md](CONVENTIONS.md) (especially the honesty floor), and follow the [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Report security issues privately per [SECURITY.md](SECURITY.md).
 
+**Maintenance cadence.** Data-card freshness is checked monthly (1st of month) by `.github/workflows/freshness.yml`, which auto-opens a "data-card freshness checklist" issue when entries go stale; you can also trigger it manually via "Run workflow" in the Actions tab (GitHub stops scheduled runs on repos inactive for 60 days and disables schedules on forks by default, so the manual entry is the fallback). Skill **behavior** quality is guarded by `evals/` (golden tasks run quarterly to record a baseline; see [evals/README.md](evals/README.md)) — a deliberate split from the CI structure checkers: CI verifies "is the structure correct," evals verify "is the behavior good."
+
 ## ❤️ Support
 
 Light is built and polished by one person in spare time. If it saves you time or makes research smoother, consider buying the author a coffee — your support is the biggest motivation for continued updates.

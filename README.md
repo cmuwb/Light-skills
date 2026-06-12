@@ -302,6 +302,8 @@ Light 给的是能跑的脚本、能套的模板和真实范例,且有"不编造
 
 欢迎修 bug、加技能、扩知识库、改文档。请先读 [CONTRIBUTING.md](CONTRIBUTING.md) 与 [CONVENTIONS.md](CONVENTIONS.md)(尤其是诚实底线),并遵守 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)。安全问题请按 [SECURITY.md](SECURITY.md) 私下报告。
 
+**维护节律**：数据卡保鲜由 `.github/workflows/freshness.yml` 每月 1 日定时检查，有超期条目自动开"数据卡保鲜清单"issue；也可在 Actions 页手动 "Run workflow"（GitHub 对不活跃仓库 60 天会停定时、fork 默认禁用定时，故手动入口是兜底）。技能行为质量由 `evals/`（季度跑黄金任务记基线，详见 [evals/README.md](evals/README.md)）把关——它与结构校验器（CI）分工：CI 验"结构对不对"，evals 验"行为好不好"。
+
 ## ❤️ 支持与鼓励
 
 Light 由一个人利用业余时间打磨。如果它帮你省下了时间、让科研更顺手,欢迎请作者喝杯咖啡——你的支持是持续更新的最大动力。
