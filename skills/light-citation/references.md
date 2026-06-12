@@ -159,6 +159,8 @@ DataCite https://datacite.readme.io/docs/what-is-the-best-way-to-make-a-content-
 
 【已知坑】email 参数强制；只认 Crossref DOI（无 DOI 文献查不到）；`best_oa_location` 可能为 null（即闭源）；`version` 区分 publishedVersion / acceptedVersion，引用时注意是否为正式版。
 
+【被 m01 消费】light-literature-search(m01) 的「单篇深读协议」用本节做"检索到→合法拿全文"的衔接：只取 OA 版本深读，闭源回退元数据+摘要级精读并声明（改本节端点须顾及 m01 深读节的指针）。
+
 ---
 
 ## OpenCitations API
