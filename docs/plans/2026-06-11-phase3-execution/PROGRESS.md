@@ -15,7 +15,7 @@
 | R6 | PPT 生图流水线 | 部分完成（见偏差） | 2026-06-12 | 2026-06-12 | `55674c2..f04c12b`（5 commit） | 绿（run 27386750356 三任务全 pass）；PR #1 → master |
 | R7 | 横切机制与瘦身 | 已完成 | 2026-06-12 | 2026-06-12 | `1cbfc52..961060c`（5 commit） | 绿（run 27389247644 三任务全 success）；PR #2 → master |
 | R8 | CI 门禁扩建 | 已完成 | 2026-06-12 | 2026-06-12 | `1c89e06..026d4b5`（7 commit） | 绿（run 27391794048 三任务全 success）；PR #3 → master |
-| R9 | 数据库规模化（批1/批2/批3） | 进行中（批1已完成） | 2026-06-12 | | 批1 `1187a9d..543e0d0`（4 commit） | 批1 绿（run 27393227083 三任务全 success）；PR #4 → master |
+| R9 | 数据库规模化（批1/批2/批3） | 进行中（批1+批2已完成） | 2026-06-12 | | 批1 `1187a9d..543e0d0`（4 commit）；批2 `0ef3c2b..048a2c3`（3 commit） | 批1 绿（run 27393227083）；批2 待推送确认 CI；PR #4 → master |
 | R11 | 行为评测与自动化闭环 | 未开始 | | | | |
 | R12 | 安全、领域与微缺口增补 | 未开始 | | | | |
 | R10 | 门面工程与发布（收官） | 未开始 | | | | |
@@ -26,6 +26,7 @@
   - **R7 收尾实测：901 → 763 行（-15.3%，达标）**。逐技能终值：file-reading 42 / memory-pm 81 / orchestrator 111 / backend-coding 57 / system-design 50 / frontend-design 83 / project-structure 80 / consistency 63 / self-review 73(+8) / tool-selection 71 / research-ethics 52。瘦身手法=细节下沉 references/examples、多 bullet 列表合并为少行、跨技能重复内容指认单一真相源后删副本；self-review 因新增「分级执行档」(R7.5)净 +8，属能力增量非冗余。**未删任何能力**：下沉内容全部进对应 references（a03 code_examples.md、m08 examples/full_pipeline_walkthrough.md、orchestrator pipelines.md 契约表+checkpoints.md 恢复探针、file-reading references.md 视频工具链等）。
 - db05/db06/db07 真实卡数基线：约 1-2 / 1-2 / 2（审计 2026-06-11 口径）
   - **R9 开工实测（2026-06-12）**：迁移/扩展后基线其实是 14 / 14 / 19（审计口径只数了 seed 卡，未计入 R5 期已迁入 resources_real/design_system_cards/figure_advanced_cards 的实体卡）。**批1 收尾**：db05 14→18、db06 14→16、db07 19→31，三库均 ≥15 达标；新增 18 张卡，每卡带来源+核验日期，抽查 5/18(28%) 来源一致（_verification_log/R9-batch1-card-spotcheck.md）。
+- db01 venue 基线 204（R9 开工）→ **批2 收尾 308**：OpenAlex 逐卡核验新增 104 张（方向命中农业工程/智慧农业/精准畜牧/奶业/兽医、CV/AI/ML、医学影像/临床肿瘤、生信、机器人/语音、统计、环境/食品/材料/能源/地学、HCI），全 19 列、物理行==逻辑行无多行字段被压平。ai_policy 12→186 张有值（六大出版社官方页实查）。抽查 22/104(21%) 来源一致（_verification_log/R9-batch2-db01-spotcheck.md）。db02 写作样本 16→24（+8 篇 2024-2026 顶会顶刊）。
 - ROUTER_EXAMPLES 必覆盖基线：7/28
 
 ## 偏差日志（只追加，不删改）
@@ -82,6 +83,9 @@
 - [2026-06-12] R9批1 — YAML 填卡两次踩"值内英文冒号+空格"陷阱：db05 `backdrop-filter: blur()`、db07 `区别于混淆矩阵: 这里`，PyYAML 报 `mapping values are not allowed here`。check_databases 当场抓。修法=去掉冒号后空格(`backdrop-filter:blur()`)或换破折号。教训沿用 R4 卡填经验：卡内值含英文冒号须紧跟非空格或加引号。
 - [2026-06-12] R9批1 — db06 风格卡来源诚信：R6.5 声明"每出一套 imggen deck 落一张 db06 风格卡"，但有 key 端到端实跑仍是 GAP(R6.6#4)。批1 db06 两卡(开题/课程教学)**不冒充 imggen 来源**——色板/字体取自已 selftest 验证的 themes.py(academic/light_elegant)，版式逻辑参照公开来源(Beamer 矩阵/CMU 教学，HTTP 200)，并在卡文件头与抽查日志显式声明此边界。imggen 实跑沉卡待 R6 补做。
 - [2026-06-12] R9批1 — db07 九图反哺卡衔接 JOURNAL_SPECS 时，核实真相源在 light-figure-**drawing**(非 figure-planning) 的 `scripts/figure_export.py`，实测值 IEEE 单栏 88.9mm(≈3.5in)/Nature 89-183mm/Science 55-120-183mm；卡内衔接段按实测值与正确技能名写，未凭"m11"标签想当然。
+- [2026-06-12] R9批2 — venues.csv **CRLF 回归**：本机 Python 脚本以 `newline=""` 写回时把原 LF 文件整体转成 CRLF，`git diff --check` 把 205 行 `\r` 全报 trailing whitespace、diff 也虚增。核实 HEAD 版本是纯 LF(205 LF/0 CRLF)，判定为我引入的回归，已字节级 `replace(b'\r\n',b'\n')` 统一回 LF，diff 收敛为真实改动(201 增 97 删=104 新行+97 行追加 ai_policy)。教训：改 venues.csv 的脚本应显式按 LF 写(或写完即转)，Windows 默认行尾会污染整文件 diff。
+- [2026-06-12] R9批2 — OpenAlex **publication_year 噪声**：按 `cited_by_count>X` 拉"2024-2026 高被引"时，大量经典论文(Attention/BatchNorm)因镜像记录重标 2024/2025、DOI 为 `10.57702/*` 等非权威重复 DOI 混入。判定不可盲取：db02 改用官方获奖名单(NeurIPS/CVPR Awards 页)定篇 → 逐篇按标题回查 OpenAlex 取权威 IEEE/期刊 DOI(CVPR 系 10.1109/cvpr52733.2024.*)，"Not All Tokens"回查命中 2019 错篇即剔除。venue 采集同理按精确 ISSN 查、剔 works<50 碎片记录。
+- [2026-06-12] R9批2 — ai_policy **出版社级口径**：单刊逐个查官网政策不现实(308 卡)，改按"同社旗下期刊共用该社政策"批量标注——实查 Elsevier/IEEE/Wiley/Springer/Nature/ACM 六大社官方政策页(2026-06，逐字提炼带官方出处)覆盖 174 张新值+原 12 张单查=186 张。卡内注明"出版社级政策，个别刊可能有附加条款，投稿前看目标刊 Author Guidelines"。Nature/Springer 政策页对未登录有 303/付费墙，措辞经官方镜像+多源核实口径一致。check_databases 不读 CSV 故此扩充不过 schema 校验，靠脚本自检列数=19+物理行==逻辑行兜底。
 
 ## 留给下一轮的话
 
@@ -113,6 +117,8 @@
 
 - **R9 批1 已完成（给批2 的话）**：①三库均 ≥15 达标(db05 18/db06 16/db07 31)，8 门禁+51 selftest 全绿，批1 commit 区间 `1187a9d..543e0d0`(含本 PROGRESS 提交)。②**批2 db01 改 venues.csv 三铁律照旧**：禁 csv 模块全量重写(压平多行)、禁无引号字段含英文逗号、`last_checked_date` 列填 `YYYY-MM(-DD)`(check_freshness 读它)；先修中国农业科学/作物学报两行的 22 列→19 列(给 risk_note 加引号)。ai_policy 字段口径=risk_note 内 `ai_policy=` 子串(CONVENTIONS §3)，已实查 12 家，批2 扩到 ≥50 卡有值。③**填卡 YAML 陷阱**(批1 踩两次)：卡内值含英文冒号须紧跟非空格或加引号，否则 PyYAML 报 `mapping values are not allowed here`，check_databases 当场抓。④新卡铁律=真实来源链接+核验日期、OpenAlex 不盲取第一条(比对年份/被引/DOI)、禁凭记忆填卡；抽查 ≥20% 落 _verification_log。⑤新增卡文件直接放各库目录、在 README「真实资源文件」节加链接即可，无需动技能四件套(本批未加技能/脚本/模板/路由)。
 - **R9 批1 给批3 的话**：palette.json 跨库机制(R9.7)——db05 的 `design_tokens.template.json`(DTCG 视觉 SSOT)已是色值锚点真相源，a05/db07 衔接段均已指认它；批3 落 palette.json 时与之字段对齐，dairygoat 项目(databases/db09-projects/projects/dairygoat-detect-track)建真实实例，m11(figure-drawing)/m16(slides)/a05 三处+a07 加"读取项目 palette.json"指针。db07 九图反哺卡的 JOURNAL_SPECS 衔接段已写明栏宽真相源=light-figure-drawing/figure_export.py。
+
+- **R9 批2 已完成（给批3/收尾的话）**：①完成判据全过——db01 308≥300、ai_policy 186≥50、db02 新样本 8≥5、抽查 22/104(21%)≥20% 落 _verification_log；8 门禁+51 selftest 全绿、git 干净、3 个中文 commit 无 AI 署名(`0ef3c2b..048a2c3`)。②**改 venues.csv 必显式按 LF 写**：本机脚本默认 CRLF 会把整文件 diff 污染(批2 已踩并修，见偏差日志)；改完务必 `git diff --check` 干净 + 验"物理行==逻辑行"。③venues.csv 现 308 卡仍**无多行字段**(物理行==逻辑行)，故"禁 csv 模块全量重写"的前提当前不成立、重写安全——但批3 若有人往 risk_note 塞换行就会破此前提，改前必先验。④db01/db02 扩充**未动技能四件套**(无新技能/脚本/模板/路由)，check_entry_docs 仍 28/28、route_examples=51。⑤批2 临时采集脚本(_collect/_gen/_enrich/_apply 等)跑完即删、未入库(联网脚本严禁留仓污染 selftest/CI)，采集→核验→入库管线已成文进 db01 README 供复现。⑥批3 只剩 palette.json 跨库机制(R9.7)+采集管线成文(R9.8 已部分落 db01 README)，收尾后打印 R11 启动提示词。
 
 ## 用户决策项登记（出现一个登记一个，R10 统一找用户拍板）
 
