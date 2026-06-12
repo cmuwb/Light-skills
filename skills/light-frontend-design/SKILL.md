@@ -91,7 +91,7 @@ user-invocable: false
 可运行前端代码 + 设计说明(风格/色板/字体/组件清单) + 截图。设计系统登记 db05 与 db09。
 
 ## 衔接
-数据接口对接 a04；与 PPT(m16)/论文图(m11) 视觉风格协调(a07)；无鉴权接口风险提示(security_awareness)。
+数据接口对接 a04；与 PPT(m16)/论文图(m11) 视觉风格协调(a07)；无鉴权接口风险提示(security_awareness)。视觉灵感图/moodboard 可复用 m16 imggen-enhanced 的生图封装(`light-slides/scripts/imagegen.py`)与 style_anchor 写法(见 m16 `light-slides/references/imggen_pipeline.md`)——同一项目 palette 由 a07 统一，生图元素配色不另起一套。
 
 ---
 逐工具核查笔记(真实端点/命令/参数/坑)见同目录 references.md。
