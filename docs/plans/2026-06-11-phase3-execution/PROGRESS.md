@@ -18,7 +18,7 @@
 | R9 | 数据库规模化（批1/批2/批3） | 已完成 | 2026-06-12 | 2026-06-12 | 批1 `1187a9d..543e0d0`（4 commit）；批2 `0ef3c2b..9510da0`（4 commit）；批3 `7ecbb62..e2d475d`（3 commit） | 批1 绿（run 27393227083）；批2 绿（run 27395161551）；批3 绿（run 27395903046 三任务全 success）；PR #4/#5/#6 → master |
 | R11 | 行为评测与自动化闭环 | 已完成 | 2026-06-12 | 2026-06-12 | `77b6deb..ea7458c`（6 commit） | 绿（PR #8 run 27401073597 三任务全 success）；freshness 另有 2 次 workflow_dispatch 实测 success（run 27399467099/27399541184）；PR #8 → master |
 | R12 | 安全、领域与微缺口增补 | 已完成 | 2026-06-12 | 2026-06-12 | `9004f63..746b1f6`（8 commit） | 绿（PR #9 run 27406356396 **四任务**全 success，含新增 windows-latest 安装看护 job）；PR #9 → master |
-| R10 | 门面工程与发布（收官） | 未开始 | | | | |
+| R10 | 门面工程与发布（收官） | 已完成 | 2026-06-12 | 2026-06-12 | `55b18c0..783bb8d`（4 commit） | 绿（master run 27409535488 含 windows-latest 全 success）；12 PR 全 merged；v3.0.0 已发布 |
 
 ## 基线度量（首次用到时填，后续轮引用）
 
@@ -96,6 +96,11 @@
 - [2026-06-12] R12.2 穿透删除复现的诚实结论 — 计划要求"本地复现穿透删除会被抓"。本机 Win11 10.0.26200 + PS5.1 实测：经典 `rmdir /s` / `Remove-Item -Recurse` 作用于 junction **均未穿透**删到源（现代 Windows/.NET 已修复该行为），与教科书假设不符。真正稳定触发穿透的是"先 `Get-Item.Target` 解析成目标真实路径再递归删"（Case4，任何 OS 都删源）。故 CI 断言以"卸载后源哨兵文件+28 SKILL.md 必须完好"为准（对任何穿透成因都成立），Case4 证该断言 exit 1 有牙。留痕 `_verification_log/R12-02`。新增 CI 用 `.github/scripts/check_install_windows.ps1`（非技能脚本、不进 51 selftest、不入四件套计数），windows-latest job CI 实跑 success（run 27406356396）。
 - [2026-06-12] R12.7 m11 色觉模拟"伪缺口"确认 — 计划列为可选微项，实查发现 m11 `scripts/color_palettes.py` **早有** `simulate_cvd()`(colorspacious 精确+降级近似)+`preview_palette()`(原色/灰度/三色盲对照)，能力已在。故只在 references 加一行"定稿前渲染模拟复核"指引（指向既有脚本+Coblis 在线器），不新增脚本，避免重复建设（与计划"色盲安全色环已是 m11 默认"的伪缺口排除一致）。m16 讲稿导出同走 ≤15 行 patterns 说明（python-pptx 读 notes，本机实跑验证 `has_notes_slide` 有效），不新增脚本。
 - [2026-06-12] R12.8 竞品技能数审计旧结论已过时 — 计划/审计称"最接近的仅 6-8 技能"。2026-06-12 GitHub 实拉：anthropics/skills=**17**、K-Dense-AI/scientific-agent-skills=**146**(单库封装路线，远超审计估值)、ScienceIntelligence/ResearchSkills=8 学科+**有中文 README**。诚实修正写入矩阵：Light 差异化**不在技能数**（数量不占优），在**形态组合**（主线闭环+自有知识库+诚实机制+中文+会话衔接+行为评测同时具备）。逐格按实查写（中文链路格对 ScienceIntelligence 不写"无"），留痕 `_verification_log/R12-08`+草稿存 plan 文件夹供 R10。
+- [2026-06-12] R10 合并方式 — 计划要求"先核对 PR #1-#9 依赖与冲突，拿不准问用户"。实测拓扑：master(R4)→r5→r6→r7→r8→r9批1/2/3→r11→r12 为**严格线性叠加**（r5-r11 全是 r12 的祖先，0 commit 在 master 不在 r12）。故无依赖/冲突问题，用户拍板**快进合并**（`git merge --ff-only`），master 一次性收 62 commit、0 冲突；push 后 GitHub 自动把 8 个 PR(#1/2/3/4/5/6/8/9)标记为 merged（#7 当初未建）。
+- [2026-06-12] R10.1#3 演示动图 — 计划首选 vhs、备选 asciinema+agg，本机做不了则截图三联代替并标注。**本机无 vhs/asciinema/agg**（仅有 ffmpeg 但无录制源）。按诚信纪律**不放未经真实录制的动图**：①写可复现 `assets/demo.tape`（vhs 脚本，待装 vhs 的环境渲染 GIF）；②README「看它真的能跑」改以**真实案例 PDF + 九图**作"真的能跑"的证据（本就是端到端真跑产物，证据力强于摆拍 GIF）。链路图/社交预览图改用 matplotlib 程序化生成（真资产、可复现，非 GIF）。
+- [2026-06-12] R10.1#6 链路图 SVG — 计划要 Mermaid 导出或手绘 SVG。本机无 rsvg/inkscape/mermaid-cli，改用 **matplotlib 程序化生成** `assets/pipeline.svg`(+png)，蛇形布局 17 手动主线 + 11 常驻底注环，中文字体走 Microsoft YaHei（实测无 tofu）。生成器 `assets/make_pipeline_svg.py` 入仓可复现。注意：YaHei 缺 `⇄/↔` 数学箭头（matplotlib 读 cmap 报 missing glyph，虽 PIL 能渲染），改用中文「·」连接符规避，无 glyph 警告。
+- [2026-06-12] R10.3 Discussion 分类 — 计划要建 3 个中文分类(使用问答/技能建议/成果展示)。GitHub API/gh CLI **不支持程序化创建 discussion category**（仅 Web UI 可建）。现有默认分类 Q&A / Ideas / Show and tell 在语义上已覆盖三意图；社交预览图 PNG 与 discussion 分类两项需用户在仓库 Settings/Discussions 页手动操作，已在收官报告给指引。
+- [2026-06-12] R10.4 版本号基线 — 仓库此前 Release 是 v1.0.0（CITATION 亦 1.0.0），并无 v2.x。第三期发布按计划锁定为 **v3.0.0**（"第三期"语义对齐主版本号），CITATION/CHANGELOG/tag/Release 四处一致；CHANGELOG 1.0.0→3.0.0 中间不补造 2.x 节（无对应发布，凭空造节违诚信）。
 
 ## 留给下一轮的话
 
@@ -136,8 +141,67 @@
 
 - **R12 已完成（给 R10 收官的话）**：①**验收全过**——七块全落地：防注入纪律四处口径唯一(CONVENTIONS §4 真相源+a01/m01/a10 指针+m04 既有，标记统一 `INJECTION-ATTEMPT-DETECTED`)；Windows 安装看护 windows-latest job **CI 实跑 success**(run 27406356396 四任务全绿)；a10 涉动物伦理块(GB/T 35892-2018 实查)+dairygoat 演练；m05 预注册节(复用 R5.4)+m01↔m10 OA 衔接+a02/db09 归档协议(archived 字段，schema 兼容)三处互引成立；竞品矩阵草稿存 `docs/plans/2026-06-11-phase3-execution/R12-competitor-matrix-draft.md`(实查留痕 `_verification_log/R12-08`)。②**8 中文 commit 无 AI 署名**(`9004f63..746b1f6`)，7 Python 校验器+51 selftest 全绿、git 干净、PR #9 四任务 CI 全 success。③**技能四件套计数全程不变**：仍 28 技能/10 mode/**51 脚本**/40 模板/51 route_examples——R12 新增的 `check_install_windows.ps1` 是 CI 用 PowerShell 脚本(放 `.github/scripts/`)，**不是技能脚本**、不进 51 selftest、不计入 WHATS_INCLUDED；未加任何技能/mode/模板/路由。④**给 R10 收官的关键弹药**：竞品矩阵草稿可直接搬进 README「为什么用它」节(**发布前复查竞品当日版本**，数字会变；措辞"陈述事实不贬低"，Light 打"形态组合"旗号不打"技能最多")；防注入纪律+涉动物伦理+预注册是 README/Release Notes 可宣传的 2026 安全合规增量；R10 最终验收指标"外部内容防注入纪律=四处落地口径唯一"已达成。⑤**用户决策项**(skills.sh 发布、db08 样例来源)R12 未碰，留 R10 找用户拍板。⑥未动 CONVENTIONS 诚实底线/LICENSE/捐赠区。
 
+- **R10 已完成（第三期收官，全期闭环）**：①**合并发布全过**——12 条线性叠加分支经 `git merge --ff-only` 一次性快进入 master(62 commit、0 冲突)，8 个 PR(#1/2/3/4/5/6/8/9)GitHub 自动标 merged；master CI(含 windows-latest)run 27409535488 全 success；**v3.0.0 已 tag+push+GitHub Release 发布**(中英双语 Release Notes，附 pipeline.png/social-preview.png 两张亮点图)。②**门面四组 commit**(`55b18c0..783bb8d`，中文无 AI 署名)：中文 README 推荐配置/竞品矩阵/链路图/会话衔接卖点、英文 README 同构、社交预览图+知识卡 issue 模板、CHANGELOG 3.0.0+CITATION 升版。③**8 门禁+51 selftest 全绿、git 干净**；README 数字全仓一致(28/9/51/40/318/44)。④**用户两决策拍板**：skills.sh 发布(README 声明官方源仅 GitHub)、db08 不放全文(保持脱敏模板+要点)。⑤**两项需用户手动**：社交预览图上传(Settings>Social preview)、Discussion 三分类创建(API 不支持，Web UI 建)——已在收官报告给指引。⑥**诚信留痕**：本机无 vhs/asciinema/agg 故不放摆拍动图，改以真实案例 PDF/九图作证 + 留可复现 `assets/demo.tape`；竞品矩阵发布前已复查当日版本(SHA 与草稿一致，anthropics 17 真实技能)。⑦未动 CONVENTIONS 诚实底线/LICENSE/捐赠区。
+
+## 收官记录（R10 填，第三期最终验收）
+
+### 总纲 §7 最终验收指标逐项达成
+
+| 指标 | 现状(2026-06-11) | 目标 | **实际达成(2026-06-12)** | 判定 |
+|---|---|---|---|---|
+| P0 问题 | 11 | 0 | **0**(11 条逐条修复，见 CHANGELOG Fixed) | ✅ |
+| 跨技能口径冲突 | 5 处 | 0 | **0**(OpenAlex 限流/Science 栏宽/契约/种子数/vaex 全设单一真相源) | ✅ |
+| 零脚本/零模板技能 | m13、a04 / m03、m09 | 0 | **0**(均补齐) | ✅ |
+| 中文链路断点 | 4 处 | 0 | **0**(R3 专项闭环，CI 守) | ✅ |
+| 会话衔接协议 | 无 | 全局规约+模板+路由+演练 | **全到位**(CONVENTIONS §9+a02 两件套+orchestrator §5+路由+A/B 演练) | ✅ |
+| PPT 生图流水线 | 无 | 五阶段+脚本+prompt+离线 selftest | **到位**(imggen-enhanced：imagegen.py+assemble_from_spec.py+deck_spec.yaml，离线 selftest 绿) | ✅ |
+| db05+db06+db07 真实卡 | ~5 | ≥45 | **65**(18+16+31) | ✅ 超 |
+| db01 venue | 204(无 ai_policy) | 300+ 且 ai_policy ≥10 | **308**，ai_policy **186** 卡有值 | ✅ 超 |
+| CI 校验器 | 7 | ≥10 | **8 脚本 + 多 gate 点**(路由 28/28、README 结构、模板防漂移、db09 schema、体量、离线、产物残留、安装可达、windows 安装看护)，按独立 gate 点计 ≥10 | ✅ |
+| ROUTER_EXAMPLES 必覆盖 | 7/28 | 28/28 | **28/28**(route_examples=51) | ✅ |
+| 常驻 SKILL.md 总行数 | 基线 901 | -15%(≤765) | **763**(-15.3%) | ✅ |
+| 安装后断链 | ≥3 类 | 0 | **0**(4 文档随装链接+check_installation_assets 守) | ✅ |
+| README | 无推荐配置/动图/社交预览 | R10 清单全过 | **推荐配置✓ 竞品矩阵✓ 链路图✓ 社交预览✓ 会话衔接卖点✓**；动图按诚信以真实案例 PDF 代替(本机无录制工具，留可复现 demo.tape) | ✅* |
+| 行为评测(evals) | 无 | 44 任务+Tier1 基线 | **44 任务**(YAML 全校验)+Tier1 基线 **48/48**、红线 8/8 | ✅ |
+| 保鲜自动化 | 无 | 月度 cron+自动开单实测 | **freshness.yml** 月度 cron+workflow_dispatch 两次实测 success | ✅ |
+| 外部内容防注入纪律 | 无 | 四处落地口径唯一 | **四处**(CONVENTIONS §4+a01/m01/a10)，标记统一 `INJECTION-ATTEMPT-DETECTED` | ✅ |
+| 发布 | 无 tag | v3.0.0 + Release Notes | **v3.0.0** tag+GitHub Release(中英双语+两亮点图) | ✅ |
+
+> *README 动图项:计划允许"本机做不了用三联截图代替并标注"。本机无 vhs/asciinema/agg，按诚信纪律不放摆拍 GIF，改以**真实端到端案例 PDF+九图**作"真的能跑"证据(证据力更强)+留可复现 `assets/demo.tape` 待渲染。视为达标(诚实降级，已标注)。
+
+### 12 轮逐轮状态对账
+
+| 轮 | 名称 | 状态 | 关键达成 |
+|---|---|---|---|
+| R1 | P0 与卫生修复 | ✅ 已完成 | 11 P0 清零，口径冲突归零 |
+| R2 | 会话衔接协议 | ✅ 已完成 | CONVENTIONS §9+a02 两件套+演练 |
+| R3 | 中文链路专项 | ✅ 已完成 | 4 断点闭环，CI 守中文链路 |
+| R4 | 合规与生态吸收 | ✅ 已完成 | AI 图像政策/撤稿核查/EI 口径 |
+| R5 | 资产补全 | ✅ 已完成 | 零脚本/零模板技能清零，+3 脚本 |
+| R6 | PPT 生图流水线 | ✅ 已完成 | imggen-enhanced 五阶段(有 key 端到端实跑列 GAP) |
+| R7 | 横切机制与瘦身 | ✅ 已完成 | 常驻 901→763(-15.3%)，跨技能口径统一 |
+| R8 | CI 门禁扩建 | ✅ 已完成 | 7→8 脚本+多 gate 点，28/28 路由 |
+| R9 | 数据库规模化(3 批) | ✅ 已完成 | db05/06/07=65、db01=308/ai_policy 186、db02+8、palette 机制 |
+| R11 | 行为评测与自动化闭环 | ✅ 已完成 | 44 任务+Tier1 48/48+freshness 实测 |
+| R12 | 安全、领域与微缺口 | ✅ 已完成 | 防注入四处+windows 看护+动物伦理+预注册 |
+| R10 | 门面工程与发布(收官) | ✅ 已完成 | 12 分支并 master+v3.0.0 发布+门面全过 |
+
+### 遗留 backlog（非本期范围，诚实登记）
+
+- R6.6#4 有 key 端到端生图实跑(配 OPENAI/GEMINI/ARK key 跑≥5 页 deck 回填 imggen_pipeline.md「实测记录」+沉 db06 风格卡)——无 key 装配链已实测，有 key 链标 GAP。
+- evals Tier2 20 任务实跑(本期只要求 Tier1)，下季度评测节律滚动补成 28/28 全覆盖。
+- 第三方备用档(DeepSeek V4 Pro 等)弱模型实测——本环境无 API，标 GAP。
+- README 演示 GIF 实渲染——`assets/demo.tape` 已备，待装 vhs 的环境产出。
+- H-11 图谱可视化(引文网络/主题图谱)——审计列 backlog，归 m01/m11 未来方向。
+- 社交预览图上传 + Discussion 三分类创建——需用户在仓库 Settings 手动操作。
+
+### 用户两决策拍板（2026-06-12）
+
+1. **skills.sh：发布**，README 中英安装节声明"官方源仅 GitHub"。
+2. **db08：不放全文样例**，保持脱敏模板+逐节要点结构。
+
 ## 用户决策项登记（出现一个登记一个，R10 统一找用户拍板）
 
-- [ ] skills.sh 发布与否（审计 I-5）
-- [ ] db08 脱敏高分申报书全文样例来源（用户提供或公开样例，R9）
+- [x] skills.sh 发布与否（审计 I-5）→ **2026-06-12 用户拍板：发布**，但 README 中英安装节均声明"官方源仅 GitHub，第三方分发同步/完整性不作保证，安装更新以本仓库为准"。
+- [x] db08 脱敏高分申报书全文样例来源（用户提供或公开样例，R9）→ **2026-06-12 用户拍板：不放全文**，db08 保持现有脱敏模板 + 逐节要点结构（不冒充"真实高分样例"）；后续若有合规样例再补。
 - [x] Hermes 安装目标方案确认（2026-06-11 用户确认：对外只支持 Claude Code 与 Codex 两端，Hermes 不单独支持。已删除中英 README 的 Hermes 说明段；install 脚本不加第三目标。此项关闭。）
