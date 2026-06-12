@@ -15,7 +15,7 @@
 | R6 | PPT 生图流水线 | 部分完成（见偏差） | 2026-06-12 | 2026-06-12 | `55674c2..f04c12b`（5 commit） | 绿（run 27386750356 三任务全 pass）；PR #1 → master |
 | R7 | 横切机制与瘦身 | 已完成 | 2026-06-12 | 2026-06-12 | `1cbfc52..961060c`（5 commit） | 绿（run 27389247644 三任务全 success）；PR #2 → master |
 | R8 | CI 门禁扩建 | 已完成 | 2026-06-12 | 2026-06-12 | `1c89e06..026d4b5`（7 commit） | 绿（run 27391794048 三任务全 success）；PR #3 → master |
-| R9 | 数据库规模化（批1/批2/批3） | 进行中（批1+批2已完成） | 2026-06-12 | | 批1 `1187a9d..543e0d0`（4 commit）；批2 `0ef3c2b..9510da0`（4 commit） | 批1 绿（run 27393227083）；批2 绿（run 27395161551 三任务全 success）；PR #4/#5 → master |
+| R9 | 数据库规模化（批1/批2/批3） | 已完成 | 2026-06-12 | 2026-06-12 | 批1 `1187a9d..543e0d0`（4 commit）；批2 `0ef3c2b..9510da0`（4 commit）；批3 `7ecbb62..本提交`（3 commit） | 批1 绿（run 27393227083）；批2 绿（run 27395161551）；批3 待推送确认 CI；PR #4/#5/#6 → master |
 | R11 | 行为评测与自动化闭环 | 未开始 | | | | |
 | R12 | 安全、领域与微缺口增补 | 未开始 | | | | |
 | R10 | 门面工程与发布（收官） | 未开始 | | | | |
@@ -26,6 +26,7 @@
   - **R7 收尾实测：901 → 763 行（-15.3%，达标）**。逐技能终值：file-reading 42 / memory-pm 81 / orchestrator 111 / backend-coding 57 / system-design 50 / frontend-design 83 / project-structure 80 / consistency 63 / self-review 73(+8) / tool-selection 71 / research-ethics 52。瘦身手法=细节下沉 references/examples、多 bullet 列表合并为少行、跨技能重复内容指认单一真相源后删副本；self-review 因新增「分级执行档」(R7.5)净 +8，属能力增量非冗余。**未删任何能力**：下沉内容全部进对应 references（a03 code_examples.md、m08 examples/full_pipeline_walkthrough.md、orchestrator pipelines.md 契约表+checkpoints.md 恢复探针、file-reading references.md 视频工具链等）。
 - db05/db06/db07 真实卡数基线：约 1-2 / 1-2 / 2（审计 2026-06-11 口径）
   - **R9 开工实测（2026-06-12）**：迁移/扩展后基线其实是 14 / 14 / 19（审计口径只数了 seed 卡，未计入 R5 期已迁入 resources_real/design_system_cards/figure_advanced_cards 的实体卡）。**批1 收尾**：db05 14→18、db06 14→16、db07 19→31，三库均 ≥15 达标；新增 18 张卡，每卡带来源+核验日期，抽查 5/18(28%) 来源一致（_verification_log/R9-batch1-card-spotcheck.md）。
+  - **批3 跨库机制（2026-06-12）**：R9.7 palette.json 视觉 SSOT 实例机制落地（dairygoat 12 token，hex 逐项比对源文件全匹配），四技能接线；R9.8 四库采集管线同口径成文 + 修 freshness 漏认 `核验日期`（统计 313→318 卡）。db05/06/07 卡数维持批1 的 18/16/31。
 - db01 venue 基线 204（R9 开工）→ **批2 收尾 308**：OpenAlex 逐卡核验新增 104 张（方向命中农业工程/智慧农业/精准畜牧/奶业/兽医、CV/AI/ML、医学影像/临床肿瘤、生信、机器人/语音、统计、环境/食品/材料/能源/地学、HCI），全 19 列、物理行==逻辑行无多行字段被压平。ai_policy 12→186 张有值（六大出版社官方页实查）。抽查 22/104(21%) 来源一致（_verification_log/R9-batch2-db01-spotcheck.md）。db02 写作样本 16→24（+8 篇 2024-2026 顶会顶刊）。
 - ROUTER_EXAMPLES 必覆盖基线：7/28
 
@@ -85,7 +86,9 @@
 - [2026-06-12] R9批1 — db07 九图反哺卡衔接 JOURNAL_SPECS 时，核实真相源在 light-figure-**drawing**(非 figure-planning) 的 `scripts/figure_export.py`，实测值 IEEE 单栏 88.9mm(≈3.5in)/Nature 89-183mm/Science 55-120-183mm；卡内衔接段按实测值与正确技能名写，未凭"m11"标签想当然。
 - [2026-06-12] R9批2 — venues.csv **CRLF 回归**：本机 Python 脚本以 `newline=""` 写回时把原 LF 文件整体转成 CRLF，`git diff --check` 把 205 行 `\r` 全报 trailing whitespace、diff 也虚增。核实 HEAD 版本是纯 LF(205 LF/0 CRLF)，判定为我引入的回归，已字节级 `replace(b'\r\n',b'\n')` 统一回 LF，diff 收敛为真实改动(201 增 97 删=104 新行+97 行追加 ai_policy)。教训：改 venues.csv 的脚本应显式按 LF 写(或写完即转)，Windows 默认行尾会污染整文件 diff。
 - [2026-06-12] R9批2 — OpenAlex **publication_year 噪声**：按 `cited_by_count>X` 拉"2024-2026 高被引"时，大量经典论文(Attention/BatchNorm)因镜像记录重标 2024/2025、DOI 为 `10.57702/*` 等非权威重复 DOI 混入。判定不可盲取：db02 改用官方获奖名单(NeurIPS/CVPR Awards 页)定篇 → 逐篇按标题回查 OpenAlex 取权威 IEEE/期刊 DOI(CVPR 系 10.1109/cvpr52733.2024.*)，"Not All Tokens"回查命中 2019 错篇即剔除。venue 采集同理按精确 ISSN 查、剔 works<50 碎片记录。
-- [2026-06-12] R9批2 — ai_policy **出版社级口径**：单刊逐个查官网政策不现实(308 卡)，改按"同社旗下期刊共用该社政策"批量标注——实查 Elsevier/IEEE/Wiley/Springer/Nature/ACM 六大社官方政策页(2026-06，逐字提炼带官方出处)覆盖 174 张新值+原 12 张单查=186 张。卡内注明"出版社级政策，个别刊可能有附加条款，投稿前看目标刊 Author Guidelines"。Nature/Springer 政策页对未登录有 303/付费墙，措辞经官方镜像+多源核实口径一致。check_databases 不读 CSV 故此扩充不过 schema 校验，靠脚本自检列数=19+物理行==逻辑行兜底。
+- [2026-06-12] R9批3 — R9.7 palette.json 取色来源选定：dairygoat 是农业/CV/畜牧项目，色板取自 db06 `light-slides/assets/themes.py` 的 AGRICULTURE 主题（该主题 scenario 原文含"畜牧检测项目"，themes.py 已 selftest 绿，是最硬的可追溯真相源），语义色取自 db05 design_tokens.template.json(DTCG SSOT)。12 个 token 的 hex 经程序化逐项比对源文件**全部精确匹配**（留痕 `_verification_log/R9-batch3-palette-verification.md`），无凭记忆填色。卡内 `source` 字段用 `db06:light-slides/...::AGRICULTURE.COLORS.primary` / `db05:design_tokens.template.json::color.semantic.success` 这类可定位 id。
+- [2026-06-12] R9批3 — palette.json 跨技能引用写法：技能正文引用 palette.json 用完整 `databases/db09-projects/projects/<project_name>/palette.json` 路径（与 m11 既有引用 `databases/db09-projects/.../version_history.md` 同惯例），不带 `../` 不以 references/templates 等受保护目录开头，故不触发 check_skill_links 的内部路径/安装可达性 gate（已实测 8 门禁全绿）。四处接线 grep 可见：m11 配色节、m16 视觉风格步、a05 设计语言段、a07 维护要点+五维⑤视觉。
+- [2026-06-12] R9批3 — R9.8 发现并修一处真实 freshness 衔接断点：`check_freshness.py` 的 PROSE_DATE_RE 原只认 `核实日期/研究日期/核查日期/核实于/更新于`，而 db05/06/07 的 6 个卡文件实际写 `核验日期`，导致它们被静默漏统计（db05/06/07 仅各计 2/1/1 张）。补 `核验日期` 同义词到正则 + selftest 断言，修复后统计 3/2/3 张（合计 313→318）。这是 warn-only 脚本（不阻断 CI），属"采集管线与 freshness 月度流程衔接"的实质修复，非扩大范围。db05/06/07 README 各补与 db01 同口径的五步采集→核验→入库管线。
 
 ## 留给下一轮的话
 
@@ -119,6 +122,8 @@
 - **R9 批1 给批3 的话**：palette.json 跨库机制(R9.7)——db05 的 `design_tokens.template.json`(DTCG 视觉 SSOT)已是色值锚点真相源，a05/db07 衔接段均已指认它；批3 落 palette.json 时与之字段对齐，dairygoat 项目(databases/db09-projects/projects/dairygoat-detect-track)建真实实例，m11(figure-drawing)/m16(slides)/a05 三处+a07 加"读取项目 palette.json"指针。db07 九图反哺卡的 JOURNAL_SPECS 衔接段已写明栏宽真相源=light-figure-drawing/figure_export.py。
 
 - **R9 批2 已完成（给批3/收尾的话）**：①完成判据全过——db01 308≥300、ai_policy 186≥50、db02 新样本 8≥5、抽查 22/104(21%)≥20% 落 _verification_log；8 门禁+51 selftest 全绿、git 干净、3 个中文 commit 无 AI 署名(`0ef3c2b..048a2c3`)。②**改 venues.csv 必显式按 LF 写**：本机脚本默认 CRLF 会把整文件 diff 污染(批2 已踩并修，见偏差日志)；改完务必 `git diff --check` 干净 + 验"物理行==逻辑行"。③venues.csv 现 308 卡仍**无多行字段**(物理行==逻辑行)，故"禁 csv 模块全量重写"的前提当前不成立、重写安全——但批3 若有人往 risk_note 塞换行就会破此前提，改前必先验。④db01/db02 扩充**未动技能四件套**(无新技能/脚本/模板/路由)，check_entry_docs 仍 28/28、route_examples=51。⑤批2 临时采集脚本(_collect/_gen/_enrich/_apply 等)跑完即删、未入库(联网脚本严禁留仓污染 selftest/CI)，采集→核验→入库管线已成文进 db01 README 供复现。⑥批3 只剩 palette.json 跨库机制(R9.7)+采集管线成文(R9.8 已部分落 db01 README)，收尾后打印 R11 启动提示词。
+
+- **R9 批3 已完成（R9 三批全部收尾，给 R11 的话）**：①**完成判据全过**——palette.json 机制四处接线(m11 配色/m16 视觉风格/a05 设计语言/a07 维护要点+五维⑤)grep 可见、dairygoat 真实实例落地(12 token hex 经程序化逐项比对源文件全匹配，留痕 `_verification_log/R9-batch3-palette-verification.md`)；schema 进 db09 README + project_card_template；8 门禁+51 selftest 全绿、git 干净、3 个中文 commit 无 AI 署名(`7ecbb62..本提交`)。②R9.8 采集管线在 db01/db05/db06/db07 README 四库同口径成文，并修一处 freshness 真实断点(`核验日期` 同义词漏认，见偏差日志)。③**批3 动了一个校验器脚本**(check_freshness.py 加同义词+selftest 断言，warn-only 不阻断)——R11 行为评测若覆盖新鲜度检查按 318 卡基线。④**未动技能四件套计数**：仍 28 技能/10 mode/51 脚本/40 模板/51 route_examples，仅 4 个 SKILL.md 各加一行 palette.json 指针(check_entry_docs/check_skill_links 已绿)，未加新技能/脚本/模板/路由。⑤palette.json 用完整 `databases/db09-projects/projects/<name>/palette.json` 路径引用(不带 `../`、不以受保护目录开头)，不触发 check_skill_links gate；新项目要挂色板照 db09 README schema、source 指 db05/db06 真实卡、hex 不凭记忆填。⑥**R9 全轮验收对账**：db05 18/db06 16/db07 31(均≥15)、db01 308(≥300)/ai_policy 186(≥50)、db02 +8(≥5)、palette 四处接线+实例、每张新卡带来源+last_checked、抽查记录三份(`R9-batch1/2/3`)——R10 收官指标"db05+db06+db07 真实卡 ≥45"实达 65、"db01 venue 300+ 且 ai_policy ≥10"实达 308/186。
 
 ## 用户决策项登记（出现一个登记一个，R10 统一找用户拍板）
 
