@@ -5,6 +5,11 @@ description: 制作精美 PPT。当用户需要为论文、项目、竞赛、答
 
 # 精美 PPT 制作
 
+## 两条 mode（先选路线，登记于 MODE_REGISTRY）
+- **`programmatic`（默认）**：python-pptx 程序化路线（themes.py/patterns.md/build_deck.py）。无生图 key、数据密集、批量出页走这条。
+- **`imggen-enhanced`**：五阶段生图流水线（大纲卡→整页视觉稿→元素化拆解→重组装配→QA），要高审美路演/答辩/发布会质感且配了生图 key 时走这条。完整规程见 `references/imggen_pipeline.md`，契约模板 `templates/deck_spec.yaml`，脚本 `scripts/imagegen.py`（三后端封装）+ `scripts/assemble_from_spec.py`（重组装配）。无 key 自动退回 `programmatic`（imagegen.py 明确报后端不可用，不静默假成功）。
+- **三条硬边界**（imggen-enhanced 必守，与 m11/a10 互引）：①数据图永不生图（走 m11/m06 真数据）②论文图链路严禁生图（出版商禁令）③文本永不烤进图（一律原生文本框）。详见 `references/imggen_pipeline.md`「三条硬边界」节。
+
 ## 先定三件事
 1. **场景与受众**：答辩(评委/导师) vs 路演(投资人/评审) vs 汇报 —— 决定内容深度与节奏。
 2. **叙事逻辑**：选骨架(问题-方法-结果-价值 / 痛点-方案-市场-团队 / 背景-工作-贡献-展望)，先列大纲(每页一个核心信息)。
@@ -34,7 +39,7 @@ description: 制作精美 PPT。当用户需要为论文、项目、竞赛、答
 - **设计/AI 向**(可借工作流，闭源)：Canva Connect API(`POST /autofills` 品牌模板批量填充，需 Enterprise)、Gamma Generations API(`POST /v1.0/generations` prompt→deck，可 `exportAs:pptx/pdf`)、Beautiful.ai(规则驱动自适应版式理念)、Slidesgo(模板灵感按行业/风格/色筛)。
 - **从论文一键转稿**：两条路线。图像渲染路线(Paper2Slides/HKUDS)——分阶段 RAG→分析(抽图表与层级)→规划(版式蓝图)→渲染，每段存 checkpoint 可只重跑某段(只换风格用 `--from-stage plan`)；其实测教训直接用：逐张单图调用别想一次出多图(会风格漂移)、prompt 给版式指令比给细粒度元素样式更易 grounding、简单 prompt 反而出图更稳。纯学术公式重的走 LaTeX 路线(takashiishida/paper2slides)——下 arXiv 源→flatten 合并 `\input`→拼 prompt(正文+宏包定义+造稿指令)→LLM 出 Beamer→自检+`chktex` lint 回灌→`pdflatex`+`pdfcrop`；注意它只靠 caption 推断图、复杂图表表现差。
 图表复用论文图(m11)并适配投影：从论文重画而非直接贴 PDF 图，放大轴标≥16pt、增强对比。
-- **生图边界（与 m11 figure_integrity 互相指认的硬红线）**：上述 AI 生图/渲染路线（Gamma、Paper2Slides、未来 R6 PPT 生图流水线）的产物**只用于 PPT/路演/前端灵感图，严禁任何产物进入论文图链路**。论文图一律走 m11(light-figure-drawing)数据驱动绘制——Nature/Science/Elsevier 三家头部出版商明令禁止 AI 生成论文图像（见 light-figure-drawing `light-figure-drawing/references/figure_integrity.md`「AI 生成图像政策」节）。PPT 里若要放实验数据图，从 m11 成品重画适配投影，不要用生成式模型造数据图。
+- **生图边界（与 m11 figure_integrity 互相指认的硬红线）**：上述 AI 生图/渲染路线（Gamma、Paper2Slides、本 skill 的 imggen-enhanced 生图流水线）的产物**只用于 PPT/路演/前端灵感图，严禁任何产物进入论文图链路**。论文图一律走 m11(light-figure-drawing)数据驱动绘制——Nature/Science/Elsevier 三家头部出版商明令禁止 AI 生成论文图像（见 light-figure-drawing `light-figure-drawing/references/figure_integrity.md`「AI 生成图像政策」节）。PPT 里若要放实验数据图，从 m11 成品重画适配投影，不要用生成式模型造数据图。
 
 ## 演讲节奏
 为每页配 speaker notes 与时长建议；标出"必讲/可略"；控制总页数匹配时长(答辩常 8–12 min ≈ 10–15 页)。
@@ -49,6 +54,8 @@ description: 制作精美 PPT。当用户需要为论文、项目、竞赛、答
 - `examples/build_deck.py`：端到端生成 5 页学术 pptx(封面+内容+结果+对比+References)，每页配 speaker notes，自带幽灵 deck 测试。`python build_deck.py --theme tech -o tech_demo.pptx`，无需外部数据即可跑。
 - `scripts/thumbnail.py`：pptx→缩略图网格做视觉 QA。优先 LibreOffice 像素渲染(需 soffice + PyMuPDF/pdftoppm)；无 soffice 时自动回退纯 python(读 python-pptx 几何用 PIL 画版式示意图)，足以抓重叠/溢出/空页/对齐/版式重复。`python scripts/thumbnail.py deck.pptx --cols 4`。
 - `scripts/to_pdf.py`：pptx→pdf 的 soffice 无头封装。本环境未装 LibreOffice，脚本会明确报 unavailable 并给安装指引+备选(不静默假成功)。`python scripts/to_pdf.py deck.pptx`，`--check` 只探测引擎。
+- `scripts/imagegen.py`（imggen-enhanced）：三后端(OpenAI gpt-image / Gemini Nano Banana / 火山方舟 Seedream)统一生图封装，自动探测 key、`--backend` 可指定；mock 后端 PIL 现画占位图供无 key 离线装配。`python scripts/imagegen.py --check` 探测后端；端点/参数实测见 references.md 与 `_verification_log/R6-imggen-api.md`。
+- `scripts/assemble_from_spec.py`（imggen-enhanced Stage D）：读 `templates/deck_spec.yaml` 契约 + assets_gen/ + figures/ → 产**可编辑** pptx(原生文本框/表格/按 bbox 摆图)。`python scripts/assemble_from_spec.py spec.yaml --assets assets_gen --figures figures -o out.pptx`。
 
 ## QA（当 bug 猎，别当确认）
 出稿后默认有问题。① 内容 QA：`python -m markitdown out.pptx` 查缺漏/错字/顺序，并 `grep -iE "xxxx|lorem|ipsum"` 抓残留占位符。② 视觉 QA：优先 `python scripts/thumbnail.py out.pptx` 出缩略图网格逐页扫(无 soffice 也能出版式示意)；有 LibreOffice 时 `python scripts/to_pdf.py out.pptx` 转 PDF 再 `pdftoppm -jpeg -r 150 out.pdf slide` 出高保真图，逐图找重叠/文字溢出/低对比/对齐错位/边距不足/装饰线压两行标题；有子代理就交给它(新鲜眼睛)。③ 改完只重渲受影响页，循环到整轮无新问题才收。

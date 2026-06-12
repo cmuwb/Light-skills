@@ -51,6 +51,8 @@
 | result-analysis | `scripts/make_figs.py` | 结果分析阶段的 matplotlib 出图模板，快速生成论文级统计图初稿 |
 | result-analysis | `scripts/significance_test.py` | 显著性检验工具：p 值、效应量、置信区间、BH-FDR 多重校正 |
 | review-rebuttal | `scripts/fetch_openreview.py` | 抓取 OpenReview 公开评审语料，校准模拟审稿与 rebuttal 话术 |
+| slides | `scripts/assemble_from_spec.py` | imggen-enhanced Stage D：读 deck_spec.yaml 契约 + 生图/真数据资产，重组装配为可编辑 pptx(原生文本框/表格/按 bbox 摆图) |
+| slides | `scripts/imagegen.py` | imggen-enhanced 三后端(OpenAI gpt-image / Gemini Nano Banana / 火山方舟 Seedream)统一生图封装，mock 后端离线占位，无 key 不静默假成功 |
 | slides | `scripts/thumbnail.py` | 把 PPTX/PDF 渲染成缩略图网格，快速做整套 deck 视觉 QA |
 | slides | `scripts/to_pdf.py` | PPTX 转 PDF，优先 LibreOffice `soffice` 无头转换，用于后续视觉审查 |
 | tool-selection | `scripts/detect_stack.py` | 读取项目清单文件识别技术栈，给出工具/技能选型建议 |
@@ -63,7 +65,7 @@
 |------|------|------|
 | `.github/scripts/check_skills.py` | 技能 frontmatter 校验 | 检查 28 个 Light 技能的 `name` / `description` 与手动/常驻数量 |
 | `.github/scripts/check_databases.py` | 数据库 YAML/schema/link 校验 | 检查 db03–db08 schema、重复卡片、YAML 解析与 README 本地链接 |
-| `.github/scripts/check_skill_assets.py` | 脚本资产清单校验 | 检查 45 个技能脚本均登记到本文件、可编译、带真实 `__main__` 且覆盖显式 `--selftest` |
+| `.github/scripts/check_skill_assets.py` | 脚本资产清单校验 | 检查 50 个技能脚本均登记到本文件、可编译、带真实 `__main__` 且覆盖显式 `--selftest` |
 | `.github/scripts/check_entry_docs.py` | 入口文档一致性校验 | 检查 README/ROUTER/MODE_REGISTRY/ROUTER_EXAMPLES 的技能数量、mode 数量、路由样例与范围边界 |
 | `.github/scripts/check_installation_assets.py` | 安装与客户端集成校验 | 检查 install.sh/install.ps1、Codex 路由片段、插件 JSON、安装文档与 CI 触发路径不漂移 |
 | `.github/scripts/check_skill_links.py` | 技能内部链接校验 | 检查 28 个技能的 SKILL.md、references.md、references/*.md、templates/*.md、examples/*.md 中指向 references/templates/examples/assets/scripts 的本地链接；验证 SKILL.md 反引号资产路径与可选 linked_files |
@@ -78,6 +80,7 @@
 | research-plan | `templates/reproducibility-checklist.md` | 可复现性勾选清单（环境/目录/配置/版本/流水线） |
 | system-design | `templates/ci.yml` | GitHub Actions 轻量 CI 骨架（lint + test + 迁移校验） |
 | project-structure | `templates/pre-commit-config.template.yaml` | pre-commit 质量门配置，scaffold 自动生成 |
+| slides | `templates/deck_spec.yaml` | imggen-enhanced 流水线契约：每页结构卡(deck/pages/elements + style_anchor)，喂给 assemble_from_spec.py 装配 |
 | competition | `scripts/market_charts.py` 配套 | 市场图所需 JSON 字段与 db08 预算共用同一套 TAM/SAM/SOM |
 | consistency | `assets/design_language_extract.template.md` | 从现有图/PPT/前端反推设计语言的抽取模板 |
 | db05 | `design_tokens.template.json` | DTCG 格式视觉 token，论文图/PPT/前端/海报共用的取值锚点 |
