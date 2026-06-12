@@ -34,6 +34,13 @@ Mobbin、Awwwards、Dribbble、Behance、Lapa Ninja、Land-book、Godly、Sitein
 
 模板与 canonical 索引见 [design_cards.md](design_cards.md)（0 张实体卡，避免重复 `project_type`）。
 
+## 采集→核验→入库管线（照此复现可扩库，与 db01/db06/db07 同口径）
+1. **采集**：从上述数据来源记风格的版式逻辑/色板/token，**不存图片本身、不抄受版权素材**（CONVENTIONS §5）。
+2. **核验（铁律）**：代表实现链接 `curl` 取 HTTP 状态留痕；色值/token 以官方设计系统文档或自家已 selftest 资产为准，不凭记忆填；抽查 ≥20% 新卡来源可访问且卡内数据与来源一致（记录落 `_verification_log/`）。
+3. **入库**：按 `design_card` schema 填卡，YAML 值含英文冒号须紧跟非空格或加引号（PyYAML 陷阱）；新卡文件放本目录，在「真实资源文件」节加链接。
+4. **校验**：`PYTHONUTF8=1 python .github/scripts/check_databases.py` 全绿（按 SCHEMA 强校验 `resources_real.md` 与 `*_cards.md` 必填字段）。
+5. **落日期**：每张卡/每个卡文件标 `核验日期 YYYY-MM-DD`，供 [check_freshness.py](../../.github/scripts/check_freshness.py) 月度统计（warn-only，不阻断 CI；每月跑一次取超期清单复查）。
+
 ## 真实资源文件
 - [resources_real.md](resources_real.md) — 真实可用前端资源清单（shadcn/ui、Tailwind、ECharts、Awwwards、Mobbin 等，带链接与许可）+ 科研场景 design_card。
 - [design_system_cards.md](design_system_cards.md) — 官方设计系统与科研项目落地模式（Carbon、Fluent、Polaris、Atlassian、Primer、USWDS、GOV.UK、Material Design 等 8 卡，站点 HTTP 200 核验）。

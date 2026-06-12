@@ -33,8 +33,8 @@ DATABASES = ROOT / "databases"
 
 DEFAULT_THRESHOLD_DAYS = 90
 
-# 散文式日期标注：核实日期 / 研究日期 / 核查日期，后接 YYYY-MM(-DD)。
-PROSE_DATE_RE = re.compile(r"(?:核实日期|研究日期|核查日期|核实于|更新于)\s*[:：]?\s*(\d{4})-(\d{2})(?:-(\d{2}))?")
+# 散文式日期标注：核实日期 / 核验日期 / 研究日期 / 核查日期，后接 YYYY-MM(-DD)。
+PROSE_DATE_RE = re.compile(r"(?:核实日期|核验日期|研究日期|核查日期|核实于|更新于)\s*[:：]?\s*(\d{4})-(\d{2})(?:-(\d{2}))?")
 # 字段式：last_checked_date: YYYY-MM(-DD)
 FIELD_DATE_RE = re.compile(r"last_checked_date\s*[:：]\s*[\"']?(\d{4})-(\d{2})(?:-(\d{2}))?")
 
@@ -131,6 +131,7 @@ def selftest() -> int:
     assert parse_ymd("2026", "06", "12") == _dt.date(2026, 6, 12)
     # 正则覆盖两类标注
     assert PROSE_DATE_RE.search("核实日期 2026-06-06") is not None
+    assert PROSE_DATE_RE.search("核验日期：2026-06-12") is not None
     assert FIELD_DATE_RE.search("last_checked_date: 2026-06") is not None
     print("✓ check_freshness selftest 通过（阈值判定/日期解析/标注正则）")
     return 0

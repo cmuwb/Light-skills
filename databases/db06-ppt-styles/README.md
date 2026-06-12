@@ -32,6 +32,13 @@ Canva、PowerPoint 模板、Slidesgo、Beautiful.ai、Gamma、Pitch、SlideModel
 
 模板与 canonical 索引见 [slide_cards.md](slide_cards.md)（0 张实体卡，避免重复 `scenario`）。
 
+## 采集→核验→入库管线（照此复现可扩库，与 db01/db05/db07 同口径）
+1. **采集**：从上述数据来源记版式逻辑/调色板/字体配对/视觉层次，**学结构不复制商用模板素材**（CONVENTIONS §5）；主要增量来源是 m16 imggen-enhanced 每出一套 deck 沉一张风格卡（R6.5 钩子，有 key 实跑仍是 GAP，见 PROGRESS R6.6#4）。
+2. **核验（铁律）**：资源链接 `curl`/GitHub-PyPI API 取 HTTP 状态与许可留痕；调色板/字体取自 db06 自家已 selftest 的 `light-slides/assets/themes.py` 或公开来源，不凭记忆填；抽查 ≥20% 新卡（记录落 `_verification_log/`）。
+3. **入库**：按 `slide_card` schema 填卡，YAML 值含英文冒号须紧跟非空格或加引号；新卡文件放本目录，在「真实资源文件」节加链接。
+4. **校验**：`PYTHONUTF8=1 python .github/scripts/check_databases.py` 全绿（按 SCHEMA 强校验 `resources_real.md` 与 `*_cards.md`）。
+5. **落日期**：每张卡/每个卡文件标 `核验日期 YYYY-MM-DD`，供 [check_freshness.py](../../.github/scripts/check_freshness.py) 月度统计（warn-only，不阻断 CI）。
+
 ## 真实资源文件
 - [resources_real.md](resources_real.md) — 真实 PPT 资源清单（Marp/reveal.js/python-pptx 等开源许可经 GitHub/PyPI API 实测，Canva/Slidesgo/Beamer 等带链接）+ 答辩/路演/汇报场景 slide_card。
 - [slide_pattern_cards.md](slide_pattern_cards.md) — 高级 PPT 页型与叙事模式（action-title 结果页、方法 pipeline、文献矩阵、dashboard、路演钩子、商业模式、A0 海报、rebuttal 汇报 + 开题报告答辩、课程教学共 10 卡）。
