@@ -1,0 +1,53 @@
+# deck_spec.yaml — imggen-enhanced 流水线的契约（Stage A 大纲卡）
+# 每页一张结构卡。先过大纲审再进 Stage B 出图。字段语义见 references/imggen_pipeline.md Stage A。
+# 这是「契约」：imagegen.py 按 elements 逐元素生图，assemble_from_spec.py 按 bbox 装回可编辑 pptx。
+# 本文件是可直接喂给 assemble_from_spec.py 的 3 页样例（封面/内容/结果），也是字段填写范例。
+
+deck:
+  title: "XX 项目答辩"
+  aspect: "16:9"                       # 固定 16:9（13.333×7.5 英寸宽屏）
+  theme: tech                          # 取 assets/themes.py 十主题之一（学术/科技/农业…）
+  palette:                             # 8 字段色板 hex（缺省继承 theme；只填要覆盖的字段）
+    primary: "1F4E79"                  # 6 位 hex 无 #；缺的字段自动从 theme 取
+  font_pair: {title: "Microsoft YaHei", body: "Microsoft YaHei"}
+  # style_anchor：风格锚段落，所有生图 prompt 复用（R6.4 模板五）——全 deck 唯一真相源，改风格只改这里
+  style_anchor: "现代科技感，深蓝主色#1F4E79，几何渐变，克制留白，扁平插画风，无拟物阴影、无照片写实、无文字"
+
+pages:
+  # ---- 第 1 页：封面 ----
+  - page_id: p01
+    page_type: cover                   # cover/agenda/transition/content/result/compare/timeline/team/conclusion
+    action_title: "边缘端奶山羊发情行为识别系统"   # 行动式标题：陈述结论的完整句，不是话题标签
+    key_message: "一句话定位：低算力、高召回、可落地"
+    elements:
+      # bbox=[x,y,w,h] 相对 0-1 坐标；type ∈ {title,body,table,chart,icon,illustration,decor,background}
+      - {id: e1, type: title, bbox: [0.07, 0.30, 0.86, 0.18], text: "边缘端奶山羊发情行为识别系统", font_size: 40, color: "FFFFFF"}
+      - {id: e2, type: body,  bbox: [0.07, 0.52, 0.70, 0.10], bullets: ["作者 · 单位 · 2026-06"], font_size: 18, color: "FFFFFF"}
+      - {id: e3, type: decor, bbox: [0.00, 0.00, 1.00, 1.00], desc: "右上角几何渐变装饰，整体极简低对比"}
+    notes: "开场 30s：点题 + 抛钩子（为什么边缘端难、为什么发情识别有价值），不照念标题。"
+
+  # ---- 第 2 页：内容（行动式标题 + 要点 + 图标）----
+  - page_id: p02
+    page_type: content
+    action_title: "三段式管线把识别延迟压到 80ms"
+    key_message: "采集→轻量检测→行为时序判定，全部端上完成"
+    elements:
+      - {id: e1, type: title, bbox: [0.06, 0.06, 0.88, 0.12], text: "三段式管线把识别延迟压到 80ms", font_size: 28, color: text}
+      - {id: e2, type: body,  bbox: [0.06, 0.24, 0.52, 0.60], font_size: 18, color: text,
+         bullets: ["采集层：红外摄像 + 帧采样", "检测层：蒸馏后的轻量主干", "判定层：行为时序窗口投票"]}
+      - {id: e3, type: icon,  bbox: [0.66, 0.30, 0.10, 0.16], desc: "上升趋势箭头与坐标轴", style: flat}
+      - {id: e4, type: illustration, bbox: [0.62, 0.50, 0.30, 0.34], desc: "奶山羊侧面剪影与传感器示意"}
+    notes: "重点讲判定层时序投票如何降误报；1.5min。"
+
+  # ---- 第 3 页：结果（行动式标题 + 真数据图 + 解读）----
+  - page_id: p03
+    page_type: result
+    action_title: "召回率 92% 且推理功耗仅 3.1W"
+    key_message: "在自建 1.2 万帧数据集上全面达标"
+    elements:
+      - {id: e1, type: title, bbox: [0.06, 0.06, 0.88, 0.12], text: "召回率 92% 且推理功耗仅 3.1W", font_size: 28, color: text}
+      # chart 走 m11/m06 真数据出图后 add_picture，绝不让生图模型画数据图（硬边界一）
+      - {id: e2, type: chart, bbox: [0.06, 0.24, 0.48, 0.60], source: "figures/fig_recall.png"}
+      - {id: e3, type: body,  bbox: [0.58, 0.24, 0.36, 0.60], font_size: 18, color: text,
+         bullets: ["召回 92%，越过实用线", "误报率较基线降 11 个百分点", "功耗 3.1W，可挂太阳能供电"]}
+    notes: "结果页只讲 so-what，不复述图里每个数；2min。图来自 m11 真数据，不是生成图。"
