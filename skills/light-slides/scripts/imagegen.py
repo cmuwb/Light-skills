@@ -44,13 +44,37 @@ DEFAULT_MODELS = {
 }
 ENV_KEYS = {"openai": "OPENAI_API_KEY", "gemini": "GEMINI_API_KEY", "seedream": "ARK_API_KEY"}
 
+# 中转/自定义网关覆盖（很多用户经 OpenAI 兼容中转站访问，必须吃这些环境变量）：
+#   OPENAI_IMAGE_BASE_URL > OPENAI_BASE_URL（形如 https://host/v1，自动拼 /images/generations）
+#   OPENAI_IMAGE_MODEL / LIGHT_IMAGEGEN_MODEL 覆盖默认模型 id（如 gpt-image-2）
+#   OPENAI_IMAGE_API_KEY 优先于 OPENAI_API_KEY
+
+
+def _openai_url() -> str:
+    base = os.environ.get("OPENAI_IMAGE_BASE_URL") or os.environ.get("OPENAI_BASE_URL")
+    if base:
+        return base.rstrip("/") + "/images/generations"
+    return ENDPOINTS["openai"]
+
+
+def _env_model(backend: str) -> str | None:
+    if backend == "openai":
+        return os.environ.get("OPENAI_IMAGE_MODEL") or os.environ.get("LIGHT_IMAGEGEN_MODEL")
+    return None
+
+
+def _env_key(backend: str) -> str:
+    if backend == "openai":
+        return os.environ.get("OPENAI_IMAGE_API_KEY") or os.environ.get("OPENAI_API_KEY", "")
+    return os.environ.get(ENV_KEYS[backend], "")
+
 # OpenAI gpt-image 仅接受固定档；16:9 用 1536x1024 近似（见实测日志）
 _OPENAI_SIZES = {"16:9": "1536x1024", "9:16": "1024x1536", "1:1": "1024x1024", "auto": "auto"}
 
 
 def detect_backends() -> list[str]:
     """返回当前环境探测到 key 的后端（按 openai/gemini/seedream 顺序）。"""
-    return [b for b in ("openai", "gemini", "seedream") if os.environ.get(ENV_KEYS[b])]
+    return [b for b in ("openai", "gemini", "seedream") if _env_key(b)]
 
 
 def _norm_size(backend: str, size: str) -> str:
@@ -69,15 +93,15 @@ def build_request(backend: str, prompt: str, *, model: str | None = None,
     """
     if backend not in ENDPOINTS:
         raise ValueError(f"未知后端 {backend!r}，可选 {list(ENDPOINTS)}")
-    model = model or DEFAULT_MODELS[backend]
-    key = os.environ.get(ENV_KEYS[backend], "")
+    model = model or _env_model(backend) or DEFAULT_MODELS[backend]
+    key = _env_key(backend)
 
     if backend == "openai":
         body = {"model": model, "prompt": prompt, "size": _norm_size("openai", size),
                 "output_format": "png", "n": 1}
         if transparent:
             body["background"] = "transparent"  # 唯一支持显式透明的后端
-        return {"url": ENDPOINTS["openai"],
+        return {"url": _openai_url(),
                 "headers": {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
                 "body": body, "resp_kind": "openai_b64"}
 
@@ -143,9 +167,18 @@ def render_placeholder(out_path: str, *, kind: str = "icon", prompt: str = "",
 
 
 def _parse_response(resp_kind: str, payload: dict) -> bytes:
-    """从各后端响应 JSON 取出图片字节（真实调用路径，selftest 用构造样例覆盖）。"""
+    """从各后端响应 JSON 取出图片字节（真实调用路径，selftest 用构造样例覆盖）。
+
+    openai 兼容口径两种都认：官方 b64_json；中转网关常给 url（需二次下载）。
+    """
     if resp_kind in ("openai_b64", "seedream_b64"):
-        return base64.b64decode(payload["data"][0]["b64_json"])
+        item = payload["data"][0]
+        if item.get("b64_json"):
+            return base64.b64decode(item["b64_json"])
+        if item.get("url"):  # 中转站实测（zzshu 2026-06-12）：只回 CDN url
+            with urllib.request.urlopen(item["url"], timeout=180) as r:
+                return r.read()
+        raise ValueError(f"响应 data[0] 无 b64_json/url，键={list(item)}")
     if resp_kind == "gemini_inline":
         for part in payload["candidates"][0]["content"]["parts"]:
             if "inlineData" in part:
@@ -178,9 +211,30 @@ def generate(prompt: str, out_path: str, *, backend: str | None = None, kind: st
 
     req = build_request(backend, prompt, model=model, size=size, transparent=transparent)
     data = json.dumps(req["body"]).encode("utf-8")
-    httpreq = urllib.request.Request(req["url"], data=data, headers=req["headers"], method="POST")
-    with urllib.request.urlopen(httpreq, timeout=timeout) as resp:
-        payload = json.loads(resp.read().decode("utf-8"))
+    # 中转网关传输层兼容（zzshu 2026-06-12 实测）：①缺 User-Agent 直接 RemoteDisconnected，
+    # 且自报家门式 UA 仍偶发 403/断连，浏览器 UA 成功率最高（官方端点不挑 UA）；
+    # ②同一请求偶发 403/RemoteDisconnected 属网关侧抖动，重试即过——故带退避重试。
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                             "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+               **req["headers"]}
+    last_err: Exception | None = None
+    for attempt in range(3):
+        if attempt:
+            import time
+            time.sleep(2 * attempt)  # 2s/4s 退避
+        httpreq = urllib.request.Request(req["url"], data=data, headers=headers, method="POST")
+        try:
+            with urllib.request.urlopen(httpreq, timeout=timeout) as resp:
+                payload = json.loads(resp.read().decode("utf-8"))
+            break
+        except (urllib.error.HTTPError, urllib.error.URLError, ConnectionError, OSError) as e:
+            # 4xx 中只有 403 值得重试（网关 WAF 抖动）；其余参数/鉴权错误重试无意义
+            code = getattr(e, "code", None)
+            if code is not None and code != 403 and 400 <= code < 500:
+                raise
+            last_err = e
+    else:
+        raise RuntimeError(f"生图请求三次均失败（网关抖动或不可用）：{last_err}") from last_err
     img_bytes = _parse_response(req["resp_kind"], payload)
     os.makedirs(os.path.dirname(os.path.abspath(out_path)) or ".", exist_ok=True)
     with open(out_path, "wb") as f:
@@ -224,6 +278,29 @@ def _selftest() -> int:
         assert False, "未知后端应抛错"
     except ValueError:
         pass
+
+    # 1.5) 中转/网关 env 覆盖（OPENAI_IMAGE_BASE_URL / OPENAI_IMAGE_MODEL / OPENAI_IMAGE_API_KEY）
+    _saved = {k: os.environ.get(k) for k in
+              ("OPENAI_IMAGE_BASE_URL", "OPENAI_BASE_URL", "OPENAI_IMAGE_MODEL",
+               "LIGHT_IMAGEGEN_MODEL", "OPENAI_IMAGE_API_KEY", "OPENAI_API_KEY")}
+    try:
+        os.environ["OPENAI_IMAGE_BASE_URL"] = "https://relay.example.com/v1/"
+        os.environ["OPENAI_IMAGE_MODEL"] = "gpt-image-2"
+        os.environ["OPENAI_IMAGE_API_KEY"] = "sk-relay-test"
+        r_relay = build_request("openai", "icon")
+        assert r_relay["url"] == "https://relay.example.com/v1/images/generations", r_relay["url"]
+        assert r_relay["body"]["model"] == "gpt-image-2", r_relay["body"]["model"]
+        assert r_relay["headers"]["Authorization"] == "Bearer sk-relay-test"
+        assert "openai" in detect_backends(), "OPENAI_IMAGE_API_KEY 应被识别为可用后端"
+        # 显式 --model 参数优先级高于 env
+        r_cli = build_request("openai", "icon", model="gpt-image-1.5")
+        assert r_cli["body"]["model"] == "gpt-image-1.5"
+    finally:
+        for k, v in _saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
 
     # 2) 响应解析（构造样例 b64，不发网络）
     px = base64.b64encode(b"\x89PNG\r\n\x1a\n").decode()
@@ -276,6 +353,8 @@ def main():
     ap.add_argument("--transparent", action="store_true", help="透明背景（仅 openai 原生支持）")
     ap.add_argument("--bbox", help="visual_draft 占位用 x,y,w,h（相对 0-1）")
     ap.add_argument("--manifest", help="把本次记录追加进该 manifest.json")
+    ap.add_argument("--timeout", type=int, default=180,
+                    help="单次请求超时秒数（gpt-image 出图慢，默认 180）")
     ap.add_argument("--check", action="store_true", help="只探测可用后端")
     ap.add_argument("--selftest", action="store_true", help="完全离线自测")
     args = ap.parse_args()
@@ -294,7 +373,8 @@ def main():
     bbox = tuple(float(x) for x in args.bbox.split(",")) if args.bbox else None
     try:
         rec = generate(args.prompt, args.out, backend=args.backend, kind=args.kind,
-                       model=args.model, size=args.size, transparent=args.transparent, bbox=bbox)
+                       model=args.model, size=args.size, transparent=args.transparent,
+                       bbox=bbox, timeout=args.timeout)
     except RuntimeError as e:
         print(f"[unavailable] {e}")
         sys.exit(2)
