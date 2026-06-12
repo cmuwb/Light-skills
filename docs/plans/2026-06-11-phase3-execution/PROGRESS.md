@@ -13,7 +13,7 @@
 | R4 | 合规与生态吸收 | 已完成 | 2026-06-11 | 2026-06-11 | `5c7d2e1..a5a088e`（7 commit） | 绿（run 27353169946 success） |
 | R5 | 资产补全 | 已完成 | 2026-06-11 | 2026-06-11 | `94f237e..cc3fd19`（9 commit） | 本地 5 门禁全绿；48 脚本 selftest 全 PASS；待推送确认 CI |
 | R6 | PPT 生图流水线 | 部分完成（见偏差） | 2026-06-12 | 2026-06-12 | `55674c2..f04c12b`（5 commit） | 绿（run 27386750356 三任务全 pass）；PR #1 → master |
-| R7 | 横切机制与瘦身 | 未开始 | | | | |
+| R7 | 横切机制与瘦身 | 已完成 | 2026-06-12 | 2026-06-12 | （见本轮 commit 区间，收尾回填） | 本地 7 门禁全绿（PYTHONUTF8=1）；51 脚本 selftest 全 PASS；待推送确认 CI |
 | R8 | CI 门禁扩建 | 未开始 | | | | |
 | R9 | 数据库规模化（批1/批2/批3） | 未开始 | | | | |
 | R11 | 行为评测与自动化闭环 | 未开始 | | | | |
@@ -22,7 +22,8 @@
 
 ## 基线度量（首次用到时填，后续轮引用）
 
-- 常驻 11 技能 SKILL.md 总行数基线（R7 开工时 `wc -l` 量取并记录在此）：＿＿＿
+- 常驻 11 技能 SKILL.md 总行数基线（R7 开工 2026-06-12 `wc -l` 量取）：**901 行**。目标 -15% → ≤765 行（须减 ≥136 行）。逐技能：file-reading 47 / memory-pm 91 / orchestrator 129 / backend-coding 89 / system-design 62 / frontend-design 99 / project-structure 90 / consistency 100 / self-review 65 / tool-selection 77 / research-ethics 52。（m16 slides 非常驻，不计入此基线。）
+  - **R7 收尾实测：901 → 763 行（-15.3%，达标）**。逐技能终值：file-reading 42 / memory-pm 81 / orchestrator 111 / backend-coding 57 / system-design 50 / frontend-design 83 / project-structure 80 / consistency 63 / self-review 73(+8) / tool-selection 71 / research-ethics 52。瘦身手法=细节下沉 references/examples、多 bullet 列表合并为少行、跨技能重复内容指认单一真相源后删副本；self-review 因新增「分级执行档」(R7.5)净 +8，属能力增量非冗余。**未删任何能力**：下沉内容全部进对应 references（a03 code_examples.md、m08 examples/full_pipeline_walkthrough.md、orchestrator pipelines.md 契约表+checkpoints.md 恢复探针、file-reading references.md 视频工具链等）。
 - db05/db06/db07 真实卡数基线：约 1-2 / 1-2 / 2（审计 2026-06-11 口径）
 - ROUTER_EXAMPLES 必覆盖基线：7/28
 
@@ -64,6 +65,13 @@
 - [2026-06-12] R6.6#4 — `GAP：待实测(2026-06-XX)`:有 key 端到端实跑(≥5 页 deck、五阶段产物齐全、QA 两项新检查、db06 沉风格卡)**未做**。执行环境探测到平台级 `OPENAI_API_KEY`,但真实生图请求会向第三方传 prompt 且计费,属外部副作用,未经用户显式授权不触发(与 selftest 离线纪律一致)。无 key 装配链(R6.6#3)已端到端实测 PASS:3 页 deck_spec 模板 + imagegen.py mock 占位 PNG → assemble_from_spec.py 产 3 页可编辑 pptx,重开校验 6 原生文本框(=title/body 元素数,守边界三文本未栅格化)+ 4 图片 + 0 warning。
 - [2026-06-12] R6 跨技能引用 — 又踩 check_skill_links 陷阱(PROGRESS 已多次记):在 a05/a10/m17 用反引号写 m16 的 `references/imggen_pipeline.md` 被当本技能内部路径报缺失,全部加 `light-slides/` 前缀修正。imagegen.py mock selftest 在 Windows 下 `Image.open` 不 `.load()` 会锁文件致 TemporaryDirectory 清理失败(WinError 32),改 `with Image.open() as im: im.load()` 释放句柄。
 - [2026-06-12] R6.2 — assemble_from_spec.py 装配 chart 元素**只 add_picture 真数据图(figures/),绝不在装配层生图**(守边界一);资产缺失画占位框+warn 不静默跳过(诚信纪律,与 to_pdf.py 同);themes.py 跨目录 import 失败时用内置兜底色板,保证离线 selftest 不依赖 import 路径。
+- [2026-06-12] R7 行数目标 — 计划把 F 组瘦身列在 m07/m08/m15/m16/m17 等**手动技能**，但 -15% 目标是对**常驻 11 技能**。两者交集小（F 组直接命中常驻的只有 a03/a09），且 E 组(R7.5-R7.12)给常驻**增**内容(a08 分级档+8、orchestrator passport/并行、a01 视频)。故按 F 组「正文留决策+一行指针、细节下沉 references」手法**横向施于全部常驻**：a03 代码例/调试四法下沉 code_examples.md(-32)、consistency 工具视角+检查维度合并(-37)、orchestrator §2 契约表镜像下沉 pipelines.md + §0 探针下沉 checkpoints.md(-18)、frontend 框架 how-to 指 references(-16)、system-design 部署/RLS/迁移多 bullet 合并(-12)、memory-pm 工具映射+写入示例压缩(-10)、project-structure 质量门/模板列表压缩(-10)。最终 901→763(-15.3%)。**严格只下沉不删能力**：每处删除的正文内容均已在对应 references 存在或同轮补入，新建 a03/code_examples.md 与 m08/examples/full_pipeline_walkthrough.md 承接。
+- [2026-06-12] R7.2 种子数 — 计划写 m05「≥3~5」vs m06「≥5」。统一为「≥5；算力受限 ≥3 且须在 m06 报告显式标注」，两技能同句式。功效分析数值(d=0.5 需每组~64)保留，措辞从「3~5 个种子」改为「少量种子」避免与新阈值打架。
+- [2026-06-12] R7.3 uv 默认 — scaffold.py 原只有 `--poetry`。改为 pyproject **始终落地**、默认 uv 后端(hatchling + `[dependency-groups]` + `[tool.hatch]` src 布局)、`--poetry` 切备选(poetry-core)，`--uv/--poetry` 互斥组。selftest 覆盖两路径并 tomllib 解析校验。a06 SKILL 三处(整理动作/版本依赖/资产清单)同步改默认 uv。
+- [2026-06-12] R7.4 vaex — 计划只点 a09 decision_matrix.md:13。现实 vaex 还活跃出现在 m02(data-engineering) SKILL:18 + references「## Vaex」节、a09 detect_stack.py:31。按验收「grep vaex 仅余已淘汰标注」全仓库处理：decision_matrix 换 DuckDB/polars streaming/dask、detect_stack 改迁移告警、m02 SKILL 换 DuckDB 并指 a09 单一口径、m02 references「## Vaex」标「已淘汰仅存档」并新增「## DuckDB」承接能力。
+- [2026-06-12] R7.10 CUMCM AI 规定 — 计划写「CUMCM 2024 起 AI 使用规定」。联网核实(官方 dxs.moe.gov.cn，2026-06)：CUMCM 正式 AI 规定是**2025 年试行版(自 2025-09-01)**，非 2024。按现实写入 m17：允许但非必须、核心独立完成、未用须声明、用了须正文标注+提交 PDF「AI 工具使用详情」、违规取消评奖；带 last_checked。留痕见对话。
+- [2026-06-12] R7.22 tex 编译 — 计划预案「本机无 TeX 则标注待验证」。现实本机有 MiKTeX + **Tectonic**，五份 .tex 骨架全部 `tectonic` 实编译退出 0 产 PDF(IEEE/ACM/Springer/Elsevier 走 pdflatex、ctex_chinese 走 XeLaTeX 自动装中文字体)，非 GAP。留痕 `_verification_log/R7-tex-compile.md`。
+- [2026-06-12] R7 新脚本 — m14 新增 `scripts/rebuttal_budget.py`(会议 rebuttal 字数/页数预算检查，纯 stdlib，中英混排分别计词，超限返回码 1)，已登记 WHATS_INCLUDED(脚本数 50→51，meta 表计数同步)、selftest 通过。
 
 ## 留给下一轮的话
 
@@ -86,6 +94,8 @@
 - **R5 现场口径(供后续轮引用一致性)**：①功效分析数值是 statsmodels 0.14.5 实跑(d=0.3/0.5/0.8 → 每组 176/64/26)，留痕 `_verification_log/R5-04-power-analysis.md`，改动须重跑核验；②paper2code 已按 I-1 以 references 形式并入 m05(复现五步协议)，非独立技能；③配对检验识别(m06 analyze_results --paired-by)与切片分析是结果分析两大新纪律，配对效应量用 d_z 不可与独立 d 混比；④数据增强红线"先划分再增强、只增训练折"，标注 IAA 复用 code_assets/agreement.py、标签错误检测用 cleanlab(找候选→人工裁定不全自动删)；⑤专利附图规范真相源在 m11 references「专利附图规范」节(m15↔m11 双向互引)，黑白线条不套论文配色；⑥静态类型档位:科研代码 pyright basic 起步/库代码 mypy --strict，scaffold pyproject 已带 [tool.mypy]。
 - **R6 已完成（给 R7 的话）**：R6 是 m16 内部新增 mode(技能数仍 28),新增 2 脚本(imagegen/assemble_from_spec,共 50 脚本全 selftest)+1 模板(deck_spec.yaml)+1 references(imggen_pipeline.md),mode 数 8→10、有 mode 技能 3→4。四件套已同步:MODE_REGISTRY(m16 两 mode + 计数句 + footer 去 m16)、WHATS_INCLUDED(2 脚本+1 模板+计数 45→50)、check_entry_docs/check_skill_assets 已绿;ROUTER/ROUTER_EXAMPLES 未动(m16 路由触发词没变,本轮没加新触发场景)。**R7(横切机制与瘦身)注意**:①R7 要量取常驻 11 技能 SKILL.md 行数基线——m16 SKILL 本轮**只增 5 行**(两 mode 分流段),细节全下沉 imggen_pipeline.md(常驻瘦身纪律已遵守),量基线时把这 5 行算进去;②瘦身若动 m16 SKILL,别把两 mode 分流段删了(MODE_REGISTRY/check_entry_docs 依赖"两 mode"在正文可见)。
 - **R6 现场口径(供后续轮/有 key 实跑引用一致性)**：①三家生图 API 真相源=`_verification_log/R6-imggen-api.md`(改端点同步 references.md「生图后端」节 + imagegen.py ENDPOINTS 常量,三处);②透明背景仅 OpenAI 原生,seed 三家都不稳→风格靠唯一 style_anchor(真相源在 deck_spec.yaml),Seedream 水印默认 true 必关;③三条硬边界(数据图不生图/论文图禁生图/文本不烤进图)三处互引锚点=m16 imggen_pipeline.md ↔ m11 figure_integrity「与 R6 生图流水线的边界」节 ↔ a10 SKILL §5,改任一处口径须同步三处;④**R6.6#4 有 key 端到端实跑是 GAP**:配 OPENAI/GEMINI/ARK key 后按 06 号文件 R6.6 第 4 条跑≥5 页 deck,回填 imggen_pipeline.md「实测记录」节 + 沉一张 db06 风格卡 + 留痕 `_verification_log/`;db06 风格卡是 R9 db06 上量的主要真实卡来源(R6.5 已声明联动)。
+- **R7 已完成（给 R8 的话）**：①脚本数 50→51（新增 m14 `rebuttal_budget.py`），WHATS_INCLUDED + meta 计数已同步，check_skill_assets/run_skill_selftests 全绿（51 PASS）。R8(CI 门禁扩建)若加「行数预算门」可直接量常驻 11 技能（763/≤765，留 2 行裕度，后续轮往常驻加内容前先看这条余量）。②技能数仍 28、mode 仍 10、路由触发词未改，ROUTER/ROUTER_EXAMPLES/MODE_REGISTRY 本轮未动（仅 m07 description 精简但触发关键词全保留，check_entry_docs 已绿）——R8 若新增校验器注意 route_examples=47 不变。③R7 新建两个下沉文件（`light-backend-coding/references/code_examples.md`、`light-paper-polishing/examples/full_pipeline_walkthrough.md`）属 references/examples 非脚本，不进 selftest。④跨技能新口径供 R8+ 一致性引用：检索库数统一 ≥2（m03↔m04）、种子数统一 ≥5/受限≥3 须标注（m05↔m06）、依赖管理默认 uv（a03↔a06）、vaex 全仓库标已淘汰（迁 DuckDB/polars streaming，a09 decision_matrix 为单一口径）。⑤a08 self-review 新增「分级执行档」（轻任务最小三项证据/事实/夸大 vs 重产出全量 11 项），orchestrator checkpoints.md 已引用；R8 行为评测设计自审类任务时按此分档。
+- **R7 现场口径(供后续轮引用一致性)**：①a07 consistency「变更广播」回扫的权威已产出材料清单 = orchestrator `.light/passport.yaml` 各阶段 `artifacts:` 并集（无 passport 退 db09 version_history），orchestrator §4 已双向指认——改 passport schema 须顾及 a07 消费侧。②m08 findings JSON 被 m14 模拟审稿消费（overclaim→Soundness major、ai_tone/punctuation→Presentation minor），字段映射在 m14「消费 m08 润色发现」节、schema 在 m08 references/findings_schema.md，改 category 取值两处同步。③m12 五份 .tex 骨架已 Tectonic 实编译验证（留痕 `_verification_log/R7-tex-compile.md`），R8 若上 CI TeX 编译门可复用此结论、离线环境需预置 TeX Live/MiKTeX 对应包。
 
 ## 用户决策项登记（出现一个登记一个，R10 统一找用户拍板）
 

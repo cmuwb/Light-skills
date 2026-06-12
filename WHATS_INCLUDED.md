@@ -51,6 +51,7 @@
 | result-analysis | `scripts/make_figs.py` | 结果分析阶段的 matplotlib 出图模板，快速生成论文级统计图初稿 |
 | result-analysis | `scripts/significance_test.py` | 显著性检验工具：p 值、效应量、置信区间、BH-FDR 多重校正 |
 | review-rebuttal | `scripts/fetch_openreview.py` | 抓取 OpenReview 公开评审语料，校准模拟审稿与 rebuttal 话术 |
+| review-rebuttal | `scripts/rebuttal_budget.py` | 会议 rebuttal 字数/页数预算检查，纯 stdlib 离线，中英混排分别计词、超限返回码 1 |
 | slides | `scripts/assemble_from_spec.py` | imggen-enhanced Stage D：读 deck_spec.yaml 契约 + 生图/真数据资产，重组装配为可编辑 pptx(原生文本框/表格/按 bbox 摆图) |
 | slides | `scripts/imagegen.py` | imggen-enhanced 三后端(OpenAI gpt-image / Gemini Nano Banana / 火山方舟 Seedream)统一生图封装，mock 后端离线占位，无 key 不静默假成功 |
 | slides | `scripts/thumbnail.py` | 把 PPTX/PDF 渲染成缩略图网格，快速做整套 deck 视觉 QA |
@@ -65,7 +66,7 @@
 |------|------|------|
 | `.github/scripts/check_skills.py` | 技能 frontmatter 校验 | 检查 28 个 Light 技能的 `name` / `description` 与手动/常驻数量 |
 | `.github/scripts/check_databases.py` | 数据库 YAML/schema/link 校验 | 检查 db03–db08 schema、重复卡片、YAML 解析与 README 本地链接 |
-| `.github/scripts/check_skill_assets.py` | 脚本资产清单校验 | 检查 50 个技能脚本均登记到本文件、可编译、带真实 `__main__` 且覆盖显式 `--selftest` |
+| `.github/scripts/check_skill_assets.py` | 脚本资产清单校验 | 检查 51 个技能脚本均登记到本文件、可编译、带真实 `__main__` 且覆盖显式 `--selftest` |
 | `.github/scripts/check_entry_docs.py` | 入口文档一致性校验 | 检查 README/ROUTER/MODE_REGISTRY/ROUTER_EXAMPLES 的技能数量、mode 数量、路由样例与范围边界 |
 | `.github/scripts/check_installation_assets.py` | 安装与客户端集成校验 | 检查 install.sh/install.ps1、Codex 路由片段、插件 JSON、安装文档与 CI 触发路径不漂移 |
 | `.github/scripts/check_skill_links.py` | 技能内部链接校验 | 检查 28 个技能的 SKILL.md、references.md、references/*.md、templates/*.md、examples/*.md 中指向 references/templates/examples/assets/scripts 的本地链接；验证 SKILL.md 反引号资产路径与可选 linked_files |
