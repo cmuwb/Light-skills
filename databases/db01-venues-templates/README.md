@@ -27,4 +27,16 @@ OpenAlex Venues、Crossref、Semantic Scholar、arXiv、DOAJ、Web of Science/JC
 - 预警/掠夺性期刊在 `risk_note` 明确标注，并联动 m13/a10。
 - 模板缺失时在 `template_url` 标注 "需补"。
 
+## 采集→核验→入库管线（实际作业流程，照此复现可扩库）
+1. **采集**：OpenAlex Sources API 按方向 `search=` 或 `filter=country_code/type` 拉候选；记 ISSN/display_name/works_count/summary_stats(h_index、2yr_mean_citedness)/host/type。
+2. **双源核验（铁律）**：按精确 ISSN 回查 OpenAlex（不盲取 search 第一条），比对年份/被引/works_count/host 合理性；剔除 works_count<50 的碎片记录与重名/同 ISSN 重复；代表作取该刊被引前列 works（真实 cited_by）。
+3. **入库**：按 19 列 schema 生成行，含英文逗号/引号的字段必须加引号（拿不准就交给程序按 CSV 规范转义，勿手填裸逗号）。`impact_factor` 列写 OpenAlex 2yr 均被引并注明口径（**非 JCR IF**）；精确 JCR IF/分区标"待核(LetPub/JCR 付费源)"，查不到标"未公开"不留 N/A。
+4. **校验**：`PYTHONUTF8=1 python .github/scripts/check_databases.py`（CSV 不进 YAML schema 校验，但须自检列数=19、物理行数=逻辑行数即无多行字段被压平）。
+5. **落日期**：`last_checked_date` 列填 `YYYY-MM(-DD)`，供 [check_freshness.py](../../.github/scripts/check_freshness.py) 月度统计。
+
+> 改 venues.csv 三条血泪铁律（R4/R8）：①含多行字段时禁用 csv 模块全量重写（会压平多行）——本库当前无多行字段，重写安全，但改前务必先验"物理行数==逻辑行数"；②无引号字段禁含英文逗号（会拆列），用中文分号/顿号或加引号；③`last_checked_date` 必须是日期格式。
+
+## ai_policy 字段口径
+`risk_note` 内的 `ai_policy=` 子串记录该 venue 的生成式 AI 投稿政策（CONVENTIONS §3 定义）。**出版社级政策**（Elsevier/IEEE/Wiley/Springer/Nature/ACM 等同社旗下期刊共用）按出版社官方政策页实查后批量标注，带官方页出处 + 核验日期；会议（CVPR/NeurIPS/ICML/ICLR 等）按各自 CFP/Author Guidelines 单独实查。三类常见口径：期刊=AI 辅助写作须披露+AI 不得署名+原始数据图禁用 AI；ML 会议=LLM 允许+作者全责+不得署名；Nature/Springer 额外=生成式 AI 图像原则禁止。论文图严禁生成式 AI（真相源 m11 figure_integrity「AI 生成图像政策」节）。
+
 种子数据见 [venues.csv](venues.csv)。
