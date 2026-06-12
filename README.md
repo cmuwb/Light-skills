@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/logo.svg" width="150" alt="Light logo"/>
+<img src="assets/logo.png" width="140" alt="Light logo"/>
 
 # Light
 
@@ -223,23 +223,23 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 
 ## 📊 图表展示
 
-同一份真实数据,九种各不相同的图——一图一个角度,拼成完整故事。完整大图见[项目 README](projects/resampling-calibration-study/#-图表展示)。
+`light-figure-drawing` 的出版级图表能力——九种对标顶刊的图型,从冲积漏斗到 Kaplan-Meier 生存曲线。**这组是视觉能力展示,数据为脚本合成的演示数据**(每图右下角已标注),一键复现见 [`assets/gallery/make_showcase.py`](assets/gallery/make_showcase.py);真实数据驱动的九图见上方[案例展示](#-案例展示一篇用-light-从头做到底的论文)。配色走色盲安全的 Okabe-Ito 色板,300 dpi 出版级导出。
 
 <table>
   <tr>
-    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g1_radar.png" alt="雷达图" width="250"><br><sub>🕸 五指标权衡雷达</sub></td>
-    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g2_violin.png" alt="小提琴图" width="250"><br><sub>🎻 ECE 分布小提琴</sub></td>
-    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g3_slope.png" alt="斜率图" width="250"><br><sub>📉 校准修复斜率图</sub></td>
+    <td align="center" width="33%"><img src="assets/gallery/s1_alluvial.png" alt="冲积图" width="250"><br><sub>🌊 筛选漏斗冲积图</sub></td>
+    <td align="center" width="33%"><img src="assets/gallery/s2_chord.png" alt="和弦图" width="250"><br><sub>🎼 跨学科合作和弦图</sub></td>
+    <td align="center" width="33%"><img src="assets/gallery/s3_raincloud.png" alt="雨云图" width="250"><br><sub>🌧 分布对比雨云图</sub></td>
   </tr>
   <tr>
-    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g4_bubble.png" alt="气泡图" width="250"><br><sub>🫧 不平衡比×损害气泡</sub></td>
-    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g5_diverge.png" alt="发散条形" width="250"><br><sub>↔️ 双模型发散条形</sub></td>
-    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g6_heatmap.png" alt="热力图" width="250"><br><sub>🔥 条件×数据集热力图</sub></td>
+    <td align="center" width="33%"><img src="assets/gallery/s4_volcano.png" alt="火山图" width="250"><br><sub>🌋 差异表达火山图</sub></td>
+    <td align="center" width="33%"><img src="assets/gallery/s5_embedding.png" alt="嵌入图" width="250"><br><sub>🔬 单细胞 UMAP 嵌入</sub></td>
+    <td align="center" width="33%"><img src="assets/gallery/s6_stream.png" alt="流图" width="250"><br><sub>📊 主题演化流图</sub></td>
   </tr>
   <tr>
-    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g7_ridge.png" alt="山脊图" width="250"><br><sub>🏔 ECE 密度山脊图</sub></td>
-    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g8_ecdf.png" alt="ECDF" width="250"><br><sub>📈 累积分布 ECDF</sub></td>
-    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g9_lollipop.png" alt="棒棒糖图" width="250"><br><sub>🍭 数据集损害排行</sub></td>
+    <td align="center" width="33%"><img src="assets/gallery/s7_polar_heatmap.png" alt="极坐标热图" width="250"><br><sub>🎯 昼夜节律极坐标热图</sub></td>
+    <td align="center" width="33%"><img src="assets/gallery/s8_ridgeline.png" alt="山脊图" width="250"><br><sub>🏔 效应量后验山脊图</sub></td>
+    <td align="center" width="33%"><img src="assets/gallery/s9_km.png" alt="生存曲线" width="250"><br><sub>📉 Kaplan-Meier 生存曲线</sub></td>
   </tr>
 </table>
 

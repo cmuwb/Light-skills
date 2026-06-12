@@ -166,6 +166,27 @@ def render_placeholder(out_path: str, *, kind: str = "icon", prompt: str = "",
     return out_path
 
 
+# 中转 CDN 二次下载也得带浏览器 UA（裸 urlopen 会被 CDN/WAF 403，zzshu 实测）。
+_DL_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+          "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
+
+
+def _download(url: str, timeout: int = 180) -> bytes:
+    """下载一个 CDN 图片 url，带 UA + 三次退避重试（中转网关侧偶发 403/断连）。"""
+    last_err: Exception | None = None
+    for attempt in range(3):
+        if attempt:
+            import time
+            time.sleep(2 * attempt)
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": _DL_UA})
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return r.read()
+        except (urllib.error.HTTPError, urllib.error.URLError, ConnectionError, OSError) as e:
+            last_err = e
+    raise RuntimeError(f"CDN 图片下载三次均失败：{last_err}") from last_err
+
+
 def _parse_response(resp_kind: str, payload: dict) -> bytes:
     """从各后端响应 JSON 取出图片字节（真实调用路径，selftest 用构造样例覆盖）。
 
@@ -176,8 +197,7 @@ def _parse_response(resp_kind: str, payload: dict) -> bytes:
         if item.get("b64_json"):
             return base64.b64decode(item["b64_json"])
         if item.get("url"):  # 中转站实测（zzshu 2026-06-12）：只回 CDN url
-            with urllib.request.urlopen(item["url"], timeout=180) as r:
-                return r.read()
+            return _download(item["url"])
         raise ValueError(f"响应 data[0] 无 b64_json/url，键={list(item)}")
     if resp_kind == "gemini_inline":
         for part in payload["candidates"][0]["content"]["parts"]:
@@ -239,8 +259,9 @@ def generate(prompt: str, out_path: str, *, backend: str | None = None, kind: st
     os.makedirs(os.path.dirname(os.path.abspath(out_path)) or ".", exist_ok=True)
     with open(out_path, "wb") as f:
         f.write(img_bytes)
-    return {"backend": backend, "model": model or DEFAULT_MODELS[backend], "prompt": prompt,
-            "kind": kind, "size": size, "transparent": transparent, "out": out_path}
+    return {"backend": backend, "model": model or _env_model(backend) or DEFAULT_MODELS[backend],
+            "prompt": prompt, "kind": kind, "size": size, "transparent": transparent,
+            "out": out_path}
 
 
 def append_manifest(manifest_path: str, record: dict) -> None:

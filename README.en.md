@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/logo.svg" width="150" alt="Light logo"/>
+<img src="assets/logo.png" width="140" alt="Light logo"/>
 
 # Light
 
@@ -223,23 +223,23 @@ Throughout, the 11 always-on skills backstop it: `file-reading` ingests any mate
 
 ## 📊 Figure gallery
 
-One real dataset, nine different views — each chart tells one part of the story. See the [project README](projects/resampling-calibration-study/#-figure-gallery) for the full-size gallery.
+The publication-grade charting power of `light-figure-drawing` — nine top-journal chart types, from alluvial funnels to Kaplan-Meier survival curves. **This set is a visual capability demo; the data is script-synthesised demo data** (labelled in the corner of each figure). One-command reproduction: [`assets/gallery/make_showcase.py`](assets/gallery/make_showcase.py). For the *real-data* nine-figure set, see the [case study above](#-case-study). Colours use the colourblind-safe Okabe-Ito palette, exported at 300 dpi.
 
 <table>
   <tr>
-    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g1_radar.png" alt="Radar chart" width="250"><br><sub>🕸 Five-metric trade-off radar</sub></td>
-    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g2_violin.png" alt="Violin plot" width="250"><br><sub>🎻 ECE distribution violin</sub></td>
-    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g3_slope.png" alt="Slope chart" width="250"><br><sub>📉 Calibration-repair slope chart</sub></td>
+    <td align="center" width="33%"><img src="assets/gallery/s1_alluvial.png" alt="Alluvial" width="250"><br><sub>🌊 Screening-funnel alluvial</sub></td>
+    <td align="center" width="33%"><img src="assets/gallery/s2_chord.png" alt="Chord" width="250"><br><sub>🎼 Cross-discipline chord</sub></td>
+    <td align="center" width="33%"><img src="assets/gallery/s3_raincloud.png" alt="Raincloud" width="250"><br><sub>🌧 Distribution raincloud</sub></td>
   </tr>
   <tr>
-    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g4_bubble.png" alt="Bubble chart" width="250"><br><sub>🫧 Imbalance ratio × damage bubble</sub></td>
-    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g5_diverge.png" alt="Diverging bars" width="250"><br><sub>↔️ Two-model diverging bars</sub></td>
-    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g6_heatmap.png" alt="Heatmap" width="250"><br><sub>🔥 Condition × dataset heatmap</sub></td>
+    <td align="center" width="33%"><img src="assets/gallery/s4_volcano.png" alt="Volcano" width="250"><br><sub>🌋 Differential-expression volcano</sub></td>
+    <td align="center" width="33%"><img src="assets/gallery/s5_embedding.png" alt="Embedding" width="250"><br><sub>🔬 Single-cell UMAP embedding</sub></td>
+    <td align="center" width="33%"><img src="assets/gallery/s6_stream.png" alt="Streamgraph" width="250"><br><sub>📊 Topic-evolution streamgraph</sub></td>
   </tr>
   <tr>
-    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g7_ridge.png" alt="Ridgeline plot" width="250"><br><sub>🏔 ECE density ridgeline</sub></td>
-    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g8_ecdf.png" alt="ECDF" width="250"><br><sub>📈 ECDF cumulative distribution</sub></td>
-    <td align="center" width="33%"><img src="projects/resampling-calibration-study/figures/g9_lollipop.png" alt="Lollipop chart" width="250"><br><sub>🍭 Dataset damage ranking</sub></td>
+    <td align="center" width="33%"><img src="assets/gallery/s7_polar_heatmap.png" alt="Polar heatmap" width="250"><br><sub>🎯 Circadian polar heatmap</sub></td>
+    <td align="center" width="33%"><img src="assets/gallery/s8_ridgeline.png" alt="Ridgeline" width="250"><br><sub>🏔 Effect-size posterior ridgeline</sub></td>
+    <td align="center" width="33%"><img src="assets/gallery/s9_km.png" alt="Kaplan-Meier" width="250"><br><sub>📉 Kaplan-Meier survival curves</sub></td>
   </tr>
 </table>
 
