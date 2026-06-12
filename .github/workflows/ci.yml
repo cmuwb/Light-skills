@@ -69,6 +69,9 @@ jobs:
         run: python .github/scripts/check_installation_assets.py
       - name: Check skill internal links
         run: python .github/scripts/check_skill_links.py
+      - name: Data-card freshness (warn-only)
+        continue-on-error: true
+        run: python .github/scripts/check_freshness.py
 
   skill-selftests:
     name: 执行技能脚本自测

@@ -26,7 +26,23 @@ Light 最核心的价值是**可核查**。任何贡献都必须遵守 [CONVENTI
 1. `SKILL.md` 的 frontmatter 只需 `name` 与 `description`;**常驻(后台自动)技能保留 `user-invocable: false`**,手动技能不加。
 2. `description` 要写清触发场景——模型靠它自动调用。
 3. 加脚本就放 `scripts/`,自带 `--selftest` 或 `__main__` 自测,跑完不要把产物(png/pdf/csv/__pycache__)留在目录里。
-4. 本地校验:`python .github/scripts/check_skills.py`。
+4. 本地全量校验(带 `PYTHONUTF8=1`,Windows 控制台否则编不了 ✓):
+   ```bash
+   PYTHONUTF8=1 python .github/scripts/check_skills.py            # frontmatter + 体量警戒
+   PYTHONUTF8=1 python .github/scripts/check_entry_docs.py        # README/ROUTER/路由样例 28/28 + 中英结构
+   PYTHONUTF8=1 python .github/scripts/check_databases.py         # 数据库 YAML/schema + db09 项目卡
+   PYTHONUTF8=1 python .github/scripts/check_skill_assets.py      # 脚本/模板登记防漂移
+   PYTHONUTF8=1 python .github/scripts/check_installation_assets.py
+   PYTHONUTF8=1 python .github/scripts/check_skill_links.py       # 内部链接 + 安装视角可达性
+   PYTHONUTF8=1 python .github/scripts/run_skill_selftests.py --group all   # 离线性 + 产物残留双闸门
+   PYTHONUTF8=1 python .github/scripts/check_freshness.py         # 数据卡新鲜度(warn-only,不影响 CI)
+   ```
+
+## 人工核对清单 / Manual checklist（自动化未覆盖项）
+
+下列一致性自动化暂不强校验,改 PR 时人工核对:
+- **API key 口径一致**:README「关于 API key」节列出的 key 清单,须与 m16(slides 生图后端 OPENAI/GEMINI/ARK)、m15 等技能内的 key 说明一致;改任一处 key 口径时同步另一处。
+- **推荐配置同步**:README 推荐配置(Harness/模型/生图模型)若变更,核对 m16 生图流水线与各技能的模型默认值不矛盾。
 
 ## 加知识库条目 / Adding knowledge-base entries
 
@@ -37,7 +53,7 @@ Light 最核心的价值是**可核查**。任何贡献都必须遵守 [CONVENTI
 1. Fork → 新建分支(如 `feat/xxx`、`fix/xxx`)。
 2. 提交信息讲清"做了什么、为什么"。
 3. 开 PR,按模板勾选自检项。
-4. CI 会校验技能 frontmatter、数据库 Markdown/YAML/README 链接与 `code_assets/` 是否可编译。
+4. CI 会校验:技能 frontmatter 与体量、数据库 Markdown/YAML/schema/README 链接、入口文档(README/ROUTER/路由样例 28/28 与中英结构)、脚本与模板登记、安装资产与安装视角可达性、`code_assets/` 可编译、并执行全部技能脚本自测(含离线性与产物残留双闸门);数据卡新鲜度为 warn-only 不阻断。
 
 ## 行为准则 / Code of Conduct
 

@@ -17,7 +17,8 @@ OpenAlex Venues、Crossref、Semantic Scholar、arXiv、DOAJ、Web of Science/JC
 受版权论文/模板**只存元数据、链接、摘要、笔记、引用关系**，不收集违规全文。优先公开资源、官方模板、arXiv、预印本、作者主页公开版。
 
 ## 更新方式
-- 每月：更新元数据。
+可执行流程（落地"定期更新"承诺，避免空头）：每月跑一次 `python .github/scripts/check_freshness.py`，按它列出的超期清单逐条复查更新——这是 warn-only 检查，不影响 CI，只产出待办清单。
+- 每月：跑 check_freshness 取超期清单 + 更新元数据。
 - 每季度：更新分区、版面费、模板链接、预警信息。
 - 每次选投稿目标前：对候选 venue 重新核查一次并更新 `last_checked_date`。
 
