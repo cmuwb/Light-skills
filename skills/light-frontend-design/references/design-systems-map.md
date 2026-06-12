@@ -3,6 +3,8 @@
 研究/核实日期 2026-06-06。**一个项目只用一套设计系统**（混用会产生 token 冲突、双倍 bundle、视觉漂移）。
 下面每个包名都已 `curl https://registry.npmjs.org/<pkg>` 实测 HTTP 200 并取到 latest 版本号。
 
+> **职责边界（canonical）**：本文件是**方法论**——给 brief 信号→怎么选哪套设计系统、装哪个包。具体的**风格实例卡**（玻璃拟态/新拟物/编辑器极简/杂志编辑/官方设计系统落地模式/科研场景版式…）是 db05 的职责，真相源在 `databases/db05-frontend-styles/`（`style_genre_cards.md` 按视觉风格、`design_system_cards.md` 按官方系统、`resources_real.md` 按科研场景）。选型看本表，找可套用的风格卡去 db05；两边不重复彼此内容。
+
 ## 决策表
 
 | brief 信号 | 选哪套 | 理由 | install（pin 到实测版本） |

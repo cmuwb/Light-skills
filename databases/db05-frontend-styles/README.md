@@ -2,6 +2,8 @@
 
 搜集主流热门前端风格，训练 a05(前端设计) 的审美、布局、配色、组件能力。**学版式逻辑，不抄袭**。
 
+> **职责边界（canonical）**：db05 是**风格实例卡片库**（一张卡=一套可迁移的视觉范式：风格名/色板/字体/token/代表实现/适用场景/禁忌）。"brief 信号→怎么选哪套设计系统"的**方法论**在 a05 的 `light-frontend-design/references/design-systems-map.md`。选型看 a05，找可套用的风格卡来 db05；两边不重复彼此内容。
+
 ## design_card schema
 `project_type, style_tag, layout_type, color_palette, font_style, component_pattern, interaction_pattern, animation_type, screenshot_reference, implementation_notes, suitable_project_scene`
 
@@ -35,3 +37,4 @@ Mobbin、Awwwards、Dribbble、Behance、Lapa Ninja、Land-book、Godly、Sitein
 ## 真实资源文件
 - [resources_real.md](resources_real.md) — 真实可用前端资源清单（shadcn/ui、Tailwind、ECharts、Awwwards、Mobbin 等，带链接与许可）+ 科研场景 design_card。
 - [design_system_cards.md](design_system_cards.md) — 官方设计系统与科研项目落地模式（Carbon、Fluent、Polaris、Atlassian、Primer、USWDS、GOV.UK、Material Design 等 8 卡，站点 HTTP 200 核验）。
+- [style_genre_cards.md](style_genre_cards.md) — 风格谱系卡（玻璃拟态、新拟物、编辑器极简 Linear/Vercel、杂志编辑 4 卡，来源 HTTP 200 核验 2026-06-12）。
