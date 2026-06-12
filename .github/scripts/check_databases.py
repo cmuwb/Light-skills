@@ -8,6 +8,8 @@ CI scope:
 - template blocks with all required fields left blank are allowed and skipped;
 - duplicate YAML keys are rejected instead of silently overwritten;
 - db03 method_name, db04 dataset_name, db05 project_type, db06 scenario, db07 figure_type and db08 material_type must be unique within each database;
+- db09 project_card.md must carry all 14 CONVENTIONS §3 project-card fields and its
+  decision_log/version_history/terminology siblings must exist (R8.4);
 - every local .md link in a database README must point to an existing file.
 """
 from __future__ import annotations
@@ -31,6 +33,7 @@ yaml_blocks = 0
 readme_links = 0
 schema_checked_cards = 0
 template_cards = 0
+project_checked_cards = 0
 duplicate_name_index: dict[tuple[str, str], list[str]] = {}
 
 SCHEMAS: dict[str, list[str]] = {
@@ -59,6 +62,9 @@ UNIQUE_NAME_FIELDS = {
     "db07-figures": "figure_type",
     "db08-ip-materials": "material_type",
 }
+
+# CONVENTIONS §3 项目卡 14 字段（真相源）。project_card.md 的 yaml 块须全含且非空。
+DB09_CARD_FIELDS = "project_name, goal, current_stage, confirmed_idea, data_status, method_status, experiment_status, paper_status, ppt_status, code_status, risk_list, next_actions, decision_log, version_history".split(", ")
 
 
 class UniqueKeyLoader(yaml.SafeLoader):
@@ -231,6 +237,33 @@ else:
             name_field = UNIQUE_NAME_FIELDS[db_key]
             errors.append(f"databases/{db_key}: duplicate {name_field} {name!r}: {joined}")
 
+    # --- R8.4 db09 项目卡 schema：CONVENTIONS §3 项目卡 14 字段为真相源 ---
+    db09_root = DATABASES / "db09-projects" / "projects"
+    if db09_root.exists():
+        for card in sorted(db09_root.glob("*/project_card.md")):
+            project_checked_cards += 1
+            rel = card.relative_to(ROOT)
+            text = card.read_text(encoding="utf-8")
+            blocks = list(YAML_FENCE_RE.finditer(text))
+            if not blocks:
+                errors.append(f"{rel}: project_card.md 缺 ```yaml 字段块")
+                continue
+            try:
+                data = yaml.load(blocks[0].group(1), Loader=UniqueKeyLoader)
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"{rel}: project_card yaml 不能解析: {exc}")
+                continue
+            if not isinstance(data, dict):
+                errors.append(f"{rel}: project_card yaml 块必须是字段映射")
+                continue
+            missing = [f for f in DB09_CARD_FIELDS if f not in data or is_blank(data.get(f))]
+            if missing:
+                errors.append(f"{rel}: 项目卡缺字段: {', '.join(missing)}")
+            # 四件套同目录文件齐全（decision_log/version_history/terminology）
+            for sibling in ("decision_log.md", "version_history.md", "terminology.md"):
+                if not (card.parent / sibling).exists():
+                    errors.append(f"{rel.parent}: 缺配套文件 {sibling}")
+
     for readme in sorted(DATABASES.glob("db*/README.md")):
         text = readme.read_text(encoding="utf-8")
         base = readme.parent
@@ -256,7 +289,8 @@ else:
 print(
     "数据库 Markdown: "
     f"yaml_blocks={yaml_blocks}, readme_md_links={readme_links}, "
-    f"schema_checked_cards={schema_checked_cards}, template_cards={template_cards}"
+    f"schema_checked_cards={schema_checked_cards}, template_cards={template_cards}, "
+    f"db09_project_cards={project_checked_cards}"
 )
 if errors:
     print("\n数据库校验失败:")

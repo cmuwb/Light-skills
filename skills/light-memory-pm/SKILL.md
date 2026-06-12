@@ -25,7 +25,7 @@ databases/db09-projects/projects/<project_name>/
 └── version_history.md    论文/PPT/图表/代码各版本记录
 （可选子目录 literature/ reviews/ submissions/ 见 db09 README）
 ```
-`<project_name>` 用短横线英文 slug（如 `dairygoat-detect-track`）。已存在实例可直接参考：`projects/dairygoat-detect-track/`（3 个文件齐全，version_history.md 待该项目首次出版本时补建）。
+`<project_name>` 用短横线英文 slug（如 `dairygoat-detect-track`）。已存在实例可直接参考：`projects/dairygoat-detect-track/`（四文件齐全；version_history.md 在未出正式版本前只记当前态、不编造历史版本）。
 
 ### 什么格式（四文件确切结构，模板见 db09 `project_card_template.md`）
 1. **project_card.md** — 顶部 YAML frontmatter（`project_name` / `created` 绝对日期），正文 `# 项目卡：<中文标题>`，再用一个 ```yaml 代码块装 14 字段：`project_name, goal, current_stage, confirmed_idea, data_status, method_status, experiment_status, paper_status, ppt_status, code_status, risk_list, next_actions`，末两字段写 `decision_log: 见 decision_log.md`、`version_history: 见 version_history.md`。多行字段用 `|` 块标量。
