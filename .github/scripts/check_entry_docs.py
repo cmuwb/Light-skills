@@ -5,8 +5,12 @@ This gate protects the public/agent-facing entry layer:
 - README zh/en must reflect the real 28 skills and 17/11 split;
 - ROUTER.md must cover every manual/always-on skill via its m/a code;
 - MODE_REGISTRY.md must report the actual mode table count;
+- README.md and README.en.md must stay structurally isomorphic: same number of
+  level-2 (##) headings, in the same order, with the same leading emoji/marker on
+  each (heading text itself may differ zh/en) (R8.3 中英结构 gate);
 - ROUTER_EXAMPLES.md must contain machine-readable examples whose expected
-  skill codes exist in ROUTER.md;
+  skill codes exist in ROUTER.md, and must cover every one of the 28 skill
+  codes plus light-orchestrator (28/28 必覆盖, R8.1 起从 7 个收紧到全集);
 - out-of-scope skill names must not reappear in entry docs.
 """
 from __future__ import annotations
@@ -130,6 +134,22 @@ def parse_router_examples(markdown: str) -> list[tuple[int, str, list[str]]]:
     return rows
 
 
+# Leading-marker regex: capture any non-word/non-CJK prefix (emoji, symbols) on a
+# heading so README zh/en structure can be compared without matching translated text.
+_HEADING_MARKER_RE = re.compile(r"^([^\w一-鿿]*)", re.UNICODE)
+
+
+def parse_heading_markers(markdown: str) -> list[str]:
+    """Return the ordered leading-marker (emoji/symbol prefix) of every ## heading."""
+    markers: list[str] = []
+    for line in markdown.splitlines():
+        if line.startswith("## "):
+            title = line[3:].strip()
+            marker = _HEADING_MARKER_RE.match(title).group(1).strip()
+            markers.append(marker)
+    return markers
+
+
 skill_dirs = sorted(path.parent.name for path in SKILLS.glob("light-*/SKILL.md"))
 require(len(skill_dirs) == 28, f"expected 28 light skills, found {len(skill_dirs)}")
 require(set(skill_dirs) == set(ALL_SKILLS_BY_CODE.values()), "manual/always-on registry does not match skills/light-* dirs")
@@ -150,6 +170,22 @@ for name in ("README.md", "README.en.md"):
     missing = [skill for skill in skill_dirs if skill not in text]
     if missing:
         errors.append(f"{name}: missing skill links/mentions: {', '.join(missing)}")
+
+# R8.3 README 中英结构同构 gate：## 标题数量、顺序、前导 emoji/标记一致（文本不要求逐字）
+zh_markers = parse_heading_markers(texts["README.md"])
+en_markers = parse_heading_markers(texts["README.en.md"])
+if len(zh_markers) != len(en_markers):
+    errors.append(
+        f"README 结构不同步: README.md 有 {len(zh_markers)} 个 ## 标题, "
+        f"README.en.md 有 {len(en_markers)} 个 (数量须一致)"
+    )
+else:
+    for idx, (zh_marker, en_marker) in enumerate(zip(zh_markers, en_markers), 1):
+        if zh_marker != en_marker:
+            errors.append(
+                f"README 结构不同步: 第 {idx} 个 ## 标题前导标记不一致 "
+                f"(README.md={zh_marker!r} vs README.en.md={en_marker!r})"
+            )
 
 router = texts["ROUTER.md"]
 router_codes = parse_router_codes(router)
@@ -180,14 +216,15 @@ for lineno, utterance, expected in examples:
             errors.append(f"ROUTER_EXAMPLES.md:{lineno}: unknown expected route code: {code}")
         covered_codes.add(code)
 
-for required_code in ["m01", "m06", "m09", "m11", "m16", "a02", "light-orchestrator"]:
+for required_code in sorted(ALL_CODES):
     if required_code not in covered_codes:
         errors.append(f"ROUTER_EXAMPLES.md: examples do not cover required route {required_code}")
 
 print(
     "入口文档: "
     f"skills={len(skill_dirs)}, manual={len(MANUAL)}, always_on={len(ALWAYS_ON)}, "
-    f"modes={len(mode_rows)}, route_examples={len(examples)}"
+    f"modes={len(mode_rows)}, route_examples={len(examples)}, "
+    f"readme_h2={len(zh_markers)}/{len(en_markers)}"
 )
 
 if errors:
