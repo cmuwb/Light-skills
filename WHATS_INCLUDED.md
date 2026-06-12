@@ -74,14 +74,51 @@
 
 ## 可套用模板与数据文件
 
+> 本表对 `skills/*/templates/*` 全量 1:1 登记，由 `.github/scripts/check_skill_assets.py` 防漂移（缺登记/多登记/路径失效均报错）。表末若干非 templates/ 行（脚本配套 / assets / 数据库文件）为高亮指引，不进 templates 校验。
+
 | 位置 | 文件 | 作用 |
 |------|------|------|
+| data-engineering | `templates/annotation_guide.md` | 标注规范骨架：标签定义/边界判定/IAA 复核流程 |
+| idea-generation | `templates/idea_card.md` | idea 卡：问题/创新点/可行性/风险/对照工作 |
+| idea-critique | `templates/verdict_template.md` | idea 严审裁决书：创新度/可行性/风险逐维评级 |
+| idea-critique | `templates/Revision_Roadmap.md` | 严审后修订路线图：按问题优先级排改进项 |
 | research-plan | `templates/research-plan.md` | 研究方案填空骨架，每节带成功标准/验证方式 |
-| research-plan | `templates/experiment-matrix.md` | 实验矩阵：实验ID × 假设 × 数据集 × baseline × 指标 × 种子，含派生数据规格 |
+| research-plan | `templates/experiment_matrix.md` | 实验矩阵：实验ID × 假设 × 数据集 × baseline × 指标 × 种子，含派生数据规格 |
 | research-plan | `templates/reproducibility-checklist.md` | 可复现性勾选清单（环境/目录/配置/版本/流水线） |
-| system-design | `templates/ci.yml` | GitHub Actions 轻量 CI 骨架（lint + test + 迁移校验） |
-| project-structure | `templates/pre-commit-config.template.yaml` | pre-commit 质量门配置，scaffold 自动生成 |
+| paper-drafting | `templates/01_imrad.md` | IMRaD 实证论文章节骨架 |
+| paper-drafting | `templates/02_review_survey.md` | 综述/survey 论文章节骨架 |
+| paper-drafting | `templates/03_theory.md` | 理论/方法型论文章节骨架 |
+| paper-drafting | `templates/04_case_study.md` | 案例研究论文章节骨架 |
+| paper-drafting | `templates/05_policy_brief.md` | 政策简报/对策建议骨架 |
+| paper-drafting | `templates/06_conference.md` | 会议短文（含 rebuttal 预算意识）骨架 |
+| figure-planning | `templates/figure_plan_card.md` | 图表规划卡：图号/类型/数据/目标章节/栏宽 |
+| citation 上游 | — | （引用样式无模板文件，见脚本表 verify_refs.py） |
+| venue-matching | `templates/venue_compare_table.md` | 投稿候选刊对比表：冲稳保分档与匹配信号 |
+| review-rebuttal | `templates/response_letter_template.md` | 审稿意见逐条回复信骨架 |
+| review-rebuttal | `templates/rereview_checklist.md` | 复审自查清单：逐条意见闭环核对 |
+| ip-application | `templates/disclosure_template.md` | 专利交底书骨架：技术问题/方案/有益效果 |
+| ip-application | `templates/claims_template.md` | 权利要求书骨架：独权/从权层级 |
+| ip-application | `templates/specification_template.md` | 专利说明书骨架：背景/内容/实施例/附图说明 |
+| ip-application | `templates/copyright_checklist.md` | 软著申报材料勾选清单 |
+| typesetting | `templates/ieee_bare_conf.tex` | IEEE 会议双栏 LaTeX 骨架（Tectonic 实编译验证） |
+| typesetting | `templates/acm_sigconf.tex` | ACM sigconf LaTeX 骨架 |
+| typesetting | `templates/springer_llncs.tex` | Springer LLNCS LaTeX 骨架 |
+| typesetting | `templates/elsevier_elsarticle.tex` | Elsevier elsarticle LaTeX 骨架 |
+| typesetting | `templates/ctex_chinese.tex` | 中文 XeLaTeX(ctex) 骨架，自动装中文字体 |
 | slides | `templates/deck_spec.yaml` | imggen-enhanced 流水线契约：每页结构卡(deck/pages/elements + style_anchor)，喂给 assemble_from_spec.py 装配 |
+| memory-pm | `templates/handoff_card.md` | 跨会话衔接卡：状态/已产出/下一步/恢复探针 |
+| memory-pm | `templates/handoff_prompt.md` | 新对话启动提示词骨架，与衔接卡配套 |
+| system-design | `templates/schema.sql` | 关系库建表 DDL 骨架 |
+| system-design | `templates/rls_policy.sql` | 行级安全(RLS)策略骨架 |
+| system-design | `templates/openapi.yaml` | OpenAPI 接口契约骨架 |
+| system-design | `templates/ci.yml` | GitHub Actions 轻量 CI 骨架（lint + test + 迁移校验） |
+| project-structure | `templates/README.template.md` | 项目 README 骨架 |
+| project-structure | `templates/PROJECT_PLAN.template.md` | 项目计划骨架 |
+| project-structure | `templates/PROJECT_STRUCTURE.md` | 标准可复现目录结构说明 |
+| project-structure | `templates/CHANGELOG.template.md` | 变更日志骨架（Keep a Changelog 风格） |
+| project-structure | `templates/pre-commit-config.template.yaml` | pre-commit 质量门配置，scaffold 自动生成 |
+| project-structure | `templates/editorconfig.template` | 跨编辑器风格统一 .editorconfig |
+| project-structure | `templates/python-research.gitignore` | 科研 Python 项目 .gitignore（显式不忽略 .light/） |
 | competition | `scripts/market_charts.py` 配套 | 市场图所需 JSON 字段与 db08 预算共用同一套 TAM/SAM/SOM |
 | consistency | `assets/design_language_extract.template.md` | 从现有图/PPT/前端反推设计语言的抽取模板 |
 | db05 | `design_tokens.template.json` | DTCG 格式视觉 token，论文图/PPT/前端/海报共用的取值锚点 |

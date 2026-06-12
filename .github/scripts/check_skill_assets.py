@@ -5,6 +5,9 @@ CI scope:
 - every skills/light-*/scripts/*.py is documented exactly once in the
   WHATS_INCLUDED.md "可运行脚本" table as (skill, script);
 - every documented executable script table row points to an existing script;
+- every file under skills/light-*/templates/* is documented exactly once in the
+  WHATS_INCLUDED.md "可套用模板与数据文件" table as (skill, templates/name), and
+  every documented templates/* row points to an existing template (R8.2 防漂移);
 - every script compiles with py_compile;
 - every script has a real ``if __name__ == "__main__"`` guard;
 - every script exposes an explicit selftest marker/entry; missing selftests fail CI.
@@ -63,6 +66,35 @@ def parse_executable_script_table(markdown: str) -> list[tuple[str, str]]:
             errors.append(f"WHATS_INCLUDED.md: empty skill in row: {line}")
             continue
         rows.append((skill, script_match.group(1)))
+    return rows
+
+
+def parse_template_table(markdown: str) -> list[tuple[str, str]]:
+    """Parse rows from the 可套用模板与数据文件 table as (skill_slug, templates/name).
+
+    Only rows whose file cell is a single backticked ``templates/...`` path are
+    treated as template registrations; high-level rows that point at scripts,
+    assets/ or db files are ignored so this gate covers exactly skills/*/templates/*.
+    """
+    section = extract_section(markdown, "可套用模板与数据文件")
+    rows: list[tuple[str, str]] = []
+    for line in section.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|") or "`templates/" not in stripped:
+            continue
+        cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        if len(cells) < 3:
+            errors.append(f"WHATS_INCLUDED.md: malformed template row: {line}")
+            continue
+        skill = cells[0]
+        tmpl_match = re.fullmatch(r"`(templates/[^`]+)`", cells[1])
+        if not tmpl_match:
+            # row references templates/ inside prose but not as a clean path cell
+            continue
+        if not skill:
+            errors.append(f"WHATS_INCLUDED.md: empty skill in template row: {line}")
+            continue
+        rows.append((skill, tmpl_match.group(1)))
     return rows
 
 
@@ -128,6 +160,38 @@ for skill, script_name in sorted(documented_key_set):
             f"{skill}/scripts/{script_name}"
         )
 
+# --- R8.2 模板防漂移：skills/*/templates/* 与登记表 1:1 ---
+template_paths = sorted(SKILLS.glob("light-*/templates/*"))
+actual_tmpl_keys = [
+    (path.parts[-3].removeprefix("light-"), f"templates/{path.name}")
+    for path in template_paths
+    if path.is_file()
+]
+actual_tmpl_set = set(actual_tmpl_keys)
+
+documented_tmpl_keys = parse_template_table(whats_text)
+documented_tmpl_counter = Counter(documented_tmpl_keys)
+documented_tmpl_set = set(documented_tmpl_keys)
+
+for key, count in sorted(documented_tmpl_counter.items()):
+    if count > 1:
+        skill, tmpl_name = key
+        errors.append(
+            f"WHATS_INCLUDED.md: duplicate template row for {skill}/{tmpl_name}"
+        )
+
+for skill, tmpl_name in actual_tmpl_keys:
+    if (skill, tmpl_name) not in documented_tmpl_set:
+        errors.append(
+            f"WHATS_INCLUDED.md: missing template row for {skill}/{tmpl_name}"
+        )
+
+for skill, tmpl_name in sorted(documented_tmpl_set):
+    if (skill, tmpl_name) not in actual_tmpl_set:
+        errors.append(
+            f"WHATS_INCLUDED.md: documented template does not exist: {skill}/{tmpl_name}"
+        )
+
 for script in script_paths:
     rel = script.relative_to(ROOT).as_posix()
     text = script.read_text(encoding="utf-8", errors="ignore")
@@ -145,6 +209,7 @@ for script in script_paths:
 print(
     "技能脚本资产: "
     f"scripts={len(script_paths)}, executable_table_rows={len(documented_keys)}, "
+    f"templates={len(template_paths)}, template_table_rows={len(documented_tmpl_keys)}, "
     f"with_selftest={len(script_paths) - len(missing_selftests)}, "
     f"missing_selftest={len(missing_selftests)}"
 )
