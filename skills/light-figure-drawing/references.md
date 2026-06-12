@@ -14,6 +14,7 @@
 - 组图：`fig, axes = plt.subplots(2,2, figsize=(7,5), constrained_layout=True)`；不规则布局用 `GridSpec`（`fig.add_gridspec` + `subplotspec`），跨格用切片 `gs[0, :]`。`constrained_layout=True` 比 `tight_layout()` 更适合共享色标/图例。
 - 物理尺寸控制：figsize 单位是英寸，按目标栏宽设（单栏≈3.5in，双栏≈7.2in），避免投稿后被缩放导致字号失真。
 - 色盲友好 colormap：`viridis/cividis/magma`（感知均匀），分类用 `tab10`。
+- **色觉模拟自检（Okabe-Ito 默认之上的复核手段）**：默认色环已是 Okabe-Ito 色盲安全，但配色定稿前仍建议**渲染模拟复核一遍**——跑 `python scripts/color_palettes.py`（或 `preview_palette()`）出原色/灰度/三种色盲对照图，有 `colorspacious` 走精确算法、缺则线性近似降级；无本地环境时用 Coblis 在线模拟器（color-blindness.com/coblis-color-blindness-simulator/）上传图核对。重点看相邻类别在 deuteranopia/protanopia 下是否仍可区分。
 
 【链接】
 - savefig: https://matplotlib.org/stable/api/_as_gen/matplotlib.figure.Figure.savefig.html

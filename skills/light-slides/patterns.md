@@ -265,6 +265,24 @@ add_text(s, 0.9, 1.9, 11.8, 4.4, [(r,0) for r in refs], 14, P_muted, font=F_en)
 slide.notes_slide.notes_text_frame.text = "讲稿 1-2 句 + 时长 + 必讲/可略标记"
 ```
 
+## 讲稿导出（speaker notes → 逐字稿初稿）
+
+答辩/路演要逐字稿时，把每页 notes 读出来拼成初稿，再据时长扩写——无需新脚本，python-pptx 直接读：
+
+```python
+from pptx import Presentation
+prs = Presentation("deck.pptx")
+lines = []
+for i, slide in enumerate(prs.slides, 1):
+    # has_notes_slide 先判，避免访问 .notes_slide 时凭空建出空 notes
+    note = slide.notes_slide.notes_text_frame.text if slide.has_notes_slide else ""
+    lines.append(f"## 第 {i} 页\n{note.strip() or '（无备注，待补）'}\n")
+open("script_draft.md", "w", encoding="utf-8").write("\n".join(lines))
+```
+
+- 产出是**初稿骨架**（每页一段 notes），不是终稿——逐字稿要据每页时长（notes 里标的"30s/1min"）扩写成口语化整段，开场/转场/收尾另补。
+- 与写入方向对称：上节往 notes 写"1-2 句 + 时长 + 必讲/可略"，导出时这些标记正好成为扩写依据。诚实边界：notes 为空的页如实标"待补"，不替用户编讲稿内容。
+
 ## 保存与 QA
 
 ```python
