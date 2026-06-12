@@ -217,6 +217,22 @@
 
 ---
 
+## 视频工具链（ffmpeg 抽帧 + Whisper 转写）
+
+【是什么】视频无现成"读懂"库，标准做法是拆成两路降维：画面→抽帧→当图片读；语音→抽音轨→转写成文本。ffmpeg 管音视频解复用/抽帧，faster-whisper / openai-whisper 管语音转文字。
+
+【可复用方法】
+- 抽帧（固定间隔）：`ffmpeg -i in.mp4 -vf "fps=1/5" frames/%04d.jpg`（每 5 秒一帧，调 `1/N`）。
+- 抽帧（场景切变，适合 PPT 录屏/翻页）：`ffmpeg -i in.mp4 -vf "select='gt(scene,0.3)',showinfo" -vsync vfr frames/%04d.jpg`，阈值 0.3 可调（越小越敏感）。
+- 抽音轨（转写前置）：`ffmpeg -i in.mp4 -vn -ac 1 -ar 16000 audio.wav`（单声道 16kHz，Whisper 友好）。
+- 转写（faster-whisper，推荐，快且省显存）：`pip install faster-whisper` 后 CLI `whisper-faster audio.wav --model base --language zh --output_format srt`；或 Python `from faster_whisper import WhisperModel; model=WhisperModel("base"); segments,_=model.transcribe("audio.wav", language="zh")` 拿带时间戳的段。
+- 转写（openai-whisper，官方实现）：`pip install -U openai-whisper` 后 `whisper audio.wav --model base --output_format srt`。模型档 tiny/base/small/medium/large-v3，越大越准越慢。
+- 取视频元信息/时长：`ffprobe -v quiet -print_format json -show_format -show_streams in.mp4`。
+
+【已知坑】ffmpeg、whisper 均需**另装**（ffmpeg 走系统包管理器/官网二进制；whisper 走 pip，openai-whisper 还需 ffmpeg 在 PATH）；large 模型显存吃紧，长音频先按 ffprobe 时长分段或先抽帧定位关键时段再精转写，别整段硬转；中文务必显式 `--language zh`（自动检测对中英混杂易误判）；抽帧 fps 太高会产生海量图片，按需求先粗后细。
+
+---
+
 ## pdfplumber (jsvine/pdfplumber)
 
 【是什么】基于 pdfminer.six 的 Python 库，抽取字符/线/矩形/曲线的细节，含高层文本/表格抽取与可视化调试。最适合机器生成 PDF(非扫描件)。MIT。
