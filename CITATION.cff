@@ -18,9 +18,11 @@ keywords:
   - research-tools
   - academic-writing
   - ai-agent
+  - agent-skills
   - claude-code
   - codex
   - scientific-workflow
+  - literature-review
 license: MIT
-version: 1.0.0
-date-released: "2026-06-01"
+version: 3.0.0
+date-released: "2026-06-12"
