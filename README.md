@@ -264,13 +264,14 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 ## 🔑 关于 API key
 
 > [!NOTE]
-> **绝大多数功能开箱即用,无需任何 API key。** 文献检索默认走免费、免注册的 OpenAlex / Crossref。
+> **绝大多数功能开箱即用,无需任何 API key。** 文献检索默认走免费的 OpenAlex / Crossref;OpenAlex 2026 年起官方要求注册**免费** API key(匿名访问处于过渡期仍可用),建议花两分钟注册以免限流。
 
-只有一种情况需要你自备 key:用 `light-ip-application` 做**专利检索**时,调用商用专利库需要各自的凭证。Light **不内置、也不会替你保存任何 key**,只在你提供时才发起请求。
+只有两种情况需要你自备 key:① 用 `light-ip-application` 做**专利检索**,调用商用专利库需要各自的凭证;② 给 `light-slides` 解锁 **PPT 生图流水线**(`imggen-enhanced` 模式,强烈建议但完全可选,不配置自动走程序化路线)。Light **不内置、也不会替你保存任何 key**,只在你提供时才发起请求。
 
 | 服务 | 用途 | 是否必需 | 怎么获取 |
 |------|------|----------|----------|
-| OpenAlex / Crossref | 学术文献检索 | 免 key,默认 | 无需注册 |
+| OpenAlex / Crossref | 学术文献检索 | 免费,默认 | Crossref 无需注册;OpenAlex 官网免费注册 key(建议) |
+| 生图模型(GPT Image 2 / Nanobanana 2 / Seedream 5.0 任一) | PPT 生图流水线(`imggen-enhanced`) | 选用,强烈建议 | OpenAI / Google AI Studio / 火山方舟,按张计费 |
 | [The Lens](https://www.lens.org/lens/user/subscriptions#scholar) | 专利↔论文关联检索 | 选用 | 注册申请,学术用途多数免费授权 |
 | [EPO OPS](https://developers.epo.org/) | 欧洲专利官方数据 | 选用 | 注册拿 consumer key/secret |
 | [USPTO ODP](https://developer.uspto.gov/) | 美国专利数据 | 选用 | 注册申请 API key |
@@ -326,7 +327,7 @@ Light 给的是能跑的脚本、能套的模板和真实范例,且有"不编造
 <details>
 <summary><b>需要配置 API key 吗?</b></summary>
 
-绝大多数功能免 key,文献检索默认走免费的 OpenAlex / Crossref。只有用 `light-ip-application` 做专利检索时,才需自备 Lens/EPO/USPTO 的凭证。详见 [关于 API key](#-关于-api-key)。
+绝大多数功能免 key,文献检索默认走免费的 OpenAlex / Crossref(OpenAlex 建议注册免费 key,见 2026 新政说明)。需要自备 key 的只有两类:专利检索(Lens/EPO/USPTO)与可选的 PPT 生图模型。详见 [关于 API key](#-关于-api-key)。
 </details>
 
 <details>

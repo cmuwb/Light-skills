@@ -264,13 +264,14 @@ Plus `code_assets/` — adversarially-verified statistics and metrics code (Cohe
 ## 🔑 About API keys
 
 > [!NOTE]
-> **Most features work out of the box with no API key.** Literature search defaults to the free, no-signup OpenAlex / Crossref.
+> **Most features work out of the box with no API key.** Literature search defaults to the free OpenAlex / Crossref; since 2026 OpenAlex officially asks for a **free** API key (anonymous access still works during the transition period) — registering takes two minutes and avoids throttling.
 
-Only one case needs your own key: **patent search** via `light-ip-application` calls commercial patent databases that require their own credentials. Light **never bundles or stores any key** — it only issues a request when you supply one.
+Only two cases need your own key: ① **patent search** via `light-ip-application` (commercial patent databases require their own credentials); ② unlocking the **image-gen PPT pipeline** in `light-slides` (`imggen-enhanced` mode — strongly recommended but fully optional; without it the programmatic route is used automatically). Light **never bundles or stores any key** — it only issues a request when you supply one.
 
 | Service | Use | Required? | How to get |
 |---------|-----|-----------|------------|
-| OpenAlex / Crossref | Academic literature search | No key, default | No signup |
+| OpenAlex / Crossref | Academic literature search | Free, default | Crossref: no signup; OpenAlex: free key on its site (recommended) |
+| Image-gen model (any of GPT Image 2 / Nanobanana 2 / Seedream 5.0) | Image-gen PPT pipeline (`imggen-enhanced`) | Optional, strongly recommended | OpenAI / Google AI Studio / Volcano Ark; pay per image |
 | [The Lens](https://www.lens.org/lens/user/subscriptions#scholar) | Patent↔paper linkage | Optional | Register; free for most academic use |
 | [EPO OPS](https://developers.epo.org/) | European patent office data | Optional | Register for consumer key/secret |
 | [USPTO ODP](https://developer.uspto.gov/) | US patent data | Optional | Register for an API key |
@@ -326,7 +327,7 @@ Light gives runnable scripts, fillable templates, and real examples, with a hard
 <details>
 <summary><b>Do I need to configure an API key?</b></summary>
 
-Most features need none — literature search defaults to the free OpenAlex / Crossref. Only patent search via `light-ip-application` needs your own Lens/EPO/USPTO credentials. See [About API keys](#-about-api-keys).
+Most features need none — literature search defaults to the free OpenAlex / Crossref (a free OpenAlex key is recommended under its 2026 policy). Your own keys are only needed for two things: patent search (Lens/EPO/USPTO) and the optional image-gen model for the PPT pipeline. See [About API keys](#-about-api-keys).
 </details>
 
 <details>
