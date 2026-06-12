@@ -60,6 +60,8 @@ databases/db09-projects/projects/<project_name>/
 ## 会话开始时
 先读项目库与记忆：定位 `databases/db09-projects/projects/<project_name>/project_card.md`，**优先读 `next_actions` 字段**确认"上次做到哪、下一步是什么"，必要时再读 decision_log 末几条与 version_history。会话长时被压缩后，靠 db09/记忆而非短期记忆恢复状态。
 
+**跳过已归档项目**：罗列/恢复项目时跳过 project_card 带非空 `archived:` 字段的项目，只在活跃项目里恢复状态；除非用户点名该归档项目。完结项目按「项目归档协议」（见 `references.md`）加 `archived: 日期` + 回写终版 lessons，不删目录、不挪路径。
+
 **复用历史教训**：新项目立项，或选定方法/投稿策略**前**，先 Grep db09 顶层 `lessons.md` 检索同类"阶段/场景"关键词（如 `方案确认`/`数据准备`/`投稿`）的历史有效做法；命中可复用的，在写 decision_log 时注明"复用自 lesson [日期]"。
 
 ## 会话衔接（主动交接）

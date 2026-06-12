@@ -6,6 +6,7 @@
 `project_name, goal, current_stage, confirmed_idea, data_status, method_status, experiment_status, paper_status, ppt_status, code_status, risk_list, next_actions, decision_log, version_history`
 
 - `current_stage`: 资料调研 | idea 构思 | 方案确认 | 数据准备 | 实验实现 | 结果分析 | 论文写作 | 图表制作 | 投稿准备 | 答辩展示 | 成果转化
+- `archived`（可选，归档专用）：项目完结后加 `archived: YYYY-MM-DD`（可再加 `archive_reason:`）。属**可选**字段，不在上述 14 必填字段内，check_databases 校验只认 14 必填、对额外字段兼容。归档协议见下「项目归档」节，执行者是 a02(light-memory-pm)。
 
 ## 顶层目录结构
 ```
@@ -18,6 +19,13 @@ db09-projects/
 
 ## lessons.md — 跨项目过程教训库
 全局单文件，追加式。收"做法层面的有效/失败经验"（踩坑、被拒、复现失败、流程省时），**不收**方法选型事实（→ db03 方法卡）与个人偏好（→ Light feedback 记忆）。格式：`- [YYYY-MM-DD] 阶段/场景 — 做法 — 结果(有效|失败) — 适用条件 — 来源项目slug`。写入纪律与检索时机见 a02 SKILL.md。
+
+## 项目归档（防膨胀，执行者 a02）
+db09 只进不出会越攒越多、拖慢会话开始扫描。完结项目**归档不删除**（历史/lessons 仍可复用）。
+- **完结判据**（满足其一）：论文录用/发表、竞赛或项目验收结题、用户显式声明收尾。
+- **归档动作**（加字段，不挪目录——最轻且不破坏相对路径/本 README 链接）：① project_card.md 字段块加 `archived: YYYY-MM-DD`（可选，不计入 14 必填，schema 校验兼容）；② 把该项目 1-3 条可跨项目复用的过程教训回写 `lessons.md`（出库前最后一次沉淀）；③ 目录原地保留。
+- **会话开始行为**：a02 罗列/恢复项目时**跳过** `archived` 非空者，除非用户点名；删掉 `archived` 行即"复活"回活跃集。
+- 协议细则见 a02 `references.md`「项目归档协议」节。
 
 ## 每个项目目录结构
 ```

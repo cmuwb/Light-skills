@@ -17,6 +17,7 @@ risk_list:             # 风险点 + 应对
 next_actions:          # 下一步(会话开始先读这里)
 decision_log:          # 见 decision_log.md
 version_history:       # 见 version_history.md
+# archived: YYYY-MM-DD # 可选,仅项目完结(录用/结题/用户声明)后加;a02 会话开始扫描跳过已归档项目,见 db09 README「项目归档」
 ```
 
 ## 配套文件

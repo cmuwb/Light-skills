@@ -91,3 +91,23 @@
 - 【可复用方法】项目根放 `_config.yml`（站点配置：标题、执行设置、Sphinx/扩展）与 `_toc.yml`（目录结构，format=jb-book/section 等）；内容用 MyST Markdown（支持 cross-reference、admonition、引用 `{cite}` + BibTeX、可执行代码块）。`jupyter-book build .` 生成 `_build/html`。Jupyter Book 2.x 转向以 MyST 引擎为核心。可借鉴：把论文/实验报告做成可执行、带引用、可发布网页的"活文档"，paper_status 之外多一条复现产物。
 - 【链接】https://jupyterbook.org ，cookiecutter 模板 https://github.com/executablebooks/cookiecutter-jupyter-book
 - 【已知坑】1.x 基于 Sphinx、2.x 基于 MyST 引擎，配置不完全兼容（注意版本）；notebook 执行依赖环境，CI 里要装齐 kernel 与依赖。
+
+---
+
+## 项目归档协议（防 db09 膨胀，与 a07 一致性配合）
+
+db09 只进不出，项目越攒越多会拖慢会话开始时的扫描、稀释"当前在做什么"。完结的项目应**归档**而非删除（历史与 lessons 仍有复用价值）。
+
+【完结判据（满足其一即可归档）】
+- 论文/成果**已录用或正式发表**；或竞赛/项目**已验收结题**；或**用户显式声明**"这个项目收了/不做了"。
+
+【归档动作（选"加字段"不"挪目录"——最轻且不破坏既有相对路径与 db09 README 链接）】
+1. 在 `project_card.md` 的 yaml 字段块加一行 `archived: YYYY-MM-DD`（绝对日期；可选字段，仅归档项目才有，不影响 CONVENTIONS §3 的 14 必填字段，check_databases 兼容）。可再加 `archive_reason:` 一句（录用/结题/用户声明）。
+2. **终版 lessons 回写**：归档时把该项目最值得跨项目复用的 1-3 条过程教训补进 db09 顶层 `lessons.md`（格式见 db09 README），来源 slug 即本项目——这是项目"出库"前的最后一次知识沉淀。
+3. 目录原地不动：`projects/<slug>/` 保留全部文件，相对路径/链接不变。
+
+【会话开始时的行为（a02 SKILL「会话开始时」据此）】
+- 扫描/罗列项目时**跳过** `archived:` 非空的项目，只在活跃项目里恢复 `current_stage`/`next_actions`；除非用户**点名**该归档项目（"看下之前那个 X 项目"），才读取。
+- 归档项目可"复活"：用户要继续做，删掉 `archived` 行即回到活跃集。
+
+【与既有机制的边界】归档只改 project_card 一行 + lessons 回写，**不动** R8.4 的 db09 schema 校验（14 必填字段照常全在）、不动 palette.json/terminology 等配套文件；与 a07 变更广播无关（归档不是材料变更）。
