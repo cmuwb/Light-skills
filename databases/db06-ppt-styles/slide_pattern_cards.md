@@ -1,7 +1,8 @@
 # db06 扩展卡 — 高级 PPT 页型与叙事模式
 
 > schema: `scenario, theme_style, page_type, layout_structure, color_palette, font_pairing, visual_hierarchy, chart_style, icon_style, transition_style, speaker_notes_style, reuse_template_notes`
-> 核验日期：2026-06-10。Marp、reveal.js、python-pptx、PptxGenJS 官方文档均脚本 HTTP 200 可达；本文件总结可复用“页型/叙事模式”，不复制任何商用模板素材。
+> 核验日期：2026-06-10（前 8 卡）/ 2026-06-12（开题、课程教学 2 卡）。Marp、reveal.js、python-pptx、PptxGenJS 官方文档均脚本 HTTP 200 可达；本文件总结可复用”页型/叙事模式”，不复制任何商用模板素材。
+> **来源诚信说明**：新增「开题报告答辩」「课程教学」两卡的调色板/字体配对取自 db06 自家已验证的 `light-slides/assets/themes.py`（academic / light_elegant 主题，selftest 绿），版式逻辑参照下列公开来源（HTTP 200 核验 2026-06-12）。R6.5 声明的”每出一套 imggen deck 落一张风格卡”因有 key 端到端实跑仍是 GAP（见 PROGRESS R6.6#4），故本批不以 imggen 实跑为来源，待 R6 实跑补做后再沉对应风格卡。
 
 ```yaml
 - scenario: 学术论文答辩 — action-title 结果页
@@ -107,4 +108,30 @@
   transition_style: 一条意见一条意见出现
   speaker_notes_style: 用 R-A-C 结构：Response、Action、Citation/Change location
   reuse_template_notes: 与 m14 response letter 同源，确保页码/图号/修改内容一致
+
+- scenario: 开题报告答辩
+  theme_style: 学术风/浅色高级(academic 主题)
+  page_type: 封面/选题背景/研究现状与gap/研究问题与目标/技术路线/创新点/计划进度/预期成果/参考文献
+  layout_structure: 顶部细标题条 + 左文右图; 研究现状用文献矩阵, 技术路线用横向 pipeline, 进度用甘特图
+  color_palette: 白底 #FFFFFF + 学校主色(取 academic 主题 primary #1F4E79) + 辅蓝 #2E75B6 + 深灰字 #333333 + 强调红 #C00000(仅创新点/gap)
+  font_pairing: 思源宋体标题 + 思源黑体正文(academic 主题 FONTS); 英文 Times New Roman; 公式 LaTeX
+  visual_hierarchy: 研究问题/创新点最突出 > 技术路线图 > 研究现状 > 计划细节; 一页一观点
+  chart_style: 文献 gap 矩阵 + 技术路线框图 + 甘特/里程碑时间线; 开题阶段多为示意, 数据图占比低
+  icon_style: 统一线性图标(同一线宽), 阶段块用克制色块
+  transition_style: 淡入, 克制无花哨
+  speaker_notes_style: "每页 1-2 句; 重点讲清'为什么做(gap)→做什么(问题/目标)→怎么做(路线)→做到什么程度(预期)'; 开题控时 10-15 min"
+  reuse_template_notes: 区别于毕业答辩——开题重'问题与计划'而非'结果'; 技术路线图与 m05 研究计划/m09 框架图同源, 勿另画一套; 推荐 Beamer(academic)或 Marp 出稿。版式参考 Beamer 主题矩阵 https://mpetroff.net/files/beamer-theme-matrix/
+
+- scenario: 课程教学 / 授课讲义
+  theme_style: 浅色高级/莫兰迪(light_elegant 主题)/低认知负荷
+  page_type: 章节封面/学习目标/概念讲解/示例演示/课堂活动或提问/小结/作业与延伸阅读
+  layout_structure: 单点聚焦, 一屏一概念; 概念页左图(示意)右文(要点≤5), 示例页用分步高亮, 小结页回扣学习目标
+  color_palette: 米白底 #FAF8F5 + 莫兰迪主色 #7C6F64(取 light_elegant 主题) + 辅 #A39788 + 强调 #B5651D(仅关键术语/重点) + 深灰字 #3A352F
+  font_pairing: 思源黑体标题+正文(light_elegant 主题 FONTS); 正文字号偏大(投影后排可读), 代码用 Consolas
+  visual_hierarchy: 学习目标/关键术语 > 示意图 > 讲解要点 > 补充; 认知负荷低, 单页信息量克制
+  chart_style: 概念示意图/类比图为主, 数据图少而精; 善用前后对比、流程分解、标注引导注意力
+  icon_style: 双色线性图标, 统一圆角; 用图标区分'定义/示例/注意/练习'
+  transition_style: 淡入/轻推; 分步揭示(逐条出现)降低一次性信息量, 配合讲解节奏
+  speaker_notes_style: "每页讲解锚点 + 预设课堂提问/易错点; 按一节课 45 min 配 15-25 页, 留活动与答疑时间"
+  reuse_template_notes: 与答辩/汇报不同——教学重'循序渐进与认知负荷', 多用分步揭示与示例; 章节封面/目标页/小结页可模板化复用。版式逻辑参考 CMU 教学设计 https://www.cmu.edu/teaching/designteach/teach/instructionalstrategies/lectures.html
 ```
