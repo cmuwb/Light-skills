@@ -39,4 +39,5 @@ CVPR/ICCV/ECCV/NeurIPS/ICLR/ICML/AAAI/IJCAI/ACL/EMNLP/KDD/WWW/SIGIR/CHI、Nature
 
 ## 真实数据文件
 - [samples_real.md](samples_real.md) — 16 篇真实顶会/顶刊论文写作结构拆解（标题/被引/DOI 由 OpenAlex 实拉，如 ResNet 被引 22 万、AlphaFold、Adam），含摘要还原与结构分析。
+- [samples_recent_2024_2026.md](samples_recent_2024_2026.md) — 8 篇 2024–2026 顶会顶刊写作样本（LLM/扩散时代），补 2012–2021 经典样本的时代缺口：VAR(NeurIPS24 最佳)、Generative Image Dynamics/Rich Human Feedback(CVPR24 最佳)、BioCLIP/Mip-Splatting(CVPR24 最佳学生)、农业 YOLO 综述、癌症影像基础模型与 ChemCrow(Nature MI)。元数据 OpenAlex 实拉、获奖身份官方页实查，**只存结构笔记 + reviewer_potential_questions，不存全文**。
 - [patterns_library.md](patterns_library.md) — 各章节写作套路与句式库 + 措辞红线，附权威写作指南来源（Whitesides、Ten Simple Rules 等）。
