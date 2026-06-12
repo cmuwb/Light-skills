@@ -23,7 +23,23 @@ version_history:       # 见 version_history.md
 - `terminology.md` — 方法名/数据集名/指标名/创新点标准措辞(供 a07 跨材料统一)。
 - `decision_log.md` — 决策时间线：`[日期] 决策 — 理由 — 来源(m03/m04/m14...)`。
 - `version_history.md` — `[日期] 材料(论文/PPT/图/代码) vN — 变更摘要`。
+- `palette.json` — 跨材料共享色板(视觉 SSOT 实例，可选)；论文图(m11)/PPT(m16)/前端(a05)共读，a07 据此核配色一致。schema 与模板见 db09 README「palette.json」节，字段与 db05 `design_tokens.template.json` 对齐。
 - `submissions/` — 投稿记录：venue / 投稿日期 / 状态 / 审稿意见 / 结果。
+
+## palette.json 模板（跨材料共享色板，可选）
+> 复制到 `projects/<project_name>/palette.json`。`source` 须指向 db05/db06 真实卡并经核验，`hex` 不凭记忆填。schema 说明见 db09 README。
+```json
+{
+  "$description": "项目级共享色板(视觉 SSOT 实例)。论文图/PPT/前端/海报同取一份，a07 据此核配色一致。",
+  "$project": "<project_name>",
+  "$aligned_with": "databases/db05-frontend-styles/design_tokens.template.json",
+  "tokens": [
+    { "name": "primary",   "hex": "#RRGGBB", "usage": "主色",       "source": "db06:light-slides/assets/themes.py::<THEME>.COLORS.primary", "last_checked": "YYYY-MM-DD" },
+    { "name": "accent",    "hex": "#RRGGBB", "usage": "强调色",     "source": "db06:.../themes.py::<THEME>.COLORS.accent",                "last_checked": "YYYY-MM-DD" },
+    { "name": "success",   "hex": "#RRGGBB", "usage": "语义色-成功", "source": "db05:design_tokens.template.json::color.semantic.success", "last_checked": "YYYY-MM-DD" }
+  ]
+}
+```
 
 ## 术语表模板（terminology.md）
 ```

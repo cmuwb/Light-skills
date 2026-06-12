@@ -11,7 +11,7 @@ user-invocable: false
 2. **Tone**：从基调谱系选一个并押注到底——科技/学术/农业智慧化/医疗/极简/玻璃拟态/卡片/大屏/管理系统/移动端，或 editorial/brutalist/luxury/organic。先 web 搜索核实涉及的具名产品/品牌(10 秒搜索胜过 1-2 小时返工)。
 3. **Constraints**：框架、性能、可访问性、信息密度。
 4. **Differentiation**：一个会被记住的唯一视觉/交互记忆点(不是堆特效)。
-据此定 **设计语言**：调色板(主/辅/强调/中性) + 字体系统 + 间距栅格 + 圆角阴影 + 图标风格，落到 Design Tokens，登记 db05。设计长在已有语境(品牌/代码库/UI kit/真实截图)上而非凭空造。简报太空(如"做个好看的")时进 Advisor 模式：从风格库提 3 个差异化方向让用户选，再押注其一(canvas-design)。涉及品牌则先按 Core Asset Protocol 收集 logo/产品图/UI 截图/品牌色字，写入 brand-spec.md 当一等公民。
+据此定 **设计语言**：调色板(主/辅/强调/中性) + 字体系统 + 间距栅格 + 圆角阴影 + 图标风格，落到 Design Tokens，登记 db05。**项目有 `databases/db09-projects/projects/<project_name>/palette.json` 则必用其取色**（与论文图 m11/PPT m16 共享的视觉 SSOT 实例，前端不另立色板；schema 见 db09 README，色值锚点真相源是 db05 `design_tokens.template.json`）。设计长在已有语境(品牌/代码库/UI kit/真实截图)上而非凭空造。简报太空(如"做个好看的")时进 Advisor 模式：从风格库提 3 个差异化方向让用户选，再押注其一(canvas-design)。涉及品牌则先按 Core Asset Protocol 收集 logo/产品图/UI 截图/品牌色字，写入 brand-spec.md 当一等公民。
 设计系统持久化：用一个全局真相源(如 MASTER.md/design tokens)+ 页级覆盖文件(页文件覆盖全局，无页文件则用全局)，避免跨页风格漂移(ui-ux-pro-max)。
 
 ## 设计原则（可量化）

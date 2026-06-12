@@ -26,10 +26,28 @@ projects/<project_name>/
 ├── terminology.md        术语/指标/创新点统一定义表(供 a07)
 ├── decision_log.md       重大决策时间线(含 idea 取舍、方案变更)
 ├── version_history.md    论文/PPT/图表/代码各版本记录
+├── palette.json          跨材料共享色板(视觉 SSOT 实例，可选；论文图/PPT/前端共读，见下)
 ├── literature/           m01 调研产出
 ├── reviews/              m14 审稿意见与 response
 └── submissions/          投稿记录(venue/日期/状态/结果)
 ```
+
+## palette.json — 跨材料共享色板（视觉 SSOT 实例）
+解决"slides 与 figure 风格统一只能靠 a07 人工把关"：项目级一份 `palette.json`，论文图(m11/db07)、PPT(m16/db06，含 R6 style_anchor)、前端(a05/db05)三方共读——**有则必用**，谁都不另起一套色板；a07 的"跨材料配色一致"检查改为对照本文件。
+
+它是 db05 `design_tokens.template.json`（DTCG 视觉 SSOT，色值锚点真相源，a05/a07 维护）在本项目的**落地副本/扁平视图**，字段与之对齐，色值最终以 db05 DTCG 模板为准。改色只改这一份并触发 a07 变更广播回扫下游。
+
+schema（每个 token 一项）：
+
+| 字段 | 含义 |
+|---|---|
+| `name` | token 名（primary/secondary/accent/text/bg/surface/muted/line/success/warning/danger/info…，对齐 themes.py 8 字段色板 + DTCG 语义色） |
+| `hex` | `#RRGGBB` 色值 |
+| `usage` | 用途：主色 / 辅色 / 强调 / 语义色（成功/警告/危险/信息）/ 背景 / 文字 / 分隔线 等 |
+| `source` | 取色出处，**须真实可追溯**：指向 db05 卡或 db06 卡 id（如 `db06:light-slides/assets/themes.py::AGRICULTURE.COLORS.primary`、`db05:design_tokens.template.json::color.semantic.success`） |
+| `last_checked` | 核验日期 `YYYY-MM-DD` |
+
+顶层带 `$description`/`$project`/`$aligned_with`（指回 db05 DTCG 模板路径）。**铁律**：`hex`/`source` 不凭记忆填，每个 token 的 source 指向 db05/db06 真实卡并经核验。实例见 `projects/dairygoat-detect-track/palette.json`（取色自 db06 themes.py 农业风主题 + db05 DTCG 语义色，selftest 绿）。
 
 ## 管理工具映射
 - 代码/文本版本 → Git
