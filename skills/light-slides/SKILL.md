@@ -37,7 +37,7 @@ description: 制作精美 PPT。当用户需要为论文、项目、竞赛、答
 - **Beamer**(LaTeX，学术)：`\documentclass{beamer}`+`\usetheme{}`；`frame`/`columns`/`block`/`alertblock`；overlay 用 `\item<1->` 或 `\pause`；公式/BibTeX 强、视觉迭代慢。
 - **海报**：LaTeX `beamerposter`(`\usepackage[orientation=portrait,size=a0,scale=1.4]{beamerposter}`) 或 `tikzposter`(`\block{}{}`)；或 PPTX 海报(把 slide 尺寸设成 A0 单页，python-pptx 设 `slide_width/height`)。A0=841×1189mm，照片≥150–300 DPI、嵌字体防错位。
 - **设计/AI 向**(可借工作流，闭源)：Canva Connect API(`POST /autofills` 品牌模板批量填充，需 Enterprise)、Gamma Generations API(`POST /v1.0/generations` prompt→deck，可 `exportAs:pptx/pdf`)、Beautiful.ai(规则驱动自适应版式理念)、Slidesgo(模板灵感按行业/风格/色筛)。
-- **从论文一键转稿**：两条路线。图像渲染路线(Paper2Slides/HKUDS)——分阶段 RAG→分析(抽图表与层级)→规划(版式蓝图)→渲染，每段存 checkpoint 可只重跑某段(只换风格用 `--from-stage plan`)；其实测教训直接用：逐张单图调用别想一次出多图(会风格漂移)、prompt 给版式指令比给细粒度元素样式更易 grounding、简单 prompt 反而出图更稳。纯学术公式重的走 LaTeX 路线(takashiishida/paper2slides)——下 arXiv 源→flatten 合并 `\input`→拼 prompt(正文+宏包定义+造稿指令)→LLM 出 Beamer→自检+`chktex` lint 回灌→`pdflatex`+`pdfcrop`；注意它只靠 caption 推断图、复杂图表表现差。
+- **从论文一键转稿**：两条路线择一——图像渲染路线（Paper2Slides/HKUDS，RAG→分析→规划→渲染，分阶段 checkpoint）适合图文均衡稿；LaTeX/Beamer 路线（takashiishida/paper2slides，flatten 源→LLM 出 Beamer→chktex lint→编译）适合公式重的硬核论文。两条的完整 CLI/参数/实测教训见 `references.md`（paper2slides 两节）。
 图表复用论文图(m11)并适配投影：从论文重画而非直接贴 PDF 图，放大轴标≥16pt、增强对比。
 - **生图边界（与 m11 figure_integrity 互相指认的硬红线）**：上述 AI 生图/渲染路线（Gamma、Paper2Slides、本 skill 的 imggen-enhanced 生图流水线）的产物**只用于 PPT/路演/前端灵感图，严禁任何产物进入论文图链路**。论文图一律走 m11(light-figure-drawing)数据驱动绘制——Nature/Science/Elsevier 三家头部出版商明令禁止 AI 生成论文图像（见 light-figure-drawing `light-figure-drawing/references/figure_integrity.md`「AI 生成图像政策」节）。PPT 里若要放实验数据图，从 m11 成品重画适配投影，不要用生成式模型造数据图。
 

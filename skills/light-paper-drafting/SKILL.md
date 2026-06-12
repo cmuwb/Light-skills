@@ -1,6 +1,6 @@
 ---
 name: light-paper-drafting
-description: 撰写论文初稿，支持分模块撰写（标题、摘要、引言、相关工作、方法、实验、结果分析、讨论、结论、局限性、未来工作）与五种操作模式（full/outline-only/abstract-only/section-redraft/self-review）。当用户需要写论文或某个章节时使用。内置 6 类结构模板、端到端范例、8维+7失败模式自检清单、量化诚信门（claim 抽样+引用 curl 核查）、reporting 指南映射(CONSORT/STROBE/PRISMA 等)、必备声明与 AI 使用声明模板、机检脚本。以顶刊/顶会审稿人标准不断打磨，强调逻辑严谨、问题清晰、创新点突出、贡献明确、语言专业、实验支撑充分、结论不夸大。
+description: 撰写论文初稿与单章节起草、重写、自检。当用户要写论文、写某个章节（标题/摘要/引言/相关工作/方法/实验/结果/讨论/结论/局限/未来工作）、重写某章节、或对草稿做失败模式自检时使用。五种模式 full/outline-only/abstract-only/section-redraft/self-review；以顶刊/顶会审稿人标准打磨，逻辑严谨、创新点突出、结论不夸大、claim 有引用支撑。
 ---
 
 # 论文初稿撰写

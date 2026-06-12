@@ -36,7 +36,7 @@ description: 根据目标期刊/会议/学校/比赛要求做 LaTeX 或 Word 排
 以 IEEE 会议双栏为例，其它 venue 把模板文件名替换即可：
 1. **选模板骨架**：从 `templates/` 拷官方骨架起手，不从空文件写。
    - IEEE→`ieee_bare_conf.tex`，ACM→`acm_sigconf.tex`，Springer LNCS→`springer_llncs.tex`，Elsevier→`elsevier_elsarticle.tex`，中文→`ctex_chinese.tex`。
-   - 五份骨架结构完整、可直接编译（见各文件头注释的编译命令）。
+   - 五份骨架结构完整、可直接编译（见各文件头注释的编译命令）。**编译验证（2026-06-12，Tectonic）**：五份全部 `tectonic <f>.tex` 退出 0 产出 PDF（IEEE/ACM/Springer/Elsevier 走 pdflatex 路径，ctex_chinese 走 XeLaTeX 路径自动装中文字体）；留痕 `_verification_log/R7-tex-compile.md`。
 2. **灌内容**：填 title/author/abstract/keywords、章节正文(来自 m07/m08)、公式(`amsmath`)、三线表(`booktabs`)、算法(`algorithm2e`/`algpseudocode`)。图(来自 m11)用 `\includegraphics` 替换骨架里的 `\rule{}` 占位框；宽图用 `figure*` 跨双栏放页顶。
 3. **挂引用**：引用(来自 m10)写进 `refs.bib`，正文 `\cite{key}`，启用骨架里注释的 `\bibliographystyle{IEEEtran}`+`\bibliography{refs}`(替换演示用 `thebibliography`)。交叉引用用 `\label`+`\cref`。
 4. **编译收敛**：`latexmk -pdf -interaction=nonstopmode file.tex`(中文用 `-xelatex`)。latexmk 自动跑够轮数 + bibtex/biber 直到引用/目录收敛。缺包：TeX Live `tlmgr install`、MiKTeX `miktex packages install <pkg>` 并 `initexmf --update-fndb`。

@@ -6,9 +6,6 @@ user-invocable: false
 
 # 上下文管理、记忆持久化与科研项目管理
 
-## Hermes 会话链恢复
-当用户说新窗口/昨天对话找不到、恢复后消息太少、或要求把长任务恢复到某个工作区时，不要只看最近一条 session 或默认列表；应检查 Hermes `state.db` 的 `parent_session_id`、`archived`、`cwd` 与消息计数，恢复完整压缩主链和相关子会话。具体可复用流程见 `references/hermes_session_lineage_recovery.md`。
-
 ## 持久化（用 Light 记忆系统 + 项目库 db09）
 - 跨会话事实写入记忆文件(user/feedback/project/reference)，并在 MEMORY.md 加索引行。其中 **feedback 记忆槽的「跨项目过程教训」部分结构化落地为 db09 顶层 `lessons.md`**（与 `projects/` 平级，格式见下）；feedback 记忆文件本身仍存个人偏好类反馈。
 - 项目级状态写入 db09 的 project_card：`project_name, goal, current_stage, confirmed_idea, data_status, method_status, experiment_status, paper_status, ppt_status, code_status, risk_list, next_actions, decision_log, version_history`。
@@ -45,12 +42,10 @@ databases/db09-projects/projects/<project_name>/
 - **任务清单**(可勾选)、**时间线/甘特**、**里程碑**、**风险清单**、**版本记录**。
 - 落到工具时：一个阶段=一个里程碑(GitHub milestone，带 due 日期)，阶段内任务=带 `- [ ]` 复选框的条目，风险项打 `risk` 标记。`- [x]` 用于已完成项，便于自动统计进度。
 
-## 管理工具映射（见 a09，具体用法见 references.md）
-- **代码/文本/稿件版本→Git**：里程碑版本用带注释标签 `git tag -a v1.2.0 -m "..."`（注释标签才被 `git describe` 识别）；遵循 SemVer；论文/PPT 也打 tag（如 `submit-icml2026`）并与 version_history 对齐。CHANGELOG 按 Keep a Changelog（Added/Changed/Fixed/Removed + 日期）。大文件不进 Git，交 DVC。标签需 `git push --tags` 才上传。
-- **数据/实验→DVC / MLflow / W&B**：DVC 用 `dvc add` 生成 `.dvc` 指针、`dvc.yaml` 定义 stage(cmd/deps/params/outs/metrics)、`dvc exp run`+`dvc metrics diff` 对比；data_status/experiment_status 直接挂 `.dvc`/`dvc.lock` 的 commit。MLflow 用 `start_run`+`log_param/log_metric/log_artifact`，run_id 串联 method/experiment 状态。W&B 用 `wandb.init/log`、Artifacts 做血缘、Sweeps 调超参；记 run URL。
-- **文献→Zotero**：Web API 基址 `https://api.zotero.org`，`/users/<id>/items`、`/collections`，带 `Zotero-API-Version:3` 与 API key；可导出 BibTeX/CSL-JSON；写操作用 `If-Unmodified-Since-Version` 乐观锁，遵守 Backoff/Retry-After 退避。
-- **项目知识→Obsidian / Notion / Logseq / Markdown**：Obsidian 用 frontmatter 承载 project_card 字段、Dataview 聚合成看板；Notion API(`/databases/{id}/query`，`Notion-Version` 头，约 3 req/s 限流)把字段映射成 database 属性；Logseq 用 journals 做 decision_log 时间线 + query 汇总未完成项。
-- **进展→README + CHANGELOG**。
+## 管理工具映射（见 a09，具体用法/端点/参数见 references.md）
+- **代码/文本/稿件版本→Git**：里程碑用带注释标签 `git tag -a v1.2.0`（注释标签才被 `git describe` 识别），遵循 SemVer，论文/PPT 也打 tag 并与 version_history 对齐；CHANGELOG 按 Keep a Changelog；大文件交 DVC；`git push --tags` 才上传。
+- **数据/实验→DVC / MLflow / W&B**：DVC `dvc add` 生指针、`dvc.yaml` 定 stage、`dvc exp run`+`metrics diff`；MLflow `start_run`+`log_param/metric/artifact` 串 run_id；W&B `init/log`+Artifacts 血缘+Sweeps，记 run URL。data_status/experiment_status 挂对应 commit/run。
+- **文献→Zotero**、**项目知识→Obsidian/Notion/Logseq/Markdown**、**进展→README+CHANGELOG**：各自的 API 基址、限流、字段映射见 references.md。
 
 ## 更新纪律（硬性）
 每次完成：资料搜索、idea 修改、实验运行、论文修改、PPT 修改、投稿返修——**立即**更新 db09 对应字段与 decision_log，避免长期项目上下文丢失。
@@ -60,13 +55,7 @@ databases/db09-projects/projects/<project_name>/
 **跨项目教训回写（节制，避免噪声）**：仅当某决策产生了**可跨项目复用的过程教训**——踩坑、被审稿/导师否掉、复现失败、某流程显著省时/避雷——才在追加 decision_log 的**同时**回写一条 lesson 到 db09 顶层 `lessons.md`（格式：`- [YYYY-MM-DD] 阶段/场景 — 做法 — 结果(有效|失败) — 适用条件 — 来源项目slug`）。日常项目内决策**不强制**回写。边界：方法选型事实归 db03 方法卡，个人偏好归 feedback 记忆，二者不进 lessons.md。
 
 ### 写入步骤示例（落地一次实验进展）
-假设刚跑完检测 baseline，项目 `dairygoat-detect-track`：
-1. **读现状**：Read `databases/db09-projects/projects/dairygoat-detect-track/project_card.md`，看 `experiment_status` 与 `next_actions` 当前值。
-2. **改项目卡**：用 Edit 把 `experiment_status` 从「方案级…尚无真实实验数据」改为「E1 检测 baseline 已跑：YOLOv11 imgsz=1280，mAP@0.5:0.95=0.71（CherryChèvre 验证集）」；同步把 `next_actions` 第 1 条勾掉/替换为下一步。
-3. **追加决策日志**：Edit `decision_log.md` 末尾加一行 `- [2026-06-06] 检测 baseline 定为 YOLOv11@1280 — mAP 0.71 优于 RT-DETR 0.68 且推理更快 — 来源 E1 实验`。
-4. **记版本**：若产出可复现权重/代码 tag，Edit `version_history.md` 加 `- [2026-06-06] 代码 v0.2.0 — 检测 baseline 可复现，git tag v0.2.0`，并 `git tag -a v0.2.0 -m "det baseline"`。
-5. **跨会话索引**：若涉及用户长期偏好/项目背景，另写入 Light 记忆文件并在 MEMORY.md 加索引行（见「衔接」）。
-日期一律用绝对日期（今天=系统 currentDate），相对日期先换算。
+刚跑完检测 baseline（项目 `dairygoat-detect-track`）的五步：① **读现状**：Read project_card.md 看 `experiment_status`/`next_actions` 当前值；② **改项目卡**：Edit 把 `experiment_status` 改为带具体指标的实测描述（如「E1 baseline 已跑：YOLOv11@1280，mAP 0.71」），同步勾掉/替换 `next_actions` 首条；③ **追加决策日志**：decision_log.md 末尾加 `- [日期] 决策 — 理由 — 来源`；④ **记版本**：有可复现 tag 则 version_history.md 加行并 `git tag -a`；⑤ **跨会话索引**：涉用户长期偏好/项目背景则写 Light 记忆文件 + MEMORY.md 索引行。日期一律绝对日期（今天=系统 currentDate）。
 
 ## 会话开始时
 先读项目库与记忆：定位 `databases/db09-projects/projects/<project_name>/project_card.md`，**优先读 `next_actions` 字段**确认"上次做到哪、下一步是什么"，必要时再读 decision_log 末几条与 version_history。会话长时被压缩后，靠 db09/记忆而非短期记忆恢复状态。
@@ -83,6 +72,7 @@ databases/db09-projects/projects/<project_name>/
 **自包含 + 自传播**：每张卡独立可读，下一个 agent 只读最新卡即可续上；沿卡内 `parent_session` 链可追到任意上级对话。每个接手会话收尾必须再造下一张卡 + 提示词，协议才不断链。衔接卡 ≠ 当前事实：接手后仍按 orchestrator §5 刷新 git/passport/db09/CI 证据。
 
 > 完整触发判据、落盘规则、与断点恢复的关系见 `references/session_handoff.md`。
+> 特定客户端：Hermes 多会话/压缩主链恢复（查 `state.db` 的 `parent_session_id`/`archived`/`cwd` 复原完整会话链）见 `references/hermes_session_lineage_recovery.md`——通用协议优先，此为单客户端细节。
 
 ## 衔接
 是所有技能的状态中枢：m01–m17 的产出都在此登记，a06 的目录与之对应。

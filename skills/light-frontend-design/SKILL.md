@@ -24,14 +24,14 @@ user-invocable: false
 - 可调三旋钮(taste-skill)：VARIANCE(布局实验度)/MOTION(动效深度)/DENSITY(每屏信息量)，按场景拨——大屏调高 DENSITY，落地页调高 VARIANCE，后台调低两者。
 
 ## 技术实现（按需，见 a09）
-- **框架 Next.js**：默认用 Server Components(零客户端 JS)，按需 `"use client"` 并检查边界位置避免膨胀 bundle；loading.tsx + Suspense 做流式、并行取数避免瀑布；next/font 防 layout shift、`<Image>` 防 CLS+WebP；Server Actions 内逐个鉴权、DB 访问放 server-only 层；request-time API(cookies/searchParams)会把路由打入动态渲染，需 Suspense 包裹。上线前 `next build` + Lighthouse + @next/bundle-analyzer。
-- **组件 shadcn/ui**：`npx shadcn@latest init`(选 -t 框架 / -b radix / --css-variables)生成 components.json，`add [component]` 把源码拷进项目自行维护；主题走 CSS 变量。源码归你，升级需手动 diff。
-- **样式 Tailwind v4**：CSS-first(`@import "tailwindcss"`)，@theme 暴露 token 为 CSS 变量；变体可叠(dark:/sm:/group-hover:/data-*:)，移动优先(sm=40rem)；复用用组件/循环而非滥抽 class；注意 class 顺序不决定优先级(样式表靠后者胜)。
-- **组件 API 设计(vercel-composition-patterns)**：按优先级修——先架构(别用布尔属性定制行为，用组合 `architecture-avoid-boolean-props`；复杂组件用 compound + 共享 context `architecture-compound-components`)，再状态(状态上提到 Provider 供兄弟共享，只暴露 `{state, actions, meta}` 泛型接口隐藏实现)，最后实现细节(显式变体 PrimaryButton/GhostButton 优于 primary/secondary 布尔；children 优于 renderX props)。典型重构：Toggle 一堆布尔 → ToggleProvider + Toggle.On/Toggle.Off；Modal → Modal/ModalHeader/ModalBody + 共享 open/close context。React 19+ 才用 use() 替代 forwardRef/useContext。
-- **移动端**：触控目标 iOS ≥44pt / Android ≥48dp；正文 ≥16；导航 iOS 底 tab(3-5)、Android bottom nav/FAB；交互元素带 accessibilityLabel/Role。
-- **微信小程序 UI**：移动优先、`rpx`、安全区、首屏轻、tabBar 3-5 项；简单 tab 可用 text-only custom tabBar；组件库在 TDesign/Vant/WeUI/Ant Design Mini/NutUI Taro/custom 中选一条，不混搭。
-- **可视化**：ECharts/D3/Plotly/大屏方案，色板统一、信息密度与可读性平衡。
-- 参考实践见 references.md 与 `references/ecosystem-2026.md`：frontend-design、web-design-guidelines、ui-ux-pro-max、canvas-design、taste-skill、shadcn、Tailwind、Next.js 等。
+栈选型与各框架的可执行要点（命令/选项/已知坑）见 `references.md` 与 `references/ecosystem-2026.md`，正文只给决策级提示：
+- **Next.js**：默认 Server Components（零客户端 JS），按需 `"use client"` 并守边界防 bundle 膨胀；loading.tsx+Suspense 流式、并行取数、next/font 防 layout shift、`<Image>` 防 CLS；Server Actions 内逐个鉴权；上线前 `next build`+Lighthouse。（细节见 references「next-best-practices」节。）
+- **shadcn/ui**：`npx shadcn@latest init` 后 `add [component]` 把源码拷进项目自维护，主题走 CSS 变量，升级手动 diff。（CLI 选项见 references「shadcn/ui」节。）
+- **Tailwind v4**：CSS-first（`@import "tailwindcss"` + `@theme` 暴露 token），变体可叠、移动优先，复用走组件而非滥抽 class。
+- **组件 API 设计**：组合优于布尔属性、compound+context、只暴露 `{state,actions,meta}`、显式变体优于布尔。（vercel-composition-patterns，见 references。）
+- **移动端/小程序**：触控目标 iOS ≥44pt/Android ≥48dp、正文 ≥16、tabBar 3-5；小程序组件库在 TDesign/Vant/WeUI/Ant Design Mini/NutUI Taro 选一不混搭。
+- **可视化**：ECharts/D3/Plotly/大屏，色板统一、密度与可读性平衡。
+- **设计 token 多端一致**：用 Style Dictionary / Terrazzo 把 token 从单一源编译到 CSS/JS 多端；权威源对齐 db05 `design_tokens.template.json`（DTCG 视觉 SSOT，a07 维护），前端不另立色板/字阶。细节见 `references/ecosystem-2026.md`「设计 token 工程化」节。
 
 ## 灵感来源（学版式不抄袭）
 - **热门 skill 雷达**：需要更新技能或选择外部设计能力时，先看 `references/ecosystem-2026.md`，优先吸收官方/高安装量/可验证的 workflow，而不是安装未知低信号包。
@@ -40,36 +40,20 @@ user-invocable: false
 - 其余：Dribbble、Behance、Land-book、Godly、Siteinspire、Figma Community、Tailwind UI、Vercel templates。总结"为什么好看、适合什么场景、需要哪些组件"，沉淀进 db05。
 - **image-to-code 三段法(taste-skill)**：拿不准视觉方向时，先 Generate(出参考板/hero 图)→ Analyze(拆版式/字体/间距/动效线索)→ Implement(照参考帧出码)，比直接凭空写更稳。
 
-## 可数 checklist（机械逐条判 Pass/Fail，见 scripts/audit_checklist.py）
-不靠「看着不错」，靠数数。给页面 section/nav/hero/bento 加轻量 `data-*` 标注后跑脚本：
-- **R1 eyebrow 实例 ≤ ceil(sectionCount/3)**：eyebrow 是稀缺强调，不是每段都配。
-- **R2 连续 image+text split ≤ 2**：超过 2 段并排「图+文」就是布局偷懒。
-- **R3 ≥8 sections 时 ≥4 个 layout family**（hero/split/bento/full/grid/stack…）：杜绝通篇一种版式。
-- **R4 hero subtext ≤20 词且 ≤4 行**：首屏副文案克制。
-- **R5 nav 单行且 ≤80px**：导航不臃肿。
-- **R6 bento N 内容 = N 格**：不留空格、不溢出。
-跑法：`cd skills/light-frontend-design && python scripts/audit_checklist.py`（自带 GOOD/BAD 合成自测）。
+## 机械门禁（脚本即真相，规则全文见脚本 selftest）
+两个 linter 把"好看"落成可数判定，交付前必过：
+- **可数 checklist** `python scripts/audit_checklist.py`（给页面元素加 `data-*` 标注后跑）：R1 eyebrow ≤ceil(sections/3)、R2 连续图文 split ≤2、R3 ≥8 段需 ≥4 种 layout family、R4 hero 副文 ≤20 词/≤4 行、R5 nav 单行 ≤80px、R6 bento N 内容=N 格。自带 GOOD/BAD 自测。
+- **反 AI-tell 黑名单** `python scripts/ai_tell_lint.py`：T1 scroll cue、T2 装饰性段落编号 eyebrow、T3 版本/Made-with 填充页脚、T4 正文 em-dash（LLM tell）——命中即改。自带 DIRTY/CLEAN 自测。
 
-## 反 AI-tell 黑名单（机械可查，见 scripts/ai_tell_lint.py）
-这些是「机器生成的破绽」，逐条用 linter 扫源码，命中即改：
-- **T1 scroll cue**：禁 "scroll down/to explore"、hero 处弹跳 chevron/mouse 提示。
-- **T2 section-numbering eyebrow**：禁把 "01 /"、"02."、"(03)" 当装饰性段落编号塞进 eyebrow。
-- **T3 版本/Made-with 页脚**：禁 "v1.0.0"、"Made with love"、"Powered by <generic>" 填充式页脚。
-- **T4 em-dash（—）**：禁用 em-dash 作正文标点（LLM 著名 tell），改用逗号/分句重写。
-跑法：`python scripts/ai_tell_lint.py`（自带 DIRTY/CLEAN 自测）。
-
-## 字体池与禁用清单（见 references/fonts-and-colors.md）
-- **Sans display 默认池**：Geist / General Sans / Satoshi / Clash Display / Cabinet Grotesk（Space Grotesk 可用但已过度收敛，非必要不选）。
-- **配对池**：display↔body 具名组合表（如 Clash Display + Geist、Cabinet Grotesk + Satoshi）。
-- **Named banned serif**：禁 Fraunces、Instrument Serif（已成 AI-tell）。
-- **禁用色族（连 hex）**：premium-consumer 套路「米色(#F5F0E8 族) + 黄铜(#B08D57 族) + 酱黑(#1A1714 族)」整族禁用；外加紫/粉渐变配白底。
+## 字体与禁用清单（全表见 references/fonts-and-colors.md）
+- Sans display 默认池：Geist / General Sans / Satoshi / Clash Display / Cabinet Grotesk；正文配对组合见 references。
+- **硬禁**：serif 禁 Fraunces / Instrument Serif（已成 AI-tell）；色禁 premium-consumer「米色#F5F0E8 族+黄铜#B08D57 族+酱黑#1A1714 族」整族 + 紫/粉渐变配白底；正文字避开 Inter/Roboto/Arial/系统字体。
 
 ## brief → 官方设计系统映射（见 references/design-systems-map.md）
-按 brief 信号选**唯一一套**：Fluent(Office/Teams) / Carbon(数据后台) / Polaris(电商) / Atlaskit(协作) / Primer(devtool) / govuk-frontend(英政府) / USWDS(美政府) / Radix(自建底座)。
-一仓一套、版本固定（表内 npm 包名与 latest 版本号均经 `curl registry.npmjs.org` 实测 HTTP 200）。
+按 brief 信号选**唯一一套**：Fluent(Office/Teams) / Carbon(数据后台) / Polaris(电商) / Atlaskit(协作) / Primer(devtool) / govuk-frontend(英政府) / USWDS(美政府) / Radix(自建底座)。一仓一套、版本固定（表内 npm 包名与版本经 `curl registry.npmjs.org` 实测 HTTP 200）。
 
 ## redesign 审计协议（见 references/redesign-audit.md）
-改造已有项目：detect(preserve vs overhaul) → audit 4 轴(Layout/Spacing/Hierarchy/Styling) → preservation rules(守住 IA/品牌/已达标无障碍) → modernisation levers(可放心拉动项) → 改造 vs 重做决策树。
+改造已有项目：detect(preserve vs overhaul) → audit 4 轴(Layout/Spacing/Hierarchy/Styling) → preservation rules(守住 IA/品牌/已达标无障碍) → modernisation levers → 改造 vs 重做决策树。
 
 ## 可运行代码骨架（assets/，含 prefers-reduced-motion + cleanup）
 直接拷进 Next.js client component 或 Vite+React 项目：
