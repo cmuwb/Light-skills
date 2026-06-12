@@ -237,3 +237,18 @@
 【链接】云文档概述 https://open.feishu.cn/document/server-docs/docs/docs-overview?lang=zh-CN ；lark-slides（社区，非官方 API）https://github.com/larksuite/cli/tree/main/skills/lark-slides
 
 【已知坑/局限】演示文稿无官方开放 API（实查口径，引用前复查最新版本，飞书 API 持续扩展）；程序化出 PPT 仍走 python-pptx/PptxGenJS/Marp；飞书文档导出的格式保真度有限，复杂版式需在成品端重排。
+
+## 生图后端（imggen-enhanced 三后端，2026-06-12 联网核实）
+
+【是什么】m16 `imggen-enhanced` mode 调用的三家生图 API，由 `scripts/imagegen.py` 统一封装。**实测真相源在仓库根 `_verification_log/R6-imggen-api.md`**——本节是摘要，改端点/参数以那里为准（同步 imagegen.py 的 ENDPOINTS/常量）。完整五阶段流水线见 `references/imggen_pipeline.md`。
+
+【真实端点/参数（核自官方文档与 SDK 类型，无 key 未发真实生成请求）】
+- **OpenAI gpt-image**：`POST https://api.openai.com/v1/images/generations`，`Authorization: Bearer $OPENAI_API_KEY`。模型 `gpt-image-1`(亦 1.5/2)。`size` 仅 `1024x1024`/`1536x1024`/`1024x1536`/`auto`(16:9 用 1536x1024 近似)；**`background:transparent` 是三家唯一显式透明开关**(配 png)；恒返回 b64_json；官方未列 seed。
+- **Gemini Nano Banana**：`POST https://generativelanguage.googleapis.com/v1/models/{model}:generateContent`(图像走通用 generateContent，无独立 images 端点)，头 `x-goog-api-key`。模型 `gemini-3.1-flash-image`(NB2)/`gemini-3-pro-image`(NB Pro)/`gemini-2.5-flash-image`(初代)。`responseFormat.image.aspectRatio` 原生支持 16:9，`imageSize` ∈ {512,1K,2K,4K}(大写 K)；图在 `candidates[0].content.parts[].inlineData`；**无透明开关**(GAP)、无 seed。
+- **火山方舟 Seedream**：`POST https://ark.cn-beijing.volces.com/api/v3/images/generations`，`Authorization: Bearer $ARK_API_KEY`。模型 id 随版本变(查方舟控制台 endpoint id)。`size` 吃 `2K`/`3K`/像素；`response_format` url 或 b64_json；**`watermark` 默认 true 必须显式关**(否则带"AI 生成"水印)；旧 t2i 系列有 seed，5.0 系列 GAP；**无透明开关**(GAP)。
+
+【选型与坑】透明图标/插画 → OpenAI(唯一原生透明)；16:9 整页稿/背景 → Gemini 或 Seedream；国内网络 → Seedream(记得关水印)。三家 seed 都不稳，风格复现不靠 seed，靠唯一 `style_anchor` + 图生图参考(见 imggen_pipeline.md R6.3)。
+
+【链接】OpenAI https://developers.openai.com/api/reference/resources/images/methods/generate/ ；Gemini https://ai.google.dev/gemini-api/docs/image-generation ；Seedream https://www.volcengine.com/docs/82379/1541523
+
+【已知坑/局限/GAP】无 key 环境**未发真实生成请求**——出图质量、透明底干净度、风格一致性实效、各档 size 真实像素均标 `GAP：待实测(2026-06-XX)`，配 key 后按 R6.6 端到端实跑回填并沉 db06 风格卡。key 一律走环境变量(SECURITY.md 口径)；核心 PPT 功能免 key(走 programmatic mode)，仅 imggen-enhanced 需自备生图 key。
