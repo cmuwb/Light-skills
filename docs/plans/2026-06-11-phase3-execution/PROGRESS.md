@@ -14,7 +14,7 @@
 | R5 | 资产补全 | 已完成 | 2026-06-11 | 2026-06-11 | `94f237e..cc3fd19`（9 commit） | 本地 5 门禁全绿；48 脚本 selftest 全 PASS；待推送确认 CI |
 | R6 | PPT 生图流水线 | 部分完成（见偏差） | 2026-06-12 | 2026-06-12 | `55674c2..f04c12b`（5 commit） | 绿（run 27386750356 三任务全 pass）；PR #1 → master |
 | R7 | 横切机制与瘦身 | 已完成 | 2026-06-12 | 2026-06-12 | `1cbfc52..961060c`（5 commit） | 绿（run 27389247644 三任务全 success）；PR #2 → master |
-| R8 | CI 门禁扩建 | 未开始 | | | | |
+| R8 | CI 门禁扩建 | 已完成 | 2026-06-12 | 2026-06-12 | `1c89e06..026d4b5`（7 commit） | 绿（run 27391794048 三任务全 success）；PR #3 → master |
 | R9 | 数据库规模化（批1/批2/批3） | 未开始 | | | | |
 | R11 | 行为评测与自动化闭环 | 未开始 | | | | |
 | R12 | 安全、领域与微缺口增补 | 未开始 | | | | |
@@ -72,6 +72,11 @@
 - [2026-06-12] R7.10 CUMCM AI 规定 — 计划写「CUMCM 2024 起 AI 使用规定」。联网核实(官方 dxs.moe.gov.cn，2026-06)：CUMCM 正式 AI 规定是**2025 年试行版(自 2025-09-01)**，非 2024。按现实写入 m17：允许但非必须、核心独立完成、未用须声明、用了须正文标注+提交 PDF「AI 工具使用详情」、违规取消评奖；带 last_checked。留痕见对话。
 - [2026-06-12] R7.22 tex 编译 — 计划预案「本机无 TeX 则标注待验证」。现实本机有 MiKTeX + **Tectonic**，五份 .tex 骨架全部 `tectonic` 实编译退出 0 产 PDF(IEEE/ACM/Springer/Elsevier 走 pdflatex、ctex_chinese 走 XeLaTeX 自动装中文字体)，非 GAP。留痕 `_verification_log/R7-tex-compile.md`。
 - [2026-06-12] R7 新脚本 — m14 新增 `scripts/rebuttal_budget.py`(会议 rebuttal 字数/页数预算检查，纯 stdlib，中英混排分别计词，超限返回码 1)，已登记 WHATS_INCLUDED(脚本数 50→51，meta 表计数同步)、selftest 通过。
+- [2026-06-12] R8.0 — 计划 08 写校验器在 `tools/`、疑 ci.yml 漏 `tools/**` 触发。现实(已核实)：校验器在 `.github/scripts/`，ci.yml 两处 paths 已含 `".github/scripts/**"` 与 `".github/workflows/**"`，且不含 `docs/**`(总纲"docs 不触发"假设成立)。自盲区**不存在**，无需改 paths，工时转投 R8.1(PROGRESS 早有此偏差，本轮确认关闭)。
+- [2026-06-12] R8.4 db09 路径 — 计划写 db09 项目卡在 `projects/*/project_card.md`。现实 db09 真相在 `databases/db09-projects/projects/<slug>/`(根目录 `projects/` 是可运行 scaffold 演示，两者不同)。schema 校验对准 databases/db09-projects；CONVENTIONS §3 的 14 字段为真相源(yaml 块含全部 14 键，末两键 decision_log/version_history 写"见 X.md"指针，校验只验键存在非空)。
+- [2026-06-12] R8.2 暴露存量漂移 — WHATS_INCLUDED 模板表旧写 `experiment-matrix.md`(连字符)，实际文件 R1.4 已改 `experiment_matrix.md`(下划线)。模板 gate 一开即抓，已修；并把原 6 行高亮表升级为 40 个模板全量 1:1 登记(表末保留 scripts 配套/assets/db 文件高亮行，正则只认 `templates/` 行进校验)。
+- [2026-06-12] R8 校验器计数口径 — 判据"7→≥10 个校验器"：独立脚本 7→8(新建 check_freshness)；但新增 gate 点远超 3 个(路由 28/28、README 结构、模板防漂移、db09 schema、体量、离线性、产物残留、安装可达性)。按"独立 gate 点"计 ≥10 达标；freshness 为 warn-only 旁路不计硬门。
+- [2026-06-12] R8.7 离线 gate 实现档 — 按计划取折中方案：环境哨兵 `LIGHT_SELFTEST_OFFLINE=1` + 代理指黑洞(127.0.0.1:9) + 文档纪律。能挡 proxy 感知的 HTTP 客户端(实测 urlopen 被挡)，挡不住裸 socket 连硬编码 IP——已在 runner docstring 留 UPGRADE 注释(socket 层 audit hook/seccomp/netns 为后续升级路径)。
 
 ## 留给下一轮的话
 
@@ -96,6 +101,10 @@
 - **R6 现场口径(供后续轮/有 key 实跑引用一致性)**：①三家生图 API 真相源=`_verification_log/R6-imggen-api.md`(改端点同步 references.md「生图后端」节 + imagegen.py ENDPOINTS 常量,三处);②透明背景仅 OpenAI 原生,seed 三家都不稳→风格靠唯一 style_anchor(真相源在 deck_spec.yaml),Seedream 水印默认 true 必关;③三条硬边界(数据图不生图/论文图禁生图/文本不烤进图)三处互引锚点=m16 imggen_pipeline.md ↔ m11 figure_integrity「与 R6 生图流水线的边界」节 ↔ a10 SKILL §5,改任一处口径须同步三处;④**R6.6#4 有 key 端到端实跑是 GAP**:配 OPENAI/GEMINI/ARK key 后按 06 号文件 R6.6 第 4 条跑≥5 页 deck,回填 imggen_pipeline.md「实测记录」节 + 沉一张 db06 风格卡 + 留痕 `_verification_log/`;db06 风格卡是 R9 db06 上量的主要真实卡来源(R6.5 已声明联动)。
 - **R7 已完成（给 R8 的话）**：①脚本数 50→51（新增 m14 `rebuttal_budget.py`），WHATS_INCLUDED + meta 计数已同步，check_skill_assets/run_skill_selftests 全绿（51 PASS）。R8(CI 门禁扩建)若加「行数预算门」可直接量常驻 11 技能（763/≤765，留 2 行裕度，后续轮往常驻加内容前先看这条余量）。②技能数仍 28、mode 仍 10、路由触发词未改，ROUTER/ROUTER_EXAMPLES/MODE_REGISTRY 本轮未动（仅 m07 description 精简但触发关键词全保留，check_entry_docs 已绿）——R8 若新增校验器注意 route_examples=47 不变。③R7 新建两个下沉文件（`light-backend-coding/references/code_examples.md`、`light-paper-polishing/examples/full_pipeline_walkthrough.md`）属 references/examples 非脚本，不进 selftest。④跨技能新口径供 R8+ 一致性引用：检索库数统一 ≥2（m03↔m04）、种子数统一 ≥5/受限≥3 须标注（m05↔m06）、依赖管理默认 uv（a03↔a06）、vaex 全仓库标已淘汰（迁 DuckDB/polars streaming，a09 decision_matrix 为单一口径）。⑤a08 self-review 新增「分级执行档」（轻任务最小三项证据/事实/夸大 vs 重产出全量 11 项），orchestrator checkpoints.md 已引用；R8 行为评测设计自审类任务时按此分档。
 - **R7 现场口径(供后续轮引用一致性)**：①a07 consistency「变更广播」回扫的权威已产出材料清单 = orchestrator `.light/passport.yaml` 各阶段 `artifacts:` 并集（无 passport 退 db09 version_history），orchestrator §4 已双向指认——改 passport schema 须顾及 a07 消费侧。②m08 findings JSON 被 m14 模拟审稿消费（overclaim→Soundness major、ai_tone/punctuation→Presentation minor），字段映射在 m14「消费 m08 润色发现」节、schema 在 m08 references/findings_schema.md，改 category 取值两处同步。③m12 五份 .tex 骨架已 Tectonic 实编译验证（留痕 `_verification_log/R7-tex-compile.md`），R8 若上 CI TeX 编译门可复用此结论、离线环境需预置 TeX Live/MiKTeX 对应包。
+
+- **R8 已完成（给 R9 的话）**：①CI 校验器现 8 个脚本(新建 `check_freshness.py`，warn-only 旁路)+多个新 gate 点，全部本地+CI 双绿(run 27391794048)，PR #3 待并。②**R9 改 venues.csv 会触发新 gate**：check_freshness 读 venues.csv 的 `last_checked_date` 列(已 202 行有值)——R9 批量补卡时该列须填 `YYYY-MM` 或 `YYYY-MM-DD`，否则该卡不计入新鲜度统计(不报错，但漏统计)。PROGRESS 早记的"venues.csv 2 行 22 列(中国农业科学/作物学报，risk_note 含未加引号英文逗号)"R9 重做时修回 19 列；改 CSV 仍守"禁 csv 模块全量重写(压平多行)、禁无引号字段含英文逗号"两铁律。③**db09 新增项目须过 schema gate**：新建项目卡必含 14 字段且 decision_log/version_history/terminology 三件套齐全(check_databases 现强校验)，否则 CI 红。④db05/db06/db07 上量(R9 主攻)注意：check_databases 对 `resources_real.md` 与 `*_cards.md` 按 SCHEMA 强校验必填字段，db06 风格卡来源是 R6.5 声明的有 key 生图实跑(仍是 GAP)。⑤新增技能/脚本/模板/mode 仍须同步四件套——本轮模板表已全量 1:1 登记，R9 若加模板记得进 WHATS_INCLUDED「可套用模板与数据文件」表(check_skill_assets 防漂移会抓)。⑥ROUTER_EXAMPLES 现 51 例、28/28 必覆盖(check_entry_docs 已收紧到全集)——R9 不动路由则无需改；若动则保持 28/28。
+
+- **R8 现场口径(供后续轮一致性)**：①体量红线 500 行/1024 字符、软警戒 300 行(check_skills 常量带依据注释)；常驻 763 行、最重单文件 120 行，往常驻加内容前看这条余量。②安装清单(install.sh sibling)= `databases/code_assets/CONVENTIONS.md/ROUTER.md/ROUTER_EXAMPLES.md/MODE_REGISTRY.md`——技能正文用 `../` 相对引用仓库级文件**只能引这 6 个**，引别的(如 docs/)会被 check_skill_links 安装可达性 gate 判断为装后断链；要新引须先把目标加进 install.sh/ps1 的 sibling 链接。③selftest 离线纪律升级为 gate：脚本可读环境变量 `LIGHT_SELFTEST_OFFLINE=1` 主动跳过联网分支；新脚本 selftest 严禁打真网络、跑完须自清理产物(残留 gate 会抓)。④check_freshness 是 warn-only，CI 用 continue-on-error 接入，永不阻断——它是"每月跑一次出待办清单"的运维工具，不是硬门。
 
 ## 用户决策项登记（出现一个登记一个，R10 统一找用户拍板）
 
