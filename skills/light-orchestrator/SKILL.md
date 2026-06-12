@@ -28,21 +28,16 @@ user-invocable: false
 
 ## 0. 断点恢复协议（用户说“继续/刚断了”时先做）
 
-不要凭印象继续。先做最小恢复探针，拼出“当前事实状态”，再行动：
+不要凭印象继续。先做最小恢复探针拼出"当前事实状态"再行动（六探针全文见 `references/checkpoints.md`「断点恢复探针」节）：
 
-1. **工作区与版本**：读 `git status --short`、`git log --oneline -5`、当前分支、remote；若有 GitHub remote，再读最近 CI（如 `gh run list --branch <branch> --limit 3`）。
-2. **当前任务单**：读取当前 Todo/TodoWrite/todo 工具状态；若没有，就从 passport、db09、最近提交重建最小任务单。
-3. **项目台账**：优先读项目根目录 `.light/passport.yaml`；没有则读 `databases/db09-projects/projects/<project_name>/project_card.md`、`decision_log.md`、`version_history.md`。
-4. **对话/外部交接**：只在两种情况下检索 transcript：①用户明确给出 Claude/Codex/Hermes 对话记录路径；②缓存路径/会话标题/项目 slug 与当前仓库或 db09 项目名明确匹配。检索时限定关键词为当前项目名、仓库路径、最近任务关键词；无法证明相关就标 `transcript: unavailable`，不得猜测不存在的记录，不读无关项目会话。
-5. **产物与脏文件**：读相关 manifest / plan / diff / 未提交文件，判断“已完成但未提交”“已提交但未推送”“已推送等 CI”“CI 失败待修”等状态。
-6. **恢复摘要**：继续前先内部形成五项事实：`当前阶段`、`已完成`、`未完成`、`阻塞/风险`、`下一步最小动作`。若下一步有副作用（提交、推送、重写历史、删除文件），按范围纪律确认或确保用户已授权。
+1. **工作区与版本**：`git status --short`、`git log --oneline -5`、当前分支/remote；有 GitHub remote 再读最近 CI（`gh run list`）。
+2. **当前任务单**：读 Todo 工具状态；没有则从 passport/db09/最近提交重建。
+3. **项目台账**：优先读 `.light/passport.yaml`；没有则读 db09 项目卡/decision_log/version_history。
+4. **对话/外部交接**：仅当①用户给出对话记录路径②缓存路径/会话标题/项目 slug 与当前仓库或 db09 项目名明确匹配时才检索 transcript，限定当前项目关键词；无法证明相关标 `transcript: unavailable`，不猜不存在的记录、不读无关项目会话。
+5. **产物与脏文件**：读 manifest/plan/diff/未提交文件，判断"已完成未提交/已提交未推送/已推送等 CI/CI 失败待修"。
+6. **恢复摘要**：继续前内部形成五项事实——`当前阶段/已完成/未完成/阻塞风险/下一步最小动作`；下一步有副作用（提交/推送/重写历史/删除）按范围纪律确认。
 
-若 `gh`/CI/todo/transcript 等某个探针不可用，不把它当硬阻断；在恢复摘要里标 `unavailable`，并用其余可用证据（git、passport、db09、文件 diff、用户提供材料）继续恢复。
-
-恢复时严禁：
-- 只凭聊天记忆说“应该到 X 了”。必须有 git/passport/db09/todo/CI 等证据。
-- 重跑已完成阶段，除非用户要求或证据显示产物无效。
-- 看到未提交改动就直接覆盖；先读 diff，确认是本轮遗留还是用户新改动。
+某探针（gh/CI/todo/transcript）不可用就标 `unavailable`，用其余可用证据继续，不当硬阻断。**恢复时严禁**：只凭聊天记忆说"应该到 X 了"（必须有 git/passport/db09/todo/CI 证据）；重跑已完成阶段（除非用户要求或产物失效）；看到未提交改动直接覆盖（先读 diff 辨本轮遗留还是用户新改）。
 
 ## 1. 规划 pipeline
 
@@ -59,24 +54,9 @@ user-invocable: false
 
 ## 2. 阶段输入输出契约
 
-跨技能交接必须有可落盘工件，不能只靠一句聊天总结。**工件命名的单一真相源是 CONVENTIONS §6.1 阶段工件契约表**；下表为其执行视角镜像，若与 CONVENTIONS §6.1 不一致以后者为准。项目已有约定时以项目约定为准，但必须在 passport 里记录路径。
+跨技能交接必须有可落盘工件，不能只靠一句聊天总结。**工件命名的单一真相源是 CONVENTIONS §6.1 阶段工件契约表**，逐阶段"上游输入→标准产物/handoff artifact→下游"的执行视角镜像表见 `references/pipelines.md`「阶段工件契约」节（与 CONVENTIONS §6.1 不一致以后者为准）。项目已有约定时以项目约定为准，但必须在 passport 里记录路径。
 
-| 阶段 | 上游输入 | 标准产物 / handoff artifact | 下游 |
-|---|---|---|---|
-| m01 调研 | 研究问题、关键词、目标领域 | `docs/literature_review.md` + evidence table（文献、claim、来源链接、可信度） | m03/m04/m07/m10 |
-| m02 数据工程 | 数据文件/来源/任务定义 | `data_card.md` + `quality_report.md` + split/manifest | m05/a03/m06 |
-| m03 idea 生成 | 调研 gap、数据约束、用户偏好 | `idea_candidates.md`（候选、机制、风险、验证方式） | m04 |
-| m04 idea 审查 | 候选 idea | `critique_verdict.md` / scorecard / 是否回 m03 | m05 |
-| m05 研究方案 | 放行 idea、数据卡、方法卡 | `PROJECT_PLAN.md` + `experiments/experiment_matrix.md` | a03/m06 |
-| a03 实验代码 | 方案、数据、指标 | 可运行代码 + test/log + `run_manifest.md` | m06 |
-| m06 结果分析 | 原始结果、实验矩阵 | `claim_evidence_table.md` + 统计检验报告 + 图表建议 | m07/m09 |
-| m07/m08 写作润色 | claim/evidence、图表、引用 | `draft.md` / 修订稿 + GAP 台账 | m09/m10/m12 |
-| m09/m11 图表 | claim/evidence、规划卡、source_card | `projects/<project_name>/figures/manifest.md` + 图文件 + checks | m07/m12 |
-| m10 引用 | 草稿 citekey、候选文献 | `refs.bib` + `citation_audit.md`（真实性 + locator） | m12 |
-| m12 排版 | 稿件、图、bib、模板 | 编译日志 + final PDF/DOCX | m13/m14/提交 |
-| m14 返修 | 审稿意见、稿件、实验/图表 | `response_matrix.md` + response letter + 改稿 | m12/提交 |
-
-每个阶段结束时，把“产物路径 + 验证输出摘要 + 下一阶段输入”写入 `.light/passport.yaml`；缺工件就不能声称该阶段完成。
+每个阶段结束时，把"产物路径 + 验证输出摘要 + 下一阶段输入"写入 `.light/passport.yaml`；缺工件就不能声称该阶段完成。
 
 ## 3. 逐阶段执行 + 检查点
 
@@ -99,6 +79,8 @@ user-invocable: false
 - gate 写 PASS/FAIL/WARN 和证据来源。
 - 用户决策写 `choice` 与 `by: user`。
 - GAP / known_limitations 如实记录。
+
+> **下游消费**：各阶段 `artifacts:` 路径并集是 a07 consistency「变更广播」回扫的**权威"已产出材料"清单**（定义/术语一改，a07 对这份清单逐项回扫防过期）。故 artifact 路径必须及时、准确——漏登记的产物 a07 扫不到。无 passport 的轻项目，a07 退回读 db09 `version_history.md`。
 
 ## 5. 阶段交接输出（handoff → 会话衔接协议两件套）
 
