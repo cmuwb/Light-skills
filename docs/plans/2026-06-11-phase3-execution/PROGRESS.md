@@ -15,7 +15,7 @@
 | R6 | PPT 生图流水线 | 部分完成（见偏差） | 2026-06-12 | 2026-06-12 | `55674c2..f04c12b`（5 commit） | 绿（run 27386750356 三任务全 pass）；PR #1 → master |
 | R7 | 横切机制与瘦身 | 已完成 | 2026-06-12 | 2026-06-12 | `1cbfc52..961060c`（5 commit） | 绿（run 27389247644 三任务全 success）；PR #2 → master |
 | R8 | CI 门禁扩建 | 已完成 | 2026-06-12 | 2026-06-12 | `1c89e06..026d4b5`（7 commit） | 绿（run 27391794048 三任务全 success）；PR #3 → master |
-| R9 | 数据库规模化（批1/批2/批3） | 未开始 | | | | |
+| R9 | 数据库规模化（批1/批2/批3） | 进行中（批1已完成） | 2026-06-12 | | 批1 `1187a9d..543e0d0`（4 commit） | 批1 本地 8 门禁+51 selftest 全绿；待推送确认 CI |
 | R11 | 行为评测与自动化闭环 | 未开始 | | | | |
 | R12 | 安全、领域与微缺口增补 | 未开始 | | | | |
 | R10 | 门面工程与发布（收官） | 未开始 | | | | |
@@ -25,6 +25,7 @@
 - 常驻 11 技能 SKILL.md 总行数基线（R7 开工 2026-06-12 `wc -l` 量取）：**901 行**。目标 -15% → ≤765 行（须减 ≥136 行）。逐技能：file-reading 47 / memory-pm 91 / orchestrator 129 / backend-coding 89 / system-design 62 / frontend-design 99 / project-structure 90 / consistency 100 / self-review 65 / tool-selection 77 / research-ethics 52。（m16 slides 非常驻，不计入此基线。）
   - **R7 收尾实测：901 → 763 行（-15.3%，达标）**。逐技能终值：file-reading 42 / memory-pm 81 / orchestrator 111 / backend-coding 57 / system-design 50 / frontend-design 83 / project-structure 80 / consistency 63 / self-review 73(+8) / tool-selection 71 / research-ethics 52。瘦身手法=细节下沉 references/examples、多 bullet 列表合并为少行、跨技能重复内容指认单一真相源后删副本；self-review 因新增「分级执行档」(R7.5)净 +8，属能力增量非冗余。**未删任何能力**：下沉内容全部进对应 references（a03 code_examples.md、m08 examples/full_pipeline_walkthrough.md、orchestrator pipelines.md 契约表+checkpoints.md 恢复探针、file-reading references.md 视频工具链等）。
 - db05/db06/db07 真实卡数基线：约 1-2 / 1-2 / 2（审计 2026-06-11 口径）
+  - **R9 开工实测（2026-06-12）**：迁移/扩展后基线其实是 14 / 14 / 19（审计口径只数了 seed 卡，未计入 R5 期已迁入 resources_real/design_system_cards/figure_advanced_cards 的实体卡）。**批1 收尾**：db05 14→18、db06 14→16、db07 19→31，三库均 ≥15 达标；新增 18 张卡，每卡带来源+核验日期，抽查 5/18(28%) 来源一致（_verification_log/R9-batch1-card-spotcheck.md）。
 - ROUTER_EXAMPLES 必覆盖基线：7/28
 
 ## 偏差日志（只追加，不删改）
@@ -77,6 +78,10 @@
 - [2026-06-12] R8.2 暴露存量漂移 — WHATS_INCLUDED 模板表旧写 `experiment-matrix.md`(连字符)，实际文件 R1.4 已改 `experiment_matrix.md`(下划线)。模板 gate 一开即抓，已修；并把原 6 行高亮表升级为 40 个模板全量 1:1 登记(表末保留 scripts 配套/assets/db 文件高亮行，正则只认 `templates/` 行进校验)。
 - [2026-06-12] R8 校验器计数口径 — 判据"7→≥10 个校验器"：独立脚本 7→8(新建 check_freshness)；但新增 gate 点远超 3 个(路由 28/28、README 结构、模板防漂移、db09 schema、体量、离线性、产物残留、安装可达性)。按"独立 gate 点"计 ≥10 达标；freshness 为 warn-only 旁路不计硬门。
 - [2026-06-12] R8.7 离线 gate 实现档 — 按计划取折中方案：环境哨兵 `LIGHT_SELFTEST_OFFLINE=1` + 代理指黑洞(127.0.0.1:9) + 文档纪律。能挡 proxy 感知的 HTTP 客户端(实测 urlopen 被挡)，挡不住裸 socket 连硬编码 IP——已在 runner docstring 留 UPGRADE 注释(socket 层 audit hook/seccomp/netns 为后续升级路径)。
+- [2026-06-12] R9批1 — 计划/审计说 db05/06/07 真实卡"各仅 1-2 张"；开工实测基线实为 14/14/19（审计只数了各库 *_cards.md 的 seed，未计 R5 期已迁入 resources_real.md / design_system_cards.md / figure_advanced_cards.md 的实体卡）。按现实处理：批1 仍按"补到 ≥15"目标推进并实打实新增（db05+4/db06+2/db07+12），不因基线已达标而跳过——谱系/场景/图型缺口才是真需求。db07 早已 >15，但 g1-g9 自家图与箱线/数据集示意/组图谱系缺口仍补齐（计划明确点名）。
+- [2026-06-12] R9批1 — YAML 填卡两次踩"值内英文冒号+空格"陷阱：db05 `backdrop-filter: blur()`、db07 `区别于混淆矩阵: 这里`，PyYAML 报 `mapping values are not allowed here`。check_databases 当场抓。修法=去掉冒号后空格(`backdrop-filter:blur()`)或换破折号。教训沿用 R4 卡填经验：卡内值含英文冒号须紧跟非空格或加引号。
+- [2026-06-12] R9批1 — db06 风格卡来源诚信：R6.5 声明"每出一套 imggen deck 落一张 db06 风格卡"，但有 key 端到端实跑仍是 GAP(R6.6#4)。批1 db06 两卡(开题/课程教学)**不冒充 imggen 来源**——色板/字体取自已 selftest 验证的 themes.py(academic/light_elegant)，版式逻辑参照公开来源(Beamer 矩阵/CMU 教学，HTTP 200)，并在卡文件头与抽查日志显式声明此边界。imggen 实跑沉卡待 R6 补做。
+- [2026-06-12] R9批1 — db07 九图反哺卡衔接 JOURNAL_SPECS 时，核实真相源在 light-figure-**drawing**(非 figure-planning) 的 `scripts/figure_export.py`，实测值 IEEE 单栏 88.9mm(≈3.5in)/Nature 89-183mm/Science 55-120-183mm；卡内衔接段按实测值与正确技能名写，未凭"m11"标签想当然。
 
 ## 留给下一轮的话
 
@@ -105,6 +110,9 @@
 - **R8 已完成（给 R9 的话）**：①CI 校验器现 8 个脚本(新建 `check_freshness.py`，warn-only 旁路)+多个新 gate 点，全部本地+CI 双绿(run 27391794048)，PR #3 待并。②**R9 改 venues.csv 会触发新 gate**：check_freshness 读 venues.csv 的 `last_checked_date` 列(已 202 行有值)——R9 批量补卡时该列须填 `YYYY-MM` 或 `YYYY-MM-DD`，否则该卡不计入新鲜度统计(不报错，但漏统计)。PROGRESS 早记的"venues.csv 2 行 22 列(中国农业科学/作物学报，risk_note 含未加引号英文逗号)"R9 重做时修回 19 列；改 CSV 仍守"禁 csv 模块全量重写(压平多行)、禁无引号字段含英文逗号"两铁律。③**db09 新增项目须过 schema gate**：新建项目卡必含 14 字段且 decision_log/version_history/terminology 三件套齐全(check_databases 现强校验)，否则 CI 红。④db05/db06/db07 上量(R9 主攻)注意：check_databases 对 `resources_real.md` 与 `*_cards.md` 按 SCHEMA 强校验必填字段，db06 风格卡来源是 R6.5 声明的有 key 生图实跑(仍是 GAP)。⑤新增技能/脚本/模板/mode 仍须同步四件套——本轮模板表已全量 1:1 登记，R9 若加模板记得进 WHATS_INCLUDED「可套用模板与数据文件」表(check_skill_assets 防漂移会抓)。⑥ROUTER_EXAMPLES 现 51 例、28/28 必覆盖(check_entry_docs 已收紧到全集)——R9 不动路由则无需改；若动则保持 28/28。
 
 - **R8 现场口径(供后续轮一致性)**：①体量红线 500 行/1024 字符、软警戒 300 行(check_skills 常量带依据注释)；常驻 763 行、最重单文件 120 行，往常驻加内容前看这条余量。②安装清单(install.sh sibling)= `databases/code_assets/CONVENTIONS.md/ROUTER.md/ROUTER_EXAMPLES.md/MODE_REGISTRY.md`——技能正文用 `../` 相对引用仓库级文件**只能引这 6 个**，引别的(如 docs/)会被 check_skill_links 安装可达性 gate 判断为装后断链；要新引须先把目标加进 install.sh/ps1 的 sibling 链接。③selftest 离线纪律升级为 gate：脚本可读环境变量 `LIGHT_SELFTEST_OFFLINE=1` 主动跳过联网分支；新脚本 selftest 严禁打真网络、跑完须自清理产物(残留 gate 会抓)。④check_freshness 是 warn-only，CI 用 continue-on-error 接入，永不阻断——它是"每月跑一次出待办清单"的运维工具，不是硬门。
+
+- **R9 批1 已完成（给批2 的话）**：①三库均 ≥15 达标(db05 18/db06 16/db07 31)，8 门禁+51 selftest 全绿，批1 commit 区间 `1187a9d..543e0d0`(含本 PROGRESS 提交)。②**批2 db01 改 venues.csv 三铁律照旧**：禁 csv 模块全量重写(压平多行)、禁无引号字段含英文逗号、`last_checked_date` 列填 `YYYY-MM(-DD)`(check_freshness 读它)；先修中国农业科学/作物学报两行的 22 列→19 列(给 risk_note 加引号)。ai_policy 字段口径=risk_note 内 `ai_policy=` 子串(CONVENTIONS §3)，已实查 12 家，批2 扩到 ≥50 卡有值。③**填卡 YAML 陷阱**(批1 踩两次)：卡内值含英文冒号须紧跟非空格或加引号，否则 PyYAML 报 `mapping values are not allowed here`，check_databases 当场抓。④新卡铁律=真实来源链接+核验日期、OpenAlex 不盲取第一条(比对年份/被引/DOI)、禁凭记忆填卡；抽查 ≥20% 落 _verification_log。⑤新增卡文件直接放各库目录、在 README「真实资源文件」节加链接即可，无需动技能四件套(本批未加技能/脚本/模板/路由)。
+- **R9 批1 给批3 的话**：palette.json 跨库机制(R9.7)——db05 的 `design_tokens.template.json`(DTCG 视觉 SSOT)已是色值锚点真相源，a05/db07 衔接段均已指认它；批3 落 palette.json 时与之字段对齐，dairygoat 项目(databases/db09-projects/projects/dairygoat-detect-track)建真实实例，m11(figure-drawing)/m16(slides)/a05 三处+a07 加"读取项目 palette.json"指针。db07 九图反哺卡的 JOURNAL_SPECS 衔接段已写明栏宽真相源=light-figure-drawing/figure_export.py。
 
 ## 用户决策项登记（出现一个登记一个，R10 统一找用户拍板）
 
