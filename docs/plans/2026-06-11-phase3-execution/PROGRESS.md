@@ -12,7 +12,7 @@
 | R3 | 中文链路专项 | 已完成 | 2026-06-11 | 2026-06-11 | `89627e2..74a1bb0`（4 commit） | 绿（run 27346343103 三任务全 success） |
 | R4 | 合规与生态吸收 | 已完成 | 2026-06-11 | 2026-06-11 | `5c7d2e1..a5a088e`（7 commit） | 绿（run 27353169946 success） |
 | R5 | 资产补全 | 已完成 | 2026-06-11 | 2026-06-11 | `94f237e..cc3fd19`（9 commit） | 本地 5 门禁全绿；48 脚本 selftest 全 PASS；待推送确认 CI |
-| R6 | PPT 生图流水线 | 未开始 | | | | |
+| R6 | PPT 生图流水线 | 部分完成（见偏差） | 2026-06-12 | 2026-06-12 | 待填（本轮 commit 区间） | 本地 6 门禁全绿；slides 3 脚本 selftest 全 PASS；待推送确认 CI |
 | R7 | 横切机制与瘦身 | 未开始 | | | | |
 | R8 | CI 门禁扩建 | 未开始 | | | | |
 | R9 | 数据库规模化（批1/批2/批3） | 未开始 | | | | |
@@ -60,6 +60,10 @@
 - [2026-06-11] R5.7 — a04 references 是 7 个常驻技能里唯一没有研究日期时效锚标头的(计划点名)，已补"研究日期 2026-06 + 落地前以所装版本官方文档为准"。
 - [2026-06-11] R5.8 — m15↔m11 专利附图断链:m15 原本只写"交 m11 绘制"无具体规范、m11 无对应节。已在 m11 references 新增「专利附图规范」节(图号/标记线/黑白线条/流程图框图)作真相源，m15 SKILL 两处 + m11 SKILL 衔接段双向互指该节。专利附图规范以 CNIPA 现行审查指南为准,本节为通用要点未逐条核对最新版次(已注明),最终须代理师审。
 - [2026-06-11] R5.9 — scaffold 目录有本地 `.pytest_cache/`(被 .gitignore:7 覆盖、未追踪),属跑测试的本地产物非仓库内容,未提交。pyproject 加 [tool.mypy] 后用 tomllib 实测可解析。
+- [2026-06-12] R6.1 — 三家生图 API 已联网核实(2026-06-12)端点/参数/尺寸/透明支持,逐条留痕 `_verification_log/R6-imggen-api.md`并回填 references.md「生图后端」节。关键真相:①透明背景**仅 OpenAI gpt-image 有显式 `background:transparent`**,Gemini/Seedream 无开关(标 GAP,做透明图标优先 OpenAI 或 PIL 去底);②三家 seed 都不稳(OpenAI/Gemini 官方未列,Seedream 5.0 系列亦未明列),风格一致性改靠唯一 style_anchor+图生图参考,不靠 seed;③Seedream `watermark` 默认 true,封装层已默认置 false(否则 PPT 元素带"AI 生成"水印);④Gemini 图像走通用 generateContent 无独立 images 端点;⑤OpenAI size 仅固定档,16:9 用 1536x1024 近似。
+- [2026-06-12] R6.6#4 — `GAP：待实测(2026-06-XX)`:有 key 端到端实跑(≥5 页 deck、五阶段产物齐全、QA 两项新检查、db06 沉风格卡)**未做**。执行环境探测到平台级 `OPENAI_API_KEY`,但真实生图请求会向第三方传 prompt 且计费,属外部副作用,未经用户显式授权不触发(与 selftest 离线纪律一致)。无 key 装配链(R6.6#3)已端到端实测 PASS:3 页 deck_spec 模板 + imagegen.py mock 占位 PNG → assemble_from_spec.py 产 3 页可编辑 pptx,重开校验 6 原生文本框(=title/body 元素数,守边界三文本未栅格化)+ 4 图片 + 0 warning。
+- [2026-06-12] R6 跨技能引用 — 又踩 check_skill_links 陷阱(PROGRESS 已多次记):在 a05/a10/m17 用反引号写 m16 的 `references/imggen_pipeline.md` 被当本技能内部路径报缺失,全部加 `light-slides/` 前缀修正。imagegen.py mock selftest 在 Windows 下 `Image.open` 不 `.load()` 会锁文件致 TemporaryDirectory 清理失败(WinError 32),改 `with Image.open() as im: im.load()` 释放句柄。
+- [2026-06-12] R6.2 — assemble_from_spec.py 装配 chart 元素**只 add_picture 真数据图(figures/),绝不在装配层生图**(守边界一);资产缺失画占位框+warn 不静默跳过(诚信纪律,与 to_pdf.py 同);themes.py 跨目录 import 失败时用内置兜底色板,保证离线 selftest 不依赖 import 路径。
 
 ## 留给下一轮的话
 
@@ -80,6 +84,8 @@
 - **R4 现场口径(供 a10/m07/m11/m16 后续轮引用一致性)**：AI 政策两类口径——期刊=AI 生成图像禁止+文本须披露；会议=LLM 允许+作者全责+不得署名。论文图严禁生成式 AI(figure_integrity「AI 生成图像政策」节为真相源)，R6 PPT 生图流水线只服务 PPT/前端、严禁进论文图链路(figure_integrity↔slides 已双向互指)。撤稿判定真相源=research-ethics/check_retractions.py 的 FLAG_TYPES，citation/verify_refs.py 内联同源(改判定常量须两处同步)。
 - **R5 已完成（给 R6 的话）**：R5 新增 3 个脚本(plan_lint/venue_signal/er_diagram)，技能数仍 28、未动路由，故只需同步 WHATS_INCLUDED(已登记)，四件套其余无需动(check_entry_docs/check_skill_assets 已绿，48 脚本全 selftest)。零脚本技能(m13/a04)与零模板关键交付物(m03/m09)均已清零。R6(PPT 生图流水线)按 06 号文件做，注意 R4 现场口径"PPT 生图严禁进论文图链路"。
 - **R5 现场口径(供后续轮引用一致性)**：①功效分析数值是 statsmodels 0.14.5 实跑(d=0.3/0.5/0.8 → 每组 176/64/26)，留痕 `_verification_log/R5-04-power-analysis.md`，改动须重跑核验；②paper2code 已按 I-1 以 references 形式并入 m05(复现五步协议)，非独立技能；③配对检验识别(m06 analyze_results --paired-by)与切片分析是结果分析两大新纪律，配对效应量用 d_z 不可与独立 d 混比；④数据增强红线"先划分再增强、只增训练折"，标注 IAA 复用 code_assets/agreement.py、标签错误检测用 cleanlab(找候选→人工裁定不全自动删)；⑤专利附图规范真相源在 m11 references「专利附图规范」节(m15↔m11 双向互引)，黑白线条不套论文配色；⑥静态类型档位:科研代码 pyright basic 起步/库代码 mypy --strict，scaffold pyproject 已带 [tool.mypy]。
+- **R6 已完成（给 R7 的话）**：R6 是 m16 内部新增 mode(技能数仍 28),新增 2 脚本(imagegen/assemble_from_spec,共 50 脚本全 selftest)+1 模板(deck_spec.yaml)+1 references(imggen_pipeline.md),mode 数 8→10、有 mode 技能 3→4。四件套已同步:MODE_REGISTRY(m16 两 mode + 计数句 + footer 去 m16)、WHATS_INCLUDED(2 脚本+1 模板+计数 45→50)、check_entry_docs/check_skill_assets 已绿;ROUTER/ROUTER_EXAMPLES 未动(m16 路由触发词没变,本轮没加新触发场景)。**R7(横切机制与瘦身)注意**:①R7 要量取常驻 11 技能 SKILL.md 行数基线——m16 SKILL 本轮**只增 5 行**(两 mode 分流段),细节全下沉 imggen_pipeline.md(常驻瘦身纪律已遵守),量基线时把这 5 行算进去;②瘦身若动 m16 SKILL,别把两 mode 分流段删了(MODE_REGISTRY/check_entry_docs 依赖"两 mode"在正文可见)。
+- **R6 现场口径(供后续轮/有 key 实跑引用一致性)**：①三家生图 API 真相源=`_verification_log/R6-imggen-api.md`(改端点同步 references.md「生图后端」节 + imagegen.py ENDPOINTS 常量,三处);②透明背景仅 OpenAI 原生,seed 三家都不稳→风格靠唯一 style_anchor(真相源在 deck_spec.yaml),Seedream 水印默认 true 必关;③三条硬边界(数据图不生图/论文图禁生图/文本不烤进图)三处互引锚点=m16 imggen_pipeline.md ↔ m11 figure_integrity「与 R6 生图流水线的边界」节 ↔ a10 SKILL §5,改任一处口径须同步三处;④**R6.6#4 有 key 端到端实跑是 GAP**:配 OPENAI/GEMINI/ARK key 后按 06 号文件 R6.6 第 4 条跑≥5 页 deck,回填 imggen_pipeline.md「实测记录」节 + 沉一张 db06 风格卡 + 留痕 `_verification_log/`;db06 风格卡是 R9 db06 上量的主要真实卡来源(R6.5 已声明联动)。
 
 ## 用户决策项登记（出现一个登记一个，R10 统一找用户拍板）
 
