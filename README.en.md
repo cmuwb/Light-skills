@@ -8,6 +8,8 @@
 
 Every step of research, from literature search to rebuttal, has a dedicated skill · Works with Claude Code & Codex
 
+**28 skills · 9 knowledge bases · 51 runnable scripts · 40 templates · 318 knowledge cards · never fabricates**
+
 <br/>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -26,7 +28,7 @@ Every step of research, from literature search to rebuttal, has a dedicated skil
 
 ## Contents
 
-[What is Light](#what-is-light) · [Why use it](#why-use-it) · [Quick start](#-install) · [Skills](#-skills-at-a-glance) · [Project flow](#a-full-project-flow) · [Case study](#-case-study) · [Figure gallery](#-figure-gallery) · [Knowledge bases](#-knowledge-bases) · [API keys](#-about-api-keys) · [FAQ](#-faq) · [Contributing](#-contributing) · [Citation](#-citation)
+[What is Light](#what-is-light) · [Why use it](#why-use-it) · [Recommended setup](#-recommended-setup-best-experience) · [Quick start](#-install) · [Skills](#-skills-at-a-glance) · [Project flow](#a-full-project-flow) · [Case study](#-case-study) · [Figure gallery](#-figure-gallery) · [Knowledge bases](#-knowledge-bases) · [API keys](#-about-api-keys) · [FAQ](#-faq) · [Contributing](#-contributing) · [Citation](#-citation)
 
 ---
 
@@ -49,8 +51,49 @@ Most "research AI" stops at chat. Light is different in three hard ways:
 | **Cohesion** | One-off answers, disjoint | 28 skills along one line, 9 shared knowledge bases |
 | **Quality** | One pass | Adversarial self-check + authoritative cross-validation |
 | **Memory** | Forgets on close | Cross-session project memory |
+| **Continuity** | Re-explain everything when context breaks | Proactive handoff card + startup prompt; a fresh chat picks up seamlessly |
 
 For: undergrads, grad students, and independent researchers who want to turn a project into a **real paper / copyright / patent / contest result** — especially anyone short on advisor support who needs a reliable companion across the whole pipeline.
+
+### Compared to similar open-source skill packs
+
+The ecosystem has several strong agent skill packs, each with its own focus. Light's edge is **not skill count** (it doesn't lead on numbers) but the **combination of forms** — a closed research throughline, self-maintained traceable knowledge bases, honesty mechanisms, bilingual pipeline, session handoff, and behavior evals, all at once:
+
+| Dimension | **Light** | anthropics/skills | K-Dense scientific-agent-skills | ScienceIntelligence/ResearchSkills |
+|---|---|---|---|---|
+| **Closed throughline** | 28 skills close the research loop (search→data→idea→plan→experiment→analysis→writing→figures→submission→rebuttal; patents/PPT/contest in parallel) + orchestrator + checkpoint recovery | 17 skills, general doc/artifact tools, no research line | 146 skills (mostly library wrappers); multi-step pipelines but no fixed research-stage line | Organized by discipline, no end-to-end paper workflow |
+| **Runnable assets** | 51 scripts all with offline selftest + 40 templates + code_assets verified digit-for-digit vs scipy/sklearn, CI-checked | scripts per skill, no unified offline self-test gate | 70+ Python packages, 100+ database integrations (wrapper route) | knowledge/methods + memory templates |
+| **Knowledge bases** | 9 shared bases (318 cards, all traceable) | none | integrates 100+ external science databases (live query, not self-maintained cards) | no standalone base (knowledge lives in skills) |
+| **Honesty mechanisms** | honesty floor in the conventions + 3-state citation/retraction checks + injection discipline + adversarial self-check | none seen in README | no anti-fabrication guardrails seen in README | none seen in README |
+| **Chinese pipeline** | full bilingual line (Chinese venue search / GB/T 7714 / Chinese writing), CI guards it | none | no Chinese seen in README | has a Chinese README, but no end-to-end Chinese output pipeline |
+| **Session handoff** | global handoff protocol (proactive seeding + card + startup prompt) + passive recovery | none | none seen in README | memory templates (memory-type, not a proactive cross-session handoff protocol) |
+| **Behavior evals** | 44-task golden set + Tier1 baseline (48/48, 8/8 fabrication-bait red lines held) + monthly freshness automation | none | none seen in README | none |
+
+<sub>Compared on **2026-06-12**, from each repo's README/tree (anthropics/skills `5754626` 17 skills · K-Dense `dab7aa6` 146 skills · ScienceIntelligence `ada6c05`). Competitors keep evolving; "none/not seen" means that repo's README/tree showed no such capability on that date — stating facts, not disparaging. Trail: [`_verification_log/R12-08-competitor-matrix.md`](_verification_log/R12-08-competitor-matrix.md).</sub>
+
+### See it actually run
+
+No filler demo GIF — here's the proof directly: a paper built **end-to-end with Light**, [`resampling-calibration-study`](projects/resampling-calibration-study/), walks search→idea→adversarial critique→real experiments→figures→a 6-page IEEE paper. [The PDF opens](projects/resampling-calibration-study/paper/main.pdf); the 9 figures are in the [gallery below](#-figure-gallery). Every number comes from a real run. A reproducible offline demo recording script for the skill scripts is at [`assets/demo.tape`](assets/demo.tape).
+
+## 🏆 Recommended setup (best experience)
+
+Light runs in any Claude Code / Codex environment; for the best experience, this combo:
+
+| Item | Recommended | Notes |
+|---|---|---|
+| Harness | **Claude Code** / **Codex** | both one-command installs, skills auto-trigger |
+| Model | **Claude Opus 4.8**, **GPT 5.5** | backup: DeepSeek V4 Pro etc. |
+| Image model (strongly suggested) | any of **GPT Image 2** / **Nanobanana 2** / **Seedream 5.0** | unlocks the PPT image pipeline (`imggen-enhanced` mode of [`light-slides`](skills/light-slides/SKILL.md)); without it, falls back to the programmatic route |
+
+> No image key, and every core feature still works. Add one, and your defense/pitch decks jump a tier. Generated images serve PPT/frontend visuals only — **never the paper-figure pipeline** (journal policy).
+
+**🎨 PPT image pipeline.** The `imggen-enhanced` mode of [`light-slides`](skills/light-slides/SKILL.md) turns a `deck_spec.yaml` contract → image backend (OpenAI gpt-image / Gemini Nano Banana / Volcengine Seedream, one wrapper, no silent fake-success without a key) → real-data figure overlay → reassembled into an **editable pptx** (native text boxes/tables, no text baked into images). Without a key it auto-falls back to programmatic themed layouts; nothing is lost.
+
+<details>
+<summary><b>Known limits of low-tier / backup models</b></summary>
+
+Low-tier / backup models (e.g. Claude Haiku or lightweight third-party models) hold the skills' honesty red lines (no fabrication, no overclaim, respect boundaries) — a direct payoff of writing red lines into SKILL text rather than relying on model judgment. But testing (2026-06-12, Haiku 4.5 on 8 fabrication-bait tasks, red lines 8/8 held) shows they lean toward "reciting the discipline" over "running scripts to produce evidence", and don't proactively question wrong premises a user gives (e.g. environment/state). **For heavy outputs or tasks needing multi-step real verification or proactive investigation, use a main-tier model (Opus 4.8 / GPT 5.5); low-tier fits light, single-step, clear-red-line tasks.** (Third-party backups like DeepSeek V4 Pro have no API in this environment and were not tested.)
+</details>
 
 ## 🚀 Install
 
@@ -65,6 +108,8 @@ For: undergrads, grad students, and independent researchers who want to turn a p
 git clone https://github.com/Light0305/Light-skills.git
 cd Light-skills
 ```
+
+> **GitHub is the only official source.** `github.com/Light0305/Light-skills` is Light's sole maintained source. Light is also listed on third-party skill marketplaces (e.g. skills.sh) for discoverability, but sync and integrity of any third-party-distributed copy are not guaranteed — install and update from this repo.
 
 **2. Run the installer:**
 
@@ -113,7 +158,7 @@ The 28 skills split in two: **17 manual skills** you can invoke by name with `/`
 | 📈 Figures | `light-figure-planning` ⇄ `light-figure-drawing` | Plan what to chart and where ↔ draw it to publication spec per journal |
 | 🔖 Cite & typeset | `light-citation` · `light-typesetting` | Verify DOIs, generate refs in any format · typeset in LaTeX/Word, export PDF |
 | 📮 Submit & rebut | `light-venue-matching` · `light-review-rebuttal` | Target venues by tier (reach/safe/floor) · mock-review, rebut point by point |
-| 🏆 Outputs | `light-ip-application` · `light-slides` · `light-competition` | Write patents/copyright · build defense & pitch decks · prep contest materials |
+| 🏆 Outputs | `light-ip-application` · `light-slides` · `light-competition` | Write patents/copyright · build defense & pitch decks (optional `imggen-enhanced` image pipeline) · prep contest materials |
 
 ### Always-on skills · background (11)
 
@@ -137,6 +182,13 @@ No need to invoke — they kick in automatically on relevant tasks and guard qua
 
 Skills aren't isolated tools — they hand off along one research throughline:
 
+<p align="center">
+  <img src="assets/pipeline.svg" alt="Light research throughline: 17 manual skills closing the loop + 11 always-on skills backstopping" width="860">
+</p>
+
+<details>
+<summary>Plain-text flow (terminal-friendly)</summary>
+
 ```
 kickoff → literature-search find direction & gaps → data-engineering health-check & leakage-safe split
         → idea-generation ⇄ idea-critique propose, adversarial critique, loop until solid
@@ -145,8 +197,10 @@ kickoff → literature-search find direction & gaps → data-engineering health-
         → paper-drafting ⇄ paper-polishing draft & polish
         → citation / figure-drawing / typesetting verify refs, render, typeset
         → venue-matching pick a venue → review-rebuttal rebuttal & revision
-        → ip-application patents · slides defense deck · competition contest materials
+        → ip-application patents · slides defense deck (optional imggen image branch) · competition contest materials
 ```
+
+</details>
 
 Throughout, the 11 always-on skills backstop it: `file-reading` ingests any material, `memory-pm` remembers where you left off, `orchestrator` plans cross-stage pipelines, `consistency` keeps materials aligned, `self-review` self-checks before every output, `research-ethics` holds the integrity floor.
 
@@ -238,8 +292,9 @@ Light-skills/
 ├── databases/          # 9 knowledge bases (db01–db09)
 ├── code_assets/        # adversarially-verified stats & metrics code, CI-checked
 ├── projects/           # end-to-end showcase projects
+├── evals/              # behavior eval golden set (44 tasks + Tier1 baseline, quarterly rolling)
 ├── _verification_log/  # secondary verification trail (API fields, tool behavior, source checks)
-├── assets/             # logo and images
+├── assets/             # logo, pipeline diagram, social preview (with reproducible generators)
 ├── install.ps1 / .sh   # one-command installer (idempotent)
 ├── CONVENTIONS.md      # global conventions (honesty floor, output norms)
 ├── ROUTER.md           # skill routing logic
@@ -320,6 +375,10 @@ Light is built and polished by one person in spare time. If it saves you time or
 - **Usage & discussion** — head to [Discussions](https://github.com/Light0305/Light-skills/discussions)
 - **Contributions** — fork and send a Pull Request
 - **Email** — 1833058953@qq.com
+
+## 📈 Star history
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Light0305/Light-skills&type=Date)](https://star-history.com/#Light0305/Light-skills&Date)
 
 ## 📌 Citation
 
