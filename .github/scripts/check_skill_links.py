@@ -8,6 +8,11 @@ CI scope:
   for explicit Markdown/HTML local links that resolve into those internal paths;
 - validate optional SKILL.md frontmatter linked_files entries when present;
 - reject path traversal for protected internal references;
+- install-reachability (R8.8): any concrete ``../``-relative reference in a SKILL.md
+  that points at a repo-level file/dir must have its top-level target present in the
+  installer manifest (databases / code_assets / shared top-level docs), so the path
+  still resolves after installing into ~/.claude/skills or ~/.agents/skills. Pure
+  textual mentions (no relative path), e.g. orchestrator "见 CONVENTIONS §5", are allowed;
 - skip generic directory mentions, globs, placeholders, and selftest-generated
   example output directories so the gate catches real drift without blocking on
   documentation examples.
@@ -32,6 +37,13 @@ TARGET_DIRS = {"references", "templates", "examples", "assets", "scripts"}
 TARGET_ROOT_FILES = {"references.md"}
 EXPECTED_SKILLS = 28
 
+# R8.8 安装清单：install.sh 把这些仓库级 sibling 链进 ~/.../skills/ 旁边，
+# 技能用 ../../<这些> 的相对路径装后才可达。databases/code_assets 是目录、其余是顶层文档。
+# 解析自 install.sh 以免硬编码漂移（解析失败则退回这份内置默认）。
+DEFAULT_INSTALL_MANIFEST = {"databases", "code_assets", "CONVENTIONS.md", "ROUTER.md", "ROUTER_EXAMPLES.md", "MODE_REGISTRY.md"}
+# 相对仓库根的引用：``../`` 开头、最终落到仓库内某文件/目录的具体路径 token。
+RELATIVE_REPO_RE = re.compile(r"(?<![\w./-])((?:\.\./)+[A-Za-z0-9_][A-Za-z0-9_./-]*)")
+
 # Standard Markdown links/images and simple HTML href/src attributes.
 MARKDOWN_LINK_RE = re.compile(r"!??\[[^\]\n]*(?:\][^\[\]\n]*)*\]\(([^)\n]+)\)")
 HTML_ATTR_RE = re.compile(r'''\b(?:href|src)=["']([^"']+)["']''', re.IGNORECASE)
@@ -53,6 +65,7 @@ errors: list[str] = []
 warnings: list[str] = []
 checked_paths: list[tuple[str, str, str]] = []
 skipped_reasons: Counter[str] = Counter()
+install_refs_checked = 0
 
 
 def split_frontmatter(text: str) -> tuple[str, str]:
@@ -62,6 +75,29 @@ def split_frontmatter(text: str) -> tuple[str, str]:
         if end != -1:
             return text[4:end], text[end + 5 :]
     return "", text
+
+
+def load_install_manifest() -> set[str]:
+    """Parse install.sh for the repo-level sibling targets it links next to skills/.
+
+    Looks for ``safe_link_dir "$parent/databases" ...`` style sibling dirs and the
+    ``for doc in CONVENTIONS.md ROUTER.md ... ; do`` shared-doc loop. Falls back to
+    DEFAULT_INSTALL_MANIFEST if install.sh is missing or unparseable.
+    """
+    install_sh = ROOT / "install.sh"
+    if not install_sh.exists():
+        return set(DEFAULT_INSTALL_MANIFEST)
+    text = install_sh.read_text(encoding="utf-8", errors="ignore")
+    manifest: set[str] = set()
+    for m in re.finditer(r'safe_link_dir\s+"\$parent/([A-Za-z0-9_.-]+)"', text):
+        manifest.add(m.group(1))
+    doc_loop = re.search(r"for\s+doc\s+in\s+([A-Za-z0-9_.\s-]+?);\s*do", text)
+    if doc_loop:
+        manifest.update(tok for tok in doc_loop.group(1).split() if tok)
+    return manifest or set(DEFAULT_INSTALL_MANIFEST)
+
+
+INSTALL_MANIFEST = load_install_manifest()
 
 
 def strip_local_target(raw: str) -> str | None:
@@ -259,10 +295,52 @@ def check_frontmatter_linked_files(skill_dir: pathlib.Path, seen: set[tuple[str,
             )
 
 
+def check_install_reachability(skill_dir: pathlib.Path, seen: set[str]) -> None:
+    """R8.8: concrete ../-relative repo references in SKILL.md must be install-reachable.
+
+    For each backtick token like ``../../code_assets/stats_tests.py`` or
+    ``../../databases/db09-projects/...``: strip the leading ``../`` segments, take the
+    first remaining top-level segment, and require it to be in the installer manifest
+    (so the path still resolves after install). Also require the target to exist in the
+    repo today. Placeholder/glob tokens are skipped.
+    """
+    global install_refs_checked
+    skill_file = skill_dir / "SKILL.md"
+    text = skill_file.read_text(encoding="utf-8", errors="ignore")
+    rel_doc = skill_file.relative_to(ROOT).as_posix()
+    for span_match in CODE_SPAN_RE.finditer(text):
+        span = span_match.group(1).replace("\\", "/")
+        for m in RELATIVE_REPO_RE.finditer(span):
+            token = m.group(1).rstrip("/")
+            # 占位/通配/模板片段不算具体引用
+            if any(marker in token for marker in PLACEHOLDER_MARKERS):
+                continue
+            remainder = re.sub(r"^(?:\.\./)+", "", token)
+            if not remainder:
+                continue
+            top = remainder.split("/", 1)[0]
+            dedupe_key = f"{rel_doc}::{token}"
+            if dedupe_key in seen:
+                continue
+            seen.add(dedupe_key)
+            install_refs_checked += 1
+            if top not in INSTALL_MANIFEST:
+                errors.append(
+                    f"{rel_doc}: 相对引用 {token!r} 的顶层目标 {top!r} 不在安装清单 "
+                    f"{sorted(INSTALL_MANIFEST)}，装到 ~/.claude/skills 后将断链"
+                    f"（改纯文字提及，或把 {top!r} 加入 install.sh/ps1 的 sibling 链接）"
+                )
+                continue
+            # 安装清单内的目标，还须在仓库里真实存在（去掉占位后定位）
+            clean = remainder.split("#", 1)[0].split("?", 1)[0]
+            target = (ROOT / clean)
+            if not target.exists():
+                errors.append(f"{rel_doc}: 相对引用 {token!r} 在仓库内不存在: {clean}")
+
+
 skill_dirs = sorted(path.parent for path in SKILLS.glob("light-*/SKILL.md"))
 if len(skill_dirs) != EXPECTED_SKILLS:
     errors.append(f"expected {EXPECTED_SKILLS} Light skills, found {len(skill_dirs)}")
-
 doc_count = 0
 seen_candidates: set[tuple[str, str, str]] = set()
 for skill_dir in skill_dirs:
@@ -293,10 +371,14 @@ for skill_dir in skill_dirs:
                 )
     check_frontmatter_linked_files(skill_dir, seen_candidates)
 
+install_seen: set[str] = set()
+for skill_dir in skill_dirs:
+    check_install_reachability(skill_dir, install_seen)
+
 print(
     "技能内部链接: "
     f"skills={len(skill_dirs)}, docs={doc_count}, checked_paths={len(checked_paths)}, "
-    f"skipped={sum(skipped_reasons.values())}"
+    f"install_refs={install_refs_checked}, skipped={sum(skipped_reasons.values())}"
 )
 if skipped_reasons:
     skipped = ", ".join(f"{reason}={count}" for reason, count in sorted(skipped_reasons.items()))
