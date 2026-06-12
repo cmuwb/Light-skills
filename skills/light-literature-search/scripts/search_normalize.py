@@ -73,7 +73,7 @@ def _norm_doi(doi: str | None) -> str:
 
 
 # ----------------------------- OpenAlex -----------------------------
-def search_openalex(query: str, per_page: int = 10) -> tuple[int, list[dict]]:
+def search_openalex(query: str, per_page: int = 10, from_date: str = "") -> tuple[int, list[dict]]:
     params = {
         "search": query,
         "per-page": str(per_page),
@@ -83,6 +83,9 @@ def search_openalex(query: str, per_page: int = 10) -> tuple[int, list[dict]]:
                   "authorships,primary_location,abstract_inverted_index,type,"
                   "referenced_works",
     }
+    # 定期追踪：只取 from_date 之后发表的（增量重跑用，YYYY-MM-DD）。
+    if from_date:
+        params["filter"] = "from_publication_date:" + from_date
     url = "https://api.openalex.org/works?" + urllib.parse.urlencode(params)
     code, data = _get_json(url)
     out: list[dict] = []
@@ -110,7 +113,7 @@ def search_openalex(query: str, per_page: int = 10) -> tuple[int, list[dict]]:
 
 
 # ----------------------------- Crossref -----------------------------
-def search_crossref(query: str, rows: int = 10) -> tuple[int, list[dict]]:
+def search_crossref(query: str, rows: int = 10, from_date: str = "") -> tuple[int, list[dict]]:
     params = {
         "query.bibliographic": query,
         "rows": str(rows),
@@ -120,6 +123,9 @@ def search_crossref(query: str, rows: int = 10) -> tuple[int, list[dict]]:
                   "is-referenced-by-count,type,abstract",
         "mailto": MAILTO,
     }
+    # 定期追踪：只取 from_date 之后发表的（Crossref 用 from-pub-date 过滤）。
+    if from_date:
+        params["filter"] = "from-pub-date:" + from_date
     url = "https://api.crossref.org/works?" + urllib.parse.urlencode(params)
     code, data = _get_json(url)
     out: list[dict] = []
@@ -205,12 +211,13 @@ def to_markdown(records: list[dict], query: str) -> str:
     return "\n".join(lines)
 
 
-def run(query: str, per_page: int = 10, offline_sample: bool = False) -> dict:
+def run(query: str, per_page: int = 10, offline_sample: bool = False,
+        from_date: str = "", known_dois: set | None = None) -> dict:
     offline = False
     recs: list[dict] = []
     if not offline_sample:
-        oa_code, oa = search_openalex(query, per_page)
-        cr_code, cr = search_crossref(query, per_page)
+        oa_code, oa = search_openalex(query, per_page, from_date)
+        cr_code, cr = search_crossref(query, per_page, from_date)
         print(f"[HTTP] OpenAlex={oa_code} Crossref={cr_code}", file=sys.stderr)
         recs = oa + cr
         if oa_code == 0 and cr_code == 0:
@@ -220,8 +227,16 @@ def run(query: str, per_page: int = 10, offline_sample: bool = False) -> dict:
         recs = _SYNTHETIC
         print("[OFFLINE] 网络不可达，使用内置合成样本验证管线。", file=sys.stderr)
     merged = dedup_merge(recs)
-    return {"query": query, "offline": offline, "raw_count": len(recs),
-            "merged_count": len(merged), "records": merged}
+    out = {"query": query, "offline": offline, "from_date": from_date,
+           "raw_count": len(recs), "merged_count": len(merged), "records": merged}
+    # 定期追踪：给了已读库 DOI 集合，则切出"新增（去重后未见过）"条目做增量 diff。
+    if known_dois is not None:
+        known = {_norm_doi(d) for d in known_dois if d}
+        new_recs = [r for r in merged if _norm_doi(r.get("doi")) and _norm_doi(r["doi"]) not in known]
+        out["known_count"] = len(known)
+        out["new_count"] = len(new_recs)
+        out["new_records"] = new_recs
+    return out
 
 
 _SYNTHETIC = [
@@ -252,7 +267,17 @@ def _selftest() -> int:
     assert "10.1016/j.compag.2021.100001" in dois, dois
     md = to_markdown(result["records"], "dairy goat behavior")
     assert "10.1016/j.compag.2021.100001" in md and "dairy goats" in md.lower(), md
-    print("[selftest] PASS search_normalize")
+    # 定期追踪增量 diff：已读库含合成样本里的一条 DOI，则新增应排除它。
+    incr = run("dairy goat behavior", per_page=3, offline_sample=True,
+               from_date="2020-01-01",
+               known_dois={"10.1016/j.compag.2021.100001"})
+    assert incr["from_date"] == "2020-01-01", incr
+    assert incr["known_count"] == 1, incr
+    new_dois = {r.get("doi") for r in incr["new_records"]}
+    assert "10.1016/j.compag.2021.100001" not in new_dois, incr  # 已读，被剔
+    assert "10.3390/ani9120999" in new_dois, incr                # 未读，留作新增
+    assert incr["new_count"] == len(incr["new_records"]) >= 1, incr
+    print("[selftest] PASS search_normalize (含 --from-date 增量 diff)")
     return 0
 
 
@@ -261,6 +286,10 @@ def main() -> None:
     ap.add_argument("query", nargs="?", default="dairy goat behavior")
     ap.add_argument("--per-page", type=int, default=10)
     ap.add_argument("--offline", action="store_true", help="强制用合成样本")
+    ap.add_argument("--from-date", default="",
+                    help="定期追踪：只取该日期(YYYY-MM-DD)之后发表的文献，做增量重跑")
+    ap.add_argument("--known-dois", default="",
+                    help="定期追踪：已读库 DOI 清单文件(每行一个)，输出标出新增条目")
     ap.add_argument("--selftest", action="store_true", help="run offline synthetic self-test")
     ap.add_argument("--json-out", default="")
     ap.add_argument("--md-out", default="")
@@ -269,7 +298,13 @@ def main() -> None:
     if args.selftest:
         sys.exit(_selftest())
 
-    result = run(args.query, args.per_page, offline_sample=args.offline)
+    known: set | None = None
+    if args.known_dois:
+        with open(args.known_dois, encoding="utf-8") as f:
+            known = {ln.strip() for ln in f if ln.strip() and not ln.startswith("#")}
+
+    result = run(args.query, args.per_page, offline_sample=args.offline,
+                 from_date=args.from_date, known_dois=known)
     md = to_markdown(result["records"], args.query)
 
     if args.json_out:
@@ -280,8 +315,13 @@ def main() -> None:
             f.write(md)
 
     print(md)
-    print(f"\n[SUMMARY] query={args.query!r} offline={result['offline']} "
-          f"raw={result['raw_count']} merged={result['merged_count']}")
+    summary = (f"\n[SUMMARY] query={args.query!r} offline={result['offline']} "
+               f"raw={result['raw_count']} merged={result['merged_count']}")
+    if args.from_date:
+        summary += f" from_date={args.from_date}"
+    if "new_count" in result:
+        summary += f" known={result['known_count']} new={result['new_count']}"
+    print(summary)
 
 
 if __name__ == "__main__":

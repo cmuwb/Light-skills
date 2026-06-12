@@ -33,7 +33,7 @@
 | ip-application | `scripts/patent_search.py` | 在先技术检索辅助，支持引用图一跳扩展 `--snowball` |
 | literature-search | `scripts/cn_journal_probe.py` | 读取 ISSN 清单批量探测 OpenAlex source 体量，用于中文期刊/来源可见性初筛 |
 | literature-search | `scripts/prisma_flow.py` | 系统综述 PRISMA 2020 流程留痕：核对筛选计数勾稽并产结构化流程数据 |
-| literature-search | `scripts/search_normalize.py` | 多源文献检索与规范化，首轮即带后向引用边(OpenAlex / Crossref) |
+| literature-search | `scripts/search_normalize.py` | 多源文献检索与规范化，首轮即带后向引用边(OpenAlex / Crossref)；`--from-date`+`--known-dois` 做定期追踪增量重跑与新增去重 |
 | literature-search | `scripts/snowball.py` | 按一篇文献的前向被引与后向参考做“引用滚雪球”，扩展相关文献 |
 | literature-search | `scripts/verify_citations.py` | DOI 引用核验与幻觉引用标记，辅助文献真实性检查 |
 | paper-drafting | `scripts/draft_lint.py` | 论文草稿诚信门机检：claim 无源、结果/引用 GAP、夸大词与占位符风险 |
