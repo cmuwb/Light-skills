@@ -9,7 +9,7 @@
 | < 100 MB | 远小于内存 | pandas | 生态最全，无需优化 |
 | 100 MB – 2 GB | 适配单机内存 | pandas（够用）/ polars（要快） | polars 多核+惰性，2-30x 提速 |
 | 2 GB – 50 GB | 接近/超单机内存 | polars (lazy/streaming) / DuckDB | 流式扫描，SQL 直查 parquet |
-| 50 GB – 数 TB | 远超单机内存 | dask / vaex | dask 并行 pandas API；vaex 内存映射 |
+| 50 GB – 数 TB | 远超单机内存 | DuckDB / polars streaming / dask | DuckDB out-of-core SQL 直查 parquet；polars `streaming=True` 流式；dask 并行 pandas API。（vaex 2023 后停维护，已淘汰，勿新用） |
 | > TB 或需集群 | 分布式 | Spark (PySpark) | 集群编排；单机别上 Spark（开销大于收益） |
 
 - 经验法则：**pandas 工作集 ≈ 文件大小的 3-10 倍**（中间副本）。500 MB CSV 可能吃 2-5 GB 内存。

@@ -38,7 +38,7 @@ description: 以顶刊/顶会审稿人标准严格判断 idea 是否真有突破
 3. 末尾输出 `[CONTRACT-ACKNOWLEDGED]`，否则不得进 Phase 2。
 
 ### Step 2 — 检索取证（落地"证据先于结论"）
-宣称新颖前真检索：OpenAlex（`api.openalex.org/works?search=...&mailto=`）/ Semantic Scholar bulk / arXiv，至少一库交叉验证，**记 HTTP 码 + 最像 3 篇 + 量化 delta + confidence**。无检索 → 创新性维度封顶并标 evidence-missing（rubric.md 第 0 节）。可拉 OpenReview 同主题真实 review 看审稿人怎么挑同类工作（端点见 references.md 第 2 条）。
+宣称新颖前真检索：OpenAlex（`api.openalex.org/works?search=...&mailto=`）/ Semantic Scholar bulk / arXiv，**至少 2 库交叉验证**（与 m03 撞车复核同口径，复核者不得弱于自报者），**记 HTTP 码 + 最像 3 篇 + 量化 delta + confidence**。无检索 → 创新性维度封顶并标 evidence-missing（rubric.md 第 0 节）。可拉 OpenReview 同主题真实 review 看审稿人怎么挑同类工作（端点见 references.md 第 2 条）。
 
 #### Step 2 必做：核心撞车复核（一票否决，不可跳过）
 m03 在立项卡里自报了"核心撞车检查"四问的检索证据——**你的职责是独立复查，不是采信**。曾有 idea 自报新颖性 70、做完整套实验和论文后才发现核心结论已被前作（Dal Pozzolo 2015）发表，真实新颖性 35-45，投稿必被"已做过"秒拒。根除此类事故是本步最高优先级：

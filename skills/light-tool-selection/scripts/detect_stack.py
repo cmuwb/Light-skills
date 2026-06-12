@@ -28,7 +28,8 @@ RULES = {
     "pandas": ("数据处理", "中小数据(<2GB)主力；超内存切 polars/dask"),
     "polars": ("数据处理", "已选高性能 DataFrame，适合 1-50GB 单机"),
     "dask": ("数据处理", "已选超内存/并行；确认是否真需要分布式"),
-    "vaex": ("数据处理", "已选超内存惰性计算；亿级行 OK"),
+    "duckdb": ("数据处理", "out-of-core SQL 直查 parquet/csv；超内存分析首选之一"),
+    "vaex": ("数据处理", "⚠ vaex 2023 后停维护(已淘汰)；迁 DuckDB / polars streaming"),
     "pyspark": ("数据处理", "集群级；单机数据 <50GB 时 polars 更省心"),
     # ---- Python 科学/ML ----
     "numpy": ("科学计算", "数值基座，向量化优先于 Python 循环"),

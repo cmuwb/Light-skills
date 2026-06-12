@@ -33,11 +33,18 @@
 - 【链接】https://medium.com/data-science/beyond-pandas-spark-dask-vaex-and-other-big-data-technologies-battling-head-to-head-a453a1f8cc13 ；https://www.kdnuggets.com/2021/03/pandas-big-data-better-options.html
 - 【已知坑】分区大小要调（太多小分区调度开销大）；不是所有 pandas 操作都支持/高效（涉及全局 shuffle 的 sort、某些 groupby 较贵）；小数据上 Dask 反而比 pandas 慢（调度开销）。
 
-## Vaex
+## DuckDB（超内存分析首选）
+- 【是什么】嵌入式分析型数据库（OLAP 版 SQLite），单文件零服务，直接对 parquet/csv/pandas/polars 跑 SQL，out-of-core 执行超内存时自动 spill 到磁盘。
+- 【可复用方法】`import duckdb; duckdb.sql("SELECT col, count(*) FROM 'data/*.parquet' GROUP BY col")` 直查文件无需先导入；`duckdb.sql("...").df()` / `.pl()` 出 pandas/polars；`SET memory_limit='8GB'; SET temp_directory='/tmp'` 控内存与 spill；与 Polars 互通（`pl.read_database` 或直接查 `pl.scan_*` 的 Arrow）。适合“单机、超大、做统计/聚合/连接”的体检与特征工程。
+- 【链接】https://duckdb.org/docs/ ；https://duckdb.org/2021/06/25/querying-parquet.html
+- 【已知坑】OLAP 取向，逐行 OLTP 更新不是强项；极宽表全列扫描仍吃内存（按需 `SELECT` 列）；版本间存储格式偶有不兼容，长期落盘优先 parquet 而非 `.duckdb`。
+
+## Vaex（已淘汰，仅存档）
+> ⚠ Vaex 2023 后基本停止维护，**不再推荐新项目使用**；超内存场景迁 DuckDB（SQL）或 polars streaming（DataFrame 写法）。引擎选型以 a09 tool-selection `decision_matrix.md` 为单一口径。以下为历史方法存档。
 - 【是什么】面向单机超大表（亿~十亿行）的 DataFrame 库，核心是内存映射 + 惰性表达式，几乎零内存开销地扫数据。
-- 【可复用方法】把 CSV 先转 HDF5/Arrow（`df.export_hdf5`），之后 `vaex.open` 内存映射瞬间打开；虚拟列（virtual columns）——新列只存表达式不占内存，按需计算；惰性表达式 + 流式聚合（mean/std/count/分箱统计 `df.mean(expr, binby=...)`）一遍扫盘出结果；适合“单机、超大、做统计/可视化聚合”的体检场景。
-- 【链接】https://vaex.io/blog/dask-vs-vaex-a-qualitative-comparison ；https://datarevenue.webflow.io/en-blog/pandas-vs-dask-vs-vaex-vs-modin-vs-rapids-vs-ray
-- 【已知坑】项目活跃度近年下降，维护与新特性需留意；强项是单机大数据的聚合/扫描，不是分布式也不是复杂 join/ETL；首选列式格式（HDF5/Arrow/Parquet），原始大 CSV 需先转换。
+- 【可复用方法（历史）】把 CSV 先转 HDF5/Arrow（`df.export_hdf5`），之后 `vaex.open` 内存映射瞬间打开；虚拟列（virtual columns）——新列只存表达式不占内存，按需计算；惰性表达式 + 流式聚合一遍扫盘出结果。
+- 【链接】https://vaex.io/blog/dask-vs-vaex-a-qualitative-comparison
+- 【已知坑】项目活跃度近年下降、维护停滞（淘汰主因）；强项是单机大数据的聚合/扫描，不是分布式也不是复杂 join/ETL；同等场景 DuckDB / polars streaming 更活跃、生态更广。
 
 ## scikit-learn（数据划分/预处理相关）
 - 【是什么】Python 机器学习库，本技能主要用其数据划分与预处理防泄漏能力。

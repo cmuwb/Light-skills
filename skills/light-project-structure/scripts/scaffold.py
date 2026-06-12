@@ -3,7 +3,7 @@
 """scaffold.py — 一条命令生成规范科研项目骨架。
 
 用法:
-    python scaffold.py <目标目录> [--name 名称] [--module 包名] [--dvc] [--poetry] [--force]
+    python scaffold.py <目标目录> [--name 名称] [--module 包名] [--dvc] [--uv|--poetry] [--force]
 
 行为:
     1. 创建标准科研目录树 (data 四分层 / src / experiments / ... 见 DIRS)。
@@ -11,7 +11,8 @@
        README / CHANGELOG / PROJECT_PLAN / .gitignore / .editorconfig /
        .pre-commit-config.yaml。.pre-commit-config.yaml 在 `pre-commit install`
        前完全惰性, 故与 .editorconfig 一样默认始终落地。
-    3. --poetry: 额外写 pyproject.toml (Poetry + Ruff 配置, 离线可用)。
+    3. pyproject.toml 始终落地; 依赖管理后端默认 uv (--uv, 与 a03 推荐一致),
+       --poetry 切到 Poetry 备选。两者互斥。
     4. --dvc:    写 dvc.yaml 占位管线; 若本机有 dvc 则顺带 dvc init。
     5. 空目录放 .gitkeep, 便于 git 跟踪空树。
 
@@ -80,6 +81,37 @@ ignore = ["E501"]
 quote-style = "double"
 '''
 
+# 默认后端: uv (PEP 621 标准表 + hatchling, 与 a03 backend-coding 推荐一致)。
+# dev 依赖走 [dependency-groups] (uv/PEP 735); src 布局用 [tool.hatch] 指定包路径。
+PYPROJECT_TOML_UV = '''[project]
+name = "{name}"
+version = "0.1.0"
+description = "{name} research project"
+requires-python = ">=3.10"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/{module}"]
+
+[dependency-groups]
+dev = ["pytest", "ruff"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+'''
+
 DVC_YAML = '''# DVC 管线占位; 用 `dvc repro` 运行, 只重跑变更阶段。
 # 真正使用时把 cmd/deps/outs 改成项目实际命令与产物。
 stages:
@@ -118,9 +150,14 @@ def make_tree(root: Path) -> None:
 
 def _selftest() -> int:
     import tempfile
+    try:
+        import tomllib  # py3.11+
+    except ModuleNotFoundError:
+        tomllib = None
     with tempfile.TemporaryDirectory(prefix="light_scaffold_") as tmp:
+        # 路径一: 默认 (uv) 后端
         target = Path(tmp) / "demo-project"
-        rc = main([str(target), "--name", "demo-project", "--module", "demo_project", "--poetry"])
+        rc = main([str(target), "--name", "demo-project", "--module", "demo_project"])
         assert rc == 0, rc
         required = [target / "README.md", target / "CHANGELOG.md", target / "PROJECT_PLAN.md",
                     target / ".pre-commit-config.yaml", target / "src" / "demo_project" / "__init__.py",
@@ -128,9 +165,21 @@ def _selftest() -> int:
                     target / ".light" / ".gitkeep", target / ".light" / "handoff" / ".gitkeep"]
         missing = [str(p) for p in required if not p.exists()]
         assert not missing, missing
-        rc2 = main([str(target)])
+        uv_toml = (target / "pyproject.toml").read_text(encoding="utf-8")
+        assert "[dependency-groups]" in uv_toml and "hatchling" in uv_toml, "uv 默认后端未写入"
+        if tomllib:
+            assert tomllib.loads(uv_toml)["project"]["name"] == "demo-project"
+        rc2 = main([str(target)])  # 非空守卫
         assert rc2 == 2, rc2
-    print("[selftest] PASS scaffold")
+        # 路径二: --poetry 备选后端
+        target2 = Path(tmp) / "demo-poetry"
+        rc3 = main([str(target2), "--name", "demo-poetry", "--module", "demo_poetry", "--poetry"])
+        assert rc3 == 0, rc3
+        poetry_toml = (target2 / "pyproject.toml").read_text(encoding="utf-8")
+        assert "[tool.poetry]" in poetry_toml and "poetry-core" in poetry_toml, "Poetry 备选后端未写入"
+        if tomllib:
+            assert tomllib.loads(poetry_toml)["project"]["name"] == "demo-poetry"
+    print("[selftest] PASS scaffold (uv 默认 + poetry 备选两路径)")
     return 0
 
 
@@ -140,7 +189,9 @@ def main(argv=None) -> int:
     ap.add_argument("--name", help="项目名称 (默认取目标目录名)")
     ap.add_argument("--module", help="源码包名 (默认由 name 推断, 连字符转下划线)")
     ap.add_argument("--dvc", action="store_true", help="写 dvc.yaml 并尝试 dvc init")
-    ap.add_argument("--poetry", action="store_true", help="写 pyproject.toml (Poetry+Ruff)")
+    backend = ap.add_mutually_exclusive_group()
+    backend.add_argument("--uv", action="store_true", help="pyproject.toml 用 uv 后端 (默认)")
+    backend.add_argument("--poetry", action="store_true", help="pyproject.toml 改用 Poetry 后端 (备选)")
     ap.add_argument("--force", action="store_true", help="目标非空时仍继续")
     ap.add_argument("--selftest", action="store_true", help="run offline scaffold self-test")
     args = ap.parse_args(argv)
@@ -166,9 +217,13 @@ def main(argv=None) -> int:
     copied = copy_templates(root)
 
     extras = []
+    # pyproject.toml 始终落地; 默认 uv 后端, --poetry 切备选。
     if args.poetry:
         write_text(root / "pyproject.toml", PYPROJECT_TOML.format(name=name, module=module))
-        extras.append("pyproject.toml")
+        extras.append("pyproject.toml (Poetry)")
+    else:
+        write_text(root / "pyproject.toml", PYPROJECT_TOML_UV.format(name=name, module=module))
+        extras.append("pyproject.toml (uv)")
     if args.dvc:
         write_text(root / "dvc.yaml", DVC_YAML.format(module=module))
         extras.append("dvc.yaml")
@@ -190,7 +245,10 @@ def main(argv=None) -> int:
     print("下一步:")
     print("  1. 填 README/CHANGELOG/PROJECT_PLAN 的 {{占位}}。")
     print("  2. git init  (无 git 仓库时 .pre-commit-config.yaml 不生效)。")
-    print("  3. pip install pre-commit  (或 pipx/uv, 已装可跳过)。")
+    if args.poetry:
+        print("  3. poetry install  (装依赖并建虚拟环境)。")
+    else:
+        print("  3. uv sync  (装依赖并建 .venv; 未装 uv 见 https://docs.astral.sh/uv/)。")
     print("  4. pre-commit install  (把钩子挂进 .git/hooks/, 否则有配置也没门)。")
     print("  5. pre-commit run --all-files  (首次全量跑一遍)。")
     return 0

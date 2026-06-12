@@ -49,34 +49,24 @@ project-name/
 
 ## 整理动作
 1. 盘点已有项目（借 repo-intake-and-plan 思路）：先读 README→扫 setup 脚本与文档化命令→把工作流归类为 推理/训练/评估，再据此给散落文件归位。
-2. 新项目骨架：**首选 `scripts/scaffold.py`**——一条命令建全树 + 拷模板 + 可选 `--dvc/--poetry`：
-   `python scripts/scaffold.py ./my-proj --name my-proj --poetry --dvc`（生成 data 四分层 + notebooks 探索/报告分流 + src 包 + `.light/`（passport 台账 + handoff/ 衔接卡目录，纳入版本控制）+ 落地 6 模板；目标非空需 `--force`）。或用 CCDS（`pipx install cookiecutter-data-science` 后 `ccds`）；或按上面骨架手工生成。无论哪种，都要落 README/CHANGELOG/PROJECT_PLAN/.gitignore/.editorconfig/pyproject.toml。
+2. 新项目骨架：**首选 `scripts/scaffold.py`**——一条命令建全树 + 拷模板 + 可选 `--dvc/--uv|--poetry`：
+   `python scripts/scaffold.py ./my-proj --name my-proj --dvc`（生成 data 四分层 + notebooks 探索/报告分流 + src 包 + `.light/`（passport 台账 + handoff/ 衔接卡目录，纳入版本控制）+ 落地 6 模板 + pyproject.toml；目标非空需 `--force`）。pyproject 默认 **uv 后端**（与 a03 推荐一致），加 `--poetry` 切 Poetry 备选。或用 CCDS（`pipx install cookiecutter-data-science` 后 `ccds`）；或按上面骨架手工生成。无论哪种，都要落 README/CHANGELOG/PROJECT_PLAN/.gitignore/.editorconfig/pyproject.toml。
 3. 重命名规范化→补 README/CHANGELOG→产出"文件归位说明"（借 handoff 结构：Key Decisions 表 + 失败尝试 + 警告）。
 
 ## 版本与依赖
 - Git 管文本，DVC 管大文件：`dvc init`→`dvc add data/x.csv`(生成 `.dvc` 小文件并自动写 .gitignore)→`git add *.dvc .gitignore`→`dvc remote add -d storage s3://...`→`dvc push`。拉取：`git pull && dvc pull`。`.dvc`/`dvc.yaml`/`dvc.lock`/`.dvc/config` 入 Git，数据本体进 DVC。
 - 多阶段管线用 `dvc.yaml`(stage 字段：`cmd` 必填、`deps`、`params`、`outs`、`metrics`、`plots`)，`dvc repro` 只重跑变更阶段（`frozen:true` 阶段跳过）；实验用 `dvc exp run/show/diff`。
-- 依赖锁定用 Poetry：`poetry init`→`poetry add`→`poetry install`(有 lock 按精确版本装)。dev/test 依赖放 `[tool.poetry.group.dev.dependencies]`。应用项目提交 `poetry.lock`。
+- 依赖锁定**默认 uv**（与 a03 backend-coding 一致，快且 lock 跨平台）：`uv init`→`uv add`→`uv sync`(按 `uv.lock` 精确装)；dev/test 依赖 `uv add --dev` 进 `[dependency-groups]`；应用项目提交 `uv.lock`。**备选 Poetry**：`poetry init`→`poetry add`→`poetry install`，dev/test 放 `[tool.poetry.group.dev.dependencies]`，提交 `poetry.lock`。scaffold 默认出 uv 版 pyproject，`--poetry` 切备选。
 
 ## 质量门（配置要点）
-- Ruff（替代 flake8+black+isort）：`[tool.ruff]` 设 `line-length`/`target-version`，`[tool.ruff.lint]` 设 `select=["E","F","I","B"]`、`ignore=["E501"]`；命令 `ruff check --fix`、`ruff format`。注意 W/C901 默认不开。
-- pre-commit：`.pre-commit-config.yaml` 列 `repos`(repo/rev/hooks/id)，`rev` 钉死 tag/SHA；通用 hook 用 trailing-whitespace、end-of-file-fixer、check-yaml；接 `astral-sh/ruff-pre-commit`(ruff + ruff-format)。装：`pre-commit install`，首次 `pre-commit run --all-files`。
-- EditorConfig：`.editorconfig` 顶部 `root=true`；`[*]` 设 charset/end_of_line/indent；`[Makefile]` 单列 `indent_style=tab`。
-- .gitignore：用 GitHub Python 模板（`__pycache__/`、`.venv`、`.pytest_cache/`、`.ruff_cache/`、`.mypy_cache/`、`build/`/`dist/` 等）；DVC 管的数据目录交给 DVC 自动写，勿手写冲突；lock 文件按项目类型决定是否提交（应用别忽略）。
-- 任务运行器二选一：团队已用 make 给 Makefile(`make data`/`make train`)；要跨平台一致+可读性给 Taskfile(`Taskfile.yml`，sources/generates 做 checksum 跳过、`task -l`/`-w`)。
+四件套——Ruff（替代 flake8+black+isort）、pre-commit（rev 钉死 tag、接 ruff-pre-commit）、EditorConfig（root=true 统一缩进/换行）、.gitignore（GitHub Python 模板 + 科研条目）——的配置已落进 `templates/` 对应模板，逐项 `[tool.*]` 键与命令见 `references.md`；质量门口径与 a03 backend-coding 一致（a03 为代码侧单一真相源）。任务运行器二选一：make 已有则 Makefile；要跨平台+可读用 Taskfile（checksum 跳过、`task -l`）。
 
 ## 与项目库对应
 目录结构与 db09 project_card 的各 status 字段一一对应（paper_status↔paper/，code_status↔src/，data_status↔data/…），便于 a02 跟踪进度。
 
 ## 现成模板（本技能目录 `templates/`，可直接复制使用）
-- `scripts/scaffold.py` — **一条命令生成全套骨架**：建标准目录树 + 拷下面 6 个模板到项目根（去 `.template` 后缀）+ 写 `src/<module>/__init__.py`；`--poetry` 加写 `pyproject.toml`（Poetry+Ruff），`--dvc` 加写 `dvc.yaml`（有 dvc 则 `dvc init`），`--force` 覆盖非空目录。空目录补 `.gitkeep`。已实测可跑（synth 自测：建树→解析 pyproject→非空守卫均通过）。
-- `templates/PROJECT_STRUCTURE.md` — 科研项目标准目录结构说明 + 命名规范 + 与 db09 字段对应 + 生成方式。
-- `templates/README.template.md` — README 模板（状态表/环境/目录/数据/复现/结果/引用）。
-- `templates/PROJECT_PLAN.template.md` — 实现计划模板（借 writing-plans：2–5 分钟可勾选任务 + No-Placeholders 强制规则 + 验收/前置/失败尝试/关键决策/阻塞）。
-- `templates/CHANGELOG.template.md` — CHANGELOG 模板（Keep a Changelog + SemVer）。
-- `templates/python-research.gitignore` — Python 科研项目 .gitignore，基线取自 GitHub 官方 `github/gitignore` 的 Python.gitignore（raw 实测 HTTP 200 @2026-06-06），末尾补充模型权重/日志/wandb/mlruns 等科研条目；复制为根目录 `.gitignore`。
-- `templates/editorconfig.template` — EditorConfig 模板；复制为根目录 `.editorconfig`。
-- `templates/pre-commit-config.template.yaml` — pre-commit 质量门模板（pre-commit-hooks 的 trailing-whitespace/end-of-file-fixer/check-yaml + ruff-pre-commit 的 ruff `--fix`/ruff-format，rev 钉死 tag，用 `pre-commit autoupdate --freeze` 维护）；复制为根目录 `.pre-commit-config.yaml`，仅在 git 仓库内 `pre-commit install` 后生效。
+- `scripts/scaffold.py` — **一条命令生成全套骨架**：建目录树 + 拷 6 模板到项目根（去 `.template` 后缀）+ 写 `src/<module>/__init__.py` + 始终落 `pyproject.toml`（默认 **uv** 后端，`--poetry` 切备选，均带 Ruff）；`--dvc` 加写 `dvc.yaml`，`--force` 覆盖非空。已实测两路径 selftest 通过。
+- 6 份模板：`PROJECT_STRUCTURE.md`（目录规范+命名+db09 对应）、`README.template.md`、`PROJECT_PLAN.template.md`（可勾选任务+No-Placeholders）、`CHANGELOG.template.md`（Keep a Changelog+SemVer）、`python-research.gitignore`（基线取 GitHub 官方 Python.gitignore，HTTP 200@2026-06-06，补科研条目）、`editorconfig.template`、`pre-commit-config.template.yaml`（rev 钉死 tag，`pre-commit autoupdate --freeze` 维护，仅 git 仓库内 `pre-commit install` 后生效）。各模板用途与配置项细节见 `references.md`。
 
 新建项目时优先 `python scripts/scaffold.py <dir> [--poetry --dvc]` 一步到位；或手工把上述文件复制到项目根（gitignore/editorconfig 去掉模板后缀），填充 README/CHANGELOG/PROJECT_PLAN 中的 `{{占位符}}` 即可。
 
