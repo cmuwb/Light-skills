@@ -66,6 +66,32 @@ python assets/make_social_preview_hybrid.py
   `make_social_preview_hybrid.py` 与 `assets/pipeline.svg` / `assets/social_bg.png` 仍在仓库，
   作为无 key 降级路线与可复现脚本（README 已不引用 svg）。
 
+## 第三轮（2026-06-13）：确认 gpt-image-2 中文渲染可靠，两图改带中文
+
+用户指出 gpt-image-2 能渲染好中文，让把中文文案直接写进 prompt。实测验证属实：
+- `social-preview.png`：纯 AI banner，"Light" + 中文标语「全流程科研技能包」「让 AI 陪你把论文
+  从想法做到投稿」**全部准确无乱码**，排版整齐。裁 2:1 → 1280×640。
+- `pipeline.png`：纯 AI 流程图，9 节点中文标签「文献/数据/创新/方案/实验/分析/写作/图表/投稿」
+  **全部准确**，图标对应，蓝→红光谱缎带串联。alt-text 恢复为含九阶段中文描述（信息性回归）。
+
+**经验更新**：gpt-image-2（经中转）渲染**简短中文词组**（2-7 字标签、一句标语）可靠，
+prompt 里把中文文案用引号逐字写出 + 指明位置/字体风格即可。长段落中文仍有风险，
+deck 正文等仍走原生文本框不烤进图。前两轮"中文易乱故不进生图"的保守判断已修正。
+
+```bash
+# social-preview（纯 AI，带中文标语）
+python skills/light-slides/scripts/imagegen.py --backend openai --size 16:9 \
+  --type background --timeout 300 -o social_cn.png \
+  --prompt "...左上角大号粗体 \"Light\",下方中文宋体标语\"全流程科研技能包\",再一行\"让 AI 陪你把论文从想法做到投稿\"...文字必须清晰准确..."
+# PIL 居中裁 2:1 -> 1280x640 -> assets/social-preview.png
+
+# pipeline（纯 AI,带九个中文阶段标签）
+python skills/light-slides/scripts/imagegen.py --backend openai --size 16:9 \
+  --type illustration --timeout 300 -o pipeline_cn.png \
+  --prompt "...九个发光节点,节点下方中文标签依次:\"文献\"\"数据\"\"创新\"\"方案\"\"实验\"\"分析\"\"写作\"\"图表\"\"投稿\"...标签必须清晰准确..."
+# PIL 缩 1280 宽 -> assets/pipeline.png
+```
+
 ```bash
 # social-preview（纯 AI，含品牌词）
 python skills/light-slides/scripts/imagegen.py --backend openai --size 16:9 \

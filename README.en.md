@@ -183,7 +183,7 @@ No need to invoke — they kick in automatically on relevant tasks and guard qua
 Skills aren't isolated tools — they hand off along one research throughline:
 
 <p align="center">
-  <img src="assets/pipeline.png" alt="Light research throughline: from literature to result" width="860">
+  <img src="assets/pipeline.png" alt="Light research throughline: literature→data→idea→plan→experiment→analysis→writing→figures→submission" width="860">
 </p>
 
 <details>

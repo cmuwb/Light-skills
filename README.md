@@ -183,7 +183,7 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 技能不是孤立工具,而是沿一条科研主线相互交接:
 
 <p align="center">
-  <img src="assets/pipeline.png" alt="Light 科研主线示意:从文献到成果的流程图" width="860">
+  <img src="assets/pipeline.png" alt="Light 科研主线技能链路图:文献→数据→创新→方案→实验→分析→写作→图表→投稿" width="860">
 </p>
 
 <details>
