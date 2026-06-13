@@ -73,7 +73,7 @@ Light 把科研全流程拆成 **28 个互相衔接的 AI 技能**,装进你的 
 
 ### 看它真的能跑
 
-不放演示动图凑数——直接给一篇**完全用 Light 从头做到底**的论文作证据:[`resampling-calibration-study`](projects/resampling-calibration-study/) 走完调研→idea→对抗严审→真跑实验→出图→6 页 IEEE 论文全流程,[PDF 可点开](projects/resampling-calibration-study/paper/main.pdf),9 张图见[下方图表展示](#-图表展示)。所有数字都来自真实运行。技能脚本本身的离线演示录制脚本见 [`assets/demo.tape`](assets/demo.tape)(可复现 GIF)。
+不放演示动图凑数——直接给一篇**完全用 Light 从头做到底**的论文作证据:[`resampling-calibration-study`](projects/resampling-calibration-study/) 走完调研→idea→对抗严审→真跑实验→出图→6 页 IEEE 论文全流程,[PDF 可点开](projects/resampling-calibration-study/paper/main.pdf),9 张真数据图见[项目图表展示](projects/resampling-calibration-study/#-图表展示)。所有数字都来自真实运行。技能脚本本身的离线演示录制脚本见 [`assets/demo.tape`](assets/demo.tape)(可复现 GIF)。
 
 ## 🏆 推荐配置(最佳体验)
 

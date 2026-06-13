@@ -73,7 +73,7 @@ The ecosystem has several strong agent skill packs, each with its own focus. Lig
 
 ### See it actually run
 
-No filler demo GIF — here's the proof directly: a paper built **end-to-end with Light**, [`resampling-calibration-study`](projects/resampling-calibration-study/), walks search→idea→adversarial critique→real experiments→figures→a 6-page IEEE paper. [The PDF opens](projects/resampling-calibration-study/paper/main.pdf); the 9 figures are in the [gallery below](#-figure-gallery). Every number comes from a real run. A reproducible offline demo recording script for the skill scripts is at [`assets/demo.tape`](assets/demo.tape).
+No filler demo GIF — here's the proof directly: a paper built **end-to-end with Light**, [`resampling-calibration-study`](projects/resampling-calibration-study/), walks search→idea→adversarial critique→real experiments→figures→a 6-page IEEE paper. [The PDF opens](projects/resampling-calibration-study/paper/main.pdf); its 9 real-data figures are in the [project figure gallery](projects/resampling-calibration-study/#-图表展示). Every number comes from a real run. A reproducible offline demo recording script for the skill scripts is at [`assets/demo.tape`](assets/demo.tape).
 
 ## 🏆 Recommended setup (best experience)
 
