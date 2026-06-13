@@ -3,7 +3,7 @@
 """search_normalize.py — 多源文献检索与规范化（OpenAlex + Crossref）。
 
 功能：
-1. urllib 直连 OpenAlex /works 与 Crossref /works（无第三方依赖，带 mailto 进礼貌池）。
+1. urllib 直连 OpenAlex /works 与 Crossref /works（无第三方依赖，按需带 mailto 进礼貌池）。
 2. 还原 OpenAlex 的 abstract_inverted_index 为正文摘要。
 3. 跨源按 DOI 去重归并（无 DOI 回退到 规范化标题+年）。
 4. 按 cited_by 排序。
@@ -12,13 +12,16 @@
 诚实约定（见 d:/skill/Light/CONVENTIONS.md）：
 - 不臆造 DOI/被引；被引数标来源库（OpenAlex vs Crossref 口径不同，不可直接比）。
 - 网络不可用时回退到内置合成样本，保证 __main__ 可跑通并打印 [OFFLINE] 标记。
+- 礼貌池邮箱经环境变量 OPENALEX_MAILTO / CROSSREF_MAILTO 或 --mailto 传入；不传则匿名（不伪造）。
+- OpenAlex key 经环境变量 OPENALEX_API_KEY 或 --api-key 传入（2026 起需 key，口径见 references）。
 
 用法：
-    python scripts/search_normalize.py "dairy goat behavior" --per-page 10
+    python scripts/search_normalize.py "dairy goat behavior" --per-page 10 --mailto you@inst.edu
 """
 from __future__ import annotations
 import argparse
 import json
+import os
 import re
 import sys
 import urllib.parse
@@ -29,14 +32,42 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
-MAILTO = "light-skill@example.com"
+# 礼貌池邮箱：优先环境变量 OPENALEX_MAILTO / CROSSREF_MAILTO，其次 --mailto，不传则匿名（不伪造）。
+# 不再硬编码伪造邮箱（旧版硬编码了一个 example.com 占位邮箱，违反 OpenAlex/Crossref 礼貌池约定且无意义）。
+# OpenAlex API key：2026 起 OpenAlex 需免费 key，经 --api-key 或环境变量 OPENALEX_API_KEY 传入；
+# key/限流/计费的唯一口径见本技能 references「OpenAlex 接入真相源」节，本脚本不复写数字。
+_MAILTO = (os.environ.get("OPENALEX_MAILTO") or os.environ.get("CROSSREF_MAILTO") or "").strip()
+_API_KEY = os.environ.get("OPENALEX_API_KEY", "").strip()
 TIMEOUT = 30
-UA = "Light-literature-search/1.0 (mailto:%s)" % MAILTO
+
+
+def _user_agent() -> str:
+    if _MAILTO:
+        return "Light-literature-search/1.0 (mailto:%s)" % _MAILTO
+    return "Light-literature-search/1.0"
+
+
+def _oa_params(params: dict) -> dict:
+    """给 OpenAlex 查询参数按需注入 mailto（礼貌池）与 api_key（2026 起需 key）。"""
+    p = dict(params)
+    if _MAILTO:
+        p["mailto"] = _MAILTO
+    if _API_KEY:
+        p["api_key"] = _API_KEY
+    return p
+
+
+def _cr_params(params: dict) -> dict:
+    """给 Crossref 查询参数按需注入 mailto（礼貌池）。Crossref 不需 api_key。"""
+    p = dict(params)
+    if _MAILTO:
+        p["mailto"] = _MAILTO
+    return p
 
 
 def _get_json(url: str) -> tuple[int, Any]:
     """返回 (http_code, parsed_json_or_None)。任何异常吞掉返回 (0, None)。"""
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
+    req = urllib.request.Request(url, headers={"User-Agent": _user_agent(), "Accept": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
             code = resp.getcode()
@@ -78,7 +109,6 @@ def search_openalex(query: str, per_page: int = 10, from_date: str = "") -> tupl
         "search": query,
         "per-page": str(per_page),
         "sort": "cited_by_count:desc",
-        "mailto": MAILTO,
         "select": "id,doi,title,publication_year,cited_by_count,"
                   "authorships,primary_location,abstract_inverted_index,type,"
                   "referenced_works",
@@ -86,7 +116,7 @@ def search_openalex(query: str, per_page: int = 10, from_date: str = "") -> tupl
     # 定期追踪：只取 from_date 之后发表的（增量重跑用，YYYY-MM-DD）。
     if from_date:
         params["filter"] = "from_publication_date:" + from_date
-    url = "https://api.openalex.org/works?" + urllib.parse.urlencode(params)
+    url = "https://api.openalex.org/works?" + urllib.parse.urlencode(_oa_params(params))
     code, data = _get_json(url)
     out: list[dict] = []
     if data and "results" in data:
@@ -121,12 +151,11 @@ def search_crossref(query: str, rows: int = 10, from_date: str = "") -> tuple[in
         "order": "desc",
         "select": "DOI,title,author,issued,container-title,"
                   "is-referenced-by-count,type,abstract",
-        "mailto": MAILTO,
     }
     # 定期追踪：只取 from_date 之后发表的（Crossref 用 from-pub-date 过滤）。
     if from_date:
         params["filter"] = "from-pub-date:" + from_date
-    url = "https://api.crossref.org/works?" + urllib.parse.urlencode(params)
+    url = "https://api.crossref.org/works?" + urllib.parse.urlencode(_cr_params(params))
     code, data = _get_json(url)
     out: list[dict] = []
     if data and data.get("message", {}).get("items"):
@@ -293,7 +322,17 @@ def main() -> None:
     ap.add_argument("--selftest", action="store_true", help="run offline synthetic self-test")
     ap.add_argument("--json-out", default="")
     ap.add_argument("--md-out", default="")
+    ap.add_argument("--mailto", default="",
+                    help="礼貌池邮箱（也可设环境变量 OPENALEX_MAILTO / CROSSREF_MAILTO）；不传则匿名查")
+    ap.add_argument("--api-key", default="",
+                    help="OpenAlex API key（也可设环境变量 OPENALEX_API_KEY）；口径见本技能 references")
     args = ap.parse_args()
+
+    global _MAILTO, _API_KEY
+    if args.mailto:
+        _MAILTO = args.mailto.strip()
+    if args.api_key:
+        _API_KEY = args.api_key.strip()
 
     if args.selftest:
         sys.exit(_selftest())

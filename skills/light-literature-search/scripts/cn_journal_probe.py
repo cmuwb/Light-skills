@@ -12,9 +12,11 @@
   Computers"），故按 ISSN 检索比按 language:zh 更可靠（见 SKILL.md）。
 - ISSN 解析失败（404）如实标 NOT_FOUND，不脑补。
 - 无网络时回退合成体量，打印 [OFFLINE]。
+- 礼貌池邮箱经环境变量 OPENALEX_MAILTO / CROSSREF_MAILTO 或 --mailto 传入；不传则匿名（不伪造）。
+- OpenAlex key 经环境变量 OPENALEX_API_KEY 或 --api-key 传入（2026 起需 key，口径见 references）。
 
 用法：
-    python scripts/cn_journal_probe.py
+    python scripts/cn_journal_probe.py --mailto you@inst.edu
     python scripts/cn_journal_probe.py --csv assets/cn_core_issn.csv --sleep 0.2
 """
 from __future__ import annotations
@@ -27,18 +29,27 @@ import time
 import urllib.parse
 import urllib.request
 
-MAILTO = "light-skill@example.com"
+_MAILTO = (os.environ.get("OPENALEX_MAILTO") or os.environ.get("CROSSREF_MAILTO") or "").strip()
+_API_KEY = os.environ.get("OPENALEX_API_KEY", "").strip()
 TIMEOUT = 30
-UA = "Light-literature-search/1.0 (mailto:%s)" % MAILTO
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_CSV = os.path.join(HERE, "..", "assets", "cn_core_issn.csv")
 
 
+def _user_agent() -> str:
+    if _MAILTO:
+        return "Light-literature-search/1.0 (mailto:%s)" % _MAILTO
+    return "Light-literature-search/1.0"
+
+
 def probe_issn(issn: str) -> dict:
-    params = {"mailto": MAILTO,
-              "select": "id,display_name,works_count,cited_by_count,country_code"}
+    params = {"select": "id,display_name,works_count,cited_by_count,country_code"}
+    if _MAILTO:
+        params["mailto"] = _MAILTO
+    if _API_KEY:
+        params["api_key"] = _API_KEY
     url = f"https://api.openalex.org/sources/issn:{issn}?" + urllib.parse.urlencode(params)
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
+    req = urllib.request.Request(url, headers={"User-Agent": _user_agent(), "Accept": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
             d = json.loads(resp.read().decode("utf-8", "replace"))
@@ -133,8 +144,18 @@ def main() -> None:
     ap.add_argument("--sleep", type=float, default=0.2)
     ap.add_argument("--offline", action="store_true")
     ap.add_argument("--json-out", default="")
+    ap.add_argument("--mailto", default="",
+                    help="礼貌池邮箱（也可设环境变量 OPENALEX_MAILTO / CROSSREF_MAILTO）；不传则匿名查")
+    ap.add_argument("--api-key", default="",
+                    help="OpenAlex API key（也可设环境变量 OPENALEX_API_KEY）；口径见本技能 references")
     ap.add_argument("--selftest", action="store_true", help="run offline synthetic self-test")
     args = ap.parse_args()
+
+    global _MAILTO, _API_KEY
+    if args.mailto:
+        _MAILTO = args.mailto.strip()
+    if args.api_key:
+        _API_KEY = args.api_key.strip()
 
     if args.selftest:
         sys.exit(_selftest())

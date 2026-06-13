@@ -20,15 +20,18 @@
   https://api.semanticscholar.org/graph/v1/paper/DOI:{A}/references?fields=externalIds
 
 诚实原则：只报开放索引真实返回；查不到时明确"未覆盖≠未引用"，不替任一方圆场。
+礼貌池邮箱经环境变量 CROSSREF_MAILTO / OPENALEX_MAILTO 或 --mailto 传入；不传则匿名（不伪造）。
+Semantic Scholar 可选 key 经环境变量 S2_API_KEY 或 --s2-api-key 传入（提高限速）。
 
 用法：
   python scripts/verify_citation_edge.py 10.1186/1756-8722-6-59 10.1056/nejabc.xxx
-  python scripts/verify_citation_edge.py --citing <A> --cited <B> --out edge.json
+  python scripts/verify_citation_edge.py --citing <A> --cited <B> --mailto you@inst.edu --out edge.json
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import urllib.error
 import urllib.parse
@@ -38,13 +41,26 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
-UA = "light-citation/1.0 (mailto:light.research@gmail.com)"
-MAILTO = "light.research@gmail.com"
+# 礼貌池邮箱：优先环境变量 CROSSREF_MAILTO / OPENALEX_MAILTO，其次 --mailto，不传则匿名（不伪造）。
+# 本脚本查 OpenCitations 与 Semantic Scholar，二者均可匿名查；带真实邮箱进 UA 更礼貌。
+# Semantic Scholar 可选 API key（x-api-key header）：经 --s2-api-key 或环境变量 S2_API_KEY 传入，
+# 提高限速上限；不传则用公共匿名通道。
+_MAILTO = (os.environ.get("CROSSREF_MAILTO") or os.environ.get("OPENALEX_MAILTO") or "").strip()
+_S2_API_KEY = os.environ.get("S2_API_KEY", "").strip()
 
 
-def _get_json(url: str, timeout: int = 30):
+def _user_agent() -> str:
+    if _MAILTO:
+        return "light-citation/1.0 (mailto:%s)" % _MAILTO
+    return "light-citation/1.0"
+
+
+def _get_json(url: str, timeout: int = 30, headers: dict | None = None):
     """返回 (http_code, obj_or_None)。沿用 verify_refs.py 模式。"""
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
+    h = {"User-Agent": _user_agent(), "Accept": "application/json"}
+    if headers:
+        h.update(headers)
+    req = urllib.request.Request(url, headers=h)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.status, json.load(r)
@@ -108,7 +124,8 @@ def _s2_check(citing: str, cited: str):
     返回 (hit: bool, ok: bool, http_code: int)。"""
     url = (f"https://api.semanticscholar.org/graph/v1/paper/DOI:{urllib.parse.quote(citing)}"
            f"/references?fields=externalIds&limit=1000")
-    code, data = _get_json(url)
+    s2_headers = {"x-api-key": _S2_API_KEY} if _S2_API_KEY else None
+    code, data = _get_json(url, headers=s2_headers)
     if code != 200 or not isinstance(data, dict):
         return False, False, code
     for item in data.get("data", []) or []:
@@ -162,8 +179,18 @@ def main(argv=None):
     ap.add_argument("dois", nargs="*", help="位置参数：<citing_doi> <cited_doi>")
     ap.add_argument("--citing", help="施引文献 DOI（A）")
     ap.add_argument("--cited", help="被引文献 DOI（B）")
+    ap.add_argument("--mailto", default="",
+                    help="礼貌池邮箱（也可设环境变量 CROSSREF_MAILTO / OPENALEX_MAILTO）；不传则匿名")
+    ap.add_argument("--s2-api-key", default="",
+                    help="Semantic Scholar API key（也可设环境变量 S2_API_KEY）；不传走匿名公共通道")
     ap.add_argument("--out", help="报告输出路径（默认 stdout）")
     args = ap.parse_args(argv)
+
+    global _MAILTO, _S2_API_KEY
+    if args.mailto:
+        _MAILTO = args.mailto.strip()
+    if args.s2_api_key:
+        _S2_API_KEY = args.s2_api_key.strip()
 
     citing = args.citing
     cited = args.cited

@@ -2,13 +2,32 @@
 
 本文件是 idea 严审的**可量化评分卡**。每个验收维度给出 5 个分段（90–100 / 75–89 / 60–74 / 45–59 / <45）的**具体证据形态**（behavioral anchor，描述"打到这一档要看到什么"，而非空泛形容词），并附权重。聚合公式与判决映射见末尾。
 
-锚定金标准：NeurIPS/ICLR 评审表（Originality/Quality/Significance + Soundness/Presentation/Contribution）、ScholarEval 五点量表、ResearchAgent 的 novelty/clarity/validity。维度不自创——是把顶会评审表展开成 idea 阶段可操作的证据形态。
+锚定金标准：NeurIPS/ICLR 评审表（Originality/Quality/Significance + Soundness/Presentation/Contribution）、ScholarEval 五点量表、ResearchAgent 的 novelty/clarity/validity。维度构成不自创——是把顶会评审表展开成 idea 阶段可操作的证据形态。
+
+> ⚠ **权重与阈值的依据（诚实声明，勿读成"会议官方权重/数据反推金标准"）**：下方各维度**权重数值**（0.20/0.18/…）与 decision mapping 的**分界线**（80/65/50/35）是**经验默认值、可调超参**——NeurIPS/ICLR 评审表只给维度、**不给数值权重**，这些数字是"按顶会维度重要性排序"的经验设定，非会议官方值，也未在大样本标注集上做敏感性回归。通过线 80（strong-accept 级）与 references.md #6 的现实（真实被接收论文自动评分仅 ~5.69/10）存在张力，**默认偏严**。要调松/调严或用自己的标注集反推：改 `scripts/score_aggregate.py` 的 `DEFAULT_THRESHOLDS` 或调用 `decide(thresholds=...)`；判决对权重微扰是否稳健可跑 `weight_sensitivity()`（±0.02 扰动看翻档）。Light 当前无公开 idea 标注集，故**不假装这些阈值有数据依据**，如实标为经验值。
 
 ## 0. 评分前提（读不到这些 → 该维度封顶 60，并在判决里标 "evidence-missing"）
 - 新颖性维度：必须有**真实检索结果**（OpenAlex/Semantic Scholar/arXiv 至少一库，记 HTTP 码与最像的 3 篇），否则封顶。
 - 数据维度：必须能说出**数据集名称 + 规模 + 标注方式**，"应该够"=红旗，封顶 60。
 - 实验维度：必须能写出**至少一组干净对照 + 一项消融**，写不出封顶 60。
 凡用 "should / probably / 应该 / 大概" 支撑某维度评分 → 该维度自动降一档并记红旗。
+
+---
+
+## 0.5 领域 profile（先选档，再按档替换"数据/实验"维的证据形态）
+
+下面维度 3（数据支撑）、维度 4（实验可控性）的默认 anchor 是 **ML/实证经验科学口味**（数据集/backbone/对照/消融/baseline）。对**非 ML 类 idea 直接套用会误判**——理论 idea 没有"数据集规模"，定性研究没有"消融"。**评分前先判定 idea 属于哪个 profile，用该 profile 的替换 anchor 评维度 3/4**（维度 1/2/5/6/7/8 通用，不替换）。判不准就显式标 `profile=uncertain` 并按最接近的两档分别试评、取更保守者。
+
+| profile | 典型领域 | 维度3「数据支撑」替换为 | 维度4「实验可控性」替换为 |
+|---|---|---|---|
+| **ml-empirical**（默认） | 机器学习、CV、NLP、数据驱动实证 | 数据集名+规模+标注方式，覆盖主张与消融 | 干净对照+逐组件消融+negative control，增益可归因创新点 |
+| **theory-math** | 理论 CS、数学、算法、统计理论 | 假设/公理是否明述且自洽，是否有反例边界、与已知定理的关系 | **证明草图**：关键引理链是否完整、是否可证伪、是否给出复杂度/界的对照（vs 已知最优），有无形式化验证 |
+| **systems** | 体系结构、OS、网络、数据库、编译 | benchmark/workload 是否真实代表性（非玩具）、负载规模与硬件配置可复现 | 端到端 vs 微基准、与真实 baseline 系统对比、消除测量噪声（多次运行/方差）、开销分解 |
+| **biomed-clinical** | 生医、临床、流行病学 | 样本量+入排标准+伦理批号（联动 a10），是否有 power analysis；队列代表性 | 遵 CONSORT/PRISMA/STROBE 之一；对照组设置、盲法、混杂控制、预注册；效应量+置信区间非仅 p 值 |
+| **hci-qualitative** | HCI、用户研究、社科定性 | 参与者数与抽样逻辑（饱和度而非"越多越好"）、资料来源（访谈/观察/日志）可信 | 编码信度（双编码 κ）、三角验证、研究者反身性、是否预登记分析框架；定性不要求"消融" |
+| **design-artifact** | 设计研究、构造性工作、工具/框架 | 评估场景/案例是否真实、对比基线工具是否公允 | 用户研究或案例研究的效度、与现有方案的可量化对比、可用性指标，而非统计消融 |
+
+> profile 只换"数据/实验"两维的**证据形态**，不换权重默认值（如理论 idea 仍可微调权重——把"数据"权重并入"理论深度"由评审显式声明，记在判决里）。这避免"用 ML 标准卡死理论 idea"或反之，兑现"通用严审"而非"伪通用"。references.md #8 已指出 CONSORT/GRADE 偏生医——本表把它收进 biomed-clinical profile，不再混入默认 anchor。
 
 ---
 
@@ -94,7 +113,7 @@
 Weighted = Σ (s_i × w_i)        # 0–100 连续分
 ```
 
-权重表（合计 1.00）：
+权重表（合计 1.00，**经验默认值/可调超参**，真相源 = `scripts/score_aggregate.py` 的 `WEIGHTS`，改动须两处同步）：
 
 | 维度 | 权重 |
 |---|---|
@@ -107,7 +126,7 @@ Weighted = Σ (s_i × w_i)        # 0–100 连续分
 | 7 可行性 | 0.07 |
 | 8 影响力 | 0.06 |
 
-**否决项优先于加权分**（gate before score）：以下任一成立，无论 Weighted 多高，最高只能"有条件通过"或直接"不通过"——
+**否决项优先于加权分**（gate before score）：以下任一成立，无论 Weighted 多高，最高只能"有条件通过"或直接"不通过"——（gate 线 `gate_fatal=45`、通过核心地板 `pass_core_floor=60` 均为可调超参，见脚本 `DEFAULT_THRESHOLDS`）
 - 创新性 < 45 → 直接不通过（套壳/无检索）。
 - 任一 Devil's Advocate CRITICAL 未化解 → 最高"有条件通过"。
 - 创新性、理论深度、数据、实验 四个核心维度中**有两个 < 45** → 不通过。
@@ -122,13 +141,17 @@ Overall ≈ round(1 + Weighted / 100 * 9)   # 线性映射到 1–10
 
 ## decision mapping 表（Overall + 否决项 → 判决）
 
+> 分界线（80/65/50/35）= `DEFAULT_THRESHOLDS` 的 pass_line/cond_line/cond_major_line/reject_line，**经验默认值、可调**；改这里须同步脚本（反之亦然）。
+
 | Weighted | Overall | 默认判决 | 条件 |
 |---|---|---|---|
-| ≥ 80 | 7–10 | **通过** | 且无未化解 CRITICAL、无核心维度 <60 |
-| 65–79 | 6 | **有条件通过** | 列 Revision Roadmap，补强 <60 的维度 |
-| 50–64 | 5 | **有条件通过（重大）** | 等价 major revision，可能需回 m03 改设定 |
-| 35–49 | 4 | **不通过** | 给 ≥3 个具体改进方向，回 m03 |
+| ≥ 80 (pass_line) | 7–10 | **通过** | 且无未化解 CRITICAL、无核心维度 <60 |
+| 65–79 (cond_line) | 6 | **有条件通过** | 列 Revision Roadmap，补强 <60 的维度 |
+| 50–64 (cond_major_line) | 5 | **有条件通过（重大）** | 等价 major revision，可能需回 m03 改设定 |
+| 35–49 (reject_line) | 4 | **不通过** | 给 ≥3 个具体改进方向，回 m03 |
 | < 35 | ≤3 | **不通过** | 地基问题，建议换 idea |
 
 判决以"否决项 + 此表"二者取**更严格**的结果。Confidence 低（检索不足/领域陌生）时不给极端分，并在判决里显式标注 confidence 与 evidence gaps。
+
+> **调阈值/反推经验值**：默认偏严（pass_line=80）。若实际 FNR 偏高（好 idea 被卡），可用 `scripts/calibration.py` 在一批**已知结局**（真实接收/被拒/经修订接收）的 idea 上反推经验阈值后，传给 `decide(thresholds=...)`；无标注集时按场景手动调 `DEFAULT_THRESHOLDS` 并记录理由，**不假装阈值有数据背书**。
 

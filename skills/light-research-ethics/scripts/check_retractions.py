@@ -9,10 +9,14 @@ Endpoint (verified 2026-06, HTTP 200): https://api.crossref.org/works/{doi}
 Honest limits: not every retracted paper exposes update-to[] (publisher-dependent);
 treat a clean result as "no retraction signal found", not a guarantee.
 
+礼貌池邮箱经环境变量 CROSSREF_MAILTO 或 --mailto 传入；不传则匿名查询（不伪造邮箱）。
+
 Usage:
     python check_retractions.py 10.1126/science.aac4716 10.1038/nature12373
-    python check_retractions.py --file dois.txt
+    python check_retractions.py --file dois.txt --mailto you@inst.edu
+    CROSSREF_MAILTO=you@inst.edu python check_retractions.py --file dois.txt
 """
+import os
 import sys
 import json
 import time
@@ -23,16 +27,28 @@ import urllib.parse
 sys.stdout.reconfigure(encoding="utf-8")
 sys.stderr.reconfigure(encoding="utf-8")
 
-MAILTO = "1833058953@qq.com"  # polite pool per Crossref etiquette
+# 礼貌池邮箱：优先环境变量 CROSSREF_MAILTO，其次 --mailto，都不传则匿名查询（不伪造邮箱）。
+# Crossref polite pool 是可选的——带真实联系邮箱进 polite pool 限流更宽，不带仍可匿名查。
+# 不再硬编码任何邮箱（旧版硬编码了一个私人邮箱，既泄露隐私又违反 polite pool 约定）。
+DEFAULT_MAILTO = os.environ.get("CROSSREF_MAILTO", "").strip()
+_MAILTO = DEFAULT_MAILTO
 FLAG_TYPES = {"retraction", "correction", "expression_of_concern", "withdrawal"}
+
+
+def _user_agent():
+    if _MAILTO:
+        return "light-research-ethics/1.0 (mailto:%s)" % _MAILTO
+    return "light-research-ethics/1.0"
 
 
 def query_crossref(doi, timeout=15):
     """Return (http_status, message_dict_or_None)."""
     url = "https://api.crossref.org/works/" + urllib.parse.quote(doi, safe="")
+    if _MAILTO:
+        url += "?mailto=" + urllib.parse.quote(_MAILTO, safe="")
     req = urllib.request.Request(
-        url + "?mailto=" + MAILTO,
-        headers={"User-Agent": "light-research-ethics/1.0 (mailto:%s)" % MAILTO},
+        url,
+        headers={"User-Agent": _user_agent()},
     )
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -70,9 +86,15 @@ def main():
     ap = argparse.ArgumentParser(description="Batch retraction check via Crossref")
     ap.add_argument("dois", nargs="*", help="DOIs to check")
     ap.add_argument("--file", help="text file with one DOI per line")
+    ap.add_argument("--mailto", default="",
+                    help="Crossref polite-pool 邮箱（也可设环境变量 CROSSREF_MAILTO）；不传则匿名查")
     ap.add_argument("--json", action="store_true", help="emit JSON instead of markdown")
     ap.add_argument("--selftest", action="store_true", help="offline logic self-test")
     args = ap.parse_args()
+
+    global _MAILTO
+    if args.mailto:
+        _MAILTO = args.mailto.strip()
 
     if args.selftest:
         return _selftest()

@@ -17,20 +17,23 @@ OA 字段定位"开放性/可访问性"，非权威性；权威性须人工查 D
 warning 只对预印本或非正式版本产生；闭源(oa_status=closed)绝不告警（顶刊多闭源）。
 
 实测端点（2026-06-06，均 HTTP 200）：
-  https://api.crossref.org/works/10.1038/s41597-023-02555-8?mailto=...
-  https://api.openalex.org/works/https://doi.org/10.1038/...?mailto=...
+  https://api.crossref.org/works/10.1038/s41597-023-02555-8[?mailto=...]
+  https://api.openalex.org/works/https://doi.org/10.1038/...[?mailto=...&api_key=...]
 
 诚实原则：只报 API 真实返回；查不到 -> error severity=high（疑似臆造/需核查），不替它圆场。
+礼貌池邮箱经环境变量 OPENALEX_MAILTO / CROSSREF_MAILTO 或 --mailto 传入；不传则匿名查询（不伪造）。
+OpenAlex key 经环境变量 OPENALEX_API_KEY 或 --api-key 传入（2026 起需 key，口径见 m01 references）。
 
 用法：
   python scripts/verify_refs.py 10.1038/s41597-023-02555-8 10.1145/3292500.3330701
-  python scripts/verify_refs.py --file dois.txt --self-author "Vayssade" --out report.json
+  python scripts/verify_refs.py --file dois.txt --self-author "Vayssade" --mailto you@inst.edu --out report.json
 """
 from __future__ import annotations
 
 import argparse
 import datetime
 import json
+import os
 import re
 import sys
 import urllib.error
@@ -41,9 +44,39 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
-UA = "light-citation/1.0 (mailto:light.research@gmail.com)"
-MAILTO = "light.research@gmail.com"
+# 礼貌池邮箱：优先环境变量（OpenAlex 用 OPENALEX_MAILTO，Crossref 用 CROSSREF_MAILTO；
+# 两者皆空时回退 --mailto），都不传则匿名查询（不伪造邮箱）。不再硬编码伪造邮箱。
+# OpenAlex API key：2026 起 OpenAlex 需免费 key，经 --api-key 或环境变量 OPENALEX_API_KEY 传入；
+# key/限流/计费的唯一口径见 light-literature-search references「OpenAlex 接入真相源」节，本脚本不复写。
+_MAILTO = (os.environ.get("OPENALEX_MAILTO") or os.environ.get("CROSSREF_MAILTO") or "").strip()
+_API_KEY = os.environ.get("OPENALEX_API_KEY", "").strip()
 THIS_YEAR = datetime.date.today().year
+
+# 标题一致性告警阈值（Crossref vs OpenAlex 标题字符级 Jaccard 低于此值 → 提示人工确认）。
+# 经验默认值、可调：0.6 是"明显不是同一篇"的保守线（含副标题差异/大小写/标点归一后仍偏低才报），
+# 调高更敏感(更多告警)、调低更宽松。非数据反推，按需改。
+TITLE_SIM_WARN = 0.6
+
+
+def _user_agent() -> str:
+    if _MAILTO:
+        return "light-citation/1.0 (mailto:%s)" % _MAILTO
+    return "light-citation/1.0"
+
+
+def _oa_params(params: dict) -> str:
+    """OpenAlex 查询参数：按需带 mailto（礼貌池）与 api_key（2026 起需 key）。"""
+    p = dict(params)
+    if _MAILTO:
+        p.setdefault("mailto", _MAILTO)
+    if _API_KEY:
+        p.setdefault("api_key", _API_KEY)
+    return urllib.parse.urlencode(p)
+
+
+def _cr_suffix() -> str:
+    """Crossref polite-pool 后缀：带 mailto 进 polite pool，不带则匿名。"""
+    return ("?mailto=" + urllib.parse.quote(_MAILTO, safe="")) if _MAILTO else ""
 
 CN_RE = re.compile(r"[一-鿿]")
 
@@ -56,7 +89,7 @@ RETRACTED_TITLE_RE = re.compile(r"^\s*retracted\b", re.I)
 
 def _get_json(url: str, timeout: int = 30):
     """返回 (http_code, obj_or_None)。"""
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
+    req = urllib.request.Request(url, headers={"User-Agent": _user_agent(), "Accept": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.status, json.load(r)
@@ -88,10 +121,10 @@ def verify_one(doi: str, self_authors=None):
            "is_oa": None, "oa_status": None, "venue": None,
            "is_in_doaj": None, "oa_type": None, "version": None,
            "is_retracted": False, "retraction_flags": [],
-           "errors": [], "warnings": []}
+           "unverified_offline": False, "errors": [], "warnings": []}
 
     # --- Crossref ---
-    cr_url = f"https://api.crossref.org/works/{urllib.parse.quote(doi)}?mailto={MAILTO}"
+    cr_url = f"https://api.crossref.org/works/{urllib.parse.quote(doi)}" + _cr_suffix()
     code, cr = _get_json(cr_url)
     rec["http"]["crossref"] = code
     cr_title = cr_year = None
@@ -126,12 +159,17 @@ def verify_one(doi: str, self_authors=None):
             rec["errors"].append({"severity": "high",
                                   "msg": "该文献已被撤稿（Crossref 撤稿信号），严禁作为有效证据引用，须删除或换源"})
     else:
-        rec["errors"].append({"severity": "high",
-                              "msg": f"Crossref 查不到该 DOI（HTTP {code}）——疑似臆造或 DOI 错误，需核查"})
+        # 区分"网络失败(code=0)"与"连上了但查无此 DOI(404 等)"：
+        # 前者是无法核验（不可冒充已核验，也不可诬为臆造），后者才是疑似臆造。
+        if code == 0:
+            rec["net_fail_crossref"] = True
+        else:
+            rec["errors"].append({"severity": "high",
+                                  "msg": f"Crossref 查不到该 DOI（HTTP {code}）——疑似臆造或 DOI 错误，需核查"})
 
     # --- OpenAlex ---
     oa_url = (f"https://api.openalex.org/works/https://doi.org/{urllib.parse.quote(doi)}"
-              f"?mailto={MAILTO}")
+              + ("?" + _oa_params({}) if (_MAILTO or _API_KEY) else ""))
     code2, oa = _get_json(oa_url)
     rec["http"]["openalex"] = code2
     if code2 == 200 and oa and oa.get("id"):
@@ -145,9 +183,9 @@ def verify_one(doi: str, self_authors=None):
         # 一致性
         if cr_title and oa_title:
             sim = _title_match(cr_title, oa_title)
-            if sim < 0.6:
+            if sim < TITLE_SIM_WARN:
                 rec["warnings"].append(
-                    f"Crossref 与 OpenAlex 标题不一致(相似度{sim:.2f})，请人工确认")
+                    f"Crossref 与 OpenAlex 标题不一致(相似度{sim:.2f}<{TITLE_SIM_WARN})，请人工确认")
         if cr_year and oa_year and abs(cr_year - oa_year) > 1:
             rec["warnings"].append(f"年份不一致：Crossref {cr_year} vs OpenAlex {oa_year}")
         # 语言/国别
@@ -173,6 +211,12 @@ def verify_one(doi: str, self_authors=None):
     else:
         if rec["found_crossref"]:
             rec["warnings"].append(f"OpenAlex 未收录（HTTP {code2}），仅 Crossref 单源，建议补证")
+        elif code == 0 and code2 == 0:
+            # 两源都网络失败 → 无法核验（离线降级），不报 high error，明确需联网重试
+            rec["unverified_offline"] = True
+            rec["warnings"].append(
+                "⚠ 网络不可达，Crossref+OpenAlex 均未连通——该引用【未核验】，"
+                "不可当作已核验/已证伪；联网后须重跑 verify_refs.py 再下结论")
         else:
             rec["errors"].append({"severity": "high",
                                   "msg": f"Crossref+OpenAlex 双源均查不到（HTTP {code}/{code2}）——高度疑似臆造"})
@@ -199,10 +243,12 @@ def build_report(dois, self_authors=None):
     n_err = sum(len(r["errors"]) for r in items)
     preprint_n = sum(1 for r in items if r.get("oa_type") == "preprint")
     retracted_n = sum(1 for r in items if r.get("is_retracted"))
+    unverified_offline_n = sum(1 for r in items if r.get("unverified_offline"))
     summary = {
         "total": n,
         "verified_ok": sum(1 for r in items if r["found_crossref"] and not r["errors"]),
         "high_severity_errors": n_err,
+        "unverified_offline_count": unverified_offline_n,
         "cn_count": cn, "foreign_count": n - cn,
         "cn_ratio": round(cn / n, 3) if n else 0,
         "self_citation_rate": round(self_n / n, 3) if n else 0,
@@ -212,6 +258,9 @@ def build_report(dois, self_authors=None):
         "retracted_count": retracted_n,
         "retraction_note": "撤稿判定复用 check_retractions.py 口径（Crossref update-to + 标题 RETRACTED 前缀）；无信号≠保证未撤稿，高风险引用须交叉查 Retraction Watch",
         "authority_note": "权威性/掠夺性判定需人工+查 DOAJ/分区/预警名单；脚本仅给 OA 线索，oa_status 反映开放性≠权威性",
+        "offline_note": ("⚠ 有 %d 条引用因网络不可达【未核验】（非疑似臆造）：离线降级不放行核验闸门，"
+                         "联网后须重跑再判真实性，切勿当作已核验通过" % unverified_offline_n)
+                        if unverified_offline_n else "全部引用均已联网核验（无离线未核验项）",
         "checked_at": datetime.date.today().isoformat(),
     }
     return {"summary": summary, "items": items}
@@ -223,8 +272,18 @@ def main(argv=None):
     ap.add_argument("--file", help="每行一个 DOI 的文件")
     ap.add_argument("--self-author", action="append", default=[],
                     help="本文作者姓氏（判自引），可多次")
+    ap.add_argument("--mailto", default="",
+                    help="礼貌池邮箱（也可设环境变量 OPENALEX_MAILTO / CROSSREF_MAILTO）；不传则匿名查")
+    ap.add_argument("--api-key", default="",
+                    help="OpenAlex API key（也可设环境变量 OPENALEX_API_KEY）；口径见 m01 references")
     ap.add_argument("--out", help="报告输出路径（默认 stdout）")
     args = ap.parse_args(argv)
+
+    global _MAILTO, _API_KEY
+    if args.mailto:
+        _MAILTO = args.mailto.strip()
+    if args.api_key:
+        _API_KEY = args.api_key.strip()
 
     dois = list(args.dois)
     if args.file:
@@ -319,6 +378,36 @@ def _selftest():
     assert r_ti["is_retracted"] and r_ti["retraction_flags"][0]["source"] == "crossref:title", r_ti
     assert not r_co["is_retracted"] and any("更正" in w or "correction" in w for w in r_co["warnings"]), r_co
     assert not r_cl["is_retracted"] and not any(e.get("msg", "").startswith("该文献已被撤稿") for e in r_cl["errors"]), r_cl
+
+    # --- 离线降级分支：两源 code=0(网络失败) → unverified_offline，不诬为"疑似臆造"high error ---
+    def fake_get_offline(url, timeout=30):
+        return 0, None  # 模拟网络不可达
+
+    def fake_get_404(url, timeout=30):
+        return 404, None  # 模拟连上了但查无此 DOI
+
+    try:
+        _get_json = fake_get_offline
+        r_off = verify_one("10.0000/offline.case")
+        _get_json = fake_get_404
+        r_404 = verify_one("10.0000/truly.missing")
+    finally:
+        _get_json = orig_get_json
+    # 网络失败：标记未核验、给 warning、绝不报 high severity "疑似臆造"
+    assert r_off["unverified_offline"] is True, r_off
+    assert not r_off["errors"], r_off  # 无 high error
+    assert any("未核验" in w for w in r_off["warnings"]), r_off["warnings"]
+    # 真查不到(404)：仍报 high severity 疑似臆造，离线降级不能掩盖真问题
+    assert r_404["unverified_offline"] is False, r_404
+    assert any(e["severity"] == "high" for e in r_404["errors"]), r_404
+    # build_report 汇总把离线未核验数单列，offline_note 提示不放行核验闸门
+    try:
+        _get_json = fake_get_offline
+        rep_off = build_report(["10.0000/a", "10.0000/b"])
+    finally:
+        _get_json = orig_get_json
+    assert rep_off["summary"]["unverified_offline_count"] == 2, rep_off["summary"]
+    assert "未核验" in rep_off["summary"]["offline_note"], rep_off["summary"]["offline_note"]
     print("[selftest] PASS verify_refs offline")
 
 

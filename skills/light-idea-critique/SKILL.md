@@ -22,9 +22,9 @@ description: 以顶刊/顶会审稿人标准严格判断 idea 是否真有突破
 - `templates/verdict_template.md` — 判决填写模板。
 - `templates/Revision_Roadmap.md` — 改进路线图模板。
 - `examples/worked_example_dermoscopy.md` — 一个 idea 走完全流程的范例。
-- `scripts/score_aggregate.py` — 八维度加权 + 否决项 + 判决映射（`python scripts/score_aggregate.py` 自测）。
+- `scripts/score_aggregate.py` — 八维度加权 + 否决项 + 判决映射 + 阈值可调(DEFAULT_THRESHOLDS)/权重敏感性(weight_sensitivity)（`python scripts/score_aggregate.py` 自测）。
 - `scripts/sycophancy_guard.py` — concession-rate / 连续让步 / 让步挂证据检查。
-- `scripts/calibration.py` — 可选 calibration mode，喂已知结局算 FNR/FPR。
+- `scripts/calibration.py` — 可选 calibration mode（三分类 accept/revise/reject，算 strict_FNR/FPR/revise_match）。
 
 ## 可执行步骤
 
@@ -33,9 +33,10 @@ description: 以顶刊/顶会审稿人标准严格判断 idea 是否真有突破
 
 ### Step 1 — Phase 1 BLIND（物理隔离，只看标题/领域/关键词）
 **此刻不许看方法/实验/结论。** 按 `references/contract.md` A 节：
-1. 照 rubric.md 八维度写下本题"打到通过每维需看到什么证据"。
-2. 写 block 触发条件（硬否决）+ warn 触发条件（软警告）。
-3. 末尾输出 `[CONTRACT-ACKNOWLEDGED]`，否则不得进 Phase 2。
+1. **先选领域 profile**（rubric.md §0.5）：判定 idea 属 ml-empirical（默认）/ theory-math / systems / biomed-clinical / hci-qualitative / design-artifact 之一，**据此决定"数据/实验"两维用哪套证据形态 anchor**（理论 idea 不套消融/数据集规模，定性研究不要求消融）。判不准标 `profile=uncertain`，按最近两档分别试评取保守者。
+2. 照 rubric.md 八维度写下本题"打到通过每维需看到什么证据"（数据/实验维按上步 profile 的 anchor）。
+3. 写 block 触发条件（硬否决）+ warn 触发条件（软警告）。
+4. 末尾输出 `[CONTRACT-ACKNOWLEDGED]`，否则不得进 Phase 2。
 
 ### Step 2 — 检索取证（落地"证据先于结论"）
 宣称新颖前真检索：OpenAlex（`api.openalex.org/works?search=...&mailto=`）/ Semantic Scholar bulk / arXiv，**至少 2 库交叉验证**（与 m03 撞车复核同口径，复核者不得弱于自报者），**记 HTTP 码 + 最像 3 篇 + 量化 delta + confidence**。无检索 → 创新性维度封顶并标 evidence-missing（rubric.md 第 0 节）。可拉 OpenReview 同主题真实 review 看审稿人怎么挑同类工作（端点见 references.md 第 2 条）。
@@ -53,6 +54,7 @@ m03 在立项卡里自报了"核心撞车检查"四问的检索证据——**你
 
 ### Step 4 — 五视角对抗（强制真冲突）
 按 protocol.md：方法/实验/理论/应用四视角各按 `Position→Reasoning→Key Risk→Insight` 独立挑刺（锚到不同维度，禁伪多样）；外加 Devil's Advocate 只挑刺找四类 CRITICAL（地基崩塌/逻辑断链/证据缺口/更强反叙事）。去标识汇总共识关切与个别关切。「更强反叙事」必须落地为**单变量精确 IF**（protocol.md Devil's Advocate 节）：挑载荷最重的 2–3 条假设，每条只变一个变量、量化后果、推二阶影响、回写判决——这是把"实验审稿人"已散在各处的归因质疑（增益来自算力/数据而非创新点）和 Phase 1 的 block 条件收敛成**一次单变量隔离归因证否**，而非新发明检查项；"增益不可归因"的 IF 结论等同未化解 CRITICAL，喂回 Step 6 否决项。
+- **结构化多样性强制（可机检，防单模型伪多样）**：四视角每个必须显式带 `anchor_dim`（主锚维度，四个互不同）/ `cited_prior`（引一篇 Step 2 检索到的具体前作，四篇互不同、DOI/标题可核）/ `blind_spot`（别视角会漏的风险，去重后≥3 条不同）三标签，汇总前过 protocol.md 的可机检清单，任一不过即作废重抽。条件允许时优先用真·多 agent/多模型并行，而非单模型角色扮演。
 
 ### Step 5 — 反谄媚反驳环节
 作者反驳时，按 contract.md B 节给每条反驳 1–5 分（5 撤回/4 降级/3 保持/2 重述/1 加强）：让步必须挂新证据；禁连续让步；用 `scripts/sycophancy_guard.py` 算 concession-rate，>50% 输出 `⚠ SYCOPHANCY-ALERT`。未被 5 分新证据撤回的 CRITICAL 仍有效。
@@ -64,12 +66,13 @@ m03 在立项卡里自报了"核心撞车检查"四问的检索证据——**你
 - **有条件通过**：填 `templates/Revision_Roadmap.md`，列 must-fix。
 - **不通过**：给原因 + ≥3 个具体改进方向，回 m03。
 判决用 `templates/verdict_template.md` 成文。**标准工件：判决落盘为 `critique_verdict.md`**（交 m05 / 回 m03 的交接工件，命名见 CONVENTIONS §6.1）。
+> **阈值是经验默认值、可调超参**（通过线 80、权重 0.20/0.18… 非 NeurIPS 官方值，详见 rubric.md 依据声明）。默认偏严（pass_line=80≈strong-accept）。需调松/调严：传 `decide(thresholds={...})` 或改脚本 `DEFAULT_THRESHOLDS`；判决对权重微扰是否稳健可跑脚本 `weight_sensitivity()`。**不假装阈值有数据背书**，调整须记录理由。
 
 ### Step 7 — 强制衔接与写回
-不通过/有条件通过的 idea 带 Roadmap 回 m03 重新生成，循环到无 block、无未化解 CRITICAL、Weighted≥80 才放行 m05（仿 ResearchAgent/AI Scientist 评审→再 ideation 闭环）。判决与理由写入 db09 的 decision_log。
+不通过/有条件通过的 idea 带 Roadmap 回 m03 重新生成，循环到无 block、无未化解 CRITICAL、Weighted≥pass_line（默认 80，可调）才放行 m05（仿 ResearchAgent/AI Scientist 评审→再 ideation 闭环）。判决与理由写入 db09 的 decision_log。
 
 ## 可选：calibration mode
-怀疑自己过严/过松时，喂一批"已知结局"的 idea（真实接收/被拒），用本技能判决跑 `scripts/calibration.py` 算 FNR（漏放好 idea）/FPR（放行坏 idea），据 interpret 建议调严格度。
+怀疑自己过严/过松时，喂一批"已知结局"的 idea，用本技能判决跑 `scripts/calibration.py` 做**三分类**校准（accept/revise/reject）：`strict_FNR`（把最终会被接收的 idea 误判为不通过=过严误杀）/ `FPR`（把真被拒 idea 放行=过松/谄媚）/ `revise_match`（"需修订"识别准确度）。**关键**：有条件通过=回 m03 迭代（最终常被接收），不等于拒稿——三分类避免旧二分类把"需修订"当"拒稿"而高估 FNR。据 interpret 建议调 `DEFAULT_THRESHOLDS`。⚠ Light 当前无公开 idea 标注集，校准须用**用户自己的已知结局数据**，无数据时不假装阈值经过反推。
 
 ## anti-patterns（详见 protocol.md 第 2 节）
 伪多样四视角 / 谄媚抬分 / 泛泛反馈 / 未检索宣称新颖 / 被反驳即软化 / 量纲混用 / 越权改写 idea —— 每条配"为何失败→正确做法"。

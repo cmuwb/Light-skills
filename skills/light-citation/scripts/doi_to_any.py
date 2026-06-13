@@ -2,24 +2,29 @@
 # -*- coding: utf-8 -*-
 """doi_to_any.py — DOI 一键转多格式引用。
 
-通过 DOI.org 内容协商（Content Negotiation）一次取回 BibTeX 与 CSL JSON，
-再由 CSL JSON 在本地排版成 GB/T 7714-2015（顺序编码制）中文国标文本。
+通过 DOI.org 内容协商（Content Negotiation）取回 BibTeX / CSL JSON / RIS，
+以及 APA / IEEE 的 CSL 排版文本；再由 CSL JSON 在本地排版成 GB/T 7714-2015
+（顺序编码制）中文国标文本（内容协商无中文国标 style，故本地排版）。
 
 实测端点（2026-06-06，HTTP 200）：
   curl -LH "Accept: application/x-bibtex" https://doi.org/10.1038/s41597-023-02555-8
   curl -LH "Accept: application/vnd.citationstyles.csl+json" https://doi.org/<doi>
+  curl -LH "Accept: text/x-bibliography; style=apa" https://doi.org/<doi>
 
 诚实原则（CONVENTIONS §4）：只对真实 DOI 协商，不臆造字段；取不到即如实报错。
+APA/IEEE 为 DOI 内容协商直出的 CSL 排版文本（非脚本本地排版），输出已注明来源。
+礼貌池邮箱经环境变量 CROSSREF_MAILTO 或 --mailto 传入；不传则匿名（不伪造）。
 
 用法：
   python scripts/doi_to_any.py 10.1038/s41597-023-02555-8
-  python scripts/doi_to_any.py 10.1038/... --format bibtex|csljson|gbt7714|all
+  python scripts/doi_to_any.py 10.1038/... --format bibtex|csljson|gbt7714|apa|ieee|ris|all
 """
 from __future__ import annotations
 
 import argparse
 import html
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
@@ -29,12 +34,25 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
 DOI_BASE = "https://doi.org/"
-UA = "light-citation/1.0 (mailto:light.research@gmail.com)"
+# 礼貌池邮箱：优先环境变量 CROSSREF_MAILTO（doi.org 内容协商背后是 Crossref/DataCite），
+# 其次 --mailto，都不传则匿名（不伪造）。doi.org 内容协商不强制 mailto，但带真实邮箱更礼貌。
+_MAILTO = (os.environ.get("CROSSREF_MAILTO") or os.environ.get("OPENALEX_MAILTO") or "").strip()
+# 直出格式：bibtex/csljson/ris 由 DOI 内容协商一次取回；
+# apa/ieee 走 DOI 内容协商 text/x-bibliography; style=（CSL 排版文本，Crossref/DataCite 支持）；
+# gbt7714 由 csljson 本地排版（中文国标，内容协商无此 style）。
 ACCEPT = {
     "bibtex": "application/x-bibtex",
     "csljson": "application/vnd.citationstyles.csl+json",
     "ris": "application/x-research-info-systems",
+    "apa": "text/x-bibliography; style=apa",
+    "ieee": "text/x-bibliography; style=ieee",
 }
+
+
+def _user_agent() -> str:
+    if _MAILTO:
+        return "light-citation/1.0 (mailto:%s)" % _MAILTO
+    return "light-citation/1.0"
 
 
 def _has_cjk(text: str) -> bool:
@@ -71,7 +89,7 @@ def negotiate(doi: str, kind: str, timeout: int = 30):
     doi = doi.strip().replace("https://doi.org/", "").replace("doi:", "")
     req = urllib.request.Request(
         DOI_BASE + doi,
-        headers={"Accept": ACCEPT[kind], "User-Agent": UA},
+        headers={"Accept": ACCEPT[kind], "User-Agent": _user_agent()},
     )
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -152,13 +170,20 @@ def csljson_to_gbt7714(csl: dict) -> str:
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="DOI -> BibTeX / CSL JSON / GB-T 7714")
+    ap = argparse.ArgumentParser(description="DOI -> BibTeX / CSL JSON / GB-T 7714 / APA / IEEE / RIS")
     ap.add_argument("doi", help="DOI，如 10.1038/s41597-023-02555-8")
     ap.add_argument("--format", default="all",
-                    choices=["bibtex", "csljson", "gbt7714", "all"])
+                    choices=["bibtex", "csljson", "gbt7714", "apa", "ieee", "ris", "all"])
+    ap.add_argument("--mailto", default="",
+                    help="礼貌池邮箱（也可设环境变量 CROSSREF_MAILTO）；不传则匿名查")
     args = ap.parse_args(argv)
 
-    want = ["bibtex", "csljson", "gbt7714"] if args.format == "all" else [args.format]
+    global _MAILTO
+    if args.mailto:
+        _MAILTO = args.mailto.strip()
+
+    # all = 常用四种（bibtex/csljson/gbt7714/apa）；ris/ieee 需显式指定，避免噪声
+    want = ["bibtex", "csljson", "gbt7714", "apa"] if args.format == "all" else [args.format]
 
     # gbt7714 与 csljson 都依赖 CSL JSON
     csl_obj = None
@@ -182,6 +207,20 @@ def main(argv=None):
     if "gbt7714" in want:
         print("=== GB/T 7714-2015（顺序编码制） ===")
         print(csljson_to_gbt7714(csl_obj) if csl_obj else "[ERROR] 缺 CSL JSON，无法排版")
+
+    # APA / IEEE：DOI 内容协商直出 CSL 排版文本（非脚本本地排版，故标来源）
+    for style in ("apa", "ieee"):
+        if style in want:
+            code, txt = negotiate(args.doi, style)
+            print(f"[content-negotiation {style}] HTTP {code}", file=sys.stderr)
+            print(f"=== {style.upper()}（DOI 内容协商 CSL 排版，非本地排版） ===")
+            print(txt.strip() if code == 200 else f"[ERROR HTTP {code}] {txt[:200]}")
+
+    if "ris" in want:
+        code, txt = negotiate(args.doi, "ris")
+        print(f"[content-negotiation ris] HTTP {code}", file=sys.stderr)
+        print("=== RIS（EndNote/Zotero 可导入） ===")
+        print(txt.strip() if code == 200 else f"[ERROR HTTP {code}] {txt[:200]}")
     return 0
 
 
@@ -216,6 +255,11 @@ def _selftest():
     gbt = csljson_to_gbt7714(csl)
     assert "Smith J. M." in gbt and ", 等" in gbt, gbt
     assert "A Reliable Dataset[J]." in gbt and "DOI: 10.1234/demo." in gbt, gbt
+
+    # 新增格式已注册到内容协商表（apa/ieee/ris 直出，离线只验注册与 Accept 头，不打网）
+    for k in ("apa", "ieee", "ris"):
+        assert k in ACCEPT, f"{k} 应在 ACCEPT 表"
+    assert "style=apa" in ACCEPT["apa"] and "style=ieee" in ACCEPT["ieee"], ACCEPT
     print("[selftest] PASS doi_to_any offline")
 
 

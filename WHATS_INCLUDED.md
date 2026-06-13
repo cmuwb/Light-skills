@@ -31,6 +31,8 @@
 | idea-critique | `scripts/sycophancy_guard.py` | 反谄媚协议的可计算检查，约束 idea 评审不要迎合式放行 |
 | ip-application | `scripts/copyright_source_prep.py` | 软件著作权源代码材料整理：过滤/抽样/编号，避免提交敏感或无关代码 |
 | ip-application | `scripts/patent_search.py` | 在先技术检索辅助，支持引用图一跳扩展 `--snowball` |
+| literature-search | `scripts/arxiv_search.py` | 预印本检索（arXiv Atom + 可选 bioRxiv/medRxiv），标注 preprint 与是否已转正式发表 |
+| literature-search | `scripts/biomedical_search.py` | 生医文献检索（Europe PMC + PubMed E-utilities），支持 MeSH 检索式透传、跨源 DOI 去重 |
 | literature-search | `scripts/cn_journal_probe.py` | 读取 ISSN 清单批量探测 OpenAlex source 体量，用于中文期刊/来源可见性初筛 |
 | literature-search | `scripts/prisma_flow.py` | 系统综述 PRISMA 2020 流程留痕：核对筛选计数勾稽并产结构化流程数据 |
 | literature-search | `scripts/search_normalize.py` | 多源文献检索与规范化，首轮即带后向引用边(OpenAlex / Crossref)；`--from-date`+`--known-dois` 做定期追踪增量重跑与新增去重 |
@@ -52,8 +54,6 @@
 | result-analysis | `scripts/significance_test.py` | 显著性检验工具：p 值、效应量、置信区间、BH-FDR 多重校正 |
 | review-rebuttal | `scripts/fetch_openreview.py` | 抓取 OpenReview 公开评审语料，校准模拟审稿与 rebuttal 话术 |
 | review-rebuttal | `scripts/rebuttal_budget.py` | 会议 rebuttal 字数/页数预算检查，纯 stdlib 离线，中英混排分别计词、超限返回码 1 |
-| slides | `scripts/assemble_from_spec.py` | imggen-enhanced Stage D：读 deck_spec.yaml 契约 + 生图/真数据资产，重组装配为可编辑 pptx(原生文本框/表格/按 bbox 摆图) |
-| slides | `scripts/imagegen.py` | imggen-enhanced 三后端(OpenAI gpt-image / Gemini Nano Banana / 火山方舟 Seedream)统一生图封装，mock 后端离线占位，无 key 不静默假成功 |
 | slides | `scripts/thumbnail.py` | 把 PPTX/PDF 渲染成缩略图网格，快速做整套 deck 视觉 QA |
 | slides | `scripts/to_pdf.py` | PPTX 转 PDF，优先 LibreOffice `soffice` 无头转换，用于后续视觉审查 |
 | tool-selection | `scripts/detect_stack.py` | 读取项目清单文件识别技术栈，给出工具/技能选型建议 |
@@ -66,7 +66,7 @@
 |------|------|------|
 | `.github/scripts/check_skills.py` | 技能 frontmatter 校验 | 检查 28 个 Light 技能的 `name` / `description` 与手动/常驻数量 |
 | `.github/scripts/check_databases.py` | 数据库 YAML/schema/link 校验 | 检查 db03–db08 schema、重复卡片、YAML 解析与 README 本地链接 |
-| `.github/scripts/check_skill_assets.py` | 脚本资产清单校验 | 检查 51 个技能脚本均登记到本文件、可编译、带真实 `__main__` 且覆盖显式 `--selftest` |
+| `.github/scripts/check_skill_assets.py` | 脚本资产清单校验 | 检查 50 个技能脚本均登记到本文件、可编译、带真实 `__main__` 且覆盖显式 `--selftest` |
 | `.github/scripts/check_entry_docs.py` | 入口文档一致性校验 | 检查 README/ROUTER/MODE_REGISTRY/ROUTER_EXAMPLES 的技能数量、mode 数量、路由样例与范围边界 |
 | `.github/scripts/check_installation_assets.py` | 安装与客户端集成校验 | 检查 install.sh/install.ps1、Codex 路由片段、插件 JSON、安装文档与 CI 触发路径不漂移 |
 | `.github/scripts/check_skill_links.py` | 技能内部链接校验 | 检查 28 个技能的 SKILL.md、references.md、references/*.md、templates/*.md、examples/*.md 中指向 references/templates/examples/assets/scripts 的本地链接；验证 SKILL.md 反引号资产路径与可选 linked_files |
@@ -105,7 +105,6 @@
 | typesetting | `templates/springer_llncs.tex` | Springer LLNCS LaTeX 骨架 |
 | typesetting | `templates/elsevier_elsarticle.tex` | Elsevier elsarticle LaTeX 骨架 |
 | typesetting | `templates/ctex_chinese.tex` | 中文 XeLaTeX(ctex) 骨架，自动装中文字体 |
-| slides | `templates/deck_spec.yaml` | imggen-enhanced 流水线契约：每页结构卡(deck/pages/elements + style_anchor)，喂给 assemble_from_spec.py 装配 |
 | memory-pm | `templates/handoff_card.md` | 跨会话衔接卡：状态/已产出/下一步/恢复探针 |
 | memory-pm | `templates/handoff_prompt.md` | 新对话启动提示词骨架，与衔接卡配套 |
 | system-design | `templates/schema.sql` | 关系库建表 DDL 骨架 |

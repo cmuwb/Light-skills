@@ -17,14 +17,18 @@
 - 不臆造 DOI/被引；被引数标来源库（OpenAlex vs S2 口径不同，不可直接比）。
 - 网络不可用时回退到内置合成样本，保证 __main__ 可跑通并打印 [OFFLINE]。
 - S2 的 citations/references 用 offset/limit 翻页；token 续翻只属于 /paper/search/bulk。
+- 礼貌池邮箱经环境变量 OPENALEX_MAILTO / CROSSREF_MAILTO 或 --mailto 传入；不传则匿名（不伪造）。
+- OpenAlex key 经 OPENALEX_API_KEY / --api-key 传入（2026 起需 key，口径见 references）；
+  S2 可选 key 经 S2_API_KEY / --s2-api-key 传入。
 
 用法：
-    python scripts/snowball.py 10.1016/j.compag.2021.100001
+    python scripts/snowball.py 10.1016/j.compag.2021.100001 --mailto you@inst.edu
     python scripts/snowball.py W2000000001 --hops 2 --provider openalex
 """
 from __future__ import annotations
 import argparse
 import json
+import os
 import re
 import sys
 import urllib.parse
@@ -49,16 +53,46 @@ except Exception:  # noqa: 单文件运行时的兜底
         d = re.sub(r"^https?://(dx\.)?doi\.org/", "", d)
         return d
 
-MAILTO = "light-skill@example.com"
+MAILTO_ENV = (os.environ.get("OPENALEX_MAILTO") or os.environ.get("CROSSREF_MAILTO") or "").strip()
+_MAILTO = MAILTO_ENV
+_API_KEY = os.environ.get("OPENALEX_API_KEY", "").strip()
+_S2_API_KEY = os.environ.get("S2_API_KEY", "").strip()
 TIMEOUT = 30
-UA = "Light-literature-search/1.0 (mailto:%s)" % MAILTO
 PLACEHOLDER_MORE = None
 
 
-def _get_json(url: str) -> tuple[int, Any]:
+def _user_agent() -> str:
+    if _MAILTO:
+        return "Light-literature-search/1.0 (mailto:%s)" % _MAILTO
+    return "Light-literature-search/1.0"
+
+
+def _oa_suffix() -> str:
+    """OpenAlex 字符串型 URL 的礼貌池/key 后缀（拼在已有查询串后，故用 & 前缀按需追加）。"""
+    extra = ""
+    if _MAILTO:
+        extra += "&mailto=" + urllib.parse.quote(_MAILTO, safe="")
+    if _API_KEY:
+        extra += "&api_key=" + urllib.parse.quote(_API_KEY, safe="")
+    return extra
+
+
+def _oa_dict(params: dict) -> dict:
+    """OpenAlex dict 型参数：按需注入 mailto 与 api_key。"""
+    p = dict(params)
+    if _MAILTO:
+        p["mailto"] = _MAILTO
+    if _API_KEY:
+        p["api_key"] = _API_KEY
+    return p
+
+
+def _get_json(url: str, headers: dict | None = None) -> tuple[int, Any]:
     """返回 (http_code, parsed_json_or_None)。任何异常吞掉返回 (0, None)。"""
-    req = urllib.request.Request(
-        url, headers={"User-Agent": UA, "Accept": "application/json"})
+    h = {"User-Agent": _user_agent(), "Accept": "application/json"}
+    if headers:
+        h.update(headers)
+    req = urllib.request.Request(url, headers=h)
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
             code = resp.getcode()
@@ -106,14 +140,14 @@ def oa_resolve_seed(seed: str) -> tuple[int, dict | None]:
            "primary_location,type,referenced_works")
     s = seed.strip()
     if s.upper().startswith("W") and re.fullmatch(r"[Ww]\d+", s):
-        url = ("https://api.openalex.org/works/%s?select=%s&mailto=%s"
-               % (_oa_id(s), sel, MAILTO))
+        url = ("https://api.openalex.org/works/%s?select=%s%s"
+               % (_oa_id(s), sel, _oa_suffix()))
     elif _norm_doi(s):
-        url = ("https://api.openalex.org/works/doi:%s?select=%s&mailto=%s"
-               % (urllib.parse.quote(_norm_doi(s)), sel, MAILTO))
+        url = ("https://api.openalex.org/works/doi:%s?select=%s%s"
+               % (urllib.parse.quote(_norm_doi(s)), sel, _oa_suffix()))
     else:
-        params = {"search": s, "per-page": "1", "select": sel, "mailto": MAILTO}
-        url = "https://api.openalex.org/works?" + urllib.parse.urlencode(params)
+        params = {"search": s, "per-page": "1", "select": sel}
+        url = "https://api.openalex.org/works?" + urllib.parse.urlencode(_oa_dict(params))
         code, data = _get_json(url)
         if data and data.get("results"):
             return code, data["results"][0]
@@ -133,8 +167,8 @@ def oa_backward(seed_work: dict, max_refs: int = 50) -> tuple[int, list[dict]]:
     for i in range(0, len(refs), 50):
         batch = refs[i:i + 50]
         flt = "openalex_id:" + "|".join(batch)  # OR 用竖线
-        params = {"filter": flt, "per-page": "50", "select": sel, "mailto": MAILTO}
-        url = "https://api.openalex.org/works?" + urllib.parse.urlencode(params)
+        params = {"filter": flt, "per-page": "50", "select": sel}
+        url = "https://api.openalex.org/works?" + urllib.parse.urlencode(_oa_dict(params))
         last_code, data = _get_json(url)
         if data and data.get("results"):
             for w in data["results"]:
@@ -151,8 +185,8 @@ def oa_forward(seed_work: dict, limit: int = 50) -> tuple[int, list[dict]]:
     sel = ("id,doi,title,publication_year,cited_by_count,authorships,"
            "primary_location,type")
     params = {"filter": "cites:" + wid, "sort": "cited_by_count:desc",
-              "per-page": str(min(limit, 200)), "select": sel, "mailto": MAILTO}
-    url = "https://api.openalex.org/works?" + urllib.parse.urlencode(params)
+              "per-page": str(min(limit, 200)), "select": sel}
+    url = "https://api.openalex.org/works?" + urllib.parse.urlencode(_oa_dict(params))
     code, data = _get_json(url)
     out: list[dict] = []
     if data and data.get("results"):
@@ -200,11 +234,12 @@ def s2_neighbors(seed: str, edge: str, limit: int = 50) -> tuple[int, list[dict]
     last_code = 0
     offset = 0
     page = min(limit, 100)
+    s2_headers = {"x-api-key": _S2_API_KEY} if _S2_API_KEY else None
     while offset < limit:
         params = {"fields": fields, "offset": str(offset),
                   "limit": str(min(page, limit - offset))}
         url = base + "?" + urllib.parse.urlencode(params)
-        last_code, data = _get_json(url)
+        last_code, data = _get_json(url, headers=s2_headers)
         items = (data or {}).get("data") or []
         if not items:
             break
@@ -377,7 +412,21 @@ def main() -> None:
     ap.add_argument("--selftest", action="store_true", help="run offline synthetic self-test")
     ap.add_argument("--json-out", default="")
     ap.add_argument("--md-out", default="")
+    ap.add_argument("--mailto", default="",
+                    help="礼貌池邮箱（也可设环境变量 OPENALEX_MAILTO / CROSSREF_MAILTO）；不传则匿名查")
+    ap.add_argument("--api-key", default="",
+                    help="OpenAlex API key（也可设环境变量 OPENALEX_API_KEY）；口径见本技能 references")
+    ap.add_argument("--s2-api-key", default="",
+                    help="Semantic Scholar API key（也可设环境变量 S2_API_KEY）；provider=s2 时提高限速")
     args = ap.parse_args()
+
+    global _MAILTO, _API_KEY, _S2_API_KEY
+    if args.mailto:
+        _MAILTO = args.mailto.strip()
+    if args.api_key:
+        _API_KEY = args.api_key.strip()
+    if args.s2_api_key:
+        _S2_API_KEY = args.s2_api_key.strip()
 
     if args.selftest:
         sys.exit(_selftest())

@@ -26,6 +26,11 @@ import argparse
 import json
 import re
 
+# 被动语态告警阈值：单段被动句占比超过此值 → 提示改写。经验默认值、可调（CLI --passive-threshold）。
+# 0.4 = 一段里多数仍应是主动句的宽松线（学术写作允许方法段适度被动，故不设太低）；
+# 仅对 ≥3 句的段落判定（短段被动占比噪声大）。非数据反推，按学科/期刊风格可调。
+PASSIVE_RATIO_WARN = 0.4
+
 # --- blacklists --------------------------------------------------------------
 OVERCLAIM = [
     "significant", "significantly", "seminal", "novel", "groundbreaking",
@@ -98,7 +103,7 @@ def scan_phrases(text, out, words, cat, issue_tmpl, sug):
                 issue_tmpl.format(w=m.group(0)), sug)
 
 
-def check_passive(text, out, threshold=0.4):
+def check_passive(text, out, threshold=PASSIVE_RATIO_WARN):
     """Flag paragraphs whose passive-sentence ratio exceeds threshold."""
     para_start = 0
     for para in re.split(r"(\n\s*\n)", text):
@@ -168,7 +173,7 @@ def check_claim_strength(text, out):
                 f"If evidence is not conclusive, downgrade: {repl}")
 
 
-def run(text):
+def run(text, passive_threshold=PASSIVE_RATIO_WARN):
     out = []
     scan_phrases(text, out, OVERCLAIM, "overclaim",
                  "Overclaim/unsupported intensifier '{w}'.",
@@ -178,7 +183,7 @@ def run(text):
                  "Cut or rewrite directly; reviewers read it as boilerplate.")
     check_hedge_stack(text, out)
     check_claim_strength(text, out)
-    check_passive(text, out)
+    check_passive(text, out, threshold=passive_threshold)
     check_punctuation(text, out)
     out.sort(key=lambda f: (f["line"], f["col"]))
     cats = {}
@@ -208,6 +213,8 @@ def main():
     g.add_argument("--text")
     g.add_argument("--file")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--passive-threshold", type=float, default=PASSIVE_RATIO_WARN,
+                    help=f"段被动句占比告警阈值(默认 {PASSIVE_RATIO_WARN}，经验值可调，见脚本注释)")
     ap.add_argument("--selftest", action="store_true", help="run offline synthetic self-test")
     args = ap.parse_args()
 
@@ -228,7 +235,7 @@ def main():
                 "remarkable improvement ， which is clearly state-of-the-art.")
         print("[self-test: no input given, using built-in sample]\n", file=sys.stderr)
 
-    result = run(text)
+    result = run(text, passive_threshold=args.passive_threshold)
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return

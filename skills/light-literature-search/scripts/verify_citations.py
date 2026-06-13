@@ -19,15 +19,25 @@ from __future__ import annotations
 import argparse
 import difflib
 import json
+import os
 import re
 import sys
 import urllib.parse
 import urllib.request
 from typing import Any
 
-MAILTO = "light-skill@example.com"
+_MAILTO = (os.environ.get("CROSSREF_MAILTO") or os.environ.get("OPENALEX_MAILTO") or "").strip()
 TIMEOUT = 30
-UA = "Light-literature-search/1.0 (mailto:%s)" % MAILTO
+
+# 标题比对告警阈值：声称标题 vs DOI 实际标题的 difflib 相似度低于此 → 标"标题相似度低"(疑似张冠李戴)。
+# 经验默认值、可调：0.6 是保守线（归一化后明显不同才报），调高更敏感、调低更宽松。非数据反推。
+TITLE_SIM_WARN = 0.6
+
+
+def _user_agent() -> str:
+    if _MAILTO:
+        return "Light-literature-search/1.0 (mailto:%s)" % _MAILTO
+    return "Light-literature-search/1.0"
 
 
 def _norm_doi(doi: str) -> str:
@@ -46,7 +56,7 @@ def _title_sim(a: str, b: str) -> float:
 def fetch_doi_csl(doi: str) -> tuple[int, dict | None]:
     """DOI 内容协商取 CSL-JSON。先打 doi.org，失败回退 Crossref /works/{doi}。"""
     doi = _norm_doi(doi)
-    headers = {"User-Agent": UA, "Accept": "application/vnd.citationstyles.csl+json"}
+    headers = {"User-Agent": _user_agent(), "Accept": "application/vnd.citationstyles.csl+json"}
     url = "https://doi.org/" + urllib.parse.quote(doi, safe="/().;:")
     req = urllib.request.Request(url, headers=headers)
     try:
@@ -59,8 +69,9 @@ def fetch_doi_csl(doi: str) -> tuple[int, dict | None]:
         pass
     # 回退 Crossref
     cr = "https://api.crossref.org/works/" + urllib.parse.quote(doi, safe="/().;:")
-    cr += "?mailto=" + MAILTO
-    req2 = urllib.request.Request(cr, headers={"User-Agent": UA, "Accept": "application/json"})
+    if _MAILTO:
+        cr += "?mailto=" + urllib.parse.quote(_MAILTO, safe="")
+    req2 = urllib.request.Request(cr, headers={"User-Agent": _user_agent(), "Accept": "application/json"})
     try:
         with urllib.request.urlopen(req2, timeout=TIMEOUT) as resp:
             data = json.loads(resp.read().decode("utf-8", "replace"))
@@ -114,8 +125,8 @@ def verify_one(claim: dict) -> dict:
     if claim.get("title"):
         sim = _title_sim(claim["title"], authoritative["title"])
         rep["title_similarity"] = sim
-        if sim < 0.6:
-            issues.append(f"标题相似度低({sim})：声称={claim['title']!r} vs 实际={authoritative['title']!r}")
+        if sim < TITLE_SIM_WARN:
+            issues.append(f"标题相似度低({sim}<{TITLE_SIM_WARN})：声称={claim['title']!r} vs 实际={authoritative['title']!r}")
     # 年份比对
     if claim.get("year") and authoritative.get("year"):
         if int(claim["year"]) != int(authoritative["year"]):
@@ -207,8 +218,14 @@ def main() -> None:
     ap.add_argument("--year", default="")
     ap.add_argument("--first-author", default="")
     ap.add_argument("--json-out", default="")
+    ap.add_argument("--mailto", default="",
+                    help="礼貌池邮箱（也可设环境变量 CROSSREF_MAILTO / OPENALEX_MAILTO）；不传则匿名查")
     ap.add_argument("--selftest", action="store_true", help="run offline synthetic self-test")
     args = ap.parse_args()
+
+    global _MAILTO
+    if args.mailto:
+        _MAILTO = args.mailto.strip()
 
     if args.selftest or not args.doi:
         raise SystemExit(_selftest())

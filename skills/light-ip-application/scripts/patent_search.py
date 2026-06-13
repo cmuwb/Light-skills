@@ -6,8 +6,9 @@ patent_search.py — 在先技术(prior-art)检索辅助。
 诚实声明(d:/skill/Light/CONVENTIONS.md):
   * OpenAlex 是本脚本唯一"可程序化的真实公开数据源",用于"非专利文献(NPL)"型在先技术。
     2026 起 OpenAlex 接入需免费 API key(接入口径以 m01 light-literature-search
-    references「OpenAlex 接入真相源」节为准)。注:本脚本当前仅传 mailto 进 polite pool,
-    尚未透传 api_key,过渡期匿名请求或仍可用但不保证;显式 key 支持为已知缺口(待 R5 资产轮补)。
+    references「OpenAlex 接入真相源」节为准)。key 经 --api-key 或环境变量 OPENALEX_API_KEY
+    传入,由 _http_get_json 对 OpenAlex 端点统一注入(不污染专利库请求);未配置时退回匿名
+    请求(过渡期或仍可用但不保证)。mailto 经 --mailto 进 polite pool。
   * 专利数据库(EPO OPS / The Lens / USPTO ODP)均需注册凭证,本脚本提供
     "构造请求"的适配器(build_*_request),便于用户带 key 时直接发起;不内置任何
     伪造 key,也不臆造返回。
@@ -25,6 +26,7 @@ patent_search.py — 在先技术(prior-art)检索辅助。
 from __future__ import annotations
 import argparse
 import json
+import os
 import sys
 import urllib.parse
 import urllib.request
@@ -35,8 +37,19 @@ if hasattr(sys.stdout, "reconfigure"):
 
 OPENALEX_BASE = "https://api.openalex.org"
 
+# 礼貌池邮箱与 OpenAlex API key 的运行时口径（不硬编码）：
+# mailto 经各 build_* 的 mailto= 参数传入（main 从 --mailto / 环境变量取）；
+# OpenAlex 2026 起需免费 key——经 --api-key / 环境变量 OPENALEX_API_KEY 传入，
+# 由 _http_get_json 对 OpenAlex 域名统一注入（不污染 Lens/EPO/USPTO 等其它端点请求）。
+# key/限流/计费的唯一口径见 light-literature-search references「OpenAlex 接入真相源」节。
+_API_KEY = os.environ.get("OPENALEX_API_KEY", "").strip()
+
 
 def _http_get_json(url: str, timeout: float = 30.0) -> dict:
+    # 仅对 OpenAlex 端点注入 api_key（若已带或未配置则原样）。
+    if _API_KEY and url.startswith(OPENALEX_BASE) and "api_key=" not in url:
+        sep = "&" if "?" in url else "?"
+        url = f"{url}{sep}api_key={urllib.parse.quote(_API_KEY, safe='')}"
     req = urllib.request.Request(url, headers={"User-Agent": "light-ip-application/1.0"})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return json.loads(resp.read().decode("utf-8"))
@@ -297,12 +310,18 @@ def main() -> int:
     ap.add_argument("--to-year", type=int, default=None)
     ap.add_argument("--per-page", type=int, default=10)
     ap.add_argument("--mailto", default=None, help="进入 OpenAlex polite pool")
+    ap.add_argument("--api-key", default="",
+                    help="OpenAlex API key（也可设环境变量 OPENALEX_API_KEY；2026 起需 key，口径见 m01 references）")
     ap.add_argument("--snowball", nargs="?", type=int, const=3, default=0,
                     metavar="N",
                     help="对前 N 条命中(默认3)做一跳引用图扩展(后向+前向),省配额默认关")
     ap.add_argument("--selftest", action="store_true", help="离线自测(不联网)")
     ap.add_argument("--print-adapters", action="store_true", help="打印专利库请求构造示例")
     args = ap.parse_args()
+
+    global _API_KEY
+    if args.api_key:
+        _API_KEY = args.api_key.strip()
 
     if args.selftest:
         return _selftest()
