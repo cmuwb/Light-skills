@@ -2,7 +2,7 @@
 
 Light 绝大多数技能是"一个技能 = 一条固定流程"的流程型技能，**不需要也没有**模式切换。只有少数技能定义了可选的操作模式（mode）——选对档位能避免每次都走完整流程。这张表是这些 mode 的单一真相源；修改某技能的 mode 时，先更新这里。
 
-> 说明：这张表故意只收录**真正存在显式 mode 机制**的技能。Light 共 28 个技能，但有显式 mode 的仅 4 个、合计 10 个 mode。其余技能走固定流程，不在此列——这是 Light 与"少技能多模式"型技能包（如 ARS）的结构差异，不是遗漏。
+> 说明：这张表故意只收录**真正存在显式 mode 机制**的技能。Light 共 28 个技能，但有显式 mode 的仅 3 个、合计 8 个 mode。其余技能走固定流程，不在此列——这是 Light 与"少技能多模式"型技能包（如 ARS）的结构差异，不是遗漏。
 
 ## m07 paper-drafting（5 种）
 
@@ -33,15 +33,10 @@ Light 绝大多数技能是"一个技能 = 一条固定流程"的流程型技能
 |------|------|----------|
 | `calibration` | 喂一批已知结局的 idea 跑 `scripts/calibration.py`，算 FNR/FPR，据此调严格度 | 怀疑自己审得过严 / 过松时 |
 
-## m16 light-slides（2 种）
+## m16 light-slides
 
-定义于 `skills/light-slides/SKILL.md`「两条 mode」节；imggen-enhanced 完整规程见 `skills/light-slides/references/imggen_pipeline.md`。
-
-| mode | 产出 | 触发场景 |
-|------|------|----------|
-| `programmatic`（默认） | python-pptx 程序化路线（themes.py/patterns.md/build_deck.py）出可编辑 pptx | 无生图 key、数据密集、批量出页 |
-| `imggen-enhanced` | 五阶段生图流水线：大纲卡→整页视觉稿→元素化拆解→重组装配→QA，产高审美可编辑 pptx | 配了生图模型、要路演/答辩/发布会质感 |
+light-slides 已统一为 **python-pptx 程序化单一路线**（无显式 mode）：themes.py 主题色板 + patterns.md 版式 + build_deck.py 端到端，出可编辑 pptx。需要更强设计感时借 PptxGenJS/Marp/reveal.js/Beamer（见 SKILL.md「实现工具」），但不再有 mode 切换。
 
 ---
 
-其余 Light 科研技能（m01–m03、m05、m06、m08–m13、m15、m17、a01–a10 与 light-orchestrator）均无显式 mode，走各自固定流程。如需为某技能新增 mode，在该技能内定义后，把它登记到本表。
+其余 Light 科研技能（m01–m03、m05、m06、m08–m13、m15、m16、m17、a01–a10 与 light-orchestrator）均无显式 mode，走各自固定流程。如需为某技能新增 mode，在该技能内定义后，把它登记到本表。

@@ -41,8 +41,8 @@ Light 最核心的价值是**可核查**。任何贡献都必须遵守 [CONVENTI
 ## 人工核对清单 / Manual checklist（自动化未覆盖项）
 
 下列一致性自动化暂不强校验,改 PR 时人工核对:
-- **API key 口径一致**:README「关于 API key」节列出的 key 清单,须与 m16(slides 生图后端 OPENAI/GEMINI/ARK)、m15 等技能内的 key 说明一致;改任一处 key 口径时同步另一处。
-- **推荐配置同步**:README 推荐配置(Harness/模型/生图模型)若变更,核对 m16 生图流水线与各技能的模型默认值不矛盾。
+- **API key 口径一致**:README「关于 API key」节列出的 key 清单,须与 m15(专利检索 Lens/EPO/USPTO)等技能内的 key 说明一致;改任一处 key 口径时同步另一处。
+- **推荐配置同步**:README 推荐配置(Harness/模型/MCP/环境)若变更,核对各技能的工具/模型默认值不矛盾;MCP 的费用门槛(MATLAB/BioRender 付费)如实标注。
 
 ## 加知识库条目 / Adding knowledge-base entries
 

@@ -5,6 +5,12 @@ All notable changes are documented here.
 
 ## [Unreleased]
 
+### Removed
+- **移除 PPT 生图流水线**(`light-slides` 原 `imggen-enhanced` 模式):删除 `imagegen.py`、`assemble_from_spec.py`、`deck_spec.yaml` 及五阶段流水线文档;`light-slides` 回归 **python-pptx 程序化单一路线**(无 mode 切换)。配套清理:推荐配置改为 MCP(Canva/Figma/MATLAB/BioRender)+ 环境(Git/Python/R/LaTeX),删生图 API key 段;db06 移除 imggen 实跑沉淀卡。脚本 51 → 49,模板 40 → 39,知识卡 318 → 317,显式 mode 10 → 8。论文图禁用 AI 生成的诚实底线(m11 figure_integrity)保留不变。
+
+### Changed
+- **推荐配置重构**:Harness(Claude Code/Codex)+ 模型(Opus 4.8/GPT 5.5,备 DeepSeek V4 Pro)+ 环境(Git/Python/R,排版补 LaTeX)+ 推荐 MCP(Canva/Figma 免费、MATLAB/BioRender 标注付费门槛)。
+
 ## [3.0.0] - 2026-06-12
 
 第三期:P0 清零、中文链路闭环、会话衔接协议、PPT 生图流水线、数据库上量、行为评测与保鲜自动化、安全合规增量。Third-phase release.

@@ -32,7 +32,7 @@ dairygoat 是农业/CV/畜牧检测项目 → 取色自 db06 `light-slides/asset
 ## 2. 四处接线 grep 可见（R9.7 验收）
 
 - m11 `light-figure-drawing/SKILL.md`「审美与规范·配色」：项目有 palette.json 则必用其取色。
-- m16 `light-slides/SKILL.md`「先定三件事·视觉风格」：项目有 palette.json 则必用其取色（含 imggen style_anchor）。
+- m16 `light-slides/SKILL.md`「先定三件事·视觉风格」：项目有 palette.json 则必用其取色。
 - a05 `light-frontend-design/SKILL.md`「设计语言」：项目有 palette.json 则必用，前端不另立色板。
 - a07 `light-consistency/SKILL.md`：维护要点 + 五维⑤视觉，把"跨材料配色一致"改为**对照 palette.json 逐项核**。
 

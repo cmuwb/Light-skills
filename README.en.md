@@ -8,7 +8,7 @@
 
 Every step of research, from literature search to rebuttal, has a dedicated skill · Works with Claude Code & Codex
 
-**28 skills · 9 knowledge bases · 51 runnable scripts · 40 templates · 318 knowledge cards · never fabricates**
+**28 skills · 9 knowledge bases · 49 runnable scripts · 39 templates · 317 knowledge cards · never fabricates**
 
 <br/>
 
@@ -62,8 +62,8 @@ The ecosystem has several strong agent skill packs, each with its own focus. Lig
 | Dimension | **Light** | anthropics/skills | K-Dense scientific-agent-skills | ScienceIntelligence/ResearchSkills |
 |---|---|---|---|---|
 | **Closed throughline** | 28 skills close the research loop (search→data→idea→plan→experiment→analysis→writing→figures→submission→rebuttal; patents/PPT/contest in parallel) + orchestrator + checkpoint recovery | 17 skills, general doc/artifact tools, no research line | 146 skills (mostly library wrappers); multi-step pipelines but no fixed research-stage line | Organized by discipline, no end-to-end paper workflow |
-| **Runnable assets** | 51 scripts all with offline selftest + 40 templates + code_assets verified digit-for-digit vs scipy/sklearn, CI-checked | scripts per skill, no unified offline self-test gate | 70+ Python packages, 100+ database integrations (wrapper route) | knowledge/methods + memory templates |
-| **Knowledge bases** | 9 shared bases (318 cards, all traceable) | none | integrates 100+ external science databases (live query, not self-maintained cards) | no standalone base (knowledge lives in skills) |
+| **Runnable assets** | 49 scripts all with offline selftest + 39 templates + code_assets verified digit-for-digit vs scipy/sklearn, CI-checked | scripts per skill, no unified offline self-test gate | 70+ Python packages, 100+ database integrations (wrapper route) | knowledge/methods + memory templates |
+| **Knowledge bases** | 9 shared bases (317 cards, all traceable) | none | integrates 100+ external science databases (live query, not self-maintained cards) | no standalone base (knowledge lives in skills) |
 | **Honesty mechanisms** | honesty floor in the conventions + 3-state citation/retraction checks + injection discipline + adversarial self-check | none seen in README | no anti-fabrication guardrails seen in README | none seen in README |
 | **Chinese pipeline** | full bilingual line (Chinese venue search / GB/T 7714 / Chinese writing), CI guards it | none | no Chinese seen in README | has a Chinese README, but no end-to-end Chinese output pipeline |
 | **Session handoff** | global handoff protocol (proactive seeding + card + startup prompt) + passive recovery | none | none seen in README | memory templates (memory-type, not a proactive cross-session handoff protocol) |
@@ -82,12 +82,20 @@ Light runs in any Claude Code / Codex environment; for the best experience, this
 | Item | Recommended | Notes |
 |---|---|---|
 | Harness | **Claude Code** / **Codex** | both one-command installs, skills auto-trigger |
-| Model | **Claude Opus 4.8**, **GPT 5.5** | backup: DeepSeek V4 Pro etc. |
-| Image model (strongly suggested) | any of **GPT Image 2** / **Nanobanana 2** / **Seedream 5.0** | unlocks the PPT image pipeline (`imggen-enhanced` mode of [`light-slides`](skills/light-slides/SKILL.md)); without it, falls back to the programmatic route |
+| Model | **Claude Opus 4.8** · **GPT 5.5** | main tier; backup: DeepSeek V4 Pro etc. |
+| Environment | **Git · Python · R** | the base trio; for typesetting add **LaTeX (TinyTeX/TeX Live)**, and **Node.js** (optional) for some MCPs/frontend |
+| MCP (as needed) | **Canva** · **Figma** · MATLAB · BioRender | external design/compute tools, see table below |
 
-> No image key, and every core feature still works. Add one, and your defense/pitch decks jump a tier. Generated images serve PPT/frontend visuals only — **never the paper-figure pipeline** (journal policy).
+**🔌 Recommended MCPs (all optional, none required).** Light is a skill pack and needs no MCP; adding these extends its design & compute reach.
 
-**🎨 PPT image pipeline.** The `imggen-enhanced` mode of [`light-slides`](skills/light-slides/SKILL.md) turns a `deck_spec.yaml` contract → image backend (OpenAI gpt-image / Gemini Nano Banana / Volcengine Seedream, one wrapper, no silent fake-success without a key) → real-data figure overlay → reassembled into an **editable pptx** (native text boxes/tables, no text baked into images). Without a key it auto-falls back to programmatic themed layouts; nothing is lost.
+| MCP | Use | Cost | Setup |
+|---|---|---|---|
+| **Canva** (official) | pitch/poster layouts, brand-template batch fill | free account, core features free | official MCP server, connect after account auth |
+| **Figma** (official Dev Mode) | read designs → frontend implementation (with [`light-frontend-design`](skills/light-frontend-design/SKILL.md)) | free account, reads free | official Dev Mode MCP server |
+| **MATLAB** (official) | signal/control/numerical computing (with [`light-tool-selection`](skills/light-tool-selection/SKILL.md)) | ⚠️ official MCP needs a **MATLAB Production Server commercial license**; individuals can't apply for free | MathWorks official framework, needs local MATLAB + commercial license |
+| **BioRender** | biomedical schematics/pathway figures (biomed) | ⚠️ official connector is **read-only**; high-res watermark-free export needs a **paid Premium subscription** | official connector, account auth |
+
+> Connecting any third-party MCP authorizes external instructions and code — vet the source and security first (see [`light-tool-selection`](skills/light-tool-selection/SKILL.md)). MATLAB / BioRender free tiers are limited; choose by real budget and field.
 
 <details>
 <summary><b>Known limits of low-tier / backup models</b></summary>
@@ -158,7 +166,7 @@ The 28 skills split in two: **17 manual skills** you can invoke by name with `/`
 | 📈 Figures | `light-figure-planning` ⇄ `light-figure-drawing` | Plan what to chart and where ↔ draw it to publication spec per journal |
 | 🔖 Cite & typeset | `light-citation` · `light-typesetting` | Verify DOIs, generate refs in any format · typeset in LaTeX/Word, export PDF |
 | 📮 Submit & rebut | `light-venue-matching` · `light-review-rebuttal` | Target venues by tier (reach/safe/floor) · mock-review, rebut point by point |
-| 🏆 Outputs | `light-ip-application` · `light-slides` · `light-competition` | Write patents/copyright · build defense & pitch decks (optional `imggen-enhanced` image pipeline) · prep contest materials |
+| 🏆 Outputs | `light-ip-application` · `light-slides` · `light-competition` | Write patents/copyright · build defense & pitch decks (programmatic python-pptx) · prep contest materials |
 
 ### Always-on skills · background (11)
 
@@ -197,7 +205,7 @@ kickoff → literature-search find direction & gaps → data-engineering health-
         → paper-drafting ⇄ paper-polishing draft & polish
         → citation / figure-drawing / typesetting verify refs, render, typeset
         → venue-matching pick a venue → review-rebuttal rebuttal & revision
-        → ip-application patents · slides defense deck (optional imggen image branch) · competition contest materials
+        → ip-application patents · slides defense deck (programmatic) · competition contest materials
 ```
 
 </details>
@@ -266,12 +274,11 @@ Plus `code_assets/` — adversarially-verified statistics and metrics code (Cohe
 > [!NOTE]
 > **Most features work out of the box with no API key.** Literature search defaults to the free OpenAlex / Crossref; since 2026 OpenAlex officially asks for a **free** API key (anonymous access still works during the transition period) — registering takes two minutes and avoids throttling.
 
-Only two cases need your own key: ① **patent search** via `light-ip-application` (commercial patent databases require their own credentials); ② unlocking the **image-gen PPT pipeline** in `light-slides` (`imggen-enhanced` mode — strongly recommended but fully optional; without it the programmatic route is used automatically). Light **never bundles or stores any key** — it only issues a request when you supply one.
+Only one case needs your own key: **patent search** via `light-ip-application` (commercial patent databases require their own credentials). Light **never bundles or stores any key** — it only issues a request when you supply one.
 
 | Service | Use | Required? | How to get |
 |---------|-----|-----------|------------|
 | OpenAlex / Crossref | Academic literature search | Free, default | Crossref: no signup; OpenAlex: free key on its site (recommended) |
-| Image-gen model (any of GPT Image 2 / Nanobanana 2 / Seedream 5.0) | Image-gen PPT pipeline (`imggen-enhanced`) | Optional, strongly recommended | OpenAI / Google AI Studio / Volcano Ark; pay per image |
 | [The Lens](https://www.lens.org/lens/user/subscriptions#scholar) | Patent↔paper linkage | Optional | Register; free for most academic use |
 | [EPO OPS](https://developers.epo.org/) | European patent office data | Optional | Register for consumer key/secret |
 | [USPTO ODP](https://developer.uspto.gov/) | US patent data | Optional | Register for an API key |
@@ -327,7 +334,7 @@ Light gives runnable scripts, fillable templates, and real examples, with a hard
 <details>
 <summary><b>Do I need to configure an API key?</b></summary>
 
-Most features need none — literature search defaults to the free OpenAlex / Crossref (a free OpenAlex key is recommended under its 2026 policy). Your own keys are only needed for two things: patent search (Lens/EPO/USPTO) and the optional image-gen model for the PPT pipeline. See [About API keys](#-about-api-keys).
+Most features need none — literature search defaults to the free OpenAlex / Crossref (a free OpenAlex key is recommended under its 2026 policy). Your own keys are only needed for patent search (Lens/EPO/USPTO). See [About API keys](#-about-api-keys).
 </details>
 
 <details>

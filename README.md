@@ -8,7 +8,7 @@
 
 从找文献到投稿返修,科研每一步都有专门技能接管 · 适配 Claude Code 与 Codex
 
-**28 技能 · 9 知识库 · 51 个可跑脚本 · 40 套模板 · 318 张知识卡 · 全程不编造**
+**28 技能 · 9 知识库 · 49 个可跑脚本 · 39 套模板 · 317 张知识卡 · 全程不编造**
 
 <br/>
 
@@ -62,8 +62,8 @@ Light 把科研全流程拆成 **28 个互相衔接的 AI 技能**,装进你的 
 | 维度 | **Light** | anthropics/skills | K-Dense scientific-agent-skills | ScienceIntelligence/ResearchSkills |
 |---|---|---|---|---|
 | **主线闭环** | 28 技能沿科研主线闭环(调研→数据→idea→方案→实验→分析→写作→图表→投稿→返修,软著/专利/PPT/竞赛并行)+ 编排器 + 断点恢复 | 17 技能,通用文档/制品工具,无科研主线 | 146 技能(多为单库封装),支持多步流水线但无固定科研阶段主线 | 按学科组织,无端到端论文工作流 |
-| **可跑资产** | 51 脚本全离线 selftest + 40 模板 + code_assets 对照 scipy/sklearn 逐位校验,CI 持续验 | 各技能附脚本,无统一离线自测门 | 70+ Python 包、100+ 数据库接入(库封装路线) | 以知识/方法 + 记忆模板为主 |
-| **知识库** | 9 个共享知识库(318 数据卡,均可溯源) | 无 | 接入 100+ 外部科学数据库(实时查询,非自维护卡库) | 无独立知识库(学科知识写在技能内) |
+| **可跑资产** | 49 脚本全离线 selftest + 39 模板 + code_assets 对照 scipy/sklearn 逐位校验,CI 持续验 | 各技能附脚本,无统一离线自测门 | 70+ Python 包、100+ 数据库接入(库封装路线) | 以知识/方法 + 记忆模板为主 |
+| **知识库** | 9 个共享知识库(317 数据卡,均可溯源) | 无 | 接入 100+ 外部科学数据库(实时查询,非自维护卡库) | 无独立知识库(学科知识写在技能内) |
 | **诚实机制** | 写进规约的诚实底线 + 引用三态/撤稿核查 + 防注入纪律 + 对抗式自检 | README 未见专门机制 | README 未见防编造护栏 | README 未见 |
 | **中文链路** | 中英双语全链路(中文期刊检索/GB/T 7714/中文写作),CI 守中文链路 | 无 | README 未见中文 | 有中文 README,但无端到端中文成果工程链路 |
 | **会话衔接** | 全局会话衔接协议(主动留种 + 衔接卡 + 启动提示词)+ 被动断点恢复 | 无 | README 未见 | 有记忆模板(记忆型,非跨会话主动交接协议) |
@@ -82,12 +82,20 @@ Light 在任意 Claude Code / Codex 环境都能跑;想要最佳体验,建议这
 | 项 | 推荐 | 说明 |
 |---|---|---|
 | Harness | **Claude Code** / **Codex** | 两端一键安装,技能自动触发 |
-| 模型 | **Claude Opus 4.8**、**GPT 5.5** | 备用:DeepSeek V4 Pro 等 |
-| 生图模型(强烈建议) | **GPT Image 2** / **Nanobanana 2** / **Seedream 5.0** 任一 | 解锁 PPT 生图流水线([`light-slides`](skills/light-slides/SKILL.md) 的 `imggen-enhanced` 模式);不配置则自动走程序化路线 |
+| 模型 | **Claude Opus 4.8** · **GPT 5.5** | 主力档;备用:DeepSeek V4 Pro 等 |
+| 环境 | **Git · Python · R** | 三件套基础;排版建议补 **LaTeX(TinyTeX/TeX Live)**,部分 MCP/前端用 **Node.js**(可选) |
+| MCP(按需) | **Canva** · **Figma** · MATLAB · BioRender | 接外部设计/计算工具,见下表 |
 
-> 不配生图 key 一切核心功能照常;配了,答辩/路演 PPT 直接上一个档次。生图只服务 PPT/前端视觉,**严禁进论文图链路**(期刊禁令)。
+**🔌 推荐 MCP(按需接,均非必装)**:Light 本体是技能包,不依赖 MCP;但接上这几个能扩展设计与计算能力。
 
-**🎨 PPT 生图流水线**:[`light-slides`](skills/light-slides/SKILL.md) 的 `imggen-enhanced` 模式把 `deck_spec.yaml` 契约 → 生图后端(OpenAI gpt-image / Gemini Nano Banana / 火山方舟 Seedream,统一封装、无 key 不静默假成功)→ 真数据图叠加 → 重组装配为**可编辑 pptx**(原生文本框/表格,不烤字进图)。无 key 时自动降级为程序化主题版式,功能不缺。
+| MCP | 用途 | 费用 | 接入 |
+|---|---|---|---|
+| **Canva**(官方) | 路演/海报版式、品牌模板批量填充 | 免费注册,核心功能免费 | 官方 MCP server,账号授权后接入 |
+| **Figma**(官方 Dev Mode) | 读设计稿→前端实现(配合 [`light-frontend-design`](skills/light-frontend-design/SKILL.md)) | 免费注册,读取免费 | 官方 Dev Mode MCP server |
+| **MATLAB**(官方) | 信号/控制/数值计算(配合 [`light-tool-selection`](skills/light-tool-selection/SKILL.md)) | ⚠️ 官方 MCP 需 **MATLAB Production Server 商业许可**,个人用户无法免费申请 | MathWorks 官方框架,需本地 MATLAB + 商业许可 |
+| **BioRender** | 生物医学示意图/通路图(生医方向) | ⚠️ 官方 connector **仅只读**,高清无水印导出需 **Premium 付费订阅** | 官方 connector,账号授权 |
+
+> 接入任何第三方 MCP 都等于授权外部指令与代码,先评估来源与安全(详见 [`light-tool-selection`](skills/light-tool-selection/SKILL.md))。MATLAB / BioRender 的免费档能力受限,按真实预算与方向取舍。
 
 <details>
 <summary><b>低配/备用档模型的已知限制</b></summary>
@@ -158,7 +166,7 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 | 📈 图表 | [`light-figure-planning`](skills/light-figure-planning/SKILL.md) ⇄ [`light-figure-drawing`](skills/light-figure-drawing/SKILL.md) | 规划做什么图、放哪 ↔ 按刊物规格出版级绘图 |
 | 🔖 引用排版 | [`light-citation`](skills/light-citation/SKILL.md) · [`light-typesetting`](skills/light-typesetting/SKILL.md) | 核验 DOI、生成多格式参考文献 · 用 LaTeX/Word 排版导出 PDF |
 | 📮 投稿返修 | [`light-venue-matching`](skills/light-venue-matching/SKILL.md) · [`light-review-rebuttal`](skills/light-review-rebuttal/SKILL.md) | 分层定位投稿(冲刺/稳妥/保底)· 模拟审稿、逐条返修 |
-| 🏆 成果转化 | [`light-ip-application`](skills/light-ip-application/SKILL.md) · [`light-slides`](skills/light-slides/SKILL.md) · [`light-competition`](skills/light-competition/SKILL.md) | 写软著专利 · 做答辩路演 PPT(可选 `imggen-enhanced` 生图流水线)· 备竞赛申报材料 |
+| 🏆 成果转化 | [`light-ip-application`](skills/light-ip-application/SKILL.md) · [`light-slides`](skills/light-slides/SKILL.md) · [`light-competition`](skills/light-competition/SKILL.md) | 写软著专利 · 做答辩路演 PPT(python-pptx 程序化)· 备竞赛申报材料 |
 
 ### 常驻技能 · 后台自动(11)
 
@@ -197,7 +205,7 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
      → paper-drafting ⇄ paper-polishing 成稿与润色
      → citation / figure-drawing / typesetting 引用核验、出图、排版
      → venue-matching 选刊投稿 → review-rebuttal 返修回复
-     → ip-application 软著专利 · slides 答辩 PPT(可选 imggen 生图分支) · competition 竞赛申报
+     → ip-application 软著专利 · slides 答辩 PPT(程序化) · competition 竞赛申报
 ```
 
 </details>
@@ -266,12 +274,11 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 > [!NOTE]
 > **绝大多数功能开箱即用,无需任何 API key。** 文献检索默认走免费的 OpenAlex / Crossref;OpenAlex 2026 年起官方要求注册**免费** API key(匿名访问处于过渡期仍可用),建议花两分钟注册以免限流。
 
-只有两种情况需要你自备 key:① 用 `light-ip-application` 做**专利检索**,调用商用专利库需要各自的凭证;② 给 `light-slides` 解锁 **PPT 生图流水线**(`imggen-enhanced` 模式,强烈建议但完全可选,不配置自动走程序化路线)。Light **不内置、也不会替你保存任何 key**,只在你提供时才发起请求。
+需要你自备 key 的只有一种情况:用 `light-ip-application` 做**专利检索**,调用商用专利库需要各自的凭证。Light **不内置、也不会替你保存任何 key**,只在你提供时才发起请求。
 
 | 服务 | 用途 | 是否必需 | 怎么获取 |
 |------|------|----------|----------|
 | OpenAlex / Crossref | 学术文献检索 | 免费,默认 | Crossref 无需注册;OpenAlex 官网免费注册 key(建议) |
-| 生图模型(GPT Image 2 / Nanobanana 2 / Seedream 5.0 任一) | PPT 生图流水线(`imggen-enhanced`) | 选用,强烈建议 | OpenAI / Google AI Studio / 火山方舟,按张计费 |
 | [The Lens](https://www.lens.org/lens/user/subscriptions#scholar) | 专利↔论文关联检索 | 选用 | 注册申请,学术用途多数免费授权 |
 | [EPO OPS](https://developers.epo.org/) | 欧洲专利官方数据 | 选用 | 注册拿 consumer key/secret |
 | [USPTO ODP](https://developer.uspto.gov/) | 美国专利数据 | 选用 | 注册申请 API key |
@@ -327,7 +334,7 @@ Light 给的是能跑的脚本、能套的模板和真实范例,且有"不编造
 <details>
 <summary><b>需要配置 API key 吗?</b></summary>
 
-绝大多数功能免 key,文献检索默认走免费的 OpenAlex / Crossref(OpenAlex 建议注册免费 key,见 2026 新政说明)。需要自备 key 的只有两类:专利检索(Lens/EPO/USPTO)与可选的 PPT 生图模型。详见 [关于 API key](#-关于-api-key)。
+绝大多数功能免 key,文献检索默认走免费的 OpenAlex / Crossref(OpenAlex 建议注册免费 key,见 2026 新政说明)。需要自备 key 的只有专利检索(Lens/EPO/USPTO)。详见 [关于 API key](#-关于-api-key)。
 </details>
 
 <details>
