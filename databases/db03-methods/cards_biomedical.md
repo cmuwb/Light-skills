@@ -21,9 +21,9 @@
   suitable_datasets: TCGA(生存终点)、MIMIC-IV、UK Biobank、SEER
   implementation_repo: R survival/survminer、Python lifelines、scikit-survival
   representative_papers:
-    - "Regression Models and Life-Tables | 1972 | cited:39192 | doi:10.1111/j.2517-6161.1972.tb00899.x"
-    - "Nonparametric Estimation from Incomplete Observations (Kaplan-Meier) | 1958 | cited:39006 | doi:10.1080/01621459.1958.10501452"
-  possible_innovation_points: 深度生存(DeepSurv/DeepHit)与可解释性结合、时变协变量建模、竞争风险下的多终点联合、多组学+影像融合预后
+    - "Regression Models and Life-Tables | 1972 | cited:39192 | doi:10.1111/j.2517-6161.1972.tb00899.x | checked:2026-06-09"
+    - "Nonparametric Estimation from Incomplete Observations (Kaplan-Meier) | 1958 | cited:39006 | doi:10.1080/01621459.1958.10501452 | checked:2026-06-09"
+  possible_innovation_points: 深度生存(DeepSurv/DeepHit)与可解释性结合、时变协变量建模、竞争风险下的多终点联合、多组学+影像融合预后; domain_scope=生物医学
   maturity: 经典  # 1958/1972 奠基,至今临床预后/流行病学标准方法,统计严谨且强制要求,不会过时
 
 - method_name: U-Net / nnU-Net 医学影像分割
@@ -38,9 +38,9 @@
   suitable_datasets: Medical Segmentation Decathlon、BraTS、KiTS、ACDC
   implementation_repo: MIC-DKFZ/nnUNet、官方 U-Net、MONAI
   representative_papers:
-    - "U-Net: Convolutional Networks for Biomedical Image Segmentation | 2015 | cited:88543 | doi:10.1007/978-3-319-24574-4_28"
-    - "nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation | 2020 | cited:8409 | doi:10.1038/s41592-020-01008-z"
-  possible_innovation_points: Transformer/Mamba 混合架构、基础模型(SAM)零样本/少样本适配、半监督与领域泛化、不确定性估计辅助临床
+    - "U-Net: Convolutional Networks for Biomedical Image Segmentation | 2015 | cited:88543 | doi:10.1007/978-3-319-24574-4_28 | checked:2026-06-09"
+    - "nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation | 2020 | cited:8409 | doi:10.1038/s41592-020-01008-z | checked:2026-06-09"
+  possible_innovation_points: Transformer/Mamba 混合架构、基础模型(SAM)零样本/少样本适配、半监督与领域泛化、不确定性估计辅助临床; domain_scope=生物医学
   maturity: 主流  # U-Net 经典骨干,nnU-Net 仍是分割竞赛强基线/事实标准,2020 后持续被超越但难被取代
 
 - method_name: GWAS 全基因组关联分析
@@ -55,9 +55,9 @@
   suitable_datasets: UK Biobank、1000 Genomes(参考/imputation)、FinnGen
   implementation_repo: PLINK 1.9/2.0、BOLT-LMM、SAIGE、REGENIE
   representative_papers:
-    - "PLINK: A Tool Set for Whole-Genome Association and Population-Based Linkage Analyses | 2007 | cited:36013 | doi:10.1086/519795"
-    - "10 Years of GWAS Discovery: Biology, Function, and Translation | 2017 | cited:4048 | doi:10.1016/j.ajhg.2017.06.005"
-  possible_innovation_points: 跨族裔/多祖先 PRS 可迁移性、罕见变异负荷检验、功能注释整合的精细定位、与多组学/EHR 的联合分析
+    - "PLINK: A Tool Set for Whole-Genome Association and Population-Based Linkage Analyses | 2007 | cited:36013 | doi:10.1086/519795 | checked:2026-06-09"
+    - "10 Years of GWAS Discovery: Biology, Function, and Translation | 2017 | cited:4048 | doi:10.1016/j.ajhg.2017.06.005 | checked:2026-06-09"
+  possible_innovation_points: 跨族裔/多祖先 PRS 可迁移性、罕见变异负荷检验、功能注释整合的精细定位、与多组学/EHR 的联合分析; domain_scope=生物医学
   maturity: 主流  # 群体遗传学标准范式,工具链(PLINK/REGENIE)持续迭代,生物库时代仍是核心
 
 - method_name: 临床预测模型(逻辑回归风险评分,TRIPOD 规范)
@@ -72,9 +72,9 @@
   suitable_datasets: MIMIC-IV、eICU、UK Biobank、Framingham 队列
   implementation_repo: R rms/glmnet、Python statsmodels/scikit-learn、列线图 R regplot
   representative_papers:
-    - "Transparent Reporting of a multivariable prediction model for Individual Prognosis Or Diagnosis (TRIPOD): the TRIPOD statement | 2015 | cited:3983 | doi:10.1136/bmj.g7594"
-    - "General Cardiovascular Risk Profile for Use in Primary Care (Framingham) | 2008 | cited:7437 | doi:10.1161/circulationaha.107.699579"
-  possible_innovation_points: 可解释 ML 与逻辑回归对比的临床效用(DCA)、外部多中心验证与公平性、动态/时序风险更新、TRIPOD+AI 报告规范落地
+    - "Transparent Reporting of a multivariable prediction model for Individual Prognosis Or Diagnosis (TRIPOD): the TRIPOD statement | 2015 | cited:3983 | doi:10.1136/bmj.g7594 | checked:2026-06-09"
+    - "General Cardiovascular Risk Profile for Use in Primary Care (Framingham) | 2008 | cited:7437 | doi:10.1161/circulationaha.107.699579 | checked:2026-06-09"
+  possible_innovation_points: 可解释 ML 与逻辑回归对比的临床效用(DCA)、外部多中心验证与公平性、动态/时序风险更新、TRIPOD+AI 报告规范落地; domain_scope=生物医学
   maturity: 经典  # 逻辑回归风险评分是临床预测金标准范式,TRIPOD(及 2024 TRIPOD+AI)强化其规范地位
 
 - method_name: AlphaFold 蛋白质结构预测
@@ -89,9 +89,9 @@
   suitable_datasets: PDB、CASP 评测集、UniProt/AlphaFold DB
   implementation_repo: deepmind/alphafold、ColabFold、OpenFold
   representative_papers:
-    - "Highly accurate protein structure prediction with AlphaFold | 2021 | cited:44717 | doi:10.1038/s41586-021-03819-2"
-    - "Accurate structure prediction of biomolecular interactions with AlphaFold 3 | 2024 | cited:13376 | doi:10.1038/s41586-024-07487-w"
-  possible_innovation_points: 蛋白动态/多构象与无序区、蛋白-配体/核酸复合物(AF3 方向)、突变效应与稳定性预测、与冷冻电镜/实验数据联合精修
+    - "Highly accurate protein structure prediction with AlphaFold | 2021 | cited:44717 | doi:10.1038/s41586-021-03819-2 | checked:2026-06-09"
+    - "Accurate structure prediction of biomolecular interactions with AlphaFold 3 | 2024 | cited:13376 | doi:10.1038/s41586-024-07487-w | checked:2026-06-09"
+  possible_innovation_points: 蛋白动态/多构象与无序区、蛋白-配体/核酸复合物(AF3 方向)、突变效应与稳定性预测、与冷冻电镜/实验数据联合精修; domain_scope=生物医学
   maturity: 主流  # 2021 起结构预测范式革命,AF3(2024)扩展到复合物,领域绝对主流且快速演进
 
 - method_name: CheXNet 类 医学影像分类(胸片多标签)
@@ -106,8 +106,8 @@
   suitable_datasets: ChestX-ray14、CheXpert、MIMIC-CXR、PadChest
   implementation_repo: TorchXRayVision、官方/复现 CheXNet、MONAI
   representative_papers:
-    - "CheXNet: Radiologist-Level Pneumonia Detection on Chest X-Rays with Deep Learning | 2017 | cited:1455 | doi:10.48550/arxiv.1711.05225"
-    - "CheXpert: A Large Chest Radiograph Dataset with Uncertainty Labels and Expert Comparison | 2019 | cited:2539 | doi:10.1609/aaai.v33i01.3301590"
-  possible_innovation_points: 视觉-语言基础模型(报告+影像)、不确定标签的鲁棒学习、跨机构域泛化与公平性、罕见病理长尾、可信定位与临床验证
+    - "CheXNet: Radiologist-Level Pneumonia Detection on Chest X-Rays with Deep Learning | 2017 | cited:1455 | doi:10.48550/arxiv.1711.05225 | checked:2026-06-09"
+    - "CheXpert: A Large Chest Radiograph Dataset with Uncertainty Labels and Expert Comparison | 2019 | cited:2539 | doi:10.1609/aaai.v33i01.3301590 | checked:2026-06-09"
+  possible_innovation_points: 视觉-语言基础模型(报告+影像)、不确定标签的鲁棒学习、跨机构域泛化与公平性、罕见病理长尾、可信定位与临床验证; domain_scope=生物医学
   maturity: 主流  # CheXNet(2017)为奠基范式,当前实践已转向 ViT/视觉-语言基础模型,任务范式仍主流
 ```

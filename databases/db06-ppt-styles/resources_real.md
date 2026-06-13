@@ -5,7 +5,7 @@
 > 链接核实方式：Bash `curl` 取 HTTP 状态 + GitHub/PyPI API 取许可与星标 + WebSearch 取官方页面（附 URL）。核实日期 2026-06-06。
 > ⚠ 许可条款会变动，正式商用前请到对应官网 License/FAQ 页面二次确认；本表"许可"列为速查，非法律意见。
 >
-> **本轮 curl 实测状态码（2026-06-06）**：Slidesgo / SlidesCarnival / SlideModel / Beautiful.ai / Pitch / Marp / reveal.js / python-pptx / PptxGenJS / OfficePLUS / iSlide / 优品PPT 均 **200**；Canva / SlidesMania / Envato Elements 返回 **403**（反爬，浏览器可正常访问）；Gamma `curl` 返回 **000**（连接被拦，已用 WebSearch 核实官网 https://gamma.app/ 真实存在）。开源项目许可与星标经 GitHub API 实测：Marp(MIT, 11.9k★)、reveal.js(MIT, 71.6k★)、PptxGenJS(MIT, 5.5k★)、mtheme(**CC-BY-SA-4.0**, 6.8k★)、moloch(**CC-BY-SA-4.0**, 238★)；python-pptx 经 PyPI API 实测 **MIT**。
+> **星标/许可/HTTP 状态是薄缓存快照**(last_checked=2026-06-06,非长期有效)：开源仓星标/许可由 [scripts/resource_signal.py](scripts/resource_signal.py) 实时查 GitHub/PyPI API,冲突信在线、无网回退快照标 stale。许可为合规红线(metropolis=CC-BY-SA-4.0 必须可追溯),以官方 LICENSE 为准。下表快照值(2026-06-06)：Marp(MIT, 11.9k★)、reveal.js(MIT, 71.6k★)、PptxGenJS(MIT, 5.5k★)、mtheme(CC-BY-SA-4.0, 6.8k★)、moloch(CC-BY-SA-4.0, 238★)、python-pptx(MIT, PyPI)；Canva/SlidesMania/Envato curl 403(反爬非失效)、Gamma curl 000(已 WebSearch 核实 https://gamma.app/ 存在),其余模板站 200。
 
 ---
 

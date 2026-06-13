@@ -4,8 +4,18 @@
 
 > **职责边界（canonical）**：db05 是**风格实例卡片库**（一张卡=一套可迁移的视觉范式：风格名/色板/字体/token/代表实现/适用场景/禁忌）。"brief 信号→怎么选哪套设计系统"的**方法论**在 a05 的 `light-frontend-design/references/design-systems-map.md`。选型看 a05，找可套用的风格卡来 db05；两边不重复彼此内容。
 
+## 这个库是什么(诚实卖点)
+
+**不是**"18 设计卡 + 26 工具 license 认证库",而是**视觉范式本地精养 + 工具 license/版本实时核 + 偏科可过滤**的分层资产:
+
+- **方法论/范式层(本地精养,护城河)**:18 张设计卡的 style_tag/layout_type/color_palette 逻辑/font_style/component_pattern 等 9 个学科中立范式字段 + design_tokens.template.json(DTCG 视觉 SSOT 模板) + 各卡范式专属 a11y 判断(玻璃拟态可读性/新拟物硬伤)。几乎不过时,是 a05 的真正消费对象。纯 WCAG 阈值/触控/栅格判据上抽到 a05 [visual-a11y-rules.md](../../skills/light-frontend-design/references/visual-a11y-rules.md) 一处维护。
+- **薄缓存层(工具事实实时核)**:resources_real.md Part1 的 26 条工具,其 license/版本/链接是会变的事实——许可列为**快照、非认证事实**,npm 系工具用 [scripts/style_signal.py](scripts/style_signal.py) 实时查 registry.npmjs.org、冲突信在线;画廊/SaaS/Pro 定价层无 API,只存指针指向官方页、标 *待核查*、投产前人工核。无网降级标 stale。
+- **偏科隔离层(可过滤)**:绝大多数 genre/设计系统卡是 general(对所有方向可见);带研究方向前提的卡以 `domain_scope=` 子串标注(如智慧农业平台卡 `domain_scope=agri-tech`),非该方向用户可过滤。无标注的卡默认 general。
+
 ## design_card schema
 `project_type, style_tag, layout_type, color_palette, font_style, component_pattern, interaction_pattern, animation_type, screenshot_reference, implementation_notes, suitable_project_scene`
+
+共 11 字段。偏科标 `domain_scope=` 以 catch-all 子串塞 suitable_project_scene,不占正式列、零 CI 改动。
 
 ## 数据来源
 Mobbin、Awwwards、Dribbble、Behance、Lapa Ninja、Land-book、Godly、Siteinspire、CSS Design Awards、Pinterest、Figma Community、shadcn/ui、Tailwind UI、Vercel templates、GitHub frontend-design 类技能。
@@ -42,6 +52,7 @@ Mobbin、Awwwards、Dribbble、Behance、Lapa Ninja、Land-book、Godly、Sitein
 5. **落日期**：每张卡/每个卡文件标 `核验日期 YYYY-MM-DD`，供 [check_freshness.py](../../.github/scripts/check_freshness.py) 月度统计（warn-only，不阻断 CI；每月跑一次取超期清单复查）。
 
 ## 真实资源文件
-- [resources_real.md](resources_real.md) — 真实可用前端资源清单（shadcn/ui、Tailwind、ECharts、Awwwards、Mobbin 等，带链接与许可）+ 科研场景 design_card。
+- [resources_real.md](resources_real.md) — 真实可用前端资源清单（shadcn/ui、Tailwind、ECharts、Awwwards、Mobbin 等）+ 科研场景 design_card。Part1 许可列为**薄缓存快照、非认证事实**,附 npm 薄缓存映射表供 style_signal.py 实时核;agri-tech 卡带 domain_scope。
 - [design_system_cards.md](design_system_cards.md) — 官方设计系统与科研项目落地模式（Carbon、Fluent、Polaris、Atlassian、Primer、USWDS、GOV.UK、Material Design 等 8 卡，站点 HTTP 200 核验）。
 - [style_genre_cards.md](style_genre_cards.md) — 风格谱系卡（玻璃拟态、新拟物、编辑器极简 Linear/Vercel、杂志编辑 4 卡，来源 HTTP 200 核验 2026-06-12）。
+- [scripts/style_signal.py](scripts/style_signal.py) — 工具 license/版本实时核(npm registry)+ 链接存活探测,冲突信在线、无网降级 stale、定价层标待核查。自检 `python scripts/style_signal.py --selftest`。

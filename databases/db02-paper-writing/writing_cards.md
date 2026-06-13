@@ -6,7 +6,7 @@
 ```yaml
 - venue:
   title_pattern:            # 标题套路
-  abstract_structure:       # 摘要分句逻辑
+  abstract_structure:       # 摘要分句逻辑(归纳,不录原文)
   intro_problem_gap_contribution:
   related_work_taxonomy:
   method_narrative:
@@ -16,7 +16,16 @@
   contribution_sentence:
   reviewer_potential_questions:
   source_url:
+  # —— 偏科隔离 + 薄缓存(db02 重构新增, catch-all 子串, 不占正式列) ——
+  domain_scope:             # 方向标签(cv-视觉/通用ML统计/统计经济金融/生物医学/NLP语音/cs.* 等);非该方向取卡时过滤
+  source_pointer:           # doi + openalex_id, 实时刷新被引的稳定锚
+  cited_snapshot:           # 被引快照值(社会证明、非权威事实, 会增长)
+  last_checked:             # 快照采集日期 YYYY-MM-DD; 用时以 scripts/paper_signal.py 实时查为准、冲突信在线
 ```
+
+> 被引数定位为「快照、会增长的 social proof」,非权威值;`scripts/paper_signal.py --doi <DOI>` 实时核。
+> **不录摘要原文**(版权纪律): abstract_structure 只写人工归纳的分句逻辑,引用零星英文短句仅作模式示例。
+> 背书规则按方向用: cs.AI/CV 的竞赛排名/SOTA/开源 social proof 不套用到统计/医学/农业等方向。
 
 ## 高频可迁移套路（领域无关）
 

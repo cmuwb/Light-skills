@@ -15,7 +15,7 @@
 ---
 
 ## R01 · Visual Autoregressive Modeling: Scalable Image Generation via Next-Scale Prediction (VAR)
-- **venue**：NeurIPS 2024（**Best Paper Award**） · **被引**：34（2026-06-12 快照） · **DOI**：10.52202/079017-2694 · 作者 5 人
+- **venue**：NeurIPS 2024（**Best Paper Award**） · **被引**：34（2026-06-12 快照） · **DOI**：10.52202/079017-2694 · 作者 5 人 · domain_scope=cv-视觉
 - **title_pattern**：`方法名缩写(VAR): 大类任务 via 核心机制` —— 用"次尺度预测(next-scale prediction)"一短语点破与 GPT 式 next-token 的类比与差异，标题自带记忆点。
 - **abstract_structure（归纳，非原文）**：① 自回归生图长期落后于扩散模型(立靶) → ② 病因诊断：传统按 raster/patch 顺序预测不符合图像多尺度结构 → ③ 主张：改为"由粗到细、逐尺度"预测 → ④ 结果：首次让 GPT 式自回归在 ImageNet 上**超过扩散基线**且推理更快、具 scaling law → ⑤ 意义：为视觉生成接入 LLM 范式打开口子。
 - **intro(problem-gap-contribution)**：重要性=统一视觉与语言的生成范式；gap=已有视觉自回归顺序不当、慢且弱；contribution=次尺度自回归定义 + 幂律 scaling 证据 + zero-shot 泛化。
@@ -31,7 +31,7 @@
 ---
 
 ## R02 · Generative Image Dynamics
-- **venue**：CVPR 2024（**Best Paper Award**） · **被引**：41（2026-06-12 快照） · **DOI**：10.1109/cvpr52733.2024.02279 · 作者 4 人(Li, Tucker, Snavely, Holynski)
+- **venue**：CVPR 2024（**Best Paper Award**） · **被引**：41（2026-06-12 快照） · **DOI**：10.1109/cvpr52733.2024.02279 · 作者 4 人(Li, Tucker, Snavely, Holynski) · domain_scope=cv-视觉
 - **title_pattern**：`Generative + 领域名词(Image Dynamics)` —— 两词极简、强画面感，不堆方法缩写，靠概念新颖度取胜（顶会 Best Paper 常见自信式命名）。
 - **abstract_structure（归纳）**：① 真实世界含无数微小往复运动(树摇/烛火/呼吸) → ② 缺：从单图建模这种"自然振荡动态"的生成先验 → ③ 方法：在频域(谱体积)上学习每像素的运动基 → ④ 结果：单张静图→可循环播放的真实动画，且支持交互式拖拽响应 → ⑤ 意义：图像空间动态先验，可迁移到多种下游交互。
 - **intro(problem-gap-contribution)**：重要性=让静态照片"活"起来的通用动态先验；gap=已有视频生成难保长时一致与物理合理的往复运动；contribution=频域运动表示 + 从单图预测谱体积 + 交互式动态渲染。
@@ -47,7 +47,7 @@
 ---
 
 ## R03 · BioCLIP: A Vision Foundation Model for the Tree of Life
-- **venue**：CVPR 2024（**Best Student Paper**） · **被引**：100（2026-06-12 快照） · **DOI**：10.1109/cvpr52733.2024.01836 · 作者 12 人
+- **venue**：CVPR 2024（**Best Student Paper**） · **被引**：100（2026-06-12 快照） · **DOI**：10.1109/cvpr52733.2024.01836 · 作者 12 人 · domain_scope=cv-视觉
 - **用户域强相关**：动植物/物种细粒度识别的视觉基础模型——精准畜牧/农业 CV/生物多样性监测可直接迁移其"大规模物种图像 + 分类层级标签"范式。
 - **title_pattern**：`方法名(BioCLIP): A 定位(Vision Foundation Model) for 宏大领域(the Tree of Life)` —— "Tree of Life" 把生物分类全域诗意化，定位"基础模型"立刻拔高格局。
 - **abstract_structure（归纳）**：① 生物学影像爆炸式增长、亟需跨物种通用视觉表征 → ② 缺：覆盖整个生命之树、含分类层级语义的基础模型与数据 → ③ 方法：构建大规模带分类阶元(界门纲目科属种)标签的图像库 + CLIP 式对比预训练 → ④ 结果：在大量细粒度物种任务上 zero/few-shot 显著超通用 CLIP → ⑤ 意义：生物学通用视觉基座，促进生态/保护/农业应用。
@@ -64,7 +64,7 @@
 ---
 
 ## R04 · Mip-Splatting: Alias-free 3D Gaussian Splatting
-- **venue**：CVPR 2024（**Best Student Paper**） · **被引**：379（2026-06-12 快照，3DGS 热点高被引） · **DOI**：10.1109/cvpr52733.2024.01839 · 作者 5 人
+- **venue**：CVPR 2024（**Best Student Paper**） · **被引**：379（2026-06-12 快照，3DGS 热点高被引） · **DOI**：10.1109/cvpr52733.2024.01839 · 作者 5 人 · domain_scope=cv-视觉
 - **title_pattern**：`致敬经典(Mip-，借 mipmap)+方法名(Splatting): 解决的痛点(Alias-free) 大类(3D Gaussian Splatting)` —— 用图形学经典词"Mip"一秒传达"抗锯齿/多尺度"，命名即卖点。
 - **abstract_structure（归纳）**：① 3DGS 渲染快但变焦/变分辨率时强烈走样 → ② 病因：高斯核缺多尺度频率约束 → ③ 方法：3D 平滑滤波(限频)+ 2D Mip 滤波(替代膨胀)→ ④ 结果：任意缩放下抗锯齿、跨分辨率泛化、几乎不增开销 → ⑤ 意义：让 3DGS 在真实多尺度观测下稳健可用。
 - **intro(problem-gap-contribution)**：重要性=3DGS 是实时新视角合成主力；gap=采样率变化导致走样、out-of-distribution 缩放崩坏；contribution=频域分析定位病因 + 两个滤波器 + 即插即用几乎零成本。
@@ -80,7 +80,7 @@
 ---
 
 ## R05 · Rich Human Feedback for Text-to-Image Generation
-- **venue**：CVPR 2024（**Best Paper Award**） · **被引**：49（2026-06-12 快照） · **DOI**：10.1109/cvpr52733.2024.01835 · 作者 18 人
+- **venue**：CVPR 2024（**Best Paper Award**） · **被引**：49（2026-06-12 快照） · **DOI**：10.1109/cvpr52733.2024.01835 · 作者 18 人 · domain_scope=cv-视觉
 - **title_pattern**：`Rich + 数据类型(Human Feedback) for 任务(Text-to-Image Generation)` —— 用 "Rich" 一词点出对粗粒度评分的升级(细粒度标注)，标题即贡献定位。
 - **abstract_structure（归纳）**：① T2I 生成质量评估多停在单一总体评分 → ② 缺：细粒度、可定位的人类反馈(哪块不真实、哪词没画出) → ③ 方法：收集带区域标注+词级标注的丰富反馈数据集，训练预测模型 → ④ 结果：可预测细粒度问题并反哺改进生成 → ⑤ 意义：把"人类反馈"从标量升级为结构化信号，推动对齐。
 - **intro(problem-gap-contribution)**：重要性=生成模型对齐依赖高质量反馈；gap=现有反馈太粗、不可定位；contribution=RichHF 数据集(区域+词级标注) + 多模态预测模型 + 反馈指导生成改善的验证。
@@ -96,7 +96,7 @@
 ---
 
 ## R06 · Foundation model for cancer imaging biomarkers
-- **venue**：Nature Machine Intelligence 2024（Nature 子刊） · **被引**：168（2026-06-12 快照） · **DOI**：10.1038/s42256-024-00807-9
+- **venue**：Nature Machine Intelligence 2024（Nature 子刊） · **被引**：168（2026-06-12 快照） · **DOI**：10.1038/s42256-024-00807-9 · domain_scope=生物医学
 - **医学影像 AI 范本**：医疗影像基础模型写作范式，可迁移到任何"小标注医学影像 + 自监督预训练"的论文。
 - **title_pattern**：`Foundation model for 领域(cancer imaging biomarkers)` —— Nature 子刊偏好"能力定位"式极简标题，不带方法缩写。
 - **abstract_structure（Nature 体，背景更长）**：① 影像生物标志物对肿瘤诊疗价值大 → ② 缺：标注稀缺限制深度模型、任务专用模型迁移差 → ③ 方法：大规模 CT 影像自监督预训练基础模型 → ④ 结果：少样本下多项生物标志物任务超专用模型、跨数据集稳健、标注效率高 → ⑤ 意义：可复用的肿瘤影像基座，降低落地门槛。
@@ -113,7 +113,7 @@
 ---
 
 ## R07 · Agricultural object detection with You Only Look Once (YOLO): A survey
-- **venue**：Computers and Electronics in Agriculture 2024（农业工程旗舰刊，用户域核心） · **被引**：327（2026-06-12 快照） · **DOI**：10.1016/j.compag.2024.109090
+- **venue**：Computers and Electronics in Agriculture 2024（农业工程旗舰刊，用户域核心） · **被引**：327（2026-06-12 快照） · **DOI**：10.1016/j.compag.2024.109090 · domain_scope=cv-农业
 - **用户域 + 综述写作双范本**：精准农业/畜牧 CV 的检测综述，既是用户域最贴的写作样本，也是"综述类论文如何组织"的范式。
 - **title_pattern**：`领域(Agricultural) 任务(object detection) with 方法(YOLO): A survey` —— 综述标题直白挂"任务×方法×survey"，利于检索与定位。
 - **abstract_structure（综述体）**：① 农业场景目标检测需求激增(病虫害/果实/牲畜/杂草) → ② YOLO 因实时性成农业首选但应用零散缺系统梳理 → ③ 本文：按农业子任务系统综述 YOLO 各版本应用、数据集与改进 → ④ 发现：归纳常见改进策略与性能权衡、指出数据与部署缺口 → ⑤ 展望：边缘部署/小目标/域适应等方向。
@@ -130,7 +130,7 @@
 ---
 
 ## R08 · Augmenting large language models with chemistry tools (ChemCrow)
-- **venue**：Nature Machine Intelligence 2024（Nature 子刊） · **被引**：568（2026-06-12 快照，LLM-agent 高被引） · **DOI**：10.1038/s42256-024-00832-8
+- **venue**：Nature Machine Intelligence 2024（Nature 子刊） · **被引**：568（2026-06-12 快照，LLM-agent 高被引） · **DOI**：10.1038/s42256-024-00832-8 · domain_scope=NLP语音
 - **LLM 智能体写作范本**：LLM + 工具调用(agent) 范式的顶刊写法，迁移到任何"LLM 接专业工具解决领域任务"的论文。
 - **title_pattern**：`动词(Augmenting) 对象(large language models) with 手段(chemistry tools)` —— 动词开头点出"增强"动作，直白传达"LLM+工具"主张。
 - **abstract_structure（归纳）**：① LLM 擅长语言但在化学等专业任务上不可靠(幻觉/不会算) → ② 缺：让 LLM 可靠完成化学合成规划/性质预测等专业任务的途径 → ③ 方法：把 LLM 与一组专家化学工具(检索/计算/合成规划)用 agent 框架编排 → ④ 结果：在多类化学任务上显著优于纯 LLM、能自主完成合成规划 → ⑤ 意义：专家工具增强是 LLM 落地专业领域的可行范式。

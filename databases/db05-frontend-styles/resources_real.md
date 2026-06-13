@@ -7,6 +7,10 @@
 
 ## Part 1 — 真实可用资源清单
 
+> **许可列是薄缓存快照,非认证事实**(last_checked=2026-06-06)。license/版本会随版本与服务条款变更——
+> npm 系工具(见文末「npm 薄缓存映射」)用 `scripts/style_signal.py --npm <包名>` 实时查 registry.npmjs.org,冲突信在线;
+> 画廊/SaaS/Figma/Pro 定价层**无 license API**,只存指针指向官方 LICENSE/pricing 页,标 *待核查*、投产前人工核。无网时用快照并标 stale。
+
 ### A. 组件库 / UI Kit（可直接写代码）
 
 | 资源 | 链接 | 是什么 | 许可 | 适合的科研/项目场景 |
@@ -60,6 +64,24 @@
 
 > 合规提醒：灵感画廊（D 类）只用于**学习版式与交互逻辑**，禁止下载/复制他人素材直接用于自己作品（CONVENTIONS §5）。组件/库（A/C/E 类）以各仓库 LICENSE 为准，商用前确认。
 
+### npm 薄缓存映射（style_signal.py 实时查的输入清单，license 为 2026-06-06 快照）
+
+| 工具 | npm 包名 | license 快照 | flag |
+|---|---|---|---|
+| shadcn/ui | shadcn | MIT | ok（CLI 工具，组件代码进自己仓库） |
+| Radix UI | @radix-ui/react-dialog（系列同协议） | MIT | ok |
+| Material UI | @mui/material | MIT | ok（MUI X 高级组件部分收费，*待核查* 具体组件） |
+| Ant Design | antd | MIT | ok |
+| Tremor | @tremor/react | Apache-2.0 | ok（Blocks 模板另有授权 *待核查*） |
+| Magic UI | magicui（仓库 magicuidesign/magicui） | MIT | ok（Pro 付费层无 API *待核查*） |
+| Apache ECharts | echarts | Apache-2.0 | ok |
+| D3.js | d3 | ISC | ok |
+| Recharts | recharts | MIT | ok |
+| Tailwind CSS | tailwindcss | MIT | ok |
+
+> 用法：`python scripts/style_signal.py --npm echarts --cached-license Apache-2.0`（查在线 license+最新版本、与快照对比、冲突信在线）。
+> 不在表内的（Aceternity/tweakcn/Realtime Colors/Coolors/画廊/Figma/Vercel 模板）无统一 npm 包或无 license API，走 `--url` 存活探测 + 官方 LICENSE 页人工核，定价层恒标 *待核查*。
+
 ---
 
 ## Part 2 — 可落地 design_card（db05 schema）
@@ -76,7 +98,7 @@
   interaction_pattern: 自动轮播 + 悬停明细 tooltip + 定时刷新
   animation_type: 数字滚动(countup) + 渐入 + 光晕脉冲
   screenshot_reference: https://echarts.apache.org/examples/  (地图/热力示例)
-  implementation_notes: ECharts(Apache-2.0) 主力 + CSS Grid 布局; 投影/大屏注意对比度与字号; 数据用 WebSocket/轮询
+  implementation_notes: ECharts 主力 + CSS Grid 布局; 投影/大屏注意对比度与字号; 数据用 WebSocket/轮询。库 license/版本见 Part1 表薄缓存,投产前以 style_signal.py 实时核为准
   suitable_project_scene: 智慧农业监控、竞赛答辩大屏、科研数据中台
 
 - project_type: 学术个人/项目主页
@@ -88,7 +110,7 @@
   interaction_pattern: 平滑滚动 + 锚点高亮 + 论文展开摘要
   animation_type: 克制(fade-in on scroll)
   screenshot_reference: https://vercel.com/templates/next.js  (academic/portfolio 模板)
-  implementation_notes: Next.js + Tailwind(MIT) + shadcn/ui 卡片; 可一键部署 Vercel; tweakcn 调主题色
+  implementation_notes: Next.js + Tailwind + shadcn/ui 卡片; 可一键部署 Vercel; tweakcn 调主题色。库 license 见 Part1 薄缓存、实时核为准
   suitable_project_scene: 论文/项目展示、个人作品集、课题组主页
 
 - project_type: 科研数据管理/分析系统
@@ -100,7 +122,7 @@
   interaction_pattern: 筛选/排序/分页 + 表单即时校验反馈 + 批量操作确认
   animation_type: 克制(抽屉滑入/loading 骨架屏)
   screenshot_reference: https://ui.shadcn.com/blocks/sidebar  (官方侧栏布局区块)
-  implementation_notes: Ant Design(MIT) 或 shadcn/ui + Recharts(MIT)/ECharts; 主题 token 化; 表格用虚拟滚动应对大数据
+  implementation_notes: Ant Design 或 shadcn/ui + Recharts/ECharts; 主题 token 化; 表格用虚拟滚动应对大数据。库 license 见 Part1 薄缓存、实时核为准
   suitable_project_scene: 科研数据平台、实验管理系统、软著系统类作品
 
 - project_type: 智慧农业监测平台
@@ -113,7 +135,7 @@
   animation_type: 数据渐变过渡 + 告警闪烁(克制)
   screenshot_reference: https://echarts.apache.org/examples/  (geo/effectScatter 地图点位)
   implementation_notes: ECharts(地图+折线) + Tailwind 绿色调色板(Realtime Colors 验证对比度); 注意户外强光下可读性, 提供深色备选主题
-  suitable_project_scene: 智慧农业课题、物联网监测、农业 IoT 答辩演示
+  suitable_project_scene: 智慧农业课题、物联网监测、农业 IoT 答辩演示 · domain_scope=agri-tech
 
 - project_type: 移动端 App 演示页
   style_tag: 移动端/mobile/拇指可达
@@ -136,7 +158,7 @@
   interaction_pattern: 滚动触发动画(scroll-reveal) + 悬停高亮 + 视差
   animation_type: Framer Motion 进场动画 + 背景粒子/光效
   screenshot_reference: https://ui.aceternity.com/components  (动效组件参考)
-  implementation_notes: Next.js + Tailwind + Aceternity UI(免费组件)/Magic UI(MIT) 动效; Pro 模板商用需购授权; 动效克制避免喧宾夺主
+  implementation_notes: Next.js + Tailwind + Aceternity UI(免费组件)/Magic UI 动效; Pro 模板商用需购授权(定价无 API,见官方 pricing 页人工核); 动效克制避免喧宾夺主。库 license 见 Part1 薄缓存、实时核为准
   suitable_project_scene: 课题成果落地页、竞赛答辩首页、开源项目主页
 ```
 

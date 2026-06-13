@@ -16,8 +16,9 @@
   citation: |
     FRED-MD: A Monthly Database for Macroeconomic Research | 2015 | cited:888 | doi:10.1080/07350015.2015.1086655
     FRED-QD: A Quarterly Database for Macroeconomic Research | 2020 | cited:100 | doi:10.3386/w26872
+    [last_checked=待核; 锚点已内联 doi:/cited:,被引实时查见 dataset_signal.py]
   leaderboard_url: 无统一官方榜
-  known_issues: 变量会修订；季节调整/转换代码必须固定；实时预测需使用 vintages 避免未来修订泄漏
+  known_issues: 变量会修订；季节调整/转换代码必须固定；实时预测需使用 vintages 避免未来修订泄漏; domain_scope=经济
   bias_risk: 中 — 以美国宏观经济为主，跨国泛化有限
   privacy_risk: 无
   preprocessing_steps: 按论文 transformation code 平稳化；记录 vintage；缺失填补；时间滚动 split
@@ -32,9 +33,9 @@
   license: Groningen Growth and Development Centre 数据条款；学术使用需引用，商用/再分发需核实
   download_url: https://www.rug.nl/ggdc/productivity/pwt/
   paper_url: https://doi.org/10.1257/aer.20130954
-  citation: "The Next Generation of the Penn World Table | 2015 | cited:4710 | doi:10.1257/aer.20130954"
+  citation: "The Next Generation of the Penn World Table | 2015 | cited:4710 | doi:10.1257/aer.20130954; last_checked=待核; doi=10.1257/aer.20130954"
   leaderboard_url: 无
-  known_issues: 购买力平价与国民账户修订导致版本差异；缺失国家/年份；跨国可比性受统计体系影响
+  known_issues: 购买力平价与国民账户修订导致版本差异；缺失国家/年份；跨国可比性受统计体系影响; domain_scope=经济
   bias_risk: 中 — 低收入国家统计质量不均，历史数据不确定性高
   privacy_risk: 无
   preprocessing_steps: 固定 PWT 版本；国家代码对齐；处理缺失/异常；按国家或时间留出验证
@@ -49,9 +50,9 @@
   license: World Bank Open Data 多数 CC BY 4.0；具体指标可能有来源限制，使用前核实
   download_url: "https://databank.worldbank.org/source/world-development-indicators ; API: https://api.worldbank.org/"
   paper_url: https://doi.org/10.1596/978-1-4648-0484-7_world_development_indicators
-  citation: "World Development Indicators | 2015 | cited:760 | doi:10.1596/978-1-4648-0484-7_world_development_indicators"
+  citation: "World Development Indicators | 2015 | cited:760 | doi:10.1596/978-1-4648-0484-7_world_development_indicators; last_checked=待核; doi=10.1596/978-1-4648-0484-7_world_development_indicators"
   leaderboard_url: 无
-  known_issues: 缺失严重、指标定义变更、国家边界/代码变化；不同来源统计口径不一
+  known_issues: 缺失严重、指标定义变更、国家边界/代码变化；不同来源统计口径不一; domain_scope=经济
   bias_risk: 中 — 国家统计能力差异导致测量偏差
   privacy_risk: 无（聚合国家级）
   preprocessing_steps: 指标筛选；缺失率阈值；国家代码标准化；固定下载日期；避免用未来年份协变量
@@ -66,9 +67,9 @@
   license: Kenneth French Data Library 免费公开；再分发/商用需核对网站条款并引用
   download_url: https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html
   paper_url: https://doi.org/10.1016/0304-405x(93)90023-5
-  citation: "Common risk factors in the returns on stocks and bonds | 1993 | cited:27629 | doi:10.1016/0304-405x(93)90023-5"
+  citation: "Common risk factors in the returns on stocks and bonds | 1993 | cited:27629 | doi:10.1016/0304-405x(93)90023-5; last_checked=待核; doi=10.1016/0304-405x(93)90023-5"
   leaderboard_url: 无
-  known_issues: 因子构造更新；幸存者/数据清洗细节依赖 CRSP/Compustat；国际市场覆盖不均
+  known_issues: 因子构造更新；幸存者/数据清洗细节依赖 CRSP/Compustat；国际市场覆盖不均; domain_scope=金融-特定市场
   bias_risk: 中 — 美股研究最充分，跨市场泛化需谨慎
   privacy_risk: 无（公开市场聚合数据）
   preprocessing_steps: 统一频率；处理百分比单位；对齐无风险利率；避免 look-ahead；记录下载日期
@@ -86,8 +87,9 @@
   citation: |
     A First Look at the Accuracy of the CRSP Mutual Fund Database and a Comparison of the CRSP and Morningstar Mutual Fund Databases | 2001 | cited:419 | doi:10.1111/0022-1082.00410
     注：这是 CRSP 相关核查文献示例，非数据库唯一引用。
+    [last_checked=待核; 锚点已内联 doi:/cited:,被引实时查见 dataset_signal.py]
   leaderboard_url: 无
-  known_issues: PERMNO/GVKEY/link table 对齐复杂；退市收益、幸存者偏差、公告日期与可得日期必须处理
+  known_issues: PERMNO/GVKEY/link table 对齐复杂；退市收益、幸存者偏差、公告日期与可得日期必须处理; domain_scope=金融-特定市场
   bias_risk: 中 — 覆盖上市公司/美股为主，私营企业与小市场不足
   privacy_risk: 低 — 市场/公司数据为商业授权数据，但非个人隐私为主
   preprocessing_steps: 使用 CCM link table；加入 delisting returns；按可得日期滞后财务变量；保留查询 SQL 与日期
@@ -102,9 +104,9 @@
   license: OECD 数据条款；多数可用于研究并需引用，商用/再分发需核实
   download_url: https://data-explorer.oecd.org/ ; https://www.oecd.org/economy/reform/indicators-of-product-market-regulation/
   paper_url: https://doi.org/10.2139/ssrn.201668
-  citation: "Summary Indicators of Product Market Regulation with an Extension to Employment Protection Legislation | 2000 | cited:474 | doi:10.2139/ssrn.201668"
+  citation: "Summary Indicators of Product Market Regulation with an Extension to Employment Protection Legislation | 2000 | cited:474 | doi:10.2139/ssrn.201668; last_checked=待核; doi=10.2139/ssrn.201668"
   leaderboard_url: 无
-  known_issues: 指标定义和方法随版本更新；非 OECD 国家覆盖有限；政策指标可能主观/离散
+  known_issues: 指标定义和方法随版本更新；非 OECD 国家覆盖有限；政策指标可能主观/离散; domain_scope=通用
   bias_risk: 中 — 发达经济体覆盖更好，制度指标跨国可比性有限
   privacy_risk: 无（国家/制度级）
   preprocessing_steps: 固定指标版本；国家代码/年份对齐；处理断点；与 WDI/PWT 合并时记录 merge 规则

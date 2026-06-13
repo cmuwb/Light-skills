@@ -22,7 +22,7 @@
     Fast Algorithms for Mining Association Rules in Large Databases
     (Agrawal & Srikant, 1994, OpenAlex 被引≈9385);
     Fast algorithms for mining association rules (1998, 被引≈10755)
-  possible_innovation_points: 与图/序列模式结合、增量/流式挖掘、隐私保护关联规则、稀有但高价值规则的兴趣度度量
+  possible_innovation_points: 与图/序列模式结合、增量/流式挖掘、隐私保护关联规则、稀有但高价值规则的兴趣度度量; domain_scope=数据挖掘
   maturity: 经典
 
 - method_name: FP-Growth
@@ -40,7 +40,7 @@
     Mining frequent patterns without candidate generation
     (Han, Pei & Yin, 2000, DOI 10.1145/335191.335372, OpenAlex 被引≈6348);
     期刊扩展版 FP-tree Approach (2003, DOI 10.1023/b:dami.0000005258.31418.83)
-  possible_innovation_points: 流式/增量 FP、GPU 并行、与序列/图模式融合、高效近似挖掘
+  possible_innovation_points: 流式/增量 FP、GPU 并行、与序列/图模式融合、高效近似挖掘; domain_scope=数据挖掘
   maturity: 经典
 ```
 
@@ -61,7 +61,7 @@
   representative_papers: >
     Box & Jenkins, Time Series Analysis: Forecasting and Control(经典专著,
     OpenAlex 收录多版本如 2013 DOI 10.1057/9781137291264_6)
-  possible_innovation_points: 自动定阶+深度残差混合、与外生变量(ARIMAX)结合、分层预测
+  possible_innovation_points: 自动定阶+深度残差混合、与外生变量(ARIMAX)结合、分层预测; domain_scope=数据挖掘
   maturity: 经典
 
 - method_name: Prophet
@@ -78,7 +78,7 @@
   representative_papers: >
     Forecasting at Scale (Taylor & Letham, 2017,
     DOI 10.1080/00031305.2017.1380080, OpenAlex 被引≈2256)
-  possible_innovation_points: 与深度/梯度提升残差融合、多序列层级协调、外生变量自动选择
+  possible_innovation_points: 与深度/梯度提升残差融合、多序列层级协调、外生变量自动选择; domain_scope=数据挖掘
   maturity: 主流
 
 - method_name: LSTM(时序预测)
@@ -95,7 +95,7 @@
   representative_papers: >
     Long Short-Term Memory (Hochreiter & Schmidhuber, 1997,
     DOI 10.1162/neco.1997.9.8.1735, OpenAlex 被引≈97420)
-  possible_innovation_points: 注意力增强、与分解结合、概率预测、迁移/少样本时序
+  possible_innovation_points: 注意力增强、与分解结合、概率预测、迁移/少样本时序; domain_scope=数据挖掘
   maturity: 主流(在长序列预测中部分被 Transformer/线性模型替代)
 
 - method_name: Transformer(时序预测, 如 Informer)
@@ -114,7 +114,7 @@
     Forecasting (Zhou et al., AAAI 2021, DOI 10.1609/aaai.v35i12.17325,
     被引≈5981); 反方观点 Are Transformers Effective for Time Series
     Forecasting? (DLinear, AAAI 2023, DOI 10.1609/aaai.v37i9.26317, 被引≈2556)
-  possible_innovation_points: 频域/分解注意力、线性复杂度、与简单基线公平对比、基础模型(TimesFM/通用时序大模型)
+  possible_innovation_points: 频域/分解注意力、线性复杂度、与简单基线公平对比、基础模型(TimesFM/通用时序大模型); domain_scope=数据挖掘
   maturity: 新兴/主流
 ```
 
@@ -137,7 +137,7 @@
     DOI 10.1109/icdm.2008.17, OpenAlex 被引≈5528);
     Extended Isolation Forest (2019, DOI 10.1109/tkde.2019.2947676);
     Deep Isolation Forest (2023, DOI 10.1109/tkde.2023.3270293)
-  possible_innovation_points: 非轴平行切分、深度表示+孤立、流式/概念漂移、可解释异常归因
+  possible_innovation_points: 非轴平行切分、深度表示+孤立、流式/概念漂移、可解释异常归因; domain_scope=数据挖掘
   maturity: 主流
 
 - method_name: LOF (Local Outlier Factor)
@@ -154,7 +154,7 @@
   representative_papers: >
     LOF: Identifying Density-Based Local Outliers (Breunig et al.,
     SIGMOD 2000, DOI 10.1145/342009.335388, OpenAlex 被引≈3836)
-  possible_innovation_points: 近似/索引加速、流式 LOF、子空间局部异常、与深度嵌入结合
+  possible_innovation_points: 近似/索引加速、流式 LOF、子空间局部异常、与深度嵌入结合; domain_scope=数据挖掘
   maturity: 经典
 
 - method_name: AutoEncoder(重构式异常检测)
@@ -171,7 +171,7 @@
   representative_papers: >
     Deep Autoencoding Gaussian Mixture Model for Unsupervised Anomaly
     Detection (Zong et al., ICLR 2018, OpenAlex 被引≈1091)
-  possible_innovation_points: 记忆模块抑制泛化、对抗/扩散重构、时序-图联合、置信度校准阈值
+  possible_innovation_points: 记忆模块抑制泛化、对抗/扩散重构、时序-图联合、置信度校准阈值; domain_scope=数据挖掘
   maturity: 主流
 ```
 
@@ -192,7 +192,7 @@
   representative_papers: >
     Item-based collaborative filtering recommendation algorithms
     (Sarwar et al., WWW 2001, DOI 10.1145/371920.372071, OpenAlex 被引≈9005)
-  possible_innovation_points: 与图/序列融合、相似度可学习、冷启动内容补全、去偏(流行度偏差)
+  possible_innovation_points: 与图/序列融合、相似度可学习、冷启动内容补全、去偏(流行度偏差); domain_scope=数据挖掘
   maturity: 经典
 
 - method_name: 矩阵分解(MF / SVD / ALS)
@@ -210,7 +210,7 @@
     Matrix Factorization Techniques for Recommender Systems
     (Koren, Bell & Volinsky, IEEE Computer 2009,
     DOI 10.1109/mc.2009.263, OpenAlex 被引≈11640)
-  possible_innovation_points: 神经矩阵分解、贝叶斯/概率 MF、加边信息(图正则)、去偏与公平
+  possible_innovation_points: 神经矩阵分解、贝叶斯/概率 MF、加边信息(图正则)、去偏与公平; domain_scope=数据挖掘
   maturity: 经典
 
 - method_name: DeepFM
@@ -227,7 +227,7 @@
   representative_papers: >
     DeepFM: A Factorization-Machine based Neural Network for CTR Prediction
     (Guo et al., IJCAI 2017, DOI 10.24963/ijcai.2017/239, OpenAlex 被引≈2234)
-  possible_innovation_points: 显式高阶交叉(DCN-V2)、特征重要性自适应(FiBiNET/AutoInt)、多任务/多场景共享
+  possible_innovation_points: 显式高阶交叉(DCN-V2)、特征重要性自适应(FiBiNET/AutoInt)、多任务/多场景共享; domain_scope=数据挖掘
   maturity: 主流
 
 - method_name: 双塔模型(Two-Tower / DSSM 式召回)
@@ -246,7 +246,7 @@
     recommendations (Yi et al., RecSys 2019, DOI 10.1145/3298689.3346996,
     OpenAlex 被引≈209); 相关 Deep Neural Networks for YouTube Recommendations
     (2016, DOI 10.1145/2959100.2959190, 被引≈3351)
-  possible_innovation_points: 细粒度晚交互(ColBERT 式)、对比学习负采样、多兴趣用户塔、对齐召回-精排
+  possible_innovation_points: 细粒度晚交互(ColBERT 式)、对比学习负采样、多兴趣用户塔、对齐召回-精排; domain_scope=数据挖掘
   maturity: 主流
 ```
 
@@ -269,7 +269,7 @@
     Kleinberg, 2003/2007, DOI 10.1002/asi.20591, OpenAlex 被引≈3022);
     Link Prediction Based on Graph Neural Networks (SEAL, Zhang & Chen,
     NeurIPS 2018, arXiv DOI 10.48550/arxiv.1802.09691)
-  possible_innovation_points: 子图/路径感知 GNN、时序动态链接预测、异质图链接、可扩展负采样与无偏评测
+  possible_innovation_points: 子图/路径感知 GNN、时序动态链接预测、异质图链接、可扩展负采样与无偏评测; domain_scope=数据挖掘
   maturity: 主流
 
 - method_name: 社区发现(Louvain / Leiden)
@@ -288,7 +288,7 @@
     DOI 10.1088/1742-5468/2008/10/p10008, OpenAlex 被引≈21129);
     From Louvain to Leiden (Traag et al., 2019,
     DOI 10.1038/s41598-019-41695-z, 被引≈5121)
-  possible_innovation_points: 属性/多层图社区、动态社区演化、GNN+模块度联合、重叠社区
+  possible_innovation_points: 属性/多层图社区、动态社区演化、GNN+模块度联合、重叠社区; domain_scope=数据挖掘
   maturity: 经典(Leiden 为推荐升级版)
 
 - method_name: 知识图谱嵌入 TransE
@@ -306,7 +306,7 @@
     Translating Embeddings for Modeling Multi-relational Data
     (Bordes et al., NeurIPS 2013; OpenAlex 收录版被引≈5199);
     后续 TransH (Wang et al., AAAI 2014, DOI 10.1609/aaai.v28i1.8870)
-  possible_innovation_points: 复杂关系建模(旋转/双曲)、时序 KG 嵌入、规则+嵌入融合、与 LLM 联合补全
+  possible_innovation_points: 复杂关系建模(旋转/双曲)、时序 KG 嵌入、规则+嵌入融合、与 LLM 联合补全; domain_scope=数据挖掘
   maturity: 经典(基线常用，研究主线已转向 RotatE/复数及 GNN 类)
 ```
 
@@ -327,7 +327,7 @@
   representative_papers: >
     A Fast and Elitist Multiobjective Genetic Algorithm: NSGA-II
     (Deb et al., IEEE TEVC 2002, DOI 10.1109/4235.996017, OpenAlex 被引≈47464)
-  possible_innovation_points: 超多目标(NSGA-III/参考点)、代理模型加速(贝叶斯/Kriging)、与梯度/学习混合、约束处理
+  possible_innovation_points: 超多目标(NSGA-III/参考点)、代理模型加速(贝叶斯/Kriging)、与梯度/学习混合、约束处理; domain_scope=数据挖掘
   maturity: 经典
 
 - method_name: 联邦学习(FedAvg)
@@ -345,7 +345,7 @@
     Communication-Efficient Learning of Deep Networks from Decentralized
     Data (FedAvg, McMahan et al., AISTATS 2017;
     arXiv DOI 10.48550/arxiv.1602.05629, OpenAlex 被引≈5178)
-  possible_innovation_points: Non-IID 鲁棒聚合、个性化联邦、差分隐私/安全聚合、通信压缩、抗投毒
+  possible_innovation_points: Non-IID 鲁棒聚合、个性化联邦、差分隐私/安全聚合、通信压缩、抗投毒; domain_scope=数据挖掘
   maturity: 新兴/主流
 ```
 

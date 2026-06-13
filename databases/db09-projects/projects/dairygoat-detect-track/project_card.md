@@ -16,7 +16,7 @@ confirmed_idea: |
   备选(Idea A)：把发情/跛行从闭集分类重定义为个体级异常早预警(VideoMAE自监督 + lead-time指标)。
   ⚠️ m04 审定结论：当前三模块串联新颖性不足(GSCW-YOLO 2024已占坑)，创新点须落在"级联误差传播处理"+"奶山羊场景专属适配"，否则审稿人难买账。
 data_status: |
-  无奶山羊"姿态+个体ID+多场景+行为"综合公开基准(db04核查确认)。真实可用：CherryChèvre(检测,CC许可,DOI:10.57745/4C03OG,唯一明确可下载)、GoatABRD(行为含跛行,GitHub无LICENSE待核)、DiaryGoatMVT(多任务,无论文)。
+  无奶山羊"姿态+个体ID+多场景+行为"综合公开基准(db04核查确认)。真实可用：CherryChèvre(检测,CC许可,DOI:10.57745/4C03OG,唯一明确可下载)、GoatABRD(行为含跛行,GitHub无LICENSE待核)、DiaryGoatMVT(多任务,无论文)。许可/DOI 为快照,权威源见 db04 cards_animal_livestock.md,用前重核、冲突信在线。
   结论：必须自建行为视频标注；起步可用CherryChèvre做检测预训练 + AP-10K/APT-36K做姿态迁移。
 method_status: |
   检测：YOLOv11(imgsz=1280小目标/俯拍OBB) / RT-DETR。跟踪：ByteTrack(低分框二次关联)+OC-SORT(观测回溯)，弃通用re-id(白羊外观同质化)。

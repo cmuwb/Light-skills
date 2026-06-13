@@ -21,9 +21,9 @@
   suitable_datasets: WMT、CNN/DailyMail、XSum、SQuAD、GLUE/SuperGLUE
   implementation_repo: Hugging Face Transformers、fairseq、OpenNMT、MarianNMT
   representative_papers:
-    - "Neural Machine Translation by Jointly Learning to Align and Translate | 2014 | cited:14620 | doi:10.48550/arxiv.1409.0473"
-    - "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer | 2019 | cited:8337 | doi:10.48550/arxiv.1910.10683"
-  possible_innovation_points: 长上下文高效注意力、事实一致性约束、检索增强与引用定位、多语言迁移、轻量蒸馏部署
+    - "Neural Machine Translation by Jointly Learning to Align and Translate | 2014 | cited:14620 | doi:10.48550/arxiv.1409.0473 | checked:2026-06-10"
+    - "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer | 2019 | cited:8337 | doi:10.48550/arxiv.1910.10683 | checked:2026-06-10"
+  possible_innovation_points: 长上下文高效注意力、事实一致性约束、检索增强与引用定位、多语言迁移、轻量蒸馏部署; domain_scope=NLP语音
   maturity: 经典  # 注意力/Transformer 已是 NLP 基础范式，新工作需与强预训练模型比较
 
 - method_name: 文本到文本预训练与指令式生成 (T5 / GPT-3 式 few-shot)
@@ -38,9 +38,9 @@
   suitable_datasets: GLUE、SuperGLUE、MMLU、BIG-bench、SQuAD、CNN/DailyMail
   implementation_repo: Hugging Face Transformers/PEFT、OpenAI API、vLLM、llama.cpp、T5X
   representative_papers:
-    - "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer | 2019 | cited:8337 | doi:10.48550/arxiv.1910.10683"
-    - "Language Models are Few-Shot Learners | 2020 | cited:3029 | doi:10.48550/arxiv.2005.14165"
-  possible_innovation_points: 领域指令数据构建、轻量微调与 RAG 结合、事实性/引用约束、中文/低资源评测、成本-质量折中
+    - "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer | 2019 | cited:8337 | doi:10.48550/arxiv.1910.10683 | checked:2026-06-10"
+    - "Language Models are Few-Shot Learners | 2020 | cited:3029 | doi:10.48550/arxiv.2005.14165 | checked:2026-06-10"
+  possible_innovation_points: 领域指令数据构建、轻量微调与 RAG 结合、事实性/引用约束、中文/低资源评测、成本-质量折中; domain_scope=NLP语音
   maturity: 主流  # LLM 时代核心范式，但科研场景必须配事实核验与复现说明
 
 - method_name: 检索增强生成 (RAG)
@@ -55,9 +55,9 @@
   suitable_datasets: Natural Questions、MS MARCO、HotpotQA、FEVER、企业/科研内部文档库
   implementation_repo: LlamaIndex、LangChain、Haystack、FAISS、Milvus、Qdrant、RAGAS
   representative_papers:
-    - "Retrieval-Augmented Generation for Large Language Models: A Survey | 2023 | cited:646 | doi:10.48550/arxiv.2312.10997"
-    - "Active Retrieval Augmented Generation | 2023 | cited:323 | doi:10.18653/v1/2023.emnlp-main.495"
-  possible_innovation_points: query rewriting、多跳检索、结构化引用定位、领域知识图谱+RAG、检索失败检测、长期记忆与项目库结合
+    - "Retrieval-Augmented Generation for Large Language Models: A Survey | 2023 | cited:646 | doi:10.48550/arxiv.2312.10997 | checked:2026-06-10"
+    - "Active Retrieval Augmented Generation | 2023 | cited:323 | doi:10.18653/v1/2023.emnlp-main.495 | checked:2026-06-10"
+  possible_innovation_points: query rewriting、多跳检索、结构化引用定位、领域知识图谱+RAG、检索失败检测、长期记忆与项目库结合; domain_scope=NLP语音
   maturity: 主流  # 实践主流但仍工程细节决定质量；科研助手必须强制引用定位
 
 - method_name: 连接时序分类与端到端 ASR (CTC / Conformer)
@@ -72,9 +72,9 @@
   suitable_datasets: LibriSpeech、Common Voice、VoxPopuli、AISHELL、Speech Commands
   implementation_repo: ESPnet、Kaldi、k2/icefall、NVIDIA NeMo、SpeechBrain、torchaudio
   representative_papers:
-    - "Connectionist temporal classification | 2006 | cited:5439 | doi:10.1145/1143844.1143891"
-    - "Conformer: Convolution-augmented Transformer for Speech Recognition | 2020 | cited:2737 | doi:10.21437/interspeech.2020-3015"
-  possible_innovation_points: 低资源/方言适配、流式 Conformer、端侧压缩、噪声鲁棒与多麦克风、ASR 置信度与人工复核
+    - "Connectionist temporal classification | 2006 | cited:5439 | doi:10.1145/1143844.1143891 | checked:2026-06-10"
+    - "Conformer: Convolution-augmented Transformer for Speech Recognition | 2020 | cited:2737 | doi:10.21437/interspeech.2020-3015 | checked:2026-06-10"
+  possible_innovation_points: 低资源/方言适配、流式 Conformer、端侧压缩、噪声鲁棒与多麦克风、ASR 置信度与人工复核; domain_scope=NLP语音
   maturity: 主流  # CTC 是端到端 ASR 基础损失，Conformer 是强工业/学术基线
 
 - method_name: 自监督语音表征学习 (wav2vec 2.0 / HuBERT)
@@ -89,9 +89,9 @@
   suitable_datasets: LibriSpeech、Common Voice、VoxPopuli、AISHELL、TED-LIUM
   implementation_repo: fairseq wav2vec、Hugging Face Transformers、SpeechBrain、ESPnet
   representative_papers:
-    - "wav2vec 2.0: A Framework for Self-Supervised Learning of Speech Representations | 2020 | cited:407 | doi:待核查"
-    - "HuBERT: Self-Supervised Speech Representation Learning by Masked Prediction of Hidden Units | 2021 | cited:269 | doi:10.1109/taslp.2021.3122291"
-  possible_innovation_points: 专业领域语音预训练、低资源中文方言、隐私保护语音表征、轻量蒸馏、跨模态音视频预训练
+    - "wav2vec 2.0: A Framework for Self-Supervised Learning of Speech Representations | 2020 | cited:407 | doi:待核查 | checked:2026-06-10"
+    - "HuBERT: Self-Supervised Speech Representation Learning by Masked Prediction of Hidden Units | 2021 | cited:269 | doi:10.1109/taslp.2021.3122291 | checked:2026-06-10"
+  possible_innovation_points: 专业领域语音预训练、低资源中文方言、隐私保护语音表征、轻量蒸馏、跨模态音视频预训练; domain_scope=NLP语音
   maturity: 主流  # 自监督语音预训练已成为低资源 ASR 标准路线
 
 - method_name: 大规模弱监督语音识别与翻译 (Whisper 类模型)
@@ -106,8 +106,8 @@
   suitable_datasets: LibriSpeech、Common Voice、VoxCeleb、FLEURS、真实会议/访谈数据(需授权)
   implementation_repo: openai/whisper、faster-whisper、whisper.cpp、Hugging Face Whisper
   representative_papers:
-    - "Robust Speech Recognition via Large-Scale Weak Supervision | 2022 | cited:1159 | doi:10.48550/arxiv.2212.04356"
-    - "Common Voice: A Massively-Multilingual Speech Corpus | 2019 | cited:209 | doi:10.48550/arxiv.1912.06670"
-  possible_innovation_points: 领域术语热词/提示、端侧部署、隐私本地化转写、多说话人分离+ASR、字幕质量评估与人工校对工作流
+    - "Robust Speech Recognition via Large-Scale Weak Supervision | 2022 | cited:1159 | doi:10.48550/arxiv.2212.04356 | checked:2026-06-10"
+    - "Common Voice: A Massively-Multilingual Speech Corpus | 2019 | cited:209 | doi:10.48550/arxiv.1912.06670 | checked:2026-06-10"
+  possible_innovation_points: 领域术语热词/提示、端侧部署、隐私本地化转写、多说话人分离+ASR、字幕质量评估与人工校对工作流; domain_scope=NLP语音
   maturity: 主流  # 通用转写任务强基线，但科研数据合规和人工核对仍不可省
 ```

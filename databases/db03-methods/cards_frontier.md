@@ -22,8 +22,8 @@
   suitable_datasets: ImageNet-1k(预训练)、COCO/VOC(下游)、医学/遥感无标注图像
   implementation_repo: facebookresearch/moco (GitHub API 200)
   representative_papers:
-    - "Momentum Contrast for Unsupervised Visual Representation Learning (MoCo) | 2019 | cited:1010 | doi:10.48550/arXiv.1911.05722 [被引为 OpenAlex arXiv 记录数值，原文聚合后更高，待核查]"
-  possible_innovation_points: 领域自监督预训练(医学/遥感/工业缺陷)、与掩码建模融合(对比+重构)、视频/多模态队列、小数据高效自监督
+    - "Momentum Contrast for Unsupervised Visual Representation Learning (MoCo) | 2019 | cited:1010 | doi:10.48550/arXiv.1911.05722 [被引为 OpenAlex arXiv 记录数值，原文聚合后更高，待核查] | checked:2026-06-06"
+  possible_innovation_points: 领域自监督预训练(医学/遥感/工业缺陷)、与掩码建模融合(对比+重构)、视频/多模态队列、小数据高效自监督; domain_scope=前沿ML
   maturity: 主流(自监督视觉的经典强基线，常作下游迁移起点)
 
 - method_name: 自监督表示学习 — 无负样本自蒸馏(BYOL)
@@ -38,8 +38,8 @@
   suitable_datasets: ImageNet-1k、下游视觉任务
   implementation_repo: lucidrains/byol-pytorch (GitHub API 200)；官方 deepmind 实现
   representative_papers:
-    - "Bootstrap your own latent: A new approach to self-supervised Learning (BYOL) | 2020 | cited:3445 | doi:10.48550/arXiv.2006.07733"
-  possible_innovation_points: 坍塌的理论刻画、跨模态 BYOL、轻量自蒸馏、与掩码自编码结合、领域迁移
+    - "Bootstrap your own latent: A new approach to self-supervised Learning (BYOL) | 2020 | cited:3445 | doi:10.48550/arXiv.2006.07733 | checked:2026-06-06"
+  possible_innovation_points: 坍塌的理论刻画、跨模态 BYOL、轻量自蒸馏、与掩码自编码结合、领域迁移; domain_scope=前沿ML
   maturity: 主流(自监督无负样本路线的代表)
 
 - method_name: 自监督表示学习 — 掩码图像建模(MAE)
@@ -54,8 +54,8 @@
   suitable_datasets: ImageNet-1k/21k、下游视觉任务
   implementation_repo: facebookresearch/mae (GitHub API 200)
   representative_papers:
-    - "Masked Autoencoders Are Scalable Vision Learners (MAE) | 2021 | cited:195 | doi:10.48550/arXiv.2111.06377 [被引为 OpenAlex arXiv 记录数值；该论文存在多条拆分/合并记录，原文真实被引远高于此，待核查]"
-  possible_innovation_points: 多模态掩码建模(音视频/点云)、掩码+对比联合目标、领域 MAE(医学/遥感)、高效解码与目标设计
+    - "Masked Autoencoders Are Scalable Vision Learners (MAE) | 2021 | cited:195 | doi:10.48550/arXiv.2111.06377 [被引为 OpenAlex arXiv 记录数值；该论文存在多条拆分/合并记录，原文真实被引远高于此，待核查] | checked:2026-06-06"
+  possible_innovation_points: 多模态掩码建模(音视频/点云)、掩码+对比联合目标、领域 MAE(医学/遥感)、高效解码与目标设计; domain_scope=前沿ML
   maturity: 主流(掩码视觉建模主线方法之一)
 
 - method_name: 对比学习通用框架(InfoNCE / CPC)
@@ -70,8 +70,8 @@
   suitable_datasets: ImageNet、LibriSpeech(语音)、各序列数据
   implementation_repo: facebookresearch/moco、google-research/simclr(GitHub API 000=网络瞬时，仓库公开存在)
   representative_papers:
-    - "Representation Learning with Contrastive Predictive Coding (CPC, InfoNCE) | 2018 | cited:4526 | doi:10.48550/arXiv.1807.03748"
-  possible_innovation_points: 难负样本挖掘、去偏对比、跨模态对比对齐、监督对比(SupCon)、与生成式目标融合
+    - "Representation Learning with Contrastive Predictive Coding (CPC, InfoNCE) | 2018 | cited:4526 | doi:10.48550/arXiv.1807.03748 | checked:2026-06-06"
+  possible_innovation_points: 难负样本挖掘、去偏对比、跨模态对比对齐、监督对比(SupCon)、与生成式目标融合; domain_scope=前沿ML
   maturity: 主流(对比学习的理论与损失基石)
 ```
 
@@ -88,8 +88,8 @@
   suitable_datasets: Omniglot、miniImageNet、Meta-Dataset、少样本 RL 任务
   implementation_repo: cbfinn/maml (GitHub API 200)；learn2learn 库
   representative_papers:
-    - "Model-Agnostic Meta-Learning for Fast Adaptation of Deep Networks (MAML) | 2017 | cited:5791 | doi:10.48550/arXiv.1703.03400"
-  possible_innovation_points: 与大模型 in-context learning 对比/融合、领域少样本(医学/工业)、一阶高效近似、元学习做超参/损失/数据增广搜索
+    - "Model-Agnostic Meta-Learning for Fast Adaptation of Deep Networks (MAML) | 2017 | cited:5791 | doi:10.48550/arXiv.1703.03400 | checked:2026-06-06"
+  possible_innovation_points: 与大模型 in-context learning 对比/融合、领域少样本(医学/工业)、一阶高效近似、元学习做超参/损失/数据增广搜索; domain_scope=前沿ML
   maturity: 主流(少样本元学习经典方法；近年部分场景被大模型 ICL 替代)
 
 - method_name: 持续/增量学习(克服灾难性遗忘，EWC 等)
@@ -104,8 +104,8 @@
   suitable_datasets: Split-MNIST/CIFAR、Permuted-MNIST、CORe50、CLEAR
   implementation_repo: GMvandeVen/continual-learning、ContinualAI/avalanche
   representative_papers:
-    - "Overcoming catastrophic forgetting in neural networks (EWC) | 2017 | cited:7078 | doi:10.1073/pnas.1611835114"
-  possible_innovation_points: 大模型/LoRA 的持续学习、无样本回放(生成式回放)、预训练表示下的持续学习、参数隔离与扩展、在线/流式持续学习
+    - "Overcoming catastrophic forgetting in neural networks (EWC) | 2017 | cited:7078 | doi:10.1073/pnas.1611835114 | checked:2026-06-06"
+  possible_innovation_points: 大模型/LoRA 的持续学习、无样本回放(生成式回放)、预训练表示下的持续学习、参数隔离与扩展、在线/流式持续学习; domain_scope=前沿ML
   maturity: 主流(持续学习的经典正则化代表，仍是常用强基线)
 
 - method_name: 神经架构搜索 — 可微分搜索(DARTS)
@@ -120,8 +120,8 @@
   suitable_datasets: CIFAR-10(搜索)、ImageNet(迁移)、NAS-Bench-201
   implementation_repo: quark0/darts (GitHub API 200)
   representative_papers:
-    - "DARTS: Differentiable Architecture Search | 2018 | cited:1402 | doi:10.48550/arXiv.1806.09055 [被引为 OpenAlex arXiv 记录数值，待核查]"
-  possible_innovation_points: 缓解坍塌(DARTS+/Fair DARTS/PC-DARTS)、零样本/免训练 NAS、硬件感知搜索、为 Transformer/大模型搜结构、与 AutoML 流水线集成
+    - "DARTS: Differentiable Architecture Search | 2018 | cited:1402 | doi:10.48550/arXiv.1806.09055 [被引为 OpenAlex arXiv 记录数值，待核查] | checked:2026-06-06"
+  possible_innovation_points: 缓解坍塌(DARTS+/Fair DARTS/PC-DARTS)、零样本/免训练 NAS、硬件感知搜索、为 Transformer/大模型搜结构、与 AutoML 流水线集成; domain_scope=前沿ML
   maturity: 新兴主流(NAS 主流路线之一；纯分类 SOTA 多靠人工设计+缩放，NAS 在受限/硬件感知场景价值高)
 
 - method_name: 自动化机器学习(AutoML / auto-sklearn)
@@ -136,8 +136,8 @@
   suitable_datasets: OpenML-CC18、AutoML Benchmark、各类表格数据
   implementation_repo: automl/auto-sklearn (GitHub API 200)
   representative_papers:
-    - "Efficient and robust automated machine learning (auto-sklearn) | 2015 | cited:1259 | doi:待核查(OpenAlex 该 NeurIPS 2015 记录 DOI 字段为 null)"
-  possible_innovation_points: LLM 驱动的 AutoML(自动写管道/解释)、面向深度学习/大模型的 AutoML、绿色/低碳搜索、自动特征工程、可解释 AutoML
+    - "Efficient and robust automated machine learning (auto-sklearn) | 2015 | cited:1259 | doi:待核查(OpenAlex 该 NeurIPS 2015 记录 DOI 字段为 null) | checked:2026-06-06"
+  possible_innovation_points: LLM 驱动的 AutoML(自动写管道/解释)、面向深度学习/大模型的 AutoML、绿色/低碳搜索、自动特征工程、可解释 AutoML; domain_scope=前沿ML
   maturity: 主流(表格数据自动建模常用；深度/大模型场景仍在发展)
 
 - method_name: 知识蒸馏(Knowledge Distillation)
@@ -152,8 +152,8 @@
   suitable_datasets: ImageNet、CIFAR、GLUE(BERT 蒸馏)、各下游任务
   implementation_repo: huggingface/transformers(DistilBERT)、各蒸馏库
   representative_papers:
-    - "Distilling the Knowledge in a Neural Network | 2015 | cited:13952 | doi:10.48550/arXiv.1503.02531"
-  possible_innovation_points: LLM 蒸馏(白盒/黑盒、推理链蒸馏)、数据无关蒸馏、自蒸馏、跨模态蒸馏、与量化联合压缩
+    - "Distilling the Knowledge in a Neural Network | 2015 | cited:13952 | doi:10.48550/arXiv.1503.02531 | checked:2026-06-06"
+  possible_innovation_points: LLM 蒸馏(白盒/黑盒、推理链蒸馏)、数据无关蒸馏、自蒸馏、跨模态蒸馏、与量化联合压缩; domain_scope=前沿ML
   maturity: 主流(模型压缩与大模型小型化的核心手段)
 ```
 
@@ -170,8 +170,8 @@
   suitable_datasets: ImageNet、CIFAR、各部署任务
   implementation_repo: PyTorch torch.nn.utils.prune；microsoft/nni(剪枝模块)
   representative_papers:
-    - "Learning both Weights and Connections for Efficient Neural Networks | 2015 | cited:668 | doi:10.48550/arXiv.1506.02626 [被引为 OpenAlex arXiv 记录数值，待核查]"
-  possible_innovation_points: 彩票假设(lottery ticket)子网、结构化/硬件感知剪枝、大模型(LLM)剪枝(SparseGPT/Wanda 思路)、训练时稀疏、剪枝+量化+蒸馏联合
+    - "Learning both Weights and Connections for Efficient Neural Networks | 2015 | cited:668 | doi:10.48550/arXiv.1506.02626 [被引为 OpenAlex arXiv 记录数值，待核查] | checked:2026-06-06"
+  possible_innovation_points: 彩票假设(lottery ticket)子网、结构化/硬件感知剪枝、大模型(LLM)剪枝(SparseGPT/Wanda 思路)、训练时稀疏、剪枝+量化+蒸馏联合; domain_scope=前沿ML
   maturity: 主流(模型压缩经典手段；LLM 剪枝为新兴热点)
 
 - method_name: 模型量化(Quantization, 含 LLM.int8)
@@ -186,8 +186,8 @@
   suitable_datasets: ImageNet、LLM 评测(WikiText/MMLU)、部署基准
   implementation_repo: TimDettmers/bitsandbytes、huggingface/transformers(量化集成)
   representative_papers:
-    - "LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale | 2022 | cited:113 | doi:10.48550/arXiv.2208.07339 [被引为 OpenAlex arXiv 记录数值，待核查]"
-  possible_innovation_points: 4bit/低比特 LLM(GPTQ/AWQ 思路)、量化感知训练大模型、KV-cache 量化、与 LoRA 结合(QLoRA)、激活量化新方案
+    - "LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale | 2022 | cited:113 | doi:10.48550/arXiv.2208.07339 [被引为 OpenAlex arXiv 记录数值，待核查] | checked:2026-06-06"
+  possible_innovation_points: 4bit/低比特 LLM(GPTQ/AWQ 思路)、量化感知训练大模型、KV-cache 量化、与 LoRA 结合(QLoRA)、激活量化新方案; domain_scope=前沿ML
   maturity: 主流(大模型/端侧部署的核心压缩技术)
 
 - method_name: 大语言模型(LLM：GPT / LLaMA 系)
@@ -202,8 +202,8 @@
   suitable_datasets: Common Crawl/RedPajama、The Pile、指令与评测基准
   implementation_repo: meta-llama/llama (facebookresearch/llama 已 301 迁移)、huggingface/transformers
   representative_papers:
-    - "LLaMA: Open and Efficient Foundation Language Models | 2023 | cited:3894 | doi:10.48550/arXiv.2302.13971"
-  possible_innovation_points: 长上下文/高效注意力、推理增强(CoT/工具)、领域/多语言适配、小模型高效化、数据质量与合成、安全对齐
+    - "LLaMA: Open and Efficient Foundation Language Models | 2023 | cited:3894 | doi:10.48550/arXiv.2302.13971 | checked:2026-06-06"
+  possible_innovation_points: 长上下文/高效注意力、推理增强(CoT/工具)、领域/多语言适配、小模型高效化、数据质量与合成、安全对齐; domain_scope=前沿ML
   maturity: 主流(当代 NLP 与通用 AI 主线)
 
 - method_name: 指令微调(Instruction Tuning, FLAN)
@@ -218,8 +218,8 @@
   suitable_datasets: FLAN collection、Super-NaturalInstructions、Alpaca/Dolly
   implementation_repo: google-research/FLAN、huggingface/transformers
   representative_papers:
-    - "Finetuned Language Models Are Zero-Shot Learners (FLAN) | 2021 | cited:69 | doi:10.48550/arXiv.2109.01652 [被引为 OpenAlex arXiv 记录数值，原文真实被引远高于此，待核查]"
-  possible_innovation_points: 合成指令数据(self-instruct)、指令数据配比/质量筛选、多模态指令微调、推理链指令、领域指令微调
+    - "Finetuned Language Models Are Zero-Shot Learners (FLAN) | 2021 | cited:69 | doi:10.48550/arXiv.2109.01652 [被引为 OpenAlex arXiv 记录数值，原文真实被引远高于此，待核查] | checked:2026-06-06"
+  possible_innovation_points: 合成指令数据(self-instruct)、指令数据配比/质量筛选、多模态指令微调、推理链指令、领域指令微调; domain_scope=前沿ML
   maturity: 主流(对齐流程的标准第一阶段)
 
 - method_name: 人类反馈强化学习(RLHF / InstructGPT)
@@ -234,9 +234,9 @@
   suitable_datasets: 人类偏好对比集(HH-RLHF)、指令数据
   implementation_repo: huggingface/trl、CarperAI/trlx
   representative_papers:
-    - "Training language models to follow instructions with human feedback (InstructGPT) | 2022 | cited:4284 | doi:10.48550/arXiv.2203.02155"
-    - "Direct Preference Optimization: Your Language Model is Secretly a Reward Model (DPO) | 2023 | cited:275 | doi:10.48550/arXiv.2305.18290 [被引为 OpenAlex arXiv 记录数值，待核查]"
-  possible_innovation_points: 免 RL 对齐(DPO/IPO/KTO)、AI 反馈(RLAIF/Constitutional)、过程奖励(PRM)、多目标对齐、奖励黑客缓解
+    - "Training language models to follow instructions with human feedback (InstructGPT) | 2022 | cited:4284 | doi:10.48550/arXiv.2203.02155 | checked:2026-06-06"
+    - "Direct Preference Optimization: Your Language Model is Secretly a Reward Model (DPO) | 2023 | cited:275 | doi:10.48550/arXiv.2305.18290 [被引为 OpenAlex arXiv 记录数值，待核查] | checked:2026-06-06"
+  possible_innovation_points: 免 RL 对齐(DPO/IPO/KTO)、AI 反馈(RLAIF/Constitutional)、过程奖励(PRM)、多目标对齐、奖励黑客缓解; domain_scope=前沿ML
   maturity: 主流(LLM 对齐主流；DPO 等简化路线快速兴起)
 ```
 
@@ -253,10 +253,10 @@
   suitable_datasets: ALFWorld、WebShop、HotpotQA(工具问答)、AgentBench
   implementation_repo: langchain-ai/langchain、Significant-Gravitas/AutoGPT、microsoft/autogen
   representative_papers:
-    - "Toolformer: Language Models Can Teach Themselves to Use Tools | 2023 | cited:388 | doi:10.48550/arXiv.2302.04761 [被引为 OpenAlex arXiv 记录数值，待核查]"
-    - "Tree of Thoughts: Deliberate Problem Solving with Large Language Models | 2023 | cited:564 | doi:10.48550/arXiv.2305.10601 [被引为 OpenAlex arXiv 记录数值，待核查]"
+    - "Toolformer: Language Models Can Teach Themselves to Use Tools | 2023 | cited:388 | doi:10.48550/arXiv.2302.04761 [被引为 OpenAlex arXiv 记录数值，待核查] | checked:2026-06-06"
+    - "Tree of Thoughts: Deliberate Problem Solving with Large Language Models | 2023 | cited:564 | doi:10.48550/arXiv.2305.10601 [被引为 OpenAlex arXiv 记录数值，待核查] | checked:2026-06-06"
     - "[ReAct: Synergizing Reasoning and Acting in Language Models (Yao et al. 2022, arXiv:2210.03629) — OpenAlex 该 arXiv DOI 解析到无关条目、按标题精确检索 count=0，免费源无法定位真实记录，标题/被引待核查]"
-  possible_innovation_points: 多智能体协作、长程规划与反思(Reflexion)、记忆机制、工具学习与可靠性、Agent 评测基准、具身/GUI Agent
+  possible_innovation_points: 多智能体协作、长程规划与反思(Reflexion)、记忆机制、工具学习与可靠性、Agent 评测基准、具身/GUI Agent; domain_scope=前沿ML
   maturity: 新兴(快速发展、热度极高；可靠性与评测仍不成熟，落地谨慎)
 
 - method_name: 混合专家(Mixture-of-Experts, MoE)
@@ -271,9 +271,9 @@
   suitable_datasets: 大规模语料、多任务/多语言数据
   implementation_repo: google/flaxformer、microsoft/tutel、华为/Mixtral 类开源实现
   representative_papers:
-    - "Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer | 2017 | cited:268 | doi:10.48550/arXiv.1701.06538 [被引为 OpenAlex arXiv 记录数值，待核查]"
-    - "Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity | 2021 | cited:361 | doi:10.48550/arXiv.2101.03961 [被引为 OpenAlex arXiv 记录数值，待核查]"
-  possible_innovation_points: 路由稳定性与负载均衡、细粒度/共享专家、MoE+LoRA、专家剪枝/合并部署、多模态 MoE、推理时专家卸载
+    - "Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer | 2017 | cited:268 | doi:10.48550/arXiv.1701.06538 [被引为 OpenAlex arXiv 记录数值，待核查] | checked:2026-06-06"
+    - "Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity | 2021 | cited:361 | doi:10.48550/arXiv.2101.03961 [被引为 OpenAlex arXiv 记录数值，待核查] | checked:2026-06-06"
+  possible_innovation_points: 路由稳定性与负载均衡、细粒度/共享专家、MoE+LoRA、专家剪枝/合并部署、多模态 MoE、推理时专家卸载; domain_scope=前沿ML
   maturity: 主流(前沿大模型扩展主线之一)
 
 - method_name: 状态空间模型(State Space Models / Mamba)
@@ -288,8 +288,8 @@
   suitable_datasets: The Pile、Long Range Arena、基因组、长音频/时序
   implementation_repo: state-spaces/mamba、state-spaces/s4
   representative_papers:
-    - "Mamba: Linear-Time Sequence Modeling with Selective State Spaces | 2023 | cited:996 | doi:10.48550/arXiv.2312.00752 [被引为 OpenAlex arXiv 记录数值，待核查]"
-  possible_innovation_points: SSM+注意力混合架构、多模态/视觉 Mamba、长上下文检索增强、领域长序列(基因/时序)、硬件高效实现
+    - "Mamba: Linear-Time Sequence Modeling with Selective State Spaces | 2023 | cited:996 | doi:10.48550/arXiv.2312.00752 [被引为 OpenAlex arXiv 记录数值，待核查] | checked:2026-06-06"
+  possible_innovation_points: SSM+注意力混合架构、多模态/视觉 Mamba、长上下文检索增强、领域长序列(基因/时序)、硬件高效实现; domain_scope=前沿ML
   maturity: 新兴(高热度长序列前沿；与 Transformer 长期竞合，混合架构看好)
 
 - method_name: 多模态大模型(CLIP / Flamingo / LLaVA)
@@ -304,9 +304,9 @@
   suitable_datasets: WIT/LAION(CLIP)、视觉指令数据(LLaVA-Instruct)、VQAv2、COCO Captions
   implementation_repo: openai/CLIP、mlfoundations/open_clip、haotian-liu/LLaVA
   representative_papers:
-    - "Flamingo: a Visual Language Model for Few-Shot Learning | 2022 | cited:1240 | doi:10.48550/arXiv.2204.14198"
-    - "Visual Instruction Tuning (LLaVA) | 2023 | cited:679 | doi:10.48550/arXiv.2304.08485 [被引为 OpenAlex arXiv 记录数值，待核查]"
-  possible_innovation_points: 高分辨率/文档/图表理解、视频与 3D 多模态、幻觉抑制、统一生成+理解、领域多模态(医学影像报告)、任意模态
+    - "Flamingo: a Visual Language Model for Few-Shot Learning | 2022 | cited:1240 | doi:10.48550/arXiv.2204.14198 | checked:2026-06-06"
+    - "Visual Instruction Tuning (LLaVA) | 2023 | cited:679 | doi:10.48550/arXiv.2304.08485 [被引为 OpenAlex arXiv 记录数值，待核查] | checked:2026-06-06"
+  possible_innovation_points: 高分辨率/文档/图表理解、视频与 3D 多模态、幻觉抑制、统一生成+理解、领域多模态(医学影像报告)、任意模态; domain_scope=前沿ML
   maturity: 主流(CLIP 为基础模型；视觉指令多模态为当前热点主流)
 ```
 
@@ -323,10 +323,10 @@
   suitable_datasets: IHDP、Lalonde/Jobs、ACIC 因果基准、各观测研究数据
   implementation_repo: py-why/dowhy (GitHub API 200)、py-why/econml
   representative_papers:
-    - "Double/debiased machine learning for treatment and structural parameters | 2017 | cited:2416 | doi:10.1111/ectj.12097"
-    - "DoWhy: An End-to-End Library for Causal Inference | 2020 | cited:15 | doi:10.48550/arXiv.2011.04216 [被引为 OpenAlex arXiv 记录数值，原文/库真实影响更高，待核查]"
-    - "Causality (Pearl，因果推断奠基) | 2009 | cited:11077 | doi:10.1017/cbo9780511803161"
-  possible_innovation_points: LLM 辅助因果发现/构图、高维 CATE 个体效应、因果表示学习、与可解释 AI 结合、领域因果(医疗/经济政策)
+    - "Double/debiased machine learning for treatment and structural parameters | 2017 | cited:2416 | doi:10.1111/ectj.12097 | checked:2026-06-06"
+    - "DoWhy: An End-to-End Library for Causal Inference | 2020 | cited:15 | doi:10.48550/arXiv.2011.04216 [被引为 OpenAlex arXiv 记录数值，原文/库真实影响更高，待核查] | checked:2026-06-06"
+    - "Causality (Pearl，因果推断奠基) | 2009 | cited:11077 | doi:10.1017/cbo9780511803161 | checked:2026-06-06"
+  possible_innovation_points: LLM 辅助因果发现/构图、高维 CATE 个体效应、因果表示学习、与可解释 AI 结合、领域因果(医疗/经济政策); domain_scope=前沿ML
   maturity: 主流(因果推断标准工具链；与机器学习结合为活跃前沿)
 
 - method_name: 可解释 AI(LIME / SHAP)
@@ -342,8 +342,8 @@
   implementation_repo: marcotcr/lime (GitHub API 200)、shap/shap (GitHub API 200)
   representative_papers:
     - "\"Why Should I Trust You?\": Explaining the Predictions of Any Classifier (LIME) | 2016 | cited:15043 | doi:10.1145/2939672.2939778"
-    - "A Unified Approach to Interpreting Model Predictions (SHAP) | 2017 | cited:7622 | doi:10.48550/arXiv.1705.07874"
-  possible_innovation_points: LLM/大模型可解释、解释的因果化与稳定性、概念级解释(TCAV)、可解释性评测基准、解释驱动的调试与对齐
+    - "A Unified Approach to Interpreting Model Predictions (SHAP) | 2017 | cited:7622 | doi:10.48550/arXiv.1705.07874 | checked:2026-06-06"
+  possible_innovation_points: LLM/大模型可解释、解释的因果化与稳定性、概念级解释(TCAV)、可解释性评测基准、解释驱动的调试与对齐; domain_scope=前沿ML
   maturity: 主流(事后可解释的事实标准工具)
 
 - method_name: 神经辐射场(NeRF)
@@ -358,8 +358,8 @@
   suitable_datasets: NeRF Synthetic(Blender)、LLFF、Tanks and Temples、Mip-NeRF 360
   implementation_repo: bmild/nerf (GitHub API 200)、nerfstudio-project/nerfstudio
   representative_papers:
-    - "NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis | 2020 | cited:4719 | doi:10.1007/978-3-030-58452-8_24"
-  possible_innovation_points: 加速(Instant-NGP/哈希编码)、动态/可变形 NeRF、少视角/无位姿、大规模城市场景、与扩散/生成结合做 3D 生成、可编辑 NeRF
+    - "NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis | 2020 | cited:4719 | doi:10.1007/978-3-030-58452-8_24 | checked:2026-06-06"
+  possible_innovation_points: 加速(Instant-NGP/哈希编码)、动态/可变形 NeRF、少视角/无位姿、大规模城市场景、与扩散/生成结合做 3D 生成、可编辑 NeRF; domain_scope=前沿ML
   maturity: 主流→部分被 3DGS 替代(实时渲染场景下 3D Gaussian Splatting 兴起；NeRF 仍是隐式重建重要基线)
 
 - method_name: 3D 高斯泼溅(3D Gaussian Splatting)
@@ -374,8 +374,8 @@
   suitable_datasets: Mip-NeRF 360、Tanks and Temples、Deep Blending
   implementation_repo: graphdeco-inria/gaussian-splatting (GitHub API 200)
   representative_papers:
-    - "3D Gaussian Splatting for Real-Time Radiance Field Rendering | 2023 | cited:4354 | doi:10.1145/3592433"
-  possible_innovation_points: 动态/4D 高斯、大场景与压缩、稀疏视角重建、与扩散结合做 3D/4D 生成、SLAM/自动驾驶应用、抗走样
+    - "3D Gaussian Splatting for Real-Time Radiance Field Rendering | 2023 | cited:4354 | doi:10.1145/3592433 | checked:2026-06-06"
+  possible_innovation_points: 动态/4D 高斯、大场景与压缩、稀疏视角重建、与扩散结合做 3D/4D 生成、SLAM/自动驾驶应用、抗走样; domain_scope=前沿ML
   maturity: 新兴主流(2023 后迅速成为实时新视角合成主导方法)
 
 - method_name: 图 Transformer(Graph Transformer / Graphormer)
@@ -390,8 +390,8 @@
   suitable_datasets: OGB(ogbg-molpcba/PCQM4M)、ZINC、分子/材料图数据
   implementation_repo: microsoft/Graphormer (GitHub API 200)
   representative_papers:
-    - "Do Transformers Really Perform Bad for Graph Representation? (Graphormer) | 2021 | cited:128 | doi:10.48550/arXiv.2106.05234 [被引为 OpenAlex arXiv 记录数值，待核查]"
-  possible_innovation_points: 线性/稀疏图注意力扩展大图、更优结构/位置编码、与消息传递混合、3D 几何图 Transformer(分子构象)、与 LLM 结合的图推理
+    - "Do Transformers Really Perform Bad for Graph Representation? (Graphormer) | 2021 | cited:128 | doi:10.48550/arXiv.2106.05234 [被引为 OpenAlex arXiv 记录数值，待核查] | checked:2026-06-06"
+  possible_innovation_points: 线性/稀疏图注意力扩展大图、更优结构/位置编码、与消息传递混合、3D 几何图 Transformer(分子构象)、与 LLM 结合的图推理; domain_scope=前沿ML
   maturity: 新兴主流(图级/分子任务的强方法；大图可扩展性为开放问题)
 
 - method_name: 扩散策略(Diffusion Policy)
@@ -406,8 +406,8 @@
   suitable_datasets: Robomimic、Push-T、真实机器人操作示范、RLBench
   implementation_repo: real-stanford/diffusion_policy (GitHub API 200)
   representative_papers:
-    - "Diffusion Policy: Visuomotor Policy Learning via Action Diffusion | 2023 | cited:405 | doi:10.15607/RSS.2023.XIX.026"
-  possible_innovation_points: 少步/一致性采样加速实时控制、与 VLA(视觉-语言-动作)大模型结合、3D 场景条件、离线 RL + 扩散、跨本体泛化
+    - "Diffusion Policy: Visuomotor Policy Learning via Action Diffusion | 2023 | cited:405 | doi:10.15607/RSS.2023.XIX.026 | checked:2026-06-06"
+  possible_innovation_points: 少步/一致性采样加速实时控制、与 VLA(视觉-语言-动作)大模型结合、3D 场景条件、离线 RL + 扩散、跨本体泛化; domain_scope=前沿ML
   maturity: 新兴(机器人操作/具身智能高热度前沿方向)
 
 - method_name: 世界模型(World Models / Dreamer)
@@ -422,9 +422,9 @@
   suitable_datasets: DeepMind Control Suite、Atari(ALE)、Crafter、Minecraft(DreamerV3)
   implementation_repo: danijar/dreamer (GitHub API 200)、danijar/dreamerv3
   representative_papers:
-    - "World Models (Ha & Schmidhuber) | 2018 | cited:180 | doi:10.48550/arXiv.1803.10122 [被引为 OpenAlex arXiv 记录数值，原文真实被引更高，待核查]"
-    - "Dream to Control: Learning Behaviors by Latent Imagination (Dreamer) | 2019 | cited:137 | doi:10.48550/arXiv.1912.01603 [被引为 OpenAlex arXiv 记录数值，待核查]"
-  possible_innovation_points: 通用世界模型(跨域 DreamerV3)、视频生成式世界模型(决策+生成融合)、与大模型结合的可控世界模型、具身/自动驾驶世界模型、长程规划
+    - "World Models (Ha & Schmidhuber) | 2018 | cited:180 | doi:10.48550/arXiv.1803.10122 [被引为 OpenAlex arXiv 记录数值，原文真实被引更高，待核查] | checked:2026-06-06"
+    - "Dream to Control: Learning Behaviors by Latent Imagination (Dreamer) | 2019 | cited:137 | doi:10.48550/arXiv.1912.01603 [被引为 OpenAlex arXiv 记录数值，待核查] | checked:2026-06-06"
+  possible_innovation_points: 通用世界模型(跨域 DreamerV3)、视频生成式世界模型(决策+生成融合)、与大模型结合的可控世界模型、具身/自动驾驶世界模型、长程规划; domain_scope=前沿ML
   maturity: 新兴(基于模型 RL 与生成式世界模型为高热度前沿)
 ```
 

@@ -19,9 +19,9 @@
   license: 研究用途, 需在官方/GitHub 申请并同意条款; 商用?否(研究授权); 再分发?否; 需授权?是(申请) → 待核查(无单一开源许可文本)
   download_url: https://github.com/sutdcv/Animal-Kingdom
   paper_url: https://openalex.org/W4224285690  # CVPR 2022, DOI:10.1109/CVPR52688.2022.01844
-  citation: Ng et al., 2022, CVPR. OpenAlex 被引 105 (2026-06-06)
+  citation: Ng et al., 2022, CVPR. OpenAlex 被引 105 (2026-06-06); last_checked=2026-06-06; oa_id=W4224285690
   leaderboard_url: https://paperswithcode.com/dataset/animal-kingdom
-  known_issues: 长尾类别极不均衡、罕见行为样本稀少、视频来源多样导致分辨率/帧率不一
+  known_issues: 长尾类别极不均衡、罕见行为样本稀少、视频来源多样导致分辨率/帧率不一; domain_scope=动物视觉
   bias_risk: 物种/地域采集偏差(依赖可获取的纪录片/网络视频)、常见物种过采样
   privacy_risk: 低(野生动物为主, 偶含拍摄者)
   preprocessing_steps: 抽帧 / 时序裁剪 / 关键点归一化 / 长尾重采样或类别加权
@@ -38,9 +38,9 @@
   license: Creative Commons Attribution 4.0 International (CC BY 4.0, 经 GitHub API 核实); 商用?是(署名); 再分发?是(署名); 需授权?否
   download_url: https://github.com/AlexTheBad/AP-10K
   paper_url: https://openalex.org/W3196756430  # NeurIPS 2021 D&B Track, arXiv:2108.12617
-  citation: Yu et al., 2021, NeurIPS Datasets & Benchmarks. OpenAlex 被引 35 (2026-06-06)
+  citation: Yu et al., 2021, NeurIPS Datasets & Benchmarks. OpenAlex 被引 35 (2026-06-06); last_checked=2026-06-06; oa_id=W3196756430
   leaderboard_url: https://paperswithcode.com/sota/animal-pose-estimation-on-ap-10k
-  known_issues: 部分物种样本少、遮挡/截断关键点标注难、跨物种关键点定义统一性受限
+  known_issues: 部分物种样本少、遮挡/截断关键点标注难、跨物种关键点定义统一性受限; domain_scope=动物视觉
   bias_risk: 物种分布不均(哺乳动物为主)、姿态/视角偏差
   privacy_risk: 低
   preprocessing_steps: 检测框裁剪 / 关键点热图生成 / 标准 top-down 姿态增强
@@ -57,9 +57,9 @@
   license: 仓库未声明 LICENSE(GitHub API 返回 None) → 待核查(默认版权归作者, 商用/再分发不明)
   download_url: https://github.com/pandorgan/APT-36K
   paper_url: https://openalex.org/W4282941653  # NeurIPS 2022, arXiv:2206.05683
-  citation: Yang et al., 2022, NeurIPS Datasets & Benchmarks. OpenAlex 被引 21 (2026-06-06)
+  citation: Yang et al., 2022, NeurIPS Datasets & Benchmarks. OpenAlex 被引 21 (2026-06-06); last_checked=2026-06-06; oa_id=W4282941653
   leaderboard_url: https://paperswithcode.com/dataset/apt-36k
-  known_issues: 跟踪 ID 切换/遮挡丢失、物种样本不均、视频质量差异
+  known_issues: 跟踪 ID 切换/遮挡丢失、物种样本不均、视频质量差异; domain_scope=动物视觉
   bias_risk: 物种/场景采集偏差
   privacy_risk: 低
   preprocessing_steps: 抽帧 / 关联 track / top-down 裁剪 / 时序平滑
@@ -76,9 +76,9 @@
   license: 仓库未声明 LICENSE(GitHub API 返回 None); 图像部分源自 PASCAL VOC(研究用途) → 待核查(无开源许可, 图像受 VOC 条款)
   download_url: https://github.com/noahcao/animal-pose-dataset
   paper_url: https://openalex.org/W2983454547  # ICCV 2019, DOI:10.1109/ICCV.2019.00959
-  citation: Cao et al., 2019, ICCV. OpenAlex 被引 175 (2026-06-06)
+  citation: Cao et al., 2019, ICCV. OpenAlex 被引 175 (2026-06-06); last_checked=2026-06-06; oa_id=W2983454547
   leaderboard_url: https://paperswithcode.com/dataset/animal-pose
-  known_issues: 类别少(5 类)、关键点定义与人体姿态迁移有 gap、规模偏小
+  known_issues: 类别少(5 类)、关键点定义与人体姿态迁移有 gap、规模偏小; domain_scope=动物视觉
   bias_risk: 物种集中于常见家畜/宠物
   privacy_risk: 低
   preprocessing_steps: 检测框裁剪 / 关键点热图 / 域适应增强
@@ -95,9 +95,9 @@
   license: 代码仓库 MIT License(GitHub API 核实); 视频数据来自公开来源, 使用前须核实逐源条款 → 数据 待核查(逐源版权)
   download_url: https://mammal-net.github.io/
   paper_url: https://openalex.org/W4386065426  # CVPR 2023, DOI:10.1109/CVPR52729.2023.01254
-  citation: Chen et al., 2023, CVPR. OpenAlex 被引 36 (2026-06-06)
+  citation: Chen et al., 2023, CVPR. OpenAlex 被引 36 (2026-06-06); last_checked=2026-06-06; oa_id=W4386065426
   leaderboard_url: https://paperswithcode.com/dataset/mammalnet
-  known_issues: 长尾物种分布、行为粒度粗(通用 12 类)、视频来源异构
+  known_issues: 长尾物种分布、行为粒度粗(通用 12 类)、视频来源异构; domain_scope=动物视觉
   bias_risk: 物种采集偏差、网络视频来源偏差
   privacy_risk: 低
   preprocessing_steps: 抽帧 / 时序采样 / 物种-行为联合标签处理
@@ -114,9 +114,9 @@
   license: 多数据归 CC BY 4.0 / 数据集层级公开赛(LILA BC 平台多为 CDLA/CC); 商用?多数允许(逐子集核实); 再分发?是; 需授权?否 → 待核查(逐子集许可)
   download_url: https://github.com/visipedia/iwildcam_comp
   paper_url: https://openalex.org/W3017567979  # The iWildCam 2021 Competition Dataset, arXiv:2105.03494
-  citation: Beery et al., 2021, arXiv/CVPR FGVC Workshop. OpenAlex 被引 18 (2026-06-06)
+  citation: Beery et al., 2021, arXiv/CVPR FGVC Workshop. OpenAlex 被引 18 (2026-06-06); last_checked=2026-06-06; oa_id=W3017567979
   leaderboard_url: https://www.kaggle.com/c/iwildcam2021-fgvc8
-  known_issues: 极端类别不均、空图(无动物)比例高、夜间/遮挡/运动模糊、跨地点分布偏移
+  known_issues: 极端类别不均、空图(无动物)比例高、夜间/遮挡/运动模糊、跨地点分布偏移; domain_scope=动物视觉
   bias_risk: 地点/物种采集偏差大(域泛化为核心挑战)
   privacy_risk: 低(偶含人类闯入帧, 通常需过滤)
   preprocessing_steps: MegaDetector 预筛动物框 / 空图过滤 / 按地点分域 / 类别加权
@@ -133,9 +133,9 @@
   license: Kaggle 页标注 GPL-2.0(数据集发布者声明); 图像源自 Google Images, 原始版权归各作者 → 待核查(逐图版权, 教学/研究常用)
   download_url: https://www.kaggle.com/datasets/alessiocorrado99/animals10
   paper_url: 无官方发布论文(Kaggle 社区数据集, 由 Alessio Corrado 发布)
-  citation: 无规范学术引用; 相关使用见 OpenAlex W3128016812 (迁移学习动物图像分类, DOI:10.1145/3443467.3443849, 被引 6)
+  citation: 无规范学术引用; 相关使用见 OpenAlex W3128016812 (迁移学习动物图像分类, DOI:10.1145/3443467.3443849, 被引 6); last_checked=待核; src=community
   leaderboard_url: https://www.kaggle.com/datasets/alessiocorrado99/animals10/code
-  known_issues: 网络爬取标签噪声、类间样本不均、含少量错标/水印图、分辨率不一
+  known_issues: 网络爬取标签噪声、类间样本不均、含少量错标/水印图、分辨率不一; domain_scope=动物视觉
   bias_risk: 搜索引擎来源偏差、类别代表性有限
   privacy_risk: 低-中(网络图像偶含人物/水印)
   preprocessing_steps: 去重/清洗水印 / resize / 标准分类增强
@@ -157,9 +157,9 @@
   license: data.bris 平台, 非商业研究用途, 需同意条款(Non-Commercial Government Licence 类) → 待核查(具体许可以 data.bris 页面为准); 商用?否; 再分发?否; 需授权?是
   download_url: https://data.bris.ac.uk/data/dataset/4vnrca7qw1642qlwxjadp87h7
   paper_url: https://openalex.org/W3176867605  # arXiv:2105.01938
-  citation: Gao et al., 2021, BMVC/arXiv. OpenAlex 被引 18 (2026-06-06)
+  citation: Gao et al., 2021, BMVC/arXiv. OpenAlex 被引 18 (2026-06-06); last_checked=2026-06-06; oa_id=W3176867605
   leaderboard_url: https://paperswithcode.com/dataset/cows2021
-  known_issues: 单一牧场采集、毛色花纹相似个体易混、光照/泥污影响、ID 随时间(换毛)漂移
+  known_issues: 单一牧场采集、毛色花纹相似个体易混、光照/泥污影响、ID 随时间(换毛)漂移; domain_scope=精准畜牧
   bias_risk: 单场景/单品种(Holstein-Friesian 黑白花)偏差
   privacy_risk: 低(动物); 含牧场位置等元数据需注意
   preprocessing_steps: 个体检测裁剪 / 自监督预训练 / 度量学习 embedding
@@ -176,9 +176,9 @@
   license: data.bris, 非商业研究用途, 需同意条款 → 待核查(以 data.bris 页面为准); 商用?否; 再分发?否; 需授权?是
   download_url: https://data.bris.ac.uk/data/dataset/10m32xl88x2b61zlkkgz3fml17
   paper_url: https://openalex.org/W3035522863  # Computers and Electronics in Agriculture 2021, DOI:10.1016/j.compag.2021.106133
-  citation: Andrew et al., 2021, Comput. Electron. Agric. OpenAlex 被引 162 (2026-06-06)
+  citation: Andrew et al., 2021, Comput. Electron. Agric. OpenAlex 被引 162 (2026-06-06); last_checked=2026-06-06; oa_id=W3035522863
   leaderboard_url: https://paperswithcode.com/dataset/opencows2020
-  known_issues: 个体数有限、跨牧场泛化差、花纹相似混淆
+  known_issues: 个体数有限、跨牧场泛化差、花纹相似混淆; domain_scope=精准畜牧
   bias_risk: 单品种/有限牧场偏差
   privacy_risk: 低(动物)
   preprocessing_steps: 检测器训练 / 个体裁剪 / 开放集识别评测
@@ -195,9 +195,9 @@
   license: data.bris, 非商业研究用途, 需同意条款 → 待核查(以 data.bris 页面为准); 商用?否; 再分发?否; 需授权?是
   download_url: https://data.bris.ac.uk/data/dataset/3owflku95bxsx24643cybxu3qh
   paper_url: https://openalex.org/W2764259953  # ICCVW 2017, DOI:10.1109/ICCVW.2017.336
-  citation: Andrew et al., 2017, ICCV Workshops. OpenAlex 被引 139 (2026-06-06)
+  citation: Andrew et al., 2017, ICCV Workshops. OpenAlex 被引 139 (2026-06-06); last_checked=2026-06-06; oa_id=W2764259953
   leaderboard_url: https://paperswithcode.com/dataset/aerialcattle2017
-  known_issues: 单次航拍/单牧场、尺度小、背景单一(草地)、泛化受限
+  known_issues: 单次航拍/单牧场、尺度小、背景单一(草地)、泛化受限; domain_scope=精准畜牧
   bias_risk: 单场景/单品种、航拍高度固定
   privacy_risk: 低(动物); 航拍含地块信息
   preprocessing_steps: 航拍图切块 / 牛只检测 / 个体识别
@@ -214,9 +214,9 @@
   license: 论文未提供标准开源数据集; 数据多为「按合理请求提供」 → 待核查(无公开下载链接, 联系作者)
   download_url: 无公开统一下载页(见论文 Data Availability, 通常 on request)
   paper_url: https://openalex.org/W3005865003  # Sensors 2020, DOI:10.3390/s20041085
-  citation: Zhang et al., 2020, Sensors. OpenAlex 被引 64 (2026-06-06)
+  citation: Zhang et al., 2020, Sensors. OpenAlex 被引 64 (2026-06-06); last_checked=2026-06-06; oa_id=W3005865003
   leaderboard_url: 无
-  known_issues: 数据非公开下载、栏舍场景单一、夜间/遮挡难、行为类别有限
+  known_issues: 数据非公开下载、栏舍场景单一、夜间/遮挡难、行为类别有限; domain_scope=精准畜牧
   bias_risk: 单养殖场/单品种偏差
   privacy_risk: 低(动物); 养殖场商业信息需脱敏
   preprocessing_steps: 抽帧+光流计算 / 双流输入 / 时序采样
@@ -233,9 +233,9 @@
   license: 期刊为开放获取(MDPI Animals, 文章 CC BY 4.0); 数据集本体公开性待核实 → 待核查(数据多为 on request)
   download_url: 见论文 Data Availability(https://www.mdpi.com/journal/animals 文章页)
   paper_url: https://openalex.org/W4387264759  # Animals 2023, DOI:10.3390/ani13193074
-  citation: 2023, Animals (MDPI). OpenAlex 被引 34 (2026-06-06)
+  citation: 2023, Animals (MDPI). OpenAlex 被引 34 (2026-06-06); last_checked=2026-06-06; oa_id=W4387264759
   leaderboard_url: 无
-  known_issues: 攻击事件稀疏(类别极不均)、遮挡/重叠猪只、标注主观
+  known_issues: 攻击事件稀疏(类别极不均)、遮挡/重叠猪只、标注主观; domain_scope=精准畜牧
   bias_risk: 单场景偏差、事件定义主观
   privacy_risk: 低(动物)
   preprocessing_steps: 事件片段切分 / 不均衡处理 / 时空特征提取
@@ -252,9 +252,9 @@
   license: 期刊为 Elsevier(Computers and Electronics in Agriculture); 数据集本体公开性待核实 → 待核查(数据多为 on request)
   download_url: 见论文(https://doi.org/10.1016/j.compag.2020.105528 Data Availability)
   paper_url: https://openalex.org/W3033615074  # Comput. Electron. Agric. 2020, DOI:10.1016/j.compag.2020.105528
-  citation: Noor et al., 2020, Comput. Electron. Agric. OpenAlex 被引 83 (2026-06-06)
+  citation: Noor et al., 2020, Comput. Electron. Agric. OpenAlex 被引 83 (2026-06-06); last_checked=2026-06-06; oa_id=W3033615074
   leaderboard_url: 无
-  known_issues: 疼痛标注主观(需兽医)、品种/姿态差异、面部检测前置难
+  known_issues: 疼痛标注主观(需兽医)、品种/姿态差异、面部检测前置难; domain_scope=精准畜牧
   bias_risk: 品种/个体偏差、标注者主观
   privacy_risk: 低(动物)
   preprocessing_steps: 面部检测对齐 / 迁移学习微调 / 等级不均处理
@@ -271,9 +271,9 @@
   license: 期刊为 MDPI Animals(文章 CC BY 4.0); 数据集本体公开性待核实 → 待核查(数据多为 on request)
   download_url: 见论文(https://doi.org/10.3390/ani13121957 Data Availability)
   paper_url: https://openalex.org/W4380372343  # Animals 2023, DOI:10.3390/ani13121957
-  citation: 2023, Animals (MDPI). OpenAlex 被引 32 (2026-06-06)
+  citation: 2023, Animals (MDPI). OpenAlex 被引 32 (2026-06-06); last_checked=2026-06-06; oa_id=W4380372343
   leaderboard_url: 无
-  known_issues: 同品种个体相似度高、姿态/光照敏感、需精确面部检测
+  known_issues: 同品种个体相似度高、姿态/光照敏感、需精确面部检测; domain_scope=精准畜牧
   bias_risk: 单品种/单场景偏差
   privacy_risk: 低(动物)
   preprocessing_steps: 面部检测对齐 / 双线性特征融合 / 度量学习
@@ -290,9 +290,9 @@
   license: Zenodo 记录, 通常 CC(以记录页声明为准) → 待核查(逐记录许可); 多为开放下载
   download_url: https://doi.org/10.5281/zenodo.10400302
   paper_url: https://openalex.org/W4393664673  # Zenodo dataset record, DOI:10.5281/zenodo.10400302
-  citation: 2023, Zenodo dataset. OpenAlex 被引 1 (2026-06-06)
+  citation: 2023, Zenodo dataset. OpenAlex 被引 1 (2026-06-06); last_checked=2026-06-06; oa_id=W4393664673
   leaderboard_url: 无
-  known_issues: 无现成框/ID 标注(原始视频)、羊群密集重叠、尺度小
+  known_issues: 无现成框/ID 标注(原始视频)、羊群密集重叠、尺度小; domain_scope=精准畜牧
   bias_risk: 单场景/单次飞行偏差
   privacy_risk: 低(动物); 航拍地块信息
   preprocessing_steps: 抽帧 / 自行标注检测框 / 密集小目标检测
@@ -317,9 +317,9 @@
   license: GitHub 仓库未声明 LICENSE(GitHub API 返回 None) → 待核查(默认版权归作者, 使用前建议联系); 公开可见但许可不明
   download_url: https://github.com/sunianbei/GoatABRD-Dataset
   paper_url: https://openalex.org/W4405572779  # A Real-Time Lightweight Behavior Recognition Model for Multiple Dairy Goats (GSCW-YOLO), Animals 2024, DOI:10.3390/ani14243667
-  citation: 2024, Animals (MDPI). OpenAlex 被引 10 (2026-06-06); 预印本 W4403010363 (Research Square, DOI:10.21203/rs.3.rs-4994192/v1)
+  citation: 2024, Animals (MDPI). OpenAlex 被引 10 (2026-06-06); 预印本 W4403010363 (Research Square, DOI:10.21203/rs.3.rs-4994192/v1); last_checked=2026-06-06; oa_id=W4405572779
   leaderboard_url: 无
-  known_issues: 异常行为(死亡/攻击)样本极稀疏、单场景采集、许可未明
+  known_issues: 异常行为(死亡/攻击)样本极稀疏、单场景采集、许可未明; domain_scope=精准畜牧-奶山羊
   bias_risk: 单牧场/单品种偏差、异常类别极不均衡
   privacy_risk: 低(动物); 养殖场信息
   preprocessing_steps: 抽帧 / 行为时序切分 / 异常类过采样或加权 / YOLO 式检测标注
@@ -336,9 +336,9 @@
   license: Recherche Data Gouv(法国国家科研数据平台)公开数据集, DOI 直链可下载; 多为 etalab/CC 开放许可 → 待核查(以记录页许可字段为准); 通常允许研究使用
   download_url: https://entrepot.recherche.data.gouv.fr/dataset.xhtml?persistentId=doi:10.57745/4C03OG
   paper_url: https://openalex.org/W4387529049  # Scientific Data 2023, DOI:10.1038/s41597-023-02555-8
-  citation: 2023, Scientific Data (Nature). OpenAlex 被引 8 (2026-06-06)
+  citation: 2023, Scientific Data (Nature). OpenAlex 被引 8 (2026-06-06); last_checked=2026-06-06; oa_id=W4387529049
   leaderboard_url: 无
-  known_issues: 仅检测(无行为/姿态)、单地区采集、自然光照/遮挡变化大
+  known_issues: 仅检测(无行为/姿态)、单地区采集、自然光照/遮挡变化大; domain_scope=精准畜牧-奶山羊
   bias_risk: 单牧场/地域偏差
   privacy_risk: 低(动物)
   preprocessing_steps: YOLO 格式直接训练 / 自然场景检测增强 / 多尺度
@@ -355,9 +355,9 @@
   license: GitHub 仓库未声明 LICENSE(GitHub API 返回 None) → 待核查(默认版权归作者, 建议联系作者); 公开可见但许可不明
   download_url: https://github.com/tiana-tang/DiaryGoatMVT
   paper_url: 暂未在 OpenAlex 检索到对应已发表论文(2026-06-06); 视为社区/课题组发布的数据仓库
-  citation: 无规范学术引用(仓库, 引用前请核实是否有配套论文)
+  citation: 无规范学术引用(仓库, 引用前请核实是否有配套论文); last_checked=待核; src=community
   leaderboard_url: 无
-  known_issues: 缺配套论文/规模文档、许可未明、维护状态需核实
+  known_issues: 缺配套论文/规模文档、许可未明、维护状态需核实; domain_scope=精准畜牧-奶山羊
   bias_risk: 单课题组/单场景偏差
   privacy_risk: 低(动物)
   preprocessing_steps: 按任务解析标注 / 标准检测或分类流程
@@ -374,9 +374,9 @@
   license: 不适用
   download_url: 不适用
   paper_url: 参考综述 https://openalex.org/W4399830201  # Public Computer Vision Datasets for Precision Livestock Farming: A Systematic Survey, arXiv:2406.10628 (2024, 被引 3)
-  citation: 见上述精准畜牧 CV 数据集系统综述(可核查现有家畜 CV 数据集全景)
+  citation: 见上述精准畜牧 CV 数据集系统综述(可核查现有家畜 CV 数据集全景); last_checked=待核; src=community
   leaderboard_url: 不适用
-  known_issues: 说明卡而非单一数据集；结论依赖 2026-06-06 前的公开检索快照，使用前应复核新发布数据集与许可证
+  known_issues: 说明卡而非单一数据集；结论依赖 2026-06-06 前的公开检索快照，使用前应复核新发布数据集与许可证; domain_scope=精准畜牧-奶山羊
   bias_risk: 说明卡本身无采样偏差；其总结的公开奶山羊数据多为单场景/小规模/许可不明，存在领域覆盖偏差
   现状结论: |
     截至 2026-06-06 真实核查:

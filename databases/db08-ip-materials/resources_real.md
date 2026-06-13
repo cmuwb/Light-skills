@@ -11,22 +11,20 @@
 
 ## 1. 真实专利检索入口
 
-| 平台 | 入口 URL | 适用 | API | 核实状态 |
-|---|---|---|---|---|
-| Google Patents | https://patents.google.com | 全球专利+非专利文献，跨语种机器翻译，最易上手的免费初检 | 无官方公开 REST API；批量分析走 Google Patents Public Datasets（BigQuery，需 GCP 账号、按量计费） | curl 直连超时(HTTP 000，疑似地区网络)，URL 经 WebSearch/常识确认有效 |
-| CNIPA 中国专利公布公告 | http://epub.cnipa.gov.cn | 中国专利**公布/公告**原始文本，申请号/公开号检索 | 无开放 API | 主站 https://www.cnipa.gov.cn **HTTP 200 实测可达** |
-| CNIPA 专利检索及分析系统 | https://pss-system.cnipa.gov.cn | 官方权威检索（需注册登录），法律状态、同族、引证 | 无开放 API | 主站可达；子系统需登录【待核查具体可用性】 |
-| EPO Espacenet | https://worldwide.espacenet.com | 1.4亿+全球专利文献，同族(INPADOC)、法律状态、分类(CPC) | **有 API：EPO Open Patent Services (OPS)**，REST，需在 EPO 开发者门户注册 OAuth 凭证，免费额度后限流 | curl HTTP 403（反爬，站点真实存在）；OPS 见 https://www.epo.org/en/searching-for-patents/data/web-services |
-| WIPO PATENTSCOPE | https://patentscope.wipo.int | PCT 国际申请、各国国家阶段，多语种检索(CLIR) | 提供有限 Web service 接口，整体偏页面检索【API 细节待核查】 | curl **HTTP 200 实测可达** |
-| USPTO Patent Public Search | https://ppubs.uspto.gov/pubwebapp/ | 美国专利与公开申请官方检索（取代 PatFT/AppFT） | 该页面本身无开放 API | curl HTTP 000（地区网络），URL 经 WebSearch 确认 |
-| USPTO PatentsView (PatentSearch API) | 站点 https://patentsview.org ，API 端点 https://search.patentsview.org | 美国专利结构化数据、发明人/受让人/引证分析 | **有 API（强烈推荐）**：旧版 legacy API 已于 **2025-02 停用**，改用新版 **PatentSearch API，需申请 API key（X-Api-Key 请求头）**，在 PatentsView 网站表单申请 | 经 WebSearch 命中官方 patentsview.org |
-| The Lens | https://www.lens.org | 专利+学术文献(scholarly)联合检索，免费账号可做组合/导出，专利学术分析 | 有 Lens API（收费/机构授权，需 token）【免费额度待核查】 | curl HTTP 200 实测可达（重定向探测告警可忽略） |
+> **端点/认证/限流的单一真相源 = [light-ip-application/references.md](../../skills/light-ip-application/references.md)（已 curl 实测 OPS OAuth/Lens/PatentsView 细节）；程序化在先技术检索走 [patent_search.py](../../skills/light-ip-application/scripts/patent_search.py)（已实时化）。** 本表只留平台指针 + 适用 + 核实状态(last_checked=2026-06-06),不重复维护 API 细节(消除双源)。
 
-要点：
-- **免费快速初检**：Google Patents（跨语种）+ CNIPA 公布公告（中文权威原文）。
-- **同族与法律状态**：Espacenet（INPADOC）最全；批量结构化分析用 PatentsView API（美国）或 Espacenet OPS（全球）。
-- **PCT/国际**：PATENTSCOPE。
-- 检索是新颖性/创造性自评的前置步骤，但**不能替代代理师的专业检索与可专利性判断**。
+| 平台 | 入口 URL(source_pointer) | 适用 | 有无 API | 核实状态(last_checked 2026-06-06) |
+|---|---|---|---|---|
+| Google Patents | https://patents.google.com | 全球专利+非专利文献,跨语种,免费初检 | 无公开 REST(批量走 BigQuery 公开数据集) | curl 000(地区网络),WebSearch 确认有效 |
+| CNIPA 公布公告 | http://epub.cnipa.gov.cn | 中国专利公布/公告原始文本 | 无开放 API | 主站 cnipa.gov.cn HTTP 200 |
+| CNIPA 检索及分析系统 | https://pss-system.cnipa.gov.cn | 官方权威检索(需登录),法律状态/同族/引证 | 无开放 API | 主站可达,子系统需登录【待核查】 |
+| EPO Espacenet | https://worldwide.espacenet.com | 1.4亿+全球文献,同族(INPADOC)/法律状态/CPC | **有(OPS,OAuth2,详见 references.md)** | curl 403(反爬,站点真实) |
+| WIPO PATENTSCOPE | https://patentscope.wipo.int | PCT 国际申请,多语种(CLIR) | 有限 Web service【细节待核查】 | curl HTTP 200 |
+| USPTO Patent Public Search | https://ppubs.uspto.gov/pubwebapp/ | 美国专利与公开申请官方检索 | 页面本身无开放 API | curl 000(地区网络),WebSearch 确认 |
+| USPTO PatentsView | https://search.patentsview.org | 美国专利结构化数据/引证分析 | **有(PatentSearch API,需 X-Api-Key;旧 legacy 2025-02 停用,详见 references.md)** | WebSearch 命中官方 |
+| The Lens | https://www.lens.org | 专利+学术联合检索 | 有(token,收费/机构;免费额度待核查,详见 references.md) | curl HTTP 200 |
+
+要点：免费初检用 Google Patents + CNIPA 公布公告；同族/法律状态用 Espacenet(OPS 最全);批量结构化分析用 PatentsView(美国)或 OPS(全球);PCT 用 PATENTSCOPE。检索是新颖性/创造性自评前置,**不替代代理师专业检索与可专利性判断**。
 
 ---
 
@@ -39,13 +37,13 @@
 2. 在线填报软件基本信息（全称+简称+版本号），生成申请表。
 3. 上传材料（源代码鉴别材料、文档鉴别材料、申请表、权属/身份证明）。
 4. 形式审查 → 补正（如有）→ 受理 → 发放《计算机软件著作权登记证书》。
-5. 普通办理法定审查周期较长，**加急办理需另付加急费、按工作日分档**——具体费用与时效【待核查：以 CPCC 当期收费/服务公告为准】。
+5. 普通办理法定审查周期较长，**加急办理需另付加急费、按工作日分档**——具体费用与时效【待核查：以 CPCC 当期收费/服务公告为准,source_pointer: ccopyright.com.cn 收费公告;不缓存数值】。
 
-**源代码提交规则（鉴别材料）**：
+**源代码提交规则（鉴别材料）** — `rule_type:行政规则 volatility:low last_checked:2026-06-06 source_pointer:CPCC《软件著作权登记申请指南》`。**本节是 60 页规则的单一真相源**(SKILL/extended_cards/copyright_source_prep.py 指针引用此处,不各写一遍):
 - 提交**源程序前、后各连续 30 页，共 60 页**；不足 60 页者全部提交。
 - **每页不少于 50 行**（最后一页除外），打印代码，**页眉含软件名称及版本号、页码连续**。
 - 代码须**连续、真实、可与软件功能对应**；不得含与本软件无关的代码、不得插入大段空行充数、不得含密钥/口令等敏感信息。
-- 说明：上述「前30+后30页、每页≥50行、页眉标软件名+版本」为业内长期通行的 CPCC 鉴别材料规则；**最新页数/行数口径以 CPCC 官网当期《软件著作权登记申请指南》为准【建议提交前核查】**。来源参考：软件著作权登记规则综述（[Wikipedia: Software copyright in China](https://en.wikipedia.org/wiki/Software_copyright_in_China)）+ CPCC 官网指南。
+- 说明：上述为业内长期通行的 CPCC 鉴别材料规则,变动极慢(全学科任何软件通用);**最新页数/行数口径以 CPCC 官网当期《软件著作权登记申请指南》为准【提交前核查】**。来源参考：[Wikipedia: Software copyright in China](https://en.wikipedia.org/wiki/Software_copyright_in_China) + CPCC 官网指南。
 
 **材料清单（checklist）**：
 - □ 软件全称 + 简称 + 版本号（三者一致、与代码页眉一致）
@@ -97,7 +95,7 @@
 |---|---|---|---|
 | 中国国际大学生创新大赛（原"互联网+"） | https://cy.ncss.cn （英文 https://cy.ncss.cn/en/ ） | 教育部主办，全国大学生创新创业最高规格赛事；报名、赛道、评审在此平台 | curl **HTTP 200 实测可达**；WebSearch 命中官方 |
 | "挑战杯"全国大学生系列科技学术竞赛 | https://www.tiaozhanbei.net | 含"挑战杯"课外学术科技作品竞赛 与 "挑战杯"中国大学生创业计划竞赛（两年各一届，交替） | curl **HTTP 200 实测可达** |
-| 大学生创新创业训练计划（国创计划 / 大创） | 全国大学生创新创业训练计划平台（教育部，依托各高校教务处/创新创业学院组织申报） | 国家级/省级/校级三级；**报名入口通常由本校教务系统下发，全国统一平台入口随年度变动【待核查当年官方链接】** | 平台入口未当场 curl 确认，标【待核查】 |
+| 大学生创新创业训练计划（国创计划 / 大创） | 全国大学生创新创业训练计划平台（教育部，依托各高校教务处/创新创业学院组织申报） | 国家级/省级/校级三级；**报名入口通常由本校教务系统下发，全国统一平台入口随年度变动【待核查当年官方链接,volatility:high 不缓存逐年值】** | 平台入口未当场 curl 确认，标【待核查】 |
 | 全国大学生数学建模竞赛（CUMCM） | http://www.mcm.edu.cn （中国工业与应用数学学会 CSIAM 主办） | 国内最大数模赛事，9 月开赛 | 入口经 WebSearch/常识确认，未当场 curl【建议核查当年通知】 |
 | 美国大学生数学建模竞赛 MCM/ICM（美赛） | https://www.comap.com/contests/mcm-icm （主办方 COMAP；竞赛站 https://www.contest.comap.org ） | 国际数模赛，2 月开赛，COMAP 组织 | WebSearch 命中官方 comap.com |
 

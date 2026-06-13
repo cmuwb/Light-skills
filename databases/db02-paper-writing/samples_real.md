@@ -1,8 +1,10 @@
 # 真实顶会/顶刊论文写作结构样本库
 
 > 学“顶级论文怎么写”：每张卡片都是**真实高被引论文**的写作范本 + 结构拆解。
-> 标题 / 作者 / 年份 / venue / 被引数 / DOI / OpenAlex id / 摘要原文，**全部来自 OpenAlex API 实测 curl**，绝无编造。
-> 摘要原文由 `abstract_inverted_index`（倒排索引）还原为正常语序，可能与出版版本有微小标点差异。
+> 标题 / 作者 / 年份 / venue / 被引数 / DOI / OpenAlex id **全部来自 OpenAlex API 实测 curl**，绝无编造。
+> **只存结构拆解 + 写作套路，不录摘要原文**（版权纪律，与 [samples_recent](samples_recent_2024_2026.md) 一致）；结构拆解里引用的零星英文短句仅作写作模式示例。
+> 被引数为**快照值**，定位为“会增长的 social proof、非权威事实”，带 `last_checked` 日期，用时以 [scripts/paper_signal.py](scripts/paper_signal.py) 实时查 OpenAlex 为准、冲突信在线。
+> 偏科提示：16 篇中 12 篇为 cs.CV/cs.AI，卡尾以 `domain_scope=` 标注方向;非 CS 论文取卡时按方向过滤、勿照搬竞赛/SOTA/开源式背书(见文末 D 表)。
 
 ## 数据来源与方法（可复现）
 - 取数 API：OpenAlex `https://api.openalex.org`（无需 key，加 `&mailto=` 进礼貌池）。
@@ -12,8 +14,8 @@
   ```
   （`C154945302` = Artificial Intelligence 概念）
 - 补充：按 DOI / 标题精确取经典方法论文（Adam、BatchNorm、word2vec）。
-- 摘要还原：把 `abstract_inverted_index`（`{词: [位置...]}`）按位置重排成连续文本。
-- 被引数为 **采集当日（2026-06-06）OpenAlex 快照值**，会随时间增长，属正常现象。
+- 结构拆解为人工归纳的写作模式分析（题型/摘要逻辑/贡献句式/可迁移套路），不录摘要原文。
+- 被引数为 **采集当日（2026-06-06）OpenAlex 快照值**，会随时间增长，属正常现象；用时实时复核(见文末脚本)。
 - 部分记录 OpenAlex 的 `venue` 字段为空或指向 arXiv 预印本镜像（如 VGG/Adam/word2vec），
   正式发表 venue 已在卡片中以“待核查/实际发表于”标注。
 
@@ -41,10 +43,7 @@
 - **作者**：Kaiming He; Xiangyu Zhang; Shaoqing Ren; Jian Sun
 - **年份/venue**：2016 · CVPR（OpenAlex venue 字段为空；DOI 前缀 `10.1109/cvpr.2016` 表明发表于 CVPR 2016）
 - **被引数**：221,133（2026-06-06 OpenAlex 快照，全库最高被引 AI 论文之一）
-- **DOI**：10.1109/cvpr.2016.90 · **OpenAlex**：W2194775991
-
-**摘要原文（倒排还原）**
-> Deeper neural networks are more difficult to train. We present a residual learning framework to ease the training of networks that are substantially deeper than those used previously. We explicitly reformulate the layers as learning residual functions with reference to the layer inputs, instead of learning unreferenced functions. We provide comprehensive empirical evidence showing that these residual networks are easier to optimize, and can gain accuracy from considerably increased depth. On the ImageNet dataset we evaluate residual nets with a depth of up to 152 layers - 8× deeper than VGG nets but still having lower complexity. An ensemble of these residual nets achieves 3.57% error on the ImageNet test set. This result won the 1st place on the ILSVRC 2015 classification task. ... Solely due to our extremely deep representations, we obtain a 28% relative improvement on the COCO object detection dataset.
+- **DOI**：10.1109/cvpr.2016.90 · **OpenAlex**：W2194775991 · domain_scope=cv-视觉
 
 **结构拆解**
 - `title_pattern`：`[核心方法名词短语] for [任务]` —— “Deep Residual Learning **for** Image Recognition”。极简、把方法和任务直接拼接。
@@ -58,10 +57,7 @@
 
 - **作者**：Alex Krizhevsky; Ilya Sutskever; Geoffrey E. Hinton
 - **年份/venue**：2017（此为 Communications of the ACM 转载版；原始版本为 NIPS 2012）
-- **被引数**：75,705 · **DOI**：10.1145/3065386 · **OpenAlex**：W2163605009
-
-**摘要原文（倒排还原）**
-> We trained a large, deep convolutional neural network to classify the 1.2 million high-resolution images in the ImageNet LSVRC-2010 contest into the 1000 different classes. On the test data, we achieved top-1 and top-5 error rates of 37.5% and 17.0%, respectively, which is considerably better than the previous state-of-the-art. The neural network, which has 60 million parameters and 650,000 neurons, consists of five convolutional layers, some of which are followed by max-pooling layers, and three fully connected layers with a final 1000-way softmax. To make training faster, we used non-saturating neurons and a very efficient GPU implementation of the convolution operation. To reduce overfitting in the fully connected layers we employed a recently developed regularization method called "dropout" that proved to be very effective. We also entered a variant of this model in the ILSVRC-2012 competition and achieved a winning top-5 test error rate of 15.3%, compared to 26.2% achieved by the second-best entry.
+- **被引数**：75,705 · **DOI**：10.1145/3065386 · **OpenAlex**：W2163605009 · domain_scope=cv-视觉
 
 **结构拆解**
 - `title_pattern`：`[任务] with [方法]` —— 与 ResNet 的 `for` 镜像，强调“用什么做到的”。
@@ -73,10 +69,7 @@
 
 - **作者**：Karen Simonyan; Andrew Zisserman
 - **年份/venue**：2014 · OpenAlex 标注 arXiv (1409.1556)；正式发表于 **ICLR 2015**（待核查具体卷期）
-- **被引数**：75,538 · **DOI**：10.48550/arxiv.1409.1556 · **OpenAlex**：W（VGG 记录，见 ai2.json）
-
-**摘要原文（倒排还原）**
-> In this work we investigate the effect of the convolutional network depth on its accuracy in the large-scale image recognition setting. Our main contribution is a thorough evaluation of networks of increasing depth using an architecture with very small (3x3) convolution filters, which shows that a significant improvement on the prior-art configurations can be achieved by pushing the depth to 16-19 weight layers. These findings were the basis of our ImageNet Challenge 2014 submission, where our team secured the first and the second places in the localisation and classification tracks respectively. We also show that our representations generalise well to other datasets, where they achieve state-of-the-art results. We have made our two best-performing ConvNet models publicly available to facilitate further research on the use of deep visual representations in computer vision.
+- **被引数**：75,538 · **DOI**：10.48550/arxiv.1409.1556 · **OpenAlex**：W（VGG 记录，见 ai2.json） · domain_scope=cv-视觉
 
 **结构拆解**
 - `title_pattern`：`Very [形容词强调] [方法] for [任务]` —— 用 “Very Deep” 把 novelty（深度）写进标题。
@@ -90,10 +83,7 @@
 
 - **作者**：Jia Deng; Wei Dong; Richard Socher; Li-Jia Li; Kai Li; Li Fei-Fei
 - **年份/venue**：2009 · 2009 IEEE Conference on Computer Vision and Pattern Recognition (CVPR)
-- **被引数**：61,631 · **DOI**：10.1109/cvpr.2009.5206848 · **OpenAlex**：W（见 selected.json）
-
-**摘要原文（倒排还原）**
-> The explosion of image data on the Internet has the potential to foster more sophisticated and robust models and algorithms to index, retrieve, organize and interact with images and multimedia data. But exactly how such data can be harnessed and organized remains a critical problem. We introduce here a new database called "ImageNet", a large-scale ontology of images built upon the backbone of the WordNet structure. ImageNet aims to populate the majority of the 80,000 synsets of WordNet with an average of 500–1000 clean and full resolution images. ... This paper offers a detailed analysis of ImageNet in its current state: 12 subtrees with 5247 synsets and 3.2 million images in total. We show that ImageNet is much larger in scale and diversity and much more accurate than the current image datasets. ... We describe the data collection scheme with Amazon Mechanical Turk. Lastly, we illustrate the usefulness of ImageNet through three simple applications ... We hope that the scale, accuracy, diversity and hierarchical structure of ImageNet can offer unparalleled opportunities to researchers ...
+- **被引数**：61,631 · **DOI**：10.1109/cvpr.2009.5206848 · **OpenAlex**：W（见 selected.json） · domain_scope=cv-视觉
 
 **结构拆解**
 - `title_pattern`：`[资源名]: A [规模/性质形容词串] [资源类型]` —— 数据集/资源类论文的经典冒号式命名。
@@ -105,10 +95,7 @@
 
 - **作者**：Yann LeCun; Léon Bottou; Yoshua Bengio; Patrick Haffner
 - **年份/venue**：1998 · Proceedings of the IEEE（权威综合期刊）
-- **被引数**：57,987 · **DOI**：10.1109/5.726791 · **OpenAlex**：W（见 selected.json）
-
-**摘要原文（倒排还原）**
-> Multilayer neural networks trained with the back-propagation algorithm constitute the best example of a successful gradient based learning technique. Given an appropriate network architecture, gradient-based learning algorithms can be used to synthesize a complex decision surface that can classify high-dimensional patterns, such as handwritten characters, with minimal preprocessing. This paper reviews various methods applied to handwritten character recognition and compares them on a standard handwritten digit recognition task. Convolutional neural networks, which are specifically designed to deal with the variability of 2D shapes, are shown to outperform all other techniques. ... A new learning paradigm, called graph transformer networks (GTN), allows such multimodule systems to be trained globally ... It is deployed commercially and reads several million cheques per day.
+- **被引数**：57,987 · **DOI**：10.1109/5.726791 · **OpenAlex**：W（见 selected.json） · domain_scope=cv-视觉
 
 **结构拆解**
 - `title_pattern`：`[方法范式] Applied to [应用领域]` —— 强调“范式落到实际任务”，适合 journal 综述+方法混合型论文。
@@ -122,10 +109,7 @@
 
 - **作者**：Zhou Wang; Alan C. Bovik; Hamid R. Sheikh; Eero P. Simoncelli
 - **年份/venue**：2004 · IEEE Transactions on Image Processing（CCF 相关方向权威期刊）
-- **被引数**：55,779 · **DOI**：10.1109/tip.2003.819861 · **OpenAlex**：W（见 selected.json）
-
-**摘要原文（倒排还原）**
-> Objective methods for assessing perceptual image quality traditionally attempted to quantify the visibility of errors (differences) between a distorted image and a reference image using a variety of known properties of the human visual system. Under the assumption that human visual perception is highly adapted for extracting structural information from a scene, we introduce an alternative complementary framework for quality assessment based on the degradation of structural information. As a specific example of this concept, we develop a Structural Similarity Index and demonstrate its promise through a set of intuitive examples, as well as comparison to both subjective ratings and state-of-the-art objective methods on a database of images compressed with JPEG and JPEG2000.
+- **被引数**：55,779 · **DOI**：10.1109/tip.2003.819861 · **OpenAlex**：W（见 selected.json） · domain_scope=cv-视觉
 
 **结构拆解**
 - `title_pattern`：`[领域]: From [旧范式] to [新范式]` —— 用 “From … to …” 把“范式转移”直接写进标题，极具叙事张力。
@@ -137,10 +121,7 @@
 
 - **作者**：Shaoqing Ren; Kaiming He; Ross Girshick; Jian Sun
 - **年份/venue**：2016 · IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI)
-- **被引数**：53,939 · **DOI**：10.1109/tpami.2016.2577031 · **OpenAlex**：W（见 selected.json）
-
-**摘要原文（倒排还原）**
-> State-of-the-art object detection networks depend on region proposal algorithms to hypothesize object locations. Advances like SPPnet and Fast R-CNN have reduced the running time of these detection networks, exposing region proposal computation as a bottleneck. In this work, we introduce a Region Proposal Network (RPN) that shares full-image convolutional features with the detection network, thus enabling nearly cost-free region proposals. An RPN is a fully convolutional network that simultaneously predicts object bounds and objectness scores at each position. The RPN is trained end-to-end to generate high-quality region proposals ... we further merge RPN and Fast R-CNN into a single network by sharing their convolutional features—using the recently popular terminology of neural networks with 'attention' mechanisms, the RPN component tells the unified network where to look. For the very deep VGG-16 model, our detection system has a frame rate of 5 fps ... while achieving state-of-the-art object detection accuracy on PASCAL VOC 2007, 2012, and MS COCO ... Code has been made publicly available.
+- **被引数**：53,939 · **DOI**：10.1109/tpami.2016.2577031 · **OpenAlex**：W（见 selected.json） · domain_scope=cv-视觉
 
 **结构拆解**
 - `title_pattern`：`[方法名]: Towards [目标性质] [任务] with [关键组件]` —— “Faster” 是相对前作的进步标记，`Towards` 表明方向性目标。
@@ -154,10 +135,7 @@
 
 - **作者**：Robert Tibshirani
 - **年份/venue**：1996 · Journal of the Royal Statistical Society Series B（统计学顶刊）
-- **被引数**：51,596 · **DOI**：10.1111/j.2517-6161.1996.tb02080.x · **OpenAlex**：W（见 selected.json）
-
-**摘要原文（倒排还原）**
-> SUMMARY We propose a new method for estimation in linear models. The 'lasso' minimizes the residual sum of squares subject to the sum of the absolute value of the coefficients being less than a constant. Because of the nature of this constraint it tends to produce some coefficients that are exactly 0 and hence gives interpretable models. Our simulation studies suggest that the lasso enjoys some of the favourable properties of both subset selection and ridge regression. It produces interpretable models like subset selection and exhibits the stability of ridge regression. There is also an interesting relationship with recent work in adaptive function estimation by Donoho and Johnstone. The lasso idea is quite general and can be applied in a variety of statistical models: extensions to generalized regression models and tree-based models are briefly described.
+- **被引数**：51,596 · **DOI**：10.1111/j.2517-6161.1996.tb02080.x · **OpenAlex**：W（见 selected.json） · domain_scope=统计经济金融
 
 **结构拆解**
 - `title_pattern`：`[功能1] and [功能2] via the [方法名]` —— 用 “via” 引出命名方法，统计学论文常见。
@@ -169,10 +147,7 @@
 
 - **作者**：Tianqi Chen; Carlos Guestrin
 - **年份/venue**：2016 · KDD（OpenAlex venue 字段为空；DOI `10.1145/2939672.2939785` 属 KDD '16 proceedings）
-- **被引数**：47,898 · **DOI**：10.1145/2939672.2939785 · **OpenAlex**：W（见 selected.json）
-
-**摘要原文（倒排还原）**
-> Tree boosting is a highly effective and widely used machine learning method. In this paper, we describe a scalable end-to-end tree boosting system called XGBoost, which is used widely by data scientists to achieve state-of-the-art results on many machine learning challenges. We propose a novel sparsity-aware algorithm for sparse data and weighted quantile sketch for approximate tree learning. More importantly, we provide insights on cache access patterns, data compression and sharding to build a scalable tree boosting system. By combining these insights, XGBoost scales beyond billions of examples using far fewer resources than existing systems.
+- **被引数**：47,898 · **DOI**：10.1145/2939672.2939785 · **OpenAlex**：W（见 selected.json） · domain_scope=通用ML统计
 
 **结构拆解**
 - `title_pattern`：`[系统名]: A [关键性质] [系统类型]`（标题在 proceedings 中含副标题，OpenAlex 仅存了 “XGBoost”）。
@@ -186,10 +161,7 @@
 
 - **作者**：Kalyanmoy Deb; Amrit Pratap; Sakshi Agarwal; T. Meyarivan
 - **年份/venue**：2002 · IEEE Transactions on Evolutionary Computation
-- **被引数**：47,464 · **DOI**：10.1109/4235.996017 · **OpenAlex**：W（见 selected.json）
-
-**摘要原文（倒排还原）**
-> Multi-objective evolutionary algorithms (MOEAs) that use non-dominated sorting and sharing have been criticized mainly for: (1) their O(MN^3) computational complexity (where M is the number of objectives and N is the population size); (2) their non-elitism approach; and (3) the need to specify a sharing parameter. In this paper, we suggest a non-dominated sorting-based MOEA, called NSGA-II ... which alleviates all of the above three difficulties. Specifically, a fast non-dominated sorting approach with O(MN^2) computational complexity is presented. Also, a selection operator is presented that creates a mating pool ... selecting the best N solutions ... Simulation results on difficult test problems show that NSGA-II is able, for most problems, to find a much better spread of solutions and better convergence near the true Pareto-optimal front compared to [两个对手算法]. Moreover, we modify the definition of dominance in order to solve constrained multi-objective problems efficiently ...
+- **被引数**：47,464 · **DOI**：10.1109/4235.996017 · **OpenAlex**：W（见 selected.json） · domain_scope=优化
 
 **结构拆解**
 - `title_pattern`：`A [性质1] and [性质2] [方法类别]: [方法名]` —— 先用形容词承诺卖点（Fast、Elitist），冒号后给命名。
@@ -201,10 +173,7 @@
 
 - **作者**：Christian Szegedy; Wei Liu; Yangqing Jia; Pierre Sermanet; Scott Reed; Dragomir Anguelov; 等 9 人
 - **年份/venue**：2015 · CVPR（DOI 前缀 `10.1109/cvpr.2015`）
-- **被引数**：46,750 · **DOI**：10.1109/cvpr.2015.7298594 · **OpenAlex**：W（见 selected.json）
-
-**摘要原文（倒排还原）**
-> We propose a deep convolutional neural network architecture codenamed Inception that achieves the new state of the art for classification and detection in the ImageNet Large-Scale Visual Recognition Challenge 2014 (ILSVRC14). The main hallmark of this architecture is the improved utilization of the computing resources inside the network. By a carefully crafted design, we increased the depth and width of the network while keeping the computational budget constant. To optimize quality, the architectural decisions were based on the Hebbian principle and the intuition of multi-scale processing. One particular incarnation used in our submission for ILSVRC14 is called GoogLeNet, a 22 layers deep network, the quality of which is assessed in the context of classification and detection.
+- **被引数**：46,750 · **DOI**：10.1109/cvpr.2015.7298594 · **OpenAlex**：W（见 selected.json） · domain_scope=cv-视觉
 
 **结构拆解**
 - `title_pattern`：动词短语标题 `Going Deeper with [组件]` —— 口语化、有动势，区别于名词堆叠式标题。
@@ -218,10 +187,7 @@
 
 - **作者**：John Jumper; Richard Evans; Alexander Pritzel; …; Demis Hassabis（34 位作者）
 - **年份/venue**：2021 · **Nature**（综合顶刊）
-- **被引数**：44,661 · **DOI**：10.1038/s41586-021-03819-2 · **OpenAlex**：W（见 selected.json）
-
-**摘要原文（倒排还原，已省略上标引文编号）**
-> Proteins are essential to life, and understanding their structure can facilitate a mechanistic understanding of their function. Through an enormous experimental effort, the structures of around 100,000 unique proteins have been determined, but this represents a small fraction of the billions of known protein sequences. Structural coverage is bottlenecked by the months to years of painstaking effort required to determine a single protein structure. Accurate computational approaches are needed to address this gap ... Predicting the three-dimensional structure that a protein will adopt based solely on its amino acid sequence ... has been an important open research problem for more than 50 years. Despite recent progress, existing methods fall far short of atomic accuracy ... Here we provide the first computational method that can regularly predict protein structures with atomic accuracy even in cases in which no similar structure is known. We validated an entirely redesigned version of our neural network-based model, AlphaFold, in the challenging 14th Critical Assessment of protein Structure Prediction (CASP14), demonstrating accuracy competitive with experimental structures in a majority of cases and greatly outperforming other methods. ...
+- **被引数**：44,661 · **DOI**：10.1038/s41586-021-03819-2 · **OpenAlex**：W（见 selected.json） · domain_scope=生物医学
 
 **结构拆解**
 - `title_pattern`：`[结果形容词] [任务] with [系统名]` —— “Highly Accurate” 把结论写进标题，适合 Nature/Science 这类强调影响力的刊。
@@ -233,10 +199,7 @@
 
 - **作者**：Diederik P. Kingma; Jimmy Ba
 - **年份/venue**：2014 · OpenAlex 标注 arXiv (1412.6980)；正式发表于 **ICLR 2015**（待核查）
-- **被引数**：84,773 · **DOI**：10.48550/arxiv.1412.6980 · **OpenAlex**：W1522301498
-
-**摘要原文（倒排还原）**
-> We introduce Adam, an algorithm for first-order gradient-based optimization of stochastic objective functions, based on adaptive estimates of lower-order moments. The method is straightforward to implement, is computationally efficient, has little memory requirements, is invariant to diagonal rescaling of the gradients, and is well suited for problems that are large in terms of data and/or parameters. The method is also appropriate for non-stationary objectives and problems with very noisy and/or sparse gradients. The hyper-parameters have intuitive interpretations and typically require little tuning. ... We also analyze the theoretical convergence properties of the algorithm and provide a regret bound on the convergence rate ... Empirical results demonstrate that Adam works well in practice and compares favorably to other stochastic optimization methods. Finally, we discuss AdaMax, a variant of Adam based on the infinity norm.
+- **被引数**：84,773 · **DOI**：10.48550/arxiv.1412.6980 · **OpenAlex**：W1522301498 · domain_scope=通用深度学习
 
 **结构拆解**
 - `title_pattern`：`[方法名]: A Method for [任务]` —— 极简，命名前置，与 Lasso/SSIM 同属“给方法起名”家族。
@@ -250,10 +213,7 @@
 
 - **作者**：Sergey Ioffe; Christian Szegedy
 - **年份/venue**：2015 · OpenAlex 标注 arXiv (1502.03167)；正式发表于 **ICML 2015**（待核查）
-- **被引数**：24,373 · **DOI**：10.48550/arxiv.1502.03167 · **OpenAlex**：W1836465849
-
-**摘要原文（倒排还原）**
-> Training Deep Neural Networks is complicated by the fact that the distribution of each layer's inputs changes during training, as the parameters of the previous layers change. This slows down the training by requiring lower learning rates and careful parameter initialization, and makes it notoriously hard to train models with saturating nonlinearities. We refer to this phenomenon as internal covariate shift, and address the problem by normalizing layer inputs. Our method draws its strength from making normalization a part of the model architecture and performing the normalization for each training mini-batch. Batch Normalization allows us to use much higher learning rates and be less careful about initialization. It also acts as a regularizer, in some cases eliminating the need for Dropout. Applied to a state-of-the-art image classification model, Batch Normalization achieves the same accuracy with 14 times fewer training steps, and beats the original model by a significant margin. ... reaching 4.9% top-5 validation error ..., exceeding the accuracy of human raters.
+- **被引数**：24,373 · **DOI**：10.48550/arxiv.1502.03167 · **OpenAlex**：W1836465849 · domain_scope=通用深度学习
 
 **结构拆解**
 - `title_pattern`：`[方法名]: [动名词收益] by [机制]` —— 标题自带“收益+原理”，信息密度极高。
@@ -265,10 +225,7 @@
 
 - **作者**：Tomáš Mikolov; Kai Chen; Greg S. Corrado; Jeffrey Dean
 - **年份/venue**：2013 · OpenAlex 标注 arXiv (1301.3781)；发表于 **ICLR 2013 Workshop**（待核查）
-- **被引数**：18,139 · **DOI**：10.48550/arxiv.1301.3781 · **OpenAlex**：W1614298861
-
-**摘要原文（倒排还原）**
-> We propose two novel model architectures for computing continuous vector representations of words from very large data sets. The quality of these representations is measured in a word similarity task, and the results are compared to the previously best performing techniques based on different types of neural networks. We observe large improvements in accuracy at much lower computational cost, i.e. it takes less than a day to learn high quality word vectors from a 1.6 billion words data set. Furthermore, we show that these vectors provide state-of-the-art performance on our test set for measuring syntactic and semantic word similarities.
+- **被引数**：18,139 · **DOI**：10.48550/arxiv.1301.3781 · **OpenAlex**：W1614298861 · domain_scope=NLP语音
 
 **结构拆解**
 - `title_pattern`：`Efficient [任务] in [空间/设定]` —— 用 “Efficient” 把核心卖点（低成本）提到标题首位。
@@ -282,10 +239,7 @@
 
 - **作者**：Fabián Pedregosa; Gaël Varoquaux; Alexandre Gramfort; …（19 位）
 - **年份/venue**：2012 · OpenAlex 标注 arXiv (1201.0490)；发表于 **JMLR 12 (2011)**（待核查具体期号）
-- **被引数**：63,694 · **DOI**：10.48550/arxiv.1201.0490 · **OpenAlex**：W（见 selected.json）
-
-**摘要原文（倒排还原）**
-> Scikit-learn is a Python module integrating a wide range of state-of-the-art machine learning algorithms for medium-scale supervised and unsupervised problems. This package focuses on bringing machine learning to non-specialists using a general-purpose high-level language. Emphasis is put on ease of use, performance, documentation, and API consistency. It has minimal dependencies and is distributed under the simplified BSD license, encouraging its use in both academic and commercial settings. Source code, binaries, and documentation can be downloaded from http://scikit-learn.org.
+- **被引数**：63,694 · **DOI**：10.48550/arxiv.1201.0490 · **OpenAlex**：W（见 selected.json） · domain_scope=通用ML统计
 
 **结构拆解**
 - `title_pattern`：`[软件名]: [一句话定位]` —— 软件/工具类论文标准命名，副标题即电梯陈述。
@@ -329,21 +283,29 @@
 - `More importantly, we provide insights on [真正核心贡献].`（注意力导向）
 
 ## D. 可信度背书清单（结尾怎么收）
-1. 竞赛排名（ILSVRC / COCO / CASP 第一名）——最硬。
-2. 与第二名 / SOTA 的对比数字（15.3% vs 26.2%）。
-3. 权威第三方基准（CASP14、PASCAL VOC、MS COCO）。
-4. 真实部署规模（“reads several million cheques per day”）。
-5. 开源 + 业界广泛采用（social proof）。
-6. 理论保证（regret bound、收敛性）安抚理论审稿人。
+
+> ⚠ 偏科警示：背书规则有领域文化前提。下表分「通用」与「cs.AI/CV 专属」两类。
+> **非 CS 方向论文（统计/医学/农业/社科）取卡时只用通用项**，照搬竞赛排名/SOTA/开源 social proof 会写歪——
+> 这些在 AI 顶会是硬通货，在统计/医学顶刊里反而显得浮夸、不专业。
+
+**通用项（任意学科可用）：**
+1. 权威第三方基准（CASP14、PASCAL VOC、MS COCO；各领域有各自的金标准基准）。`domain_scope=general`
+2. 真实部署规模（“reads several million cheques per day”——真实世界落地比任何指标都硬）。`domain_scope=general`
+3. 理论保证（regret bound、收敛性、一致性证明——安抚理论审稿人）。`domain_scope=general`
+
+**cs.AI / CV 文化专属项（仅 AI/CV/系统类会议有效，其他方向慎用）：**
+4. 竞赛排名（ILSVRC / COCO / CASP 第一名）——AI 圈最硬，但多数学科无对应竞赛。`domain_scope=cs.*`
+5. 与第二名 / SOTA 的对比数字（15.3% vs 26.2%）——“beat baseline”叙事是 ML 文化，统计/医学论文更看效应量与置信区间。`domain_scope=cs.*`
+6. 开源 + 业界广泛采用（social proof）——CS 引用放大器，但在不以代码为产出的学科里权重低。`domain_scope=cs.*`
 
 ---
 
 ## 字段诚实性声明（哪些可核查 / 哪些待核查）
-- **已由 curl 实测核查**（OpenAlex 2026-06-06 快照）：所有 16 篇的标题、作者、出版年、被引数、DOI、OpenAlex id、摘要原文。
+- **已由 curl 实测核查**（OpenAlex 2026-06-06 快照）：所有 16 篇的标题、作者、出版年、被引数、DOI、OpenAlex id。
 - **venue 部分待核查**：OpenAlex 对 VGG / Adam / Batch Norm / word2vec / scikit-learn 等记录的 `primary_location.source` 指向 arXiv 预印本镜像而非正式会议/期刊，卡片中已标注“正式发表于 ICLR/ICML/JMLR…（待核查）”，请以官方 proceedings 为准。
-- **被引数会增长**：数值为采集当日快照，非永久值。
-- **等级/分区/影响因子/APC/录用率**：OpenAlex 不提供，本文仅给出 CCF 方向性等级（带来源链接），具体分区与 IF **待核查**（需查 JCR / 中科院分区表）。
-- **摘要还原误差**：由倒排索引重排，个别标点、上标引文编号（如 1–4）已清理，可能与出版版本略有出入。
+- **被引数是快照、会增长**：数值为采集当日快照、非权威永久值，带 `last_checked`；用时以 [scripts/paper_signal.py](scripts/paper_signal.py) 实时查 OpenAlex 为准，冲突默认信在线。
+- **等级/分区/影响因子/APC/录用率**：OpenAlex 不提供，本文仅给出 CCF 方向性等级（带来源链接），具体分区与 IF **待核查**（需查 JCR / 中科院分区表，口径同 db01）。
+- **不录摘要原文**：为对齐版权纪律,各卡摘要原文已删,仅保留人工归纳的结构拆解与可迁移写作套路；拆解中引用的零星英文短句仅作写作模式示例。
 
 ## 来源链接
 - [CCF 推荐国际学术会议和期刊目录（人工智能）](https://www.ccf.org.cn/Academic_Evaluation/AI/)

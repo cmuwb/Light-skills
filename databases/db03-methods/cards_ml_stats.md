@@ -19,7 +19,7 @@
   representative_papers:
     - "Logistic regression and artificial neural network classification models: a methodology review (2002, 被引 2175, DOI 10.1016/s1532-0464(03)00034-0)"
     - "A review of goodness of fit statistics for use in the development of logistic regression models (1982, 被引 1961, DOI 10.1093/oxfordjournals.aje.a113284)"
-  possible_innovation_points: "L1/L2/弹性网正则与稀疏选择、广义可加模型(GAM)非线性化、与深度特征拼接做可解释 head、因果/工具变量扩展、概率校准"
+  possible_innovation_points: "L1/L2/弹性网正则与稀疏选择、广义可加模型(GAM)非线性化、与深度特征拼接做可解释 head、因果/工具变量扩展、概率校准; domain_scope=通用ML统计"
   maturity: "经典"
 ```
 
@@ -39,7 +39,7 @@
     - "Random Forests (Breiman, 2001, 被引 125032, DOI 10.1023/a:1010933404324)"
     - "Classification and Regression by randomForest (Liaw & Wiener, 2007, 被引 18407, 无 DOI)"
     - "Bias in random forest variable importance measures (2007, 被引 3595, DOI 10.1186/1471-2105-8-25)"
-  possible_innovation_points: "无偏/条件特征重要性、与深度表征融合、概率校准、分位数回归森林做不确定性、面向漂移的在线森林、可解释规则提取"
+  possible_innovation_points: "无偏/条件特征重要性、与深度表征融合、概率校准、分位数回归森林做不确定性、面向漂移的在线森林、可解释规则提取; domain_scope=通用ML统计"
   maturity: "经典"
 
 - method_name: "梯度提升决策树 (GBDT: XGBoost / LightGBM / CatBoost)"
@@ -58,7 +58,7 @@
     - "Greedy function approximation: A gradient boosting machine (Friedman, 2001, 被引 28682, DOI 10.1214/aos/1013203451)"
     - "LightGBM: A Highly Efficient Gradient Boosting Decision Tree (Ke et al., 2017, 被引 9487, 无 DOI)"
     - "CatBoost: unbiased boosting with categorical features (Prokhorenkova et al., 2017, 被引 1125, DOI 10.48550/arxiv.1706.09516)"
-  possible_innovation_points: "自动调参/NAS for boosting、不确定性输出(NGBoost 思路)、深度与 GBDT 融合(DeepGBM)、单调约束与可解释、对抗噪声鲁棒损失、GPU/联邦/差分隐私训练"
+  possible_innovation_points: "自动调参/NAS for boosting、不确定性输出(NGBoost 思路)、深度与 GBDT 融合(DeepGBM)、单调约束与可解释、对抗噪声鲁棒损失、GPU/联邦/差分隐私训练; domain_scope=通用ML统计"
   maturity: "主流"
 
 - method_name: "支持向量机 (SVM / SVR)"
@@ -75,7 +75,7 @@
   representative_papers:
     - "Support-vector networks (Cortes & Vapnik, 1995, 被引 40372, DOI 10.1007/bf00994018)"
     - "LIBSVM: A library for support vector machines (Chang & Lin, 2011, 被引 41320, DOI 10.1145/1961189.1961199)"
-  possible_innovation_points: "大规模近似核(随机特征/Nyström)、深度核学习、多核学习自动选核、不平衡代价敏感 SVM、与现代表征(预训练嵌入)级联做轻量分类头"
+  possible_innovation_points: "大规模近似核(随机特征/Nyström)、深度核学习、多核学习自动选核、不平衡代价敏感 SVM、与现代表征(预训练嵌入)级联做轻量分类头; domain_scope=通用ML统计"
   maturity: "主流"
 ```
 
@@ -93,7 +93,7 @@
   implementation_repo: "scikit-learn (KNeighbors*)、FAISS/ScaNN/HNSWlib(大规模近邻)"
   representative_papers:
     - "Nearest neighbor pattern classification (Cover & Hart, 1967, 被引 16013, DOI 10.1109/tit.1967.1053964)"
-  possible_innovation_points: "度量学习(Metric Learning)、近似最近邻加速(HNSW/IVF-PQ)、与深度嵌入结合做检索增强、自适应 k、面向不平衡的加权投票"
+  possible_innovation_points: "度量学习(Metric Learning)、近似最近邻加速(HNSW/IVF-PQ)、与深度嵌入结合做检索增强、自适应 k、面向不平衡的加权投票; domain_scope=通用ML统计"
   maturity: "经典"
 
 - method_name: "朴素贝叶斯 (Naive Bayes)"
@@ -110,7 +110,7 @@
   representative_papers:
     - "A comparison of event models for naive Bayes text classification (McCallum & Nigam, 1998, 被引 3226, 无 DOI)"
     - "Bayesian Network Classifiers (Friedman et al., 1997, 被引 4733, DOI 10.1023/a:1007465528199)"
-  possible_innovation_points: "半朴素/TAN 放松独立、概率校准、与神经文本编码器融合、流式/概念漂移更新、贝叶斯网扩展依赖建模"
+  possible_innovation_points: "半朴素/TAN 放松独立、概率校准、与神经文本编码器融合、流式/概念漂移更新、贝叶斯网扩展依赖建模; domain_scope=通用ML统计"
   maturity: "经典"
 
 - method_name: "聚类 (KMeans / DBSCAN / 层次聚类)"
@@ -128,7 +128,7 @@
     - "A density-based algorithm for discovering clusters in large spatial databases with noise (DBSCAN, Ester et al., 1996, 被引 19137, 无 DOI)"
     - "k-means++: the advantages of careful seeding (Arthur & Vassilvitskii, 2007, 被引 6302, DOI 10.5555/1283383.1283494)"
     - "Ward's Hierarchical Clustering Method (Murtagh & Legendre, 2011, 被引 1317, DOI 10.48550/arxiv.1111.6285)"
-  possible_innovation_points: "深度聚类(联合表征学习)、自动选簇数、变密度 DBSCAN(HDBSCAN)、可扩展层次聚类、半监督/约束聚类、簇稳定性评估"
+  possible_innovation_points: "深度聚类(联合表征学习)、自动选簇数、变密度 DBSCAN(HDBSCAN)、可扩展层次聚类、半监督/约束聚类、簇稳定性评估; domain_scope=通用ML统计"
   maturity: "经典"
 ```
 
@@ -148,7 +148,7 @@
     - "Principal component analysis: a review and recent developments (Jolliffe & Cadima, 2016, 被引 9351, DOI 10.1098/rsta.2015.0202)"
     - "Visualizing Data using t-SNE (van der Maaten & Hinton, 2008, 被引 35730, 无 DOI)"
     - "UMAP: Uniform Manifold Approximation and Projection (McInnes et al., 2018, 被引 9493, DOI 10.21105/joss.00861)"
-  possible_innovation_points: "监督/参数化 UMAP、稳定性与可重复性度量、densMAP 保密度、与对比学习表征结合、大规模 GPU 加速、可解释的非线性降维"
+  possible_innovation_points: "监督/参数化 UMAP、稳定性与可重复性度量、densMAP 保密度、与对比学习表征结合、大规模 GPU 加速、可解释的非线性降维; domain_scope=通用ML统计"
   maturity: "PCA 经典；t-SNE 主流；UMAP 主流(新兴升级)"
 
 - method_name: "高斯过程 (Gaussian Process, GP)"
@@ -164,7 +164,7 @@
   implementation_repo: "GPyTorch(cornellius-gp)、GPflow、scikit-learn (GaussianProcessRegressor)、BoTorch(贝叶斯优化)"
   representative_papers:
     - "Gaussian Processes for Machine Learning (Rasmussen & Williams, MIT Press; OpenAlex 记录 被引 19637, DOI 10.7551/mitpress/3206.001.0001;书名字段在 OpenAlex 为空，标题以原书为准[待核查 OpenAlex 标题缺失])"
-  possible_innovation_points: "稀疏变分 GP(SVGP)扩展大数据、深度核学习、多任务/多保真 GP、可扩展精确 GP(GPyTorch KeOps)、与神经网络融合的不确定性建模、批量贝叶斯优化"
+  possible_innovation_points: "稀疏变分 GP(SVGP)扩展大数据、深度核学习、多任务/多保真 GP、可扩展精确 GP(GPyTorch KeOps)、与神经网络融合的不确定性建模、批量贝叶斯优化; domain_scope=通用ML统计"
   maturity: "主流"
 
 - method_name: "隐马尔可夫模型 (Hidden Markov Model, HMM)"
@@ -181,7 +181,7 @@
   representative_papers:
     - "A tutorial on hidden Markov models and selected applications in speech recognition (Rabiner, 1989, 被引 22755, DOI 10.1109/5.18626)"
     - "Accelerated Profile HMM Searches (Eddy, 2011, 被引 7426, DOI 10.1371/journal.pcbi.1002195)"
-  possible_innovation_points: "神经-HMM 混合(可微 HMM)、半马尔可夫/分层状态、贝叶斯非参(HDP-HMM)自动定状态数、与深度发射模型结合、可解释状态切换分析"
+  possible_innovation_points: "神经-HMM 混合(可微 HMM)、半马尔可夫/分层状态、贝叶斯非参(HDP-HMM)自动定状态数、与深度发射模型结合、可解释状态切换分析; domain_scope=通用ML统计"
   maturity: "经典(多数任务过时，特定领域如生信仍主流)"
 ```
 
@@ -201,7 +201,7 @@
     - "Bagging predictors (Breiman, 1996, 被引 16356, DOI 10.1007/bf00058655)"
     - "A Decision-Theoretic Generalization of On-Line Learning and an Application to Boosting (AdaBoost, Freund & Schapire, 1997, 被引 20251, DOI 10.1006/jcss.1997.1504)"
     - "Issues in Stacked Generalization (Ting & Witten, 1999, 被引 550, DOI 10.1613/jair.594)"
-  possible_innovation_points: "异质深度+树模型 Stacking、动态/自适应集成选择、不确定性感知加权、知识蒸馏压缩集成、自动化集成搜索(AutoML)、面向漂移的在线集成"
+  possible_innovation_points: "异质深度+树模型 Stacking、动态/自适应集成选择、不确定性感知加权、知识蒸馏压缩集成、自动化集成搜索(AutoML)、面向漂移的在线集成; domain_scope=通用ML统计"
   maturity: "经典(方法论)/主流(实践)"
 
 - method_name: "贝叶斯方法 (Bayesian Inference: MCMC / 变分推断 / 贝叶斯神经网络)"
@@ -217,7 +217,7 @@
   implementation_repo: "PyMC、Stan(cmdstanpy)、NumPyro/Pyro、TensorFlow Probability"
   representative_papers:
     - "Variational Inference: A Review for Statisticians (Blei et al., 2017, 被引 3697, DOI 10.1080/01621459.2017.1285773)"
-  possible_innovation_points: "可扩展 VI(随机/分摊推断)、归一化流增强后验近似、贝叶斯深度学习不确定性校准、模拟基推断(SBI)、先验敏感性自动分析、概率编程加速(GPU/JIT)"
+  possible_innovation_points: "可扩展 VI(随机/分摊推断)、归一化流增强后验近似、贝叶斯深度学习不确定性校准、模拟基推断(SBI)、先验敏感性自动分析、概率编程加速(GPU/JIT); domain_scope=通用ML统计"
   maturity: "经典(统计)/主流(概率编程)/新兴(贝叶斯深度学习)"
 ```
 

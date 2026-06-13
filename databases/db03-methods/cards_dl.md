@@ -21,9 +21,9 @@
   suitable_datasets: ImageNet、CIFAR-10/100、下游各类视觉数据集
   implementation_repo: torchvision.models、rwightman/pytorch-image-models(timm)、官方 tensorflow/tpu(EfficientNet)
   representative_papers:
-    - "Deep Residual Learning for Image Recognition (ResNet) | 2016 | cited:221133 | doi:10.1109/cvpr.2016.90"
-    - "EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks | 2019 | cited:5013 | doi:10.48550/arXiv.1905.11946"
-  possible_innovation_points: 与注意力混合(ConvNeXt/CoAtNet 思路)、轻量化与 NAS、自监督预训练 backbone、边缘部署量化
+    - "Deep Residual Learning for Image Recognition (ResNet) | 2016 | cited:221133 | doi:10.1109/cvpr.2016.90 | checked:2026-06-06"
+    - "EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks | 2019 | cited:5013 | doi:10.48550/arXiv.1905.11946 | checked:2026-06-06"
+  possible_innovation_points: 与注意力混合(ConvNeXt/CoAtNet 思路)、轻量化与 NAS、自监督预训练 backbone、边缘部署量化; domain_scope=通用深度学习
   maturity: 经典(ResNet 仍是强基线/常用 backbone；EfficientNet 主流但分类 SOTA 已转向 ViT 系)
 ```
 
@@ -40,9 +40,9 @@
   suitable_datasets: Penn Treebank、WikiText、时序数据(M4/electricity)、语音(LibriSpeech)
   implementation_repo: torch.nn.LSTM / torch.nn.GRU、tensorflow.keras.layers.LSTM
   representative_papers:
-    - "Long Short-Term Memory (LSTM) | 1997 | cited:97420 | doi:10.1162/neco.1997.9.8.1735"
-    - "Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation (GRU) | 2014 | cited:24334 | doi:10.3115/v1/d14-1179"
-  possible_innovation_points: 与注意力/状态空间模型(Mamba/S4)结合、轻量时序预测、边缘流式推理
+    - "Long Short-Term Memory (LSTM) | 1997 | cited:97420 | doi:10.1162/neco.1997.9.8.1735 | checked:2026-06-06"
+    - "Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation (GRU) | 2014 | cited:24334 | doi:10.3115/v1/d14-1179 | checked:2026-06-06"
+  possible_innovation_points: 与注意力/状态空间模型(Mamba/S4)结合、轻量时序预测、边缘流式推理; domain_scope=通用深度学习
   maturity: 经典(LSTM/GRU 在轻量时序/低资源仍用；NLP 主线已过时被 Transformer 取代)
 
 - method_name: Transformer / 自注意力
@@ -57,8 +57,8 @@
   suitable_datasets: 大规模语料、图像、语音、多模态对齐数据
   implementation_repo: huggingface/transformers、官方 tensorflow/tensor2tensor
   representative_papers:
-    - "Attention Is All You Need | 原始为 2017 NeurIPS(Vaswani et al.) | OpenAlex 返回记录 publication_year=2025、cited:6557、doi:10.65215/2q58a426 [待核查：该 OpenAlex 记录为异常/合并条目，年份与被引明显失真，原文真实被引远高于此]"
-  possible_innovation_points: 高效/稀疏注意力、长上下文、线性注意力与状态空间替代、领域与多模态适配
+    - "Attention Is All You Need | 原始为 2017 NeurIPS(Vaswani et al.) | OpenAlex 返回记录 publication_year=2025、cited:6557、doi:10.65215/2q58a426 [待核查：该 OpenAlex 记录为异常/合并条目，年份与被引明显失真，原文真实被引远高于此] | checked:2026-06-06"
+  possible_innovation_points: 高效/稀疏注意力、长上下文、线性注意力与状态空间替代、领域与多模态适配; domain_scope=通用深度学习
   maturity: 主流(当代深度学习核心架构)
 ```
 
@@ -75,9 +75,9 @@
   suitable_datasets: Wikipedia+BookCorpus、Common Crawl、GLUE、SQuAD
   implementation_repo: huggingface/transformers、google-research/bert、openai(API)
   representative_papers:
-    - "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding | 2019 | cited:32329 | doi:10.18653/v1/n19-1423"
-    - "Language Models are Few-Shot Learners (GPT-3) | 2020 | cited:3029 | doi:10.48550/arXiv.2005.14165 [被引：OpenAlex 该 arXiv 记录数值，原文真实被引应更高，待核查]"
-  possible_innovation_points: 高效微调(LoRA/PEFT)、检索增强(RAG)、长上下文、领域/多语言适配、对齐(RLHF/DPO)
+    - "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding | 2019 | cited:32329 | doi:10.18653/v1/n19-1423 | checked:2026-06-06"
+    - "Language Models are Few-Shot Learners (GPT-3) | 2020 | cited:3029 | doi:10.48550/arXiv.2005.14165 [被引：OpenAlex 该 arXiv 记录数值，原文真实被引应更高，待核查] | checked:2026-06-06"
+  possible_innovation_points: 高效微调(LoRA/PEFT)、检索增强(RAG)、长上下文、领域/多语言适配、对齐(RLHF/DPO); domain_scope=通用深度学习
   maturity: 主流(BERT 类编码器在理解任务仍常用；GPT 类解码器为当前大模型主线)
 
 - method_name: 视觉 Transformer(ViT)
@@ -92,8 +92,8 @@
   suitable_datasets: ImageNet-1k/21k、JFT-300M、下游视觉任务
   implementation_repo: google-research/vision_transformer、timm
   representative_papers:
-    - "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale (ViT) | 2020 | cited:21562 | doi:10.48550/arXiv.2010.11929"
-  possible_innovation_points: 数据高效训练(DeiT)、层级结构(Swin)、自监督(MAE/DINO)、与卷积混合、轻量化
+    - "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale (ViT) | 2020 | cited:21562 | doi:10.48550/arXiv.2010.11929 | checked:2026-06-06"
+  possible_innovation_points: 数据高效训练(DeiT)、层级结构(Swin)、自监督(MAE/DINO)、与卷积混合、轻量化; domain_scope=通用深度学习
   maturity: 主流(大规模视觉与多模态主流 backbone)
 ```
 
@@ -110,10 +110,10 @@
   suitable_datasets: COCO、PASCAL VOC、Objects365
   implementation_repo: ultralytics(YOLO)、facebookresearch/detectron2(Faster R-CNN/Mask R-CNN)、facebookresearch/detr(DETR)
   representative_papers:
-    - "You Only Look Once: Unified, Real-Time Object Detection (YOLO) | 2016 | cited:3255 | doi:10.1109/cvpr.2016.91 [被引为 OpenAlex 该条记录数值，原始论文真实被引更高，待核查]"
-    - "Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks | 2016 | cited:53939 | doi:10.1109/tpami.2016.2577031"
-    - "End-to-End Object Detection with Transformers (DETR) | 2020 | cited:831 | doi:10.1007/978-3-030-58452-8_13 [OpenAlex 该条被引偏低，原文真实被引更高，待核查]"
-  possible_innovation_points: 实时+高精度平衡、开放词表检测、DETR 加速收敛(Deformable/DINO)、小目标与遥感、多模态检测
+    - "You Only Look Once: Unified, Real-Time Object Detection (YOLO) | 2016 | cited:3255 | doi:10.1109/cvpr.2016.91 [被引为 OpenAlex 该条记录数值，原始论文真实被引更高，待核查] | checked:2026-06-06"
+    - "Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks | 2016 | cited:53939 | doi:10.1109/tpami.2016.2577031 | checked:2026-06-06"
+    - "End-to-End Object Detection with Transformers (DETR) | 2020 | cited:831 | doi:10.1007/978-3-030-58452-8_13 [OpenAlex 该条被引偏低，原文真实被引更高，待核查] | checked:2026-06-06"
+  possible_innovation_points: 实时+高精度平衡、开放词表检测、DETR 加速收敛(Deformable/DINO)、小目标与遥感、多模态检测; domain_scope=通用深度学习
   maturity: 主流(YOLO 工业部署首选；Faster R-CNN 经典强基线；DETR 系为新兴主流研究方向)
 
 - method_name: 图像分割(U-Net / Mask R-CNN / SAM)
@@ -128,10 +128,10 @@
   suitable_datasets: Cityscapes、ADE20K、COCO、医学(ISIC/BraTS)、SA-1B
   implementation_repo: milesial/Pytorch-UNet、detectron2(Mask R-CNN)、facebookresearch/segment-anything(SAM)
   representative_papers:
-    - "U-Net: Convolutional Networks for Biomedical Image Segmentation | 2015 | cited:88486 | doi:10.1007/978-3-319-24574-4_28"
-    - "Mask R-CNN | 2017 | cited:28690 | doi:10.1109/iccv.2017.322"
-    - "Segment Anything (SAM) | 2023 | cited:8946 | doi:10.1109/iccv51070.2023.00371"
-  possible_innovation_points: 医学/遥感领域适配、提示分割与文本结合、轻量 SAM(MobileSAM)、半监督/弱监督分割
+    - "U-Net: Convolutional Networks for Biomedical Image Segmentation | 2015 | cited:88486 | doi:10.1007/978-3-319-24574-4_28 | checked:2026-06-06"
+    - "Mask R-CNN | 2017 | cited:28690 | doi:10.1109/iccv.2017.322 | checked:2026-06-06"
+    - "Segment Anything (SAM) | 2023 | cited:8946 | doi:10.1109/iccv51070.2023.00371 | checked:2026-06-06"
+  possible_innovation_points: 医学/遥感领域适配、提示分割与文本结合、轻量 SAM(MobileSAM)、半监督/弱监督分割; domain_scope=通用深度学习
   maturity: U-Net 经典(医学主流强基线)；Mask R-CNN 主流；SAM 新兴主流(通用分割基础模型)
 ```
 
@@ -148,8 +148,8 @@
   suitable_datasets: CelebA、LSUN、ImageNet、FFHQ
   implementation_repo: NVlabs/stylegan3、eriklindernoren/PyTorch-GAN
   representative_papers:
-    - "Generative Adversarial Networks (Goodfellow et al.，2014 NeurIPS；CACM 2020 重印) | 2020 | cited:13506 | doi:10.1145/3422622"
-  possible_innovation_points: 与扩散互补(对抗+去噪)、少样本生成、稳定训练、领域特定生成、作为快速采样器
+    - "Generative Adversarial Networks (Goodfellow et al.，2014 NeurIPS；CACM 2020 重印) | 2020 | cited:13506 | doi:10.1145/3422622 | checked:2026-06-06"
+  possible_innovation_points: 与扩散互补(对抗+去噪)、少样本生成、稳定训练、领域特定生成、作为快速采样器; domain_scope=通用深度学习
   maturity: 经典/部分过时(StyleGAN 类在特定人脸/快速生成仍用；通用高保真生成已被扩散取代，新研究不建议作为主方法)
 
 - method_name: 变分自编码器(VAE)
@@ -164,8 +164,8 @@
   suitable_datasets: MNIST、CelebA、分子(化学生成)
   implementation_repo: AntixK/PyTorch-VAE、pytorch 官方示例
   representative_papers:
-    - "Auto-Encoding Variational Bayes (VAE) | 2013 | cited:15627 | doi:10.48550/arXiv.1312.6114"
-  possible_innovation_points: 离散隐变量(VQ-VAE)作扩散/自回归先验、解耦表示、科学数据(分子/基因)生成
+    - "Auto-Encoding Variational Bayes (VAE) | 2013 | cited:15627 | doi:10.48550/arXiv.1312.6114 | checked:2026-06-06"
+  possible_innovation_points: 离散隐变量(VQ-VAE)作扩散/自回归先验、解耦表示、科学数据(分子/基因)生成; domain_scope=通用深度学习
   maturity: 经典(纯生成弱于扩散；但 VQ-VAE 作为隐空间/tokenizer 在 latent diffusion、多模态中仍主流)
 
 - method_name: 扩散模型(DDPM / Latent Diffusion)
@@ -180,9 +180,9 @@
   suitable_datasets: ImageNet、LAION、CelebA-HQ
   implementation_repo: huggingface/diffusers、CompVis/stable-diffusion、CompVis/latent-diffusion
   representative_papers:
-    - "Denoising Diffusion Probabilistic Models (DDPM) | 2020 | cited:5623 | doi:10.48550/arXiv.2006.11239"
-    - "High-Resolution Image Synthesis with Latent Diffusion Models (Stable Diffusion) | 2022 | cited:13494 | doi:10.1109/cvpr52688.2022.01042"
-  possible_innovation_points: 少步/一致性采样加速(蒸馏/Consistency)、可控生成与编辑、视频/3D/科学扩散、与 Transformer(DiT)结合
+    - "Denoising Diffusion Probabilistic Models (DDPM) | 2020 | cited:5623 | doi:10.48550/arXiv.2006.11239 | checked:2026-06-06"
+    - "High-Resolution Image Synthesis with Latent Diffusion Models (Stable Diffusion) | 2022 | cited:13494 | doi:10.1109/cvpr52688.2022.01042 | checked:2026-06-06"
+  possible_innovation_points: 少步/一致性采样加速(蒸馏/Consistency)、可控生成与编辑、视频/3D/科学扩散、与 Transformer(DiT)结合; domain_scope=通用深度学习
   maturity: 主流(当前生成式视觉/多模态的主导方法)
 ```
 
@@ -199,9 +199,9 @@
   suitable_datasets: ImageNet(SimCLR)、WIT/LAION(CLIP)
   implementation_repo: google-research/simclr、openai/CLIP、mlfoundations/open_clip
   representative_papers:
-    - "A Simple Framework for Contrastive Learning of Visual Representations (SimCLR) | 2020 | cited:7333 | doi:10.48550/arXiv.2002.05709"
-    - "Learning Transferable Visual Models From Natural Language Supervision (CLIP) | 2021 | cited:5296 | doi:10.48550/arXiv.2103.00020"
-  possible_innovation_points: 无负样本对比(BYOL/SimSiam)、多模态扩展(音频/视频)、细粒度对齐、领域 CLIP(医学/遥感)、作为生成模型条件编码器
+    - "A Simple Framework for Contrastive Learning of Visual Representations (SimCLR) | 2020 | cited:7333 | doi:10.48550/arXiv.2002.05709 | checked:2026-06-06"
+    - "Learning Transferable Visual Models From Natural Language Supervision (CLIP) | 2021 | cited:5296 | doi:10.48550/arXiv.2103.00020 | checked:2026-06-06"
+  possible_innovation_points: 无负样本对比(BYOL/SimSiam)、多模态扩展(音频/视频)、细粒度对齐、领域 CLIP(医学/遥感)、作为生成模型条件编码器; domain_scope=通用深度学习
   maturity: 主流(SimCLR 为自监督经典强基线；CLIP 为多模态与开放词表任务的基础模型)
 
 - method_name: 图神经网络(GCN / GAT / GraphSAGE)
@@ -216,10 +216,10 @@
   suitable_datasets: Cora/Citeseer/PubMed、OGB、PPI、分子(QM9/ZINC)
   implementation_repo: pyg-team/pytorch_geometric(PyG)、dmlc/dgl
   representative_papers:
-    - "Semi-Supervised Classification with Graph Convolutional Networks (GCN) | 2016 | cited:8068 | doi:10.48550/arXiv.1609.02907"
-    - "Graph Attention Networks (GAT) | 2017 | cited:8340 | doi:待核查(OpenAlex 该记录 doi 为 null)"
-    - "Inductive Representation Learning on Large Graphs (GraphSAGE) | 2017 | cited:4544 | doi:10.48550/arXiv.1706.02216"
-  possible_innovation_points: 缓解过平滑/深层 GNN、可扩展采样、Graph Transformer、异配图、与 LLM 结合的图推理
+    - "Semi-Supervised Classification with Graph Convolutional Networks (GCN) | 2016 | cited:8068 | doi:10.48550/arXiv.1609.02907 | checked:2026-06-06"
+    - "Graph Attention Networks (GAT) | 2017 | cited:8340 | doi:待核查(OpenAlex 该记录 doi 为 null) | checked:2026-06-06"
+    - "Inductive Representation Learning on Large Graphs (GraphSAGE) | 2017 | cited:4544 | doi:10.48550/arXiv.1706.02216 | checked:2026-06-06"
+  possible_innovation_points: 缓解过平滑/深层 GNN、可扩展采样、Graph Transformer、异配图、与 LLM 结合的图推理; domain_scope=通用深度学习
   maturity: 主流(图结构任务标准方法；GCN/GAT/GraphSAGE 为三大经典基线)
 ```
 
@@ -236,9 +236,9 @@
   suitable_datasets: Atari(ALE)、MuJoCo、OpenAI Gym/Gymnasium、Procgen
   implementation_repo: DLR-RM/stable-baselines3、ray-project/ray(RLlib)、openai/baselines
   representative_papers:
-    - "Human-level control through deep reinforcement learning (DQN) | 2015 | cited:29824 | doi:10.1038/nature14236"
+    - "Human-level control through deep reinforcement learning (DQN) | 2015 | cited:29824 | doi:10.1038/nature14236 | checked:2026-06-06"
     - "Proximal Policy Optimization Algorithms (PPO, Schulman et al. 2017, arXiv:1707.06347) | 待核查：OpenAlex 对应记录标题字段为空、被引约 1798 且条目异常，无法确认为原文，原文真实被引远高于此"
-  possible_innovation_points: 离线 RL、样本高效探索、RLHF/RLAIF 对齐、世界模型、多智能体、与 LLM 结合的决策
+  possible_innovation_points: 离线 RL、样本高效探索、RLHF/RLAIF 对齐、世界模型、多智能体、与 LLM 结合的决策; domain_scope=通用深度学习
   maturity: 主流(DQN 为离散控制经典基线；PPO 为当前策略优化与 RLHF 的事实标准)
 
 - method_name: 大模型参数高效微调(LoRA / PEFT)
@@ -253,8 +253,8 @@
   suitable_datasets: 指令微调集(Alpaca/Dolly)、领域语料、各下游基准
   implementation_repo: huggingface/peft、microsoft/LoRA
   representative_papers:
-    - "LoRA: Low-Rank Adaptation of Large Language Models | 2021 | cited:2445 | doi:10.48550/arXiv.2106.09685 [被引为 OpenAlex arXiv 记录数值，实际更高，待核查]"
-  possible_innovation_points: 量化结合(QLoRA)、动态秩/自适应分配、多适配器组合与路由(MoE-LoRA)、跨模态 PEFT、推理期高效切换
+    - "LoRA: Low-Rank Adaptation of Large Language Models | 2021 | cited:2445 | doi:10.48550/arXiv.2106.09685 [被引为 OpenAlex arXiv 记录数值，实际更高，待核查] | checked:2026-06-06"
+  possible_innovation_points: 量化结合(QLoRA)、动态秩/自适应分配、多适配器组合与路由(MoE-LoRA)、跨模态 PEFT、推理期高效切换; domain_scope=通用深度学习
   maturity: 主流(大模型微调的事实标准；LoRA/QLoRA 应用极广)
 ```
 

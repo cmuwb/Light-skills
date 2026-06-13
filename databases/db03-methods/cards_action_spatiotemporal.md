@@ -33,9 +33,9 @@
   suitable_datasets: UCF101、HMDB51
   implementation_repo: mmaction2(OpenMMLab)、feichtenhofer/twostreamfusion
   representative_papers:
-    - "Two-Stream Convolutional Networks for Action Recognition in Videos | 2014 | cited:5369 | doi:10.48550/arxiv.1406.2199"
-    - "Convolutional Two-Stream Network Fusion for Video Action Recognition | 2016 | cited:2761 | doi:10.1109/cvpr.2016.213"
-  possible_innovation_points: 奶山羊场景光流可凸显反刍口部周期运动与爬跨快速位移，但群养遮挡下光流噪声大；适合作对比基线而非首选；可用RAFT等学习式光流替代TV-L1降本
+    - "Two-Stream Convolutional Networks for Action Recognition in Videos | 2014 | cited:5369 | doi:10.48550/arxiv.1406.2199 | checked:2026-06-06"
+    - "Convolutional Two-Stream Network Fusion for Video Action Recognition | 2016 | cited:2761 | doi:10.1109/cvpr.2016.213 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊场景光流可凸显反刍口部周期运动与爬跨快速位移，但群养遮挡下光流噪声大；适合作对比基线而非首选；可用RAFT等学习式光流替代TV-L1降本; domain_scope=cv-行为识别
   maturity: 经典(奠基性，现已被3D卷积/Transformer超越，多作历史基线)
 ```
 
@@ -52,8 +52,8 @@
   suitable_datasets: Sports-1M、UCF101、HMDB51
   implementation_repo: facebook/C3D(原Caffe)、mmaction2
   representative_papers:
-    - "Learning Spatiotemporal Features with 3D Convolutional Networks (C3D) | 2015 | cited:9663 | doi:10.1109/iccv.2015.510"
-  possible_innovation_points: 奶山羊短时事件(爬跨)用短片段3D卷积可行，但反刍/跛行长周期需更长时序，C3D感受野不足；作轻量基线或边缘部署候选
+    - "Learning Spatiotemporal Features with 3D Convolutional Networks (C3D) | 2015 | cited:9663 | doi:10.1109/iccv.2015.510 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊短时事件(爬跨)用短片段3D卷积可行，但反刍/跛行长周期需更长时序，C3D感受野不足；作轻量基线或边缘部署候选; domain_scope=cv-行为识别
   maturity: 经典/趋于过时(开创3D卷积，现已被I3D/X3D等高效3D网络取代)
 ```
 
@@ -70,8 +70,8 @@
   suitable_datasets: Kinetics-400、UCF101、HMDB51、Charades
   implementation_repo: deepmind/kinetics-i3d、mmaction2
   representative_papers:
-    - "Quo Vadis, Action Recognition? A New Model and the Kinetics Dataset (I3D) | 2017 | cited:432 | doi:10.1109/cvpr.2017.502 [被引为OpenAlex该CVPR条目数值，原文真实被引远高于此，存在记录分散，待核查]"
-  possible_innovation_points: 奶山羊上可用Kinetics预训练I3D做迁移基线；RGB-only分支避免群养光流噪声；细粒度采食/反刍区分能力一般，宜与强时序模型对比
+    - "Quo Vadis, Action Recognition? A New Model and the Kinetics Dataset (I3D) | 2017 | cited:432 | doi:10.1109/cvpr.2017.502 [被引为OpenAlex该CVPR条目数值，原文真实被引远高于此，存在记录分散，待核查] | checked:2026-06-06"
+  possible_innovation_points: 奶山羊上可用Kinetics预训练I3D做迁移基线；RGB-only分支避免群养光流噪声；细粒度采食/反刍区分能力一般，宜与强时序模型对比; domain_scope=cv-行为识别
   maturity: 经典/主流基线(膨胀+大规模预训练范式影响深远，仍常作对比)
 ```
 
@@ -88,8 +88,8 @@
   suitable_datasets: Sports-1M、UCF101、Kinetics
   implementation_repo: ZhaofanQiu/pseudo-3d-residual-networks、mmaction2
   representative_papers:
-    - "Learning Spatio-Temporal Representation with Pseudo-3D Residual Networks (P3D) | 2017 | cited:1812 | doi:10.1109/iccv.2017.590"
-  possible_innovation_points: 时空分解思想可用于奶山羊轻量边缘部署；与R(2+1)D同属分解路线，建议直接用更成熟的R(2+1)D
+    - "Learning Spatio-Temporal Representation with Pseudo-3D Residual Networks (P3D) | 2017 | cited:1812 | doi:10.1109/iccv.2017.590 | checked:2026-06-06"
+  possible_innovation_points: 时空分解思想可用于奶山羊轻量边缘部署；与R(2+1)D同属分解路线，建议直接用更成熟的R(2+1)D; domain_scope=cv-行为识别
   maturity: 经典/趋于过时(分解卷积先驱，实用上被R(2+1)D取代)
 ```
 
@@ -106,8 +106,8 @@
   suitable_datasets: Kinetics-400、UCF101、HMDB51、Sports-1M
   implementation_repo: facebookresearch/VMZ、torchvision.models.video(r2plus1d_18)、mmaction2
   representative_papers:
-    - "A Closer Look at Spatiotemporal Convolutions for Action Recognition (R(2+1)D) | 2018 | cited:3513 | doi:10.1109/cvpr.2018.00675"
-  possible_innovation_points: 奶山羊上可作强而轻的3D基线(torchvision现成权重)；时空解耦便于分析采食(空间为主)与反刍(时间为主)的贡献；长周期跛行仍需多片段聚合
+    - "A Closer Look at Spatiotemporal Convolutions for Action Recognition (R(2+1)D) | 2018 | cited:3513 | doi:10.1109/cvpr.2018.00675 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊上可作强而轻的3D基线(torchvision现成权重)；时空解耦便于分析采食(空间为主)与反刍(时间为主)的贡献；长周期跛行仍需多片段聚合; domain_scope=cv-行为识别
   maturity: 主流基线(分解3D的成熟代表，torchvision内置，常用对比)
 ```
 
@@ -124,9 +124,9 @@
   suitable_datasets: UCF101、HMDB51、Kinetics-400、ActivityNet
   implementation_repo: yjxiong/temporal-segment-networks、mmaction2(TSN为默认范式之一)
   representative_papers:
-    - "Temporal Segment Networks: Towards Good Practices for Deep Action Recognition | 2016 | cited:3920 | doi:10.1007/978-3-319-46484-8_2"
-    - "Temporal Segment Networks for Action Recognition in Videos | 2018 | cited:894 | doi:10.1109/tpami.2018.2868668"
-  possible_innovation_points: 奶山羊反刍/跛行为长周期行为，TSN稀疏长程采样天然契合——可覆盖数分钟反刍周期；缺点是平均共识丢顺序，可换TSM/Transformer聚合替代平均；强烈推荐作长行为基线
+    - "Temporal Segment Networks: Towards Good Practices for Deep Action Recognition | 2016 | cited:3920 | doi:10.1007/978-3-319-46484-8_2 | checked:2026-06-06"
+    - "Temporal Segment Networks for Action Recognition in Videos | 2018 | cited:894 | doi:10.1109/tpami.2018.2868668 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊反刍/跛行为长周期行为，TSN稀疏长程采样天然契合——可覆盖数分钟反刍周期；缺点是平均共识丢顺序，可换TSM/Transformer聚合替代平均；强烈推荐作长行为基线; domain_scope=cv-行为识别
   maturity: 经典/主流(长时序采样范式影响深远，仍是常用基线与工程方案)
 ```
 
@@ -143,8 +143,8 @@
   suitable_datasets: Kinetics-400、Something-Something v1/v2、Jester
   implementation_repo: mit-han-lab/temporal-shift-module、mmaction2
   representative_papers:
-    - "TSM: Temporal Shift Module for Efficient Video Understanding | 2019 | cited:1961 | doi:10.1109/iccv.2019.00718"
-  possible_innovation_points: 奶山羊牧场边缘设备(摄像头端)实时多目标行为识别首选——低算力且在SSv2类强时序任务上强，契合细粒度采食/反刍；可作实时部署主力模型
+    - "TSM: Temporal Shift Module for Efficient Video Understanding | 2019 | cited:1961 | doi:10.1109/iccv.2019.00718 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊牧场边缘设备(摄像头端)实时多目标行为识别首选——低算力且在SSv2类强时序任务上强，契合细粒度采食/反刍；可作实时部署主力模型; domain_scope=cv-行为识别
   maturity: 主流(高效视频识别代表，工业实时部署常用)
 ```
 
@@ -161,8 +161,8 @@
   suitable_datasets: Kinetics-400/600、AVA、Charades、Something-Something
   implementation_repo: facebookresearch/SlowFast(官方PySlowFast)、mmaction2
   representative_papers:
-    - "SlowFast Networks for Video Recognition | 2019 | cited:3592 | doi:10.1109/iccv.2019.00630"
-  possible_innovation_points: 奶山羊行为快慢混合(采食/站立慢语义 + 爬跨/跛步快运动)极契合双路径思想——Fast路径捕反刍咀嚼节律与跛行步态周期；强烈推荐作主力骨干，可在Fast路径加入步态周期先验
+    - "SlowFast Networks for Video Recognition | 2019 | cited:3592 | doi:10.1109/iccv.2019.00630 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊行为快慢混合(采食/站立慢语义 + 爬跨/跛步快运动)极契合双路径思想——Fast路径捕反刍咀嚼节律与跛行步态周期；强烈推荐作主力骨干，可在Fast路径加入步态周期先验; domain_scope=cv-行为识别
   maturity: 主流(强时空骨干，AVA等检测基准长期SOTA梯队)
 ```
 
@@ -179,8 +179,8 @@
   suitable_datasets: Kinetics-400、Charades、AVA
   implementation_repo: facebookresearch/SlowFast(含X3D)、mmaction2
   representative_papers:
-    - "X3D: Expanding Architectures for Efficient Video Recognition | 2020 | cited:40 | doi:10.1109/cvpr42600.2020.00028 [OpenAlex该CVPR条目被引偏低/记录分散，原文真实被引远高于此，待核查]"
-  possible_innovation_points: 奶山羊边缘/嵌入式部署高性价比骨干，可按算力预算选X3D-XS/S；与SlowFast同源，便于从云端SlowFast蒸馏到端侧X3D
+    - "X3D: Expanding Architectures for Efficient Video Recognition | 2020 | cited:40 | doi:10.1109/cvpr42600.2020.00028 [OpenAlex该CVPR条目被引偏低/记录分散，原文真实被引远高于此，待核查] | checked:2026-06-06"
+  possible_innovation_points: 奶山羊边缘/嵌入式部署高性价比骨干，可按算力预算选X3D-XS/S；与SlowFast同源，便于从云端SlowFast蒸馏到端侧X3D; domain_scope=cv-行为识别
   maturity: 主流(高效视频网络代表，资源受限场景常用)
 ```
 
@@ -197,8 +197,8 @@
   suitable_datasets: Kinetics-400/600、Something-Something v2、HowTo100M
   implementation_repo: facebookresearch/TimeSformer、mmaction2
   representative_papers:
-    - "Is Space-Time Attention All You Need for Video Understanding? (TimeSformer) | 2021 | cited:1357 | doi:10.48550/arxiv.2102.05095"
-  possible_innovation_points: 奶山羊长周期行为(反刍/跛行)可用时间维注意力跨帧聚合；分离注意力降本利于长片段；缺点是需先在大数据预训练，建议配合VideoMAE自监督预训练后微调
+    - "Is Space-Time Attention All You Need for Video Understanding? (TimeSformer) | 2021 | cited:1357 | doi:10.48550/arxiv.2102.05095 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊长周期行为(反刍/跛行)可用时间维注意力跨帧聚合；分离注意力降本利于长片段；缺点是需先在大数据预训练，建议配合VideoMAE自监督预训练后微调; domain_scope=cv-行为识别
   maturity: 主流/新兴(视频Transformer开篇之作，仍活跃)
 ```
 
@@ -215,8 +215,8 @@
   suitable_datasets: Kinetics-400/600、Something-Something v2、Moments in Time、Epic-Kitchens
   implementation_repo: google-research/scenic(ViViT)、mmaction2
   representative_papers:
-    - "ViViT: A Video Vision Transformer | 2021 | cited:79 | doi:10.1109/iccv48922.2021.00676 [OpenAlex该ICCV条目被引偏低/记录分散，原文真实被引远高，待核查]"
-  possible_innovation_points: 奶山羊tubelet嵌入可捕局部口部/腿部时空模式利于细粒度采食/反刍/跛行；分解编码器降本利于长片段；同样依赖大规模预训练
+    - "ViViT: A Video Vision Transformer | 2021 | cited:79 | doi:10.1109/iccv48922.2021.00676 [OpenAlex该ICCV条目被引偏低/记录分散，原文真实被引远高，待核查] | checked:2026-06-06"
+  possible_innovation_points: 奶山羊tubelet嵌入可捕局部口部/腿部时空模式利于细粒度采食/反刍/跛行；分解编码器降本利于长片段；同样依赖大规模预训练; domain_scope=cv-行为识别
   maturity: 主流/新兴(视频Transformer代表，与TimeSformer并列)
 ```
 
@@ -233,8 +233,8 @@
   suitable_datasets: Kinetics-400、Something-Something v2、UCF101、HMDB51、AVA
   implementation_repo: MCG-NJU/VideoMAE、huggingface/transformers(VideoMAE)、mmaction2
   representative_papers:
-    - "VideoMAE: Masked Autoencoders are Data-Efficient Learners for Self-Supervised Video Pre-Training | 2022 | cited:435 | doi:10.48550/arxiv.2203.12602"
-  possible_innovation_points: 奶山羊标注稀缺场景的关键技术——用牧场大量无标注监控视频自监督预训练，再用少量发情/跛行标注微调，直接缓解长尾稀有类样本不足；强烈推荐
+    - "VideoMAE: Masked Autoencoders are Data-Efficient Learners for Self-Supervised Video Pre-Training | 2022 | cited:435 | doi:10.48550/arxiv.2203.12602 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊标注稀缺场景的关键技术——用牧场大量无标注监控视频自监督预训练，再用少量发情/跛行标注微调，直接缓解长尾稀有类样本不足；强烈推荐; domain_scope=cv-行为识别
   maturity: 主流/新兴(视频自监督主流范式，数据稀缺场景首选)
 ```
 
@@ -251,8 +251,8 @@
   suitable_datasets: Kinetics-400/600/700、Something-Something v2、AVA、自建大规模无标注集
   implementation_repo: OpenGVLab/VideoMAEv2、mmaction2
   representative_papers:
-    - "VideoMAE V2: Scaling Video Masked Autoencoders with Dual Masking | 2023 | cited:410 | doi:10.1109/cvpr52729.2023.01398"
-  possible_innovation_points: 奶山羊可用预训练好的VideoMAE V2权重做强特征提取/少样本微调，避免自行大规模预训练；双掩码思想也可用于自建羊场视频高效预训练
+    - "VideoMAE V2: Scaling Video Masked Autoencoders with Dual Masking | 2023 | cited:410 | doi:10.1109/cvpr52729.2023.01398 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊可用预训练好的VideoMAE V2权重做强特征提取/少样本微调，避免自行大规模预训练；双掩码思想也可用于自建羊场视频高效预训练; domain_scope=cv-行为识别
   maturity: 新兴(可扩展视频自监督前沿，2023后强基线)
 ```
 
@@ -269,9 +269,9 @@
   suitable_datasets: Kinetics-400/600、Something-Something v2、ImageNet、COCO(检测)
   implementation_repo: facebookresearch/SlowFast(含MViT)、facebookresearch/mvit、mmaction2
   representative_papers:
-    - "Multiscale Vision Transformers (MViT) | 2021 | cited:56 | doi:10.48550/arxiv.2104.11227 [arXiv条目，会议正式版被引更高，待核查]"
-    - "MViTv2: Improved Multiscale Vision Transformers for Classification and Detection | 2022 | cited:717 | doi:10.1109/cvpr52688.2022.00476"
-  possible_innovation_points: 奶山羊细粒度行为受益于多尺度——粗尺度看整体姿态(站立/躺卧)、细尺度看口部/腿部(采食/反刍/跛行)；池化注意力利于高分辨率监控帧；推荐作Transformer路线主力
+    - "Multiscale Vision Transformers (MViT) | 2021 | cited:56 | doi:10.48550/arxiv.2104.11227 [arXiv条目，会议正式版被引更高，待核查] | checked:2026-06-06"
+    - "MViTv2: Improved Multiscale Vision Transformers for Classification and Detection | 2022 | cited:717 | doi:10.1109/cvpr52688.2022.00476 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊细粒度行为受益于多尺度——粗尺度看整体姿态(站立/躺卧)、细尺度看口部/腿部(采食/反刍/跛行)；池化注意力利于高分辨率监控帧；推荐作Transformer路线主力; domain_scope=cv-行为识别
   maturity: 主流/新兴(多尺度视频Transformer强骨干，检测+识别通用)
 ```
 
@@ -288,8 +288,8 @@
   suitable_datasets: Kinetics-400/600、Something-Something v2
   implementation_repo: SwinTransformer/Video-Swin-Transformer、mmaction2
   representative_papers:
-    - "Video Swin Transformer | 2022 | cited:1886 | doi:10.1109/cvpr52688.2022.00320"
-  possible_innovation_points: 奶山羊场景Swin局部窗口+层级归纳偏置在中小自建数据上比纯ViT更稳；3D窗口可设计对齐口部/腿部局部区域；推荐数据量中等时优先于TimeSformer/ViViT
+    - "Video Swin Transformer | 2022 | cited:1886 | doi:10.1109/cvpr52688.2022.00320 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊场景Swin局部窗口+层级归纳偏置在中小自建数据上比纯ViT更稳；3D窗口可设计对齐口部/腿部局部区域；推荐数据量中等时优先于TimeSformer/ViViT; domain_scope=cv-行为识别
   maturity: 主流(层级视频Transformer强骨干，工程常用)
 ```
 
@@ -306,9 +306,9 @@
   suitable_datasets: Kinetics-400/600、Something-Something v1/v2
   implementation_repo: Sense-X/UniFormer、OpenGVLab/UniFormerV2、mmaction2
   representative_papers:
-    - "UniFormer: Unified Transformer for Efficient Spatiotemporal Representation Learning | 2022 | cited:108 | doi:10.48550/arxiv.2201.04676"
-    - "UniFormerV2: Spatiotemporal Learning by Arming Image ViTs with Video UniFormer | 2022 | cited:58 | doi:10.48550/arxiv.2211.09552"
-  possible_innovation_points: 奶山羊上浅层卷积捕局部口部/步态纹理、深层注意力建模反刍/跛行长程节律——天然契合细粒度+长时序双需求；推荐作高效兼顾型骨干
+    - "UniFormer: Unified Transformer for Efficient Spatiotemporal Representation Learning | 2022 | cited:108 | doi:10.48550/arxiv.2201.04676 | checked:2026-06-06"
+    - "UniFormerV2: Spatiotemporal Learning by Arming Image ViTs with Video UniFormer | 2022 | cited:58 | doi:10.48550/arxiv.2211.09552 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊上浅层卷积捕局部口部/步态纹理、深层注意力建模反刍/跛行长程节律——天然契合细粒度+长时序双需求；推荐作高效兼顾型骨干; domain_scope=cv-行为识别
   maturity: 新兴(卷积+注意力混合时空骨干，效率精度俱佳)
 ```
 
@@ -325,8 +325,8 @@
   suitable_datasets: NTU RGB+D(60/120)、Kinetics-Skeleton
   implementation_repo: yysijie/st-gcn、open-mmlab/mmaction2(skeleton)、pyskl
   representative_papers:
-    - "Spatial Temporal Graph Convolutional Networks for Skeleton-Based Action Recognition (ST-GCN) | 2018 | cited:4800 | doi:10.1609/aaai.v32i1.12328"
-  possible_innovation_points: 奶山羊群养遮挡/毛色/光照变化大，骨架路线规避外观噪声有优势——需先有山羊关键点检测(可迁移AnimalPose/自标注)；可自定义羊体骨架拓扑(四足+头颈)建图；跛行=步态关节角周期，骨架尤其适配
+    - "Spatial Temporal Graph Convolutional Networks for Skeleton-Based Action Recognition (ST-GCN) | 2018 | cited:4800 | doi:10.1609/aaai.v32i1.12328 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊群养遮挡/毛色/光照变化大，骨架路线规避外观噪声有优势——需先有山羊关键点检测(可迁移AnimalPose/自标注)；可自定义羊体骨架拓扑(四足+头颈)建图；跛行=步态关节角周期，骨架尤其适配; domain_scope=cv-行为识别
   maturity: 经典(骨架动作识别奠基，仍是常用基线，图结构思想被后续继承)
 ```
 
@@ -343,8 +343,8 @@
   suitable_datasets: NTU RGB+D(60/120)、Kinetics-Skeleton
   implementation_repo: lshiwjx/2s-AGCN、pyskl、mmaction2
   representative_papers:
-    - "Two-Stream Adaptive Graph Convolutional Networks for Skeleton-Based Action Recognition (2s-AGCN) | 2019 | cited:1973 | doi:10.1109/cvpr.2019.01230"
-  possible_innovation_points: 奶山羊体态关节关系未必符合人为拓扑，自适应图可数据驱动学羊体关节关联(如发情时头-尾-后肢联动)；骨骼流对爬跨/跛行的肢段相对运动敏感；推荐作骨架路线主力
+    - "Two-Stream Adaptive Graph Convolutional Networks for Skeleton-Based Action Recognition (2s-AGCN) | 2019 | cited:1973 | doi:10.1109/cvpr.2019.01230 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊体态关节关系未必符合人为拓扑，自适应图可数据驱动学羊体关节关联(如发情时头-尾-后肢联动)；骨骼流对爬跨/跛行的肢段相对运动敏感；推荐作骨架路线主力; domain_scope=cv-行为识别
   maturity: 主流(自适应图骨架识别代表，强基线)
 ```
 
@@ -361,8 +361,8 @@
   suitable_datasets: NTU RGB+D(60/120)、Kinetics-Skeleton
   implementation_repo: kenziyuliu/MS-G3D、pyskl
   representative_papers:
-    - "Disentangling and Unifying Graph Convolutions for Skeleton-Based Action Recognition (MS-G3D) | 2020 | cited:1157 | doi:10.1109/cvpr42600.2020.00022"
-  possible_innovation_points: 奶山羊多尺度图可同时聚合近端(膝-蹄)与远端(头-尾)关节,利于发情(全身姿态)与跛行(局部步态)兼顾；时空联合算子捕反刍周期；骨架路线进阶选项
+    - "Disentangling and Unifying Graph Convolutions for Skeleton-Based Action Recognition (MS-G3D) | 2020 | cited:1157 | doi:10.1109/cvpr42600.2020.00022 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊多尺度图可同时聚合近端(膝-蹄)与远端(头-尾)关节,利于发情(全身姿态)与跛行(局部步态)兼顾；时空联合算子捕反刍周期；骨架路线进阶选项; domain_scope=cv-行为识别
   maturity: 主流(多尺度骨架GCN代表，强基线)
 ```
 
@@ -379,8 +379,8 @@
   suitable_datasets: NTU RGB+D(60/120)、FineGYM、Kinetics-400、UCF101、HMDB51
   implementation_repo: open-mmlab/pyskl、mmaction2(PoseC3D)
   representative_papers:
-    - "Revisiting Skeleton-based Action Recognition (PoseC3D) | 2022 | cited:757 | doi:10.1109/cvpr52688.2022.00298"
-  possible_innovation_points: 奶山羊2D关键点检测噪声大(毛发/遮挡)，PoseC3D用热图比坐标GCN更鲁棒；可与RGB双流融合兼得外观(采食物体)与姿态(跛行步态)；细粒度FineGYM上强，契合细粒度行为；强烈推荐骨架+RGB融合方案
+    - "Revisiting Skeleton-based Action Recognition (PoseC3D) | 2022 | cited:757 | doi:10.1109/cvpr52688.2022.00298 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊2D关键点检测噪声大(毛发/遮挡)，PoseC3D用热图比坐标GCN更鲁棒；可与RGB双流融合兼得外观(采食物体)与姿态(跛行步态)；细粒度FineGYM上强，契合细粒度行为；强烈推荐骨架+RGB融合方案; domain_scope=cv-行为识别
   maturity: 主流/新兴(姿态热图3D-CNN，骨架识别新范式，鲁棒性优)
 ```
 
@@ -399,9 +399,9 @@
   suitable_datasets: UCF101、HMDB51、Kinetics-400
   implementation_repo: feichtenhofer/twostreamfusion、mmaction2
   representative_papers:
-    - "Convolutional Two-Stream Network Fusion for Video Action Recognition | 2016 | cited:2761 | doi:10.1109/cvpr.2016.213"
-    - "Two-Stream Convolutional Networks for Action Recognition in Videos | 2014 | cited:5369 | doi:10.48550/arxiv.1406.2199"
-  possible_innovation_points: 奶山羊可用RGB+光流双流凸显反刍咀嚼与爬跨快速运动；群养遮挡下光流噪声大，建议用学习式光流(RAFT)或改用骨架+RGB融合(PoseC3D)替代光流
+    - "Convolutional Two-Stream Network Fusion for Video Action Recognition | 2016 | cited:2761 | doi:10.1109/cvpr.2016.213 | checked:2026-06-06"
+    - "Two-Stream Convolutional Networks for Action Recognition in Videos | 2014 | cited:5369 | doi:10.48550/arxiv.1406.2199 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊可用RGB+光流双流凸显反刍咀嚼与爬跨快速运动；群养遮挡下光流噪声大，建议用学习式光流(RAFT)或改用骨架+RGB融合(PoseC3D)替代光流; domain_scope=cv-行为识别
   maturity: 经典(融合奠基策略，现代多用隐式时序替代显式光流)
 ```
 
@@ -418,9 +418,9 @@
   suitable_datasets: Kinetics-400、Sports-1M、UCF101
   implementation_repo: facebookresearch/SlowFast、torchvision.models.video、mmaction2
   representative_papers:
-    - "Learning Spatiotemporal Features with 3D Convolutional Networks (C3D) | 2015 | cited:9663 | doi:10.1109/iccv.2015.510"
-    - "A Closer Look at Spatiotemporal Convolutions for Action Recognition (R(2+1)D) | 2018 | cited:3513 | doi:10.1109/cvpr.2018.00675"
-  possible_innovation_points: 奶山羊短时事件(爬跨)用3D卷积隐式融合即可；长周期反刍/跛行需配合扩张时间卷积或多片段聚合扩大时间感受野
+    - "Learning Spatiotemporal Features with 3D Convolutional Networks (C3D) | 2015 | cited:9663 | doi:10.1109/iccv.2015.510 | checked:2026-06-06"
+    - "A Closer Look at Spatiotemporal Convolutions for Action Recognition (R(2+1)D) | 2018 | cited:3513 | doi:10.1109/cvpr.2018.00675 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊短时事件(爬跨)用3D卷积隐式融合即可；长周期反刍/跛行需配合扩张时间卷积或多片段聚合扩大时间感受野; domain_scope=cv-行为识别
   maturity: 主流(隐式时空融合主力，分解3D降本)
 ```
 
@@ -437,8 +437,8 @@
   suitable_datasets: Kinetics-400、Charades、AVA
   implementation_repo: facebookresearch/video-nonlocal-net、mmaction2
   representative_papers:
-    - "Non-local Neural Networks | 2018 | cited:11173 | doi:10.1109/cvpr.2018.00813"
-  possible_innovation_points: 奶山羊反刍/跛行的长周期节律需长程时序关系，Non-local/时序注意力可跨帧聚合咀嚼-吞咽或步态周期；可设计行为感知的时序注意力突出关键帧(如爬跨瞬间)
+    - "Non-local Neural Networks | 2018 | cited:11173 | doi:10.1109/cvpr.2018.00813 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊反刍/跛行的长周期节律需长程时序关系，Non-local/时序注意力可跨帧聚合咀嚼-吞咽或步态周期；可设计行为感知的时序注意力突出关键帧(如爬跨瞬间); domain_scope=cv-行为识别
   maturity: 主流(长程依赖建模标准模块，广泛叠加)
 ```
 
@@ -455,8 +455,8 @@
   suitable_datasets: UCF101、HMDB51、ActivityNet、视频描述数据集
   implementation_repo: 各框架CNN+torch.nn.LSTM组合、mmaction2(部分recurrent头)
   representative_papers:
-    - "Long-term recurrent convolutional networks for visual recognition and description (LRCN) | 2015 | cited:5268 | doi:10.1109/cvpr.2015.7298878"
-  possible_innovation_points: 奶山羊轻量边缘+流式场景可用CNN特征+GRU在线判别反刍/采食状态；长周期跛行可用双向LSTM；现代更推荐TSM/Transformer聚合，LSTM作轻量备选
+    - "Long-term recurrent convolutional networks for visual recognition and description (LRCN) | 2015 | cited:5268 | doi:10.1109/cvpr.2015.7298878 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊轻量边缘+流式场景可用CNN特征+GRU在线判别反刍/采食状态；长周期跛行可用双向LSTM；现代更推荐TSM/Transformer聚合，LSTM作轻量备选; domain_scope=cv-行为识别
   maturity: 经典/趋于过时(CNN+RNN范式，识别主线已被3D/注意力取代，轻量流式仍用)
 ```
 
@@ -473,9 +473,9 @@
   suitable_datasets: Kinetics-400/600、Something-Something v2、ActivityNet
   implementation_repo: mmaction2、facebookresearch/TimeSformer(分解时间注意力)
   representative_papers:
-    - "Is Space-Time Attention All You Need for Video Understanding? (TimeSformer，分离时序注意力) | 2021 | cited:1357 | doi:10.48550/arxiv.2102.05095"
-    - "Non-local Neural Networks (自注意力时空聚合先驱) | 2018 | cited:11173 | doi:10.1109/cvpr.2018.00813"
-  possible_innovation_points: 奶山羊长周期行为用Transformer跨段聚合最契合——可对反刍周期、跛行步态序列做顺序敏感聚合；结合时间位置编码注入周期先验；推荐作骨干(SlowFast/TSM)后的时序聚合头
+    - "Is Space-Time Attention All You Need for Video Understanding? (TimeSformer，分离时序注意力) | 2021 | cited:1357 | doi:10.48550/arxiv.2102.05095 | checked:2026-06-06"
+    - "Non-local Neural Networks (自注意力时空聚合先驱) | 2018 | cited:11173 | doi:10.1109/cvpr.2018.00813 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊长周期行为用Transformer跨段聚合最契合——可对反刍周期、跛行步态序列做顺序敏感聚合；结合时间位置编码注入周期先验；推荐作骨干(SlowFast/TSM)后的时序聚合头; domain_scope=cv-行为识别
   maturity: 主流/新兴(当代时序聚合主流，取代RNN与平均共识)
 ```
 

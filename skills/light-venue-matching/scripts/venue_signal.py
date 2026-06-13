@@ -12,30 +12,36 @@
 
 诚实约定：
 - OpenAlex 2026 起需免费 API key；key/限流/计费/退避的唯一口径见
-  m01(light-literature-search) references「OpenAlex 接入真相源」节，本脚本不复写数字，
-  仅加 ?mailto= 进礼貌池。
+  m01(light-literature-search) references「OpenAlex 接入真相源」节，本脚本不复写数字。
+  礼貌池邮箱经 --mailto 或环境变量 OPENALEX_MAILTO 传入；不传则匿名查询(不伪造邮箱)。
 - 任一信号取数失败 → 该信号 status="unavailable" + reason，不编数、不崩溃（能查多少出多少）。
 - 作者重名严重：Authors search 取首个命中仅作线索，输出标 disambiguation_caveat，
   需 ORCID/机构二次确认，禁当定论（与 SKILL rubric 一致）。
 - 自引率为"外向自引"粗估(本刊论文引用本刊的比例)，非官方入向期刊自引率，输出已注明 method。
 - db01 审稿周期/APC/分区为社区/官方混合口径，引用各标来源年份(见 SKILL §3)。
+- IF 口径(G3/G5)：按 db01 卡 risk_note 内 if_kind= 子串区分——jcr=真 JCR 权威快照(不被代理覆盖)，
+  proxy=OpenAlex 代理值(非 JCR 真值，附在线 2yr 供交叉验证)，na=无 IF。
 
 用法：
-    python scripts/venue_signal.py --issn 1234-5678 --author "Zhang San"
+    python scripts/venue_signal.py --issn 1234-5678 --author "Zhang San" --mailto you@x.edu
     python scripts/venue_signal.py --issn 1234-5678 --venues-csv <db01路径>/venues.csv
+    python scripts/venue_signal.py --batch <db01路径>/venues.csv   # 全库复查产 diff 清单
     python scripts/venue_signal.py --selftest
 """
 from __future__ import annotations
 import argparse
 import csv
 import json
+import os
+import re
 import sys
 import urllib.error
 import urllib.parse
 import urllib.request
 
-MAILTO = "light-skill@example.com"
-UA = "Light-venue-matching/1.0 (mailto:%s)" % MAILTO
+# 礼貌池邮箱：优先环境变量 OPENALEX_MAILTO，其次 --mailto，否则不带 mailto（OpenAlex 仍可匿名查，
+# 只是不进礼貌池）。不再硬编码伪造邮箱——伪造邮箱违反 OpenAlex 礼貌池约定且无意义。
+DEFAULT_MAILTO = os.environ.get("OPENALEX_MAILTO", "").strip()
 TIMEOUT = 30
 OA = "https://api.openalex.org"
 
@@ -45,16 +51,27 @@ SELF_REF_MAX_REFS = 200        # 解析的被引文献 ID 上限
 RESOLVE_CHUNK = 50             # OpenAlex OR 过滤单批上限
 
 
+# 运行时礼貌池邮箱（main/selftest 可覆盖）。空串表示匿名查询。
+_MAILTO = DEFAULT_MAILTO
+
+
+def _user_agent() -> str:
+    if _MAILTO:
+        return "Light-venue-matching/1.0 (mailto:%s)" % _MAILTO
+    return "Light-venue-matching/1.0"
+
+
 def http_fetch(url: str) -> dict:
     """真实 GET，返回解析后的 JSON dict。失败抛异常由上层捕获降级。"""
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
+    req = urllib.request.Request(url, headers={"User-Agent": _user_agent(), "Accept": "application/json"})
     with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
         return json.loads(resp.read().decode("utf-8", "replace"))
 
 
 def _add_mailto(params: dict) -> str:
     p = dict(params)
-    p.setdefault("mailto", MAILTO)
+    if _MAILTO:
+        p.setdefault("mailto", _MAILTO)
     return urllib.parse.urlencode(p)
 
 
@@ -190,18 +207,37 @@ def signal_self_citation(source: dict, fetch) -> dict:
         return {"status": "unavailable", "reason": f"查询失败: {e.__class__.__name__}"}
 
 
+def _parse_risk_subfields(risk_note: str) -> dict:
+    """从 risk_note 抽标准子串 oa_id=/issn=/domain_scope=/if_kind=(R-db01-v2 锚点规整后)。"""
+    out = {}
+    for key in ("oa_id", "issn", "domain_scope", "if_kind"):
+        m = re.search(rf"(?:^|[;；]\s*){key}=([^;；]+)", risk_note or "")
+        if m:
+            out[key] = m.group(1).strip()
+    return out
+
+
 def _load_card_from_csv(issn: str, venue_name: str, csv_path: str) -> dict | None:
-    """按 ISSN 或刊名从 db01 venues.csv 取一行卡（indexing/issn 字段含 ISSN 时匹配）。"""
+    """从 db01 venues.csv 取一行卡。优先按规整后的 issn=/oa_id= 锚点精确匹配，
+    回退刊名匹配。匹配到的行附加解析出的 _subfields(oa_id/issn/domain_scope/if_kind)。"""
     try:
         with open(csv_path, encoding="utf-8") as f:
-            for row in csv.DictReader(f):
-                blob = " ".join(str(v) for v in row.values())
-                if (issn and issn in blob) or (venue_name and venue_name and
-                        venue_name.lower() in (row.get("venue_name", "") or "").lower()):
-                    return row
+            rows = list(csv.DictReader(f))
     except OSError:
         return None
-    return None
+    issn = (issn or "").strip()
+    name_l = (venue_name or "").strip().lower()
+    fallback = None
+    for row in rows:
+        sub = _parse_risk_subfields(row.get("risk_note", ""))
+        # 精确锚点匹配：ISSN 子串 或 indexing 内 ISSN
+        if issn and (sub.get("issn") == issn or issn in (row.get("indexing", "") or "")):
+            row["_subfields"] = sub
+            return row
+        if name_l and name_l == (row.get("venue_name", "") or "").strip().lower():
+            fallback = fallback or row
+            fallback["_subfields"] = sub
+    return fallback
 
 
 def signal_review_cycle(card: dict | None) -> dict:
@@ -220,7 +256,13 @@ def signal_review_cycle(card: dict | None) -> dict:
 
 
 def signal_apc_quartile(card: dict | None, source: dict) -> dict:
-    """信号5：APC 与分区（db01 卡为主，OpenAlex apc_usd 兜底）。"""
+    """信号5：APC 与分区（db01 卡为主，OpenAlex apc_usd 兜底）。
+
+    G3/G5 诚实口径：按 db01 卡的 if_kind 子串区分 IF 来源——
+      if_kind=jcr   → 真 JCR(LetPub journalid)，权威快照，不被 OpenAlex 代理值覆盖；
+      if_kind=proxy → OpenAlex 2yr 代理值/付费墙不可得，明确标注"非 JCR 真值"；
+      if_kind=na    → 会议等无 IF。
+    """
     out = {"status": "ok"}
     got = False
     if card:
@@ -230,6 +272,18 @@ def signal_apc_quartile(card: dict | None, source: dict) -> dict:
             if v:
                 out[k] = v
                 got = True
+        sub = card.get("_subfields") or {}
+        if_kind = sub.get("if_kind")
+        if if_kind:
+            out["if_kind"] = if_kind
+            out["if_caveat"] = {
+                "jcr": "impact_factor 为真 JCR 快照(LetPub journalid)，权威值，投前仍核最新年度",
+                "proxy": "impact_factor 非 JCR 真值(付费墙)，为 OpenAlex 2yr 均被引代理，"
+                         "真 JCR/分区须查 Clarivate JCR/LetPub 付费源，勿当 JCR 引用",
+                "na": "该 venue 无 IF(会议/无 JCR 收录)",
+            }.get(if_kind, "")
+        if sub.get("domain_scope"):
+            out["domain_scope"] = sub["domain_scope"]
         out["source"] = f"db01 卡 last_checked={card.get('last_checked_date', '?')}"
     oa_apc = (source or {}).get("apc_usd")
     if oa_apc is not None:
@@ -237,6 +291,11 @@ def signal_apc_quartile(card: dict | None, source: dict) -> dict:
         got = True
     if (source or {}).get("is_in_doaj"):
         out["doaj"] = True
+        got = True
+    # 代理 IF 场景：附 OpenAlex 2yr 在线值供交叉验证(G1 冲突默认信在线)
+    oa_2yr = ((source or {}).get("summary_stats") or {}).get("2yr_mean_citedness")
+    if oa_2yr is not None and out.get("if_kind") == "proxy":
+        out["openalex_2yr_mean_citedness_live"] = round(oa_2yr, 2)
         got = True
     if not got:
         return {"status": "unavailable", "reason": "db01 卡与 OpenAlex 均无 APC/分区"}
@@ -382,7 +441,25 @@ def _selftest() -> int:
     rep3 = assemble("1234-5678", "", card, boom)
     assert rep3["signals"]["1_volume_trend"]["status"] == "unavailable"
     assert rep3["signals"]["3_review_cycle"]["status"] == "ok"  # 卡信号不依赖网络
-    print("[selftest] PASS venue_signal（五信号 + 降级 + 离线）")
+
+    # R-db01-v2 锚点/口径解析
+    sub = _parse_risk_subfields("CCF等级=A; oa_id=S4363607701; issn=0162-8828; "
+                                "domain_scope=中国CS; if_kind=jcr")
+    assert sub == {"oa_id": "S4363607701", "issn": "0162-8828",
+                   "domain_scope": "中国CS", "if_kind": "jcr"}, sub
+
+    # if_kind=jcr → caveat 标"权威值"；proxy → 标"非 JCR 真值"
+    card_jcr = dict(card, _subfields={"if_kind": "jcr", "domain_scope": "中国CS"},
+                    impact_factor="18.6(JCR2024,LetPub journalid=3411)")
+    s5j = signal_apc_quartile(card_jcr, _MockFetcher._source())
+    assert s5j["if_kind"] == "jcr" and "权威" in s5j["if_caveat"], s5j
+    card_proxy = dict(card, _subfields={"if_kind": "proxy"},
+                      impact_factor="OpenAlex 2yr均被引=4.2作替代")
+    s5p = signal_apc_quartile(card_proxy, _MockFetcher._source())
+    assert s5p["if_kind"] == "proxy" and "非 JCR" in s5p["if_caveat"], s5p
+    assert "openalex_2yr_mean_citedness_live" in s5p, "proxy 应附在线 2yr 值供交叉验证"
+
+    print("[selftest] PASS venue_signal（五信号 + 降级 + 离线 + if_kind口径 + 锚点解析）")
     return 0
 
 
@@ -397,13 +474,58 @@ def _parse_card_fields(pairs: list[str]) -> dict | None:
     return card or None
 
 
+def _batch_recheck(csv_path: str, fetch, limit: int = 0, only_stale_days: int = 0) -> dict:
+    """全库 batch 复查：逐行按 issn/oa_id 锚点查 OpenAlex，对比本地快照，产 diff 清单。
+    仅复查有锚点的行；无锚点行计入 skipped。only_stale_days>0 时只查 last_checked 超期行。"""
+    try:
+        with open(csv_path, encoding="utf-8") as f:
+            rows = list(csv.DictReader(f))
+    except OSError as e:
+        return {"status": "error", "reason": str(e)}
+    diffs, no_anchor, checked, errors = [], 0, 0, 0
+    for row in rows:
+        sub = _parse_risk_subfields(row.get("risk_note", ""))
+        issn = sub.get("issn")
+        if not issn:
+            no_anchor += 1
+            continue
+        if limit and checked >= limit:
+            break
+        try:
+            src = oa_source_by_issn(issn, fetch)
+            checked += 1
+        except Exception:  # noqa: BLE001
+            errors += 1
+            continue
+        if not src:
+            continue
+        live_2yr = ((src.get("summary_stats") or {}).get("2yr_mean_citedness"))
+        diffs.append({
+            "venue": row.get("venue_name"), "issn": issn,
+            "if_kind": sub.get("if_kind"),
+            "local_impact_factor": row.get("impact_factor", "")[:60],
+            "openalex_2yr_live": round(live_2yr, 2) if live_2yr is not None else None,
+            "openalex_works_count": src.get("works_count"),
+            "local_last_checked": row.get("last_checked_date"),
+            "note": "if_kind=jcr 时本地为权威真值不被覆盖；proxy 时以在线 2yr 为准复核",
+        })
+    return {"status": "ok", "total_rows": len(rows), "checked": checked,
+            "no_anchor_skipped": no_anchor, "fetch_errors": errors, "diffs": diffs}
+
+
 def main() -> None:
+    global _MAILTO
     ap = argparse.ArgumentParser(description="投稿 venue 五信号对照查询")
     ap.add_argument("--issn", default="", help="期刊 ISSN（信号1/2/5 主键）")
     ap.add_argument("--author", default="", help="作者姓名（信号4，重名需 ORCID 排歧）")
     ap.add_argument("--venues-csv", default="", help="db01 venues.csv 路径，按 ISSN/刊名取卡")
     ap.add_argument("--card-fields", nargs="*", default=[],
                     help="内联 db01 卡字段，如 review_cycle='8周' apc_fee='1800 USD'")
+    ap.add_argument("--mailto", default="",
+                    help="OpenAlex 礼貌池邮箱(也可设环境变量 OPENALEX_MAILTO)；不传则匿名查")
+    ap.add_argument("--batch", default="",
+                    help="全库复查模式：传 venues.csv 路径，逐行按锚点查 OpenAlex 产 diff 清单")
+    ap.add_argument("--batch-limit", type=int, default=0, help="batch 复查行数上限(0=全部)")
     ap.add_argument("--json-out", default="")
     ap.add_argument("--selftest", action="store_true", help="离线 mock 自测")
     args = ap.parse_args()
@@ -411,8 +533,23 @@ def main() -> None:
     if args.selftest:
         sys.exit(_selftest())
 
+    if args.mailto:
+        _MAILTO = args.mailto.strip()
+
+    if args.batch:
+        rep = _batch_recheck(args.batch, http_fetch, limit=args.batch_limit)
+        text = json.dumps(rep, ensure_ascii=False, indent=2)
+        if args.json_out:
+            with open(args.json_out, "w", encoding="utf-8") as f:
+                f.write(text)
+        print(text)
+        if rep.get("status") == "ok":
+            print(f"\n[BATCH] checked={rep['checked']} no_anchor={rep['no_anchor_skipped']} "
+                  f"errors={rep['fetch_errors']}", file=sys.stderr)
+        return
+
     if not args.issn and not args.author:
-        ap.error("至少提供 --issn 或 --author 其一")
+        ap.error("至少提供 --issn 或 --author 其一（或 --batch / --selftest）")
 
     card = _parse_card_fields(args.card_fields)
     if card is None and args.venues_csv:

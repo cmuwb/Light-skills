@@ -66,7 +66,7 @@
   annotation_style: 标注 mean bias、LoA 数值、异常点；可加回归线检查比例偏差
   caption_style: 说明单位、样本量、是否有重复测量、LoA 解释
   possible_code_tool: matplotlib / statsmodels / R blandr
-  replication_notes: 相关系数不能替代一致性；重复测量需用扩展方法
+  replication_notes: 遵 R4(相关≠一致性,方法学比较用 Bland-Altman 不能只给 R²/散点); 领域特异——重复测量需用扩展方法
   where_to_place_in_paper: 方法比较/设备验证结果
 
 - figure_type: 校准曲线 / reliability diagram

@@ -13,9 +13,9 @@
   license: PhysioNet credentialed access；需 CITI/数据使用协议；禁止再识别/再分发原始数据
   download_url: https://physionet.org/content/mimiciv/
   paper_url: https://doi.org/10.1038/s41597-022-01899-x
-  citation: "MIMIC-IV, a freely accessible electronic health record dataset | 2023 | cited:2694 | doi:10.1038/s41597-022-01899-x"
+  citation: "MIMIC-IV, a freely accessible electronic health record dataset | 2023 | cited:2694 | doi:10.1038/s41597-022-01899-x; last_checked=待核; doi=10.1038/s41597-022-01899-x"
   leaderboard_url: 无统一官方榜；常见任务有 mortality/LOS/sepsis benchmark
-  known_issues: 单中心(BIDMC)；时间戳偏移；编码体系复杂；缺失非随机；版本间 schema 变化
+  known_issues: 单中心(BIDMC)；时间戳偏移；编码体系复杂；缺失非随机；版本间 schema 变化; domain_scope=生物医学
   bias_risk: 高 — ICU 人群、地区/医院选择偏差、种族/保险等社会因素影响
   privacy_risk: 高 — 去标识化医疗数据，必须遵守 DUA/HIPAA 风险控制
   preprocessing_steps: 只用合法下载；固定版本；按 patient-level split；处理时间窗/缺失/单位；避免未来信息泄漏
@@ -30,9 +30,9 @@
   license: PhysioNet credentialed access；需培训/DUA；禁止再识别和未授权再分发
   download_url: https://physionet.org/content/eicu-crd/
   paper_url: https://doi.org/10.1038/sdata.2018.178
-  citation: "The eICU Collaborative Research Database, a freely available multi-center database for critical care research | 2018 | cited:1822 | doi:10.1038/sdata.2018.178"
+  citation: "The eICU Collaborative Research Database, a freely available multi-center database for critical care research | 2018 | cited:1822 | doi:10.1038/sdata.2018.178; last_checked=待核; doi=10.1038/sdata.2018.178"
   leaderboard_url: 无统一官方榜
-  known_issues: 多中心数据字段不一致；医院级差异大；部分变量抽取规则复杂；缺失机制强
+  known_issues: 多中心数据字段不一致；医院级差异大；部分变量抽取规则复杂；缺失机制强; domain_scope=生物医学
   bias_risk: 高 — 医院类型/地区/纳入机制差异，模型可能学到中心偏差
   privacy_risk: 高 — 医疗隐私数据，需 credentialed access
   preprocessing_steps: patient/hospital-level split；统一变量单位；处理医院 ID 泄漏；跨中心外部验证
@@ -47,9 +47,9 @@
   license: 需正式项目申请与 Data Access Agreement；不可公开再分发个人级数据
   download_url: https://www.ukbiobank.ac.uk/
   paper_url: https://doi.org/10.1371/journal.pmed.1001779
-  citation: "UK Biobank: An Open Access Resource for Identifying the Causes of a Wide Range of Complex Diseases of Middle and Old Age | 2015 | cited:13217 | doi:10.1371/journal.pmed.1001779"
+  citation: "UK Biobank: An Open Access Resource for Identifying the Causes of a Wide Range of Complex Diseases of Middle and Old Age | 2015 | cited:13217 | doi:10.1371/journal.pmed.1001779; last_checked=待核; doi=10.1371/journal.pmed.1001779"
   leaderboard_url: 无统一 leaderboard
-  known_issues: 健康志愿者偏倚；祖源/年龄范围限制；字段多、缺失与随访时间复杂
+  known_issues: 健康志愿者偏倚；祖源/年龄范围限制；字段多、缺失与随访时间复杂; domain_scope=生物医学
   bias_risk: 高 — 英国中老年志愿者样本，不代表全人群；祖源不均衡影响 PRS 泛化
   privacy_risk: 高 — 个人级健康/遗传数据，受严格 DUA 控制
   preprocessing_steps: 项目审批；祖源/亲缘过滤；字段缺失处理；按参与者 split；结局时间窗定义
@@ -64,9 +64,9 @@
   license: GDC/NIH 数据使用条款；开放层可下载，受控层需 dbGaP 授权
   download_url: https://portal.gdc.cancer.gov/
   paper_url: https://doi.org/10.1038/ng.2764
-  citation: "The Cancer Genome Atlas Pan-Cancer analysis project | 2013 | cited:9467 | doi:10.1038/ng.2764"
+  citation: "The Cancer Genome Atlas Pan-Cancer analysis project | 2013 | cited:9467 | doi:10.1038/ng.2764; last_checked=待核; doi=10.1038/ng.2764"
   leaderboard_url: 无统一 leaderboard；常用于 pan-cancer benchmark
-  known_issues: 批次效应、癌种/平台差异、样本量不均衡、临床结局缺失与删失
+  known_issues: 批次效应、癌种/平台差异、样本量不均衡、临床结局缺失与删失; domain_scope=通用
   bias_risk: 中高 — 癌种/中心/族裔分布不均；肿瘤样本非一般人群
   privacy_risk: 中高 — 开放数据已去标识，受控原始测序需授权
   preprocessing_steps: 批次校正；基因过滤/标准化；样本 ID 对齐；patient-level split；生存结局删失处理
@@ -84,8 +84,9 @@
   citation: |
     MIMIC-CXR, a de-identified publicly available database of chest radiographs with free-text reports | 2019 | cited:1601 | doi:10.1038/s41597-019-0322-0
     CheXpert: A Large Chest Radiograph Dataset with Uncertainty Labels and Expert Comparison | 2019 | cited:2539 | doi:10.1609/aaai.v33i01.3301590
+    [last_checked=待核; 锚点已内联 doi:/cited:,被引实时查见 dataset_signal.py]
   leaderboard_url: CheXpert competition/leaderboard（官方页面）；MIMIC-CXR 无统一榜
-  known_issues: 标签由报告 NLP 抽取，存在 uncertain/no mention 噪声；便携机/标记物/医院域偏移；患者多图相关
+  known_issues: 标签由报告 NLP 抽取，存在 uncertain/no mention 噪声；便携机/标记物/医院域偏移；患者多图相关; domain_scope=生物医学
   bias_risk: 高 — 医院/设备/人群偏差，弱标签可能反映报告习惯
   privacy_risk: 高 — 医疗影像去标识数据，需遵守 DUA
   preprocessing_steps: patient-level split；视图过滤；uncertain label 策略固定；图像归一化；报告文本去 PHI 检查
@@ -100,9 +101,9 @@
   license: 需 ADNI 数据使用申请；不可未授权再分发；遵守隐私与署名规则
   download_url: https://adni.loni.usc.edu/
   paper_url: https://doi.org/10.1016/j.jalz.2010.03.007
-  citation: "The Alzheimer's Disease Neuroimaging Initiative: Progress report and future plans | 2010 | cited:603 | doi:10.1016/j.jalz.2010.03.007"
+  citation: "The Alzheimer's Disease Neuroimaging Initiative: Progress report and future plans | 2010 | cited:603 | doi:10.1016/j.jalz.2010.03.007; last_checked=待核; doi=10.1016/j.jalz.2010.03.007"
   leaderboard_url: TADPOLE challenge（历史挑战）/ 待核查当前官方榜
-  known_issues: 队列选择偏倚；扫描协议/中心差异；纵向缺失；MCI 转化标签定义复杂
+  known_issues: 队列选择偏倚；扫描协议/中心差异；纵向缺失；MCI 转化标签定义复杂; domain_scope=多模态CV
   bias_risk: 高 — 年龄/教育/族裔/中心偏差影响泛化
   privacy_risk: 高 — 人体影像与临床数据，需 DUA
   preprocessing_steps: subject-level split；按时间预测避免未来泄漏；影像配准/分割流程固定；缺失机制记录
@@ -117,9 +118,9 @@
   license: HAM10000 Scientific Data 开放数据；ISIC 各集合许可不一，商用/再分发需逐集合核实
   download_url: "https://www.isic-archive.com/ ; HAM10000: https://doi.org/10.1038/sdata.2018.161"
   paper_url: https://doi.org/10.1038/sdata.2018.161
-  citation: "The HAM10000 dataset, a large collection of multi-source dermatoscopic images of common pigmented skin lesions | 2018 | cited:3144 | doi:10.1038/sdata.2018.161"
+  citation: "The HAM10000 dataset, a large collection of multi-source dermatoscopic images of common pigmented skin lesions | 2018 | cited:3144 | doi:10.1038/sdata.2018.161; last_checked=待核; doi=10.1038/sdata.2018.161"
   leaderboard_url: ISIC Challenge leaderboards
-  known_issues: 类别极不平衡；同一 lesion 多图可能泄漏；肤色/设备/中心偏差；标签质量混合
+  known_issues: 类别极不平衡；同一 lesion 多图可能泄漏；肤色/设备/中心偏差；标签质量混合; domain_scope=通用
   bias_risk: 高 — 肤色/地区/采集设备偏差会影响临床公平性
   privacy_risk: 中 — 去标识皮肤图像和有限元数据，仍需遵守许可
   preprocessing_steps: lesion-level split；去重；颜色/尺寸标准化；类别重采样需报告；按肤色/中心做分组评估

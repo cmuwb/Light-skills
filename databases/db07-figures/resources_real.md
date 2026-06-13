@@ -2,7 +2,8 @@
 
 > 服务 m09(图表规划) 与 m11(绘图)。两部分：**(1) 真实资源清单**（带可核查链接 + 用途），**(2) figure_card 扩充卡片**（重点写"支撑哪个 claim + 用什么工具 + 放论文哪里"）。
 > 配色铁律（全 db07 统一，见 README 与 a07）：**色盲友好**（viridis / ColorBrewer 安全色板 / Set2）、**全文统一调色板**、**黑白可辨**（线型+标记双重编码）、**矢量优先**（PDF/SVG，位图 ≥300 dpi）。
-> 核实方式：工具论文的标题/年份/被引/DOI 来自 **OpenAlex API 真实 curl 结果**（2026-06-06）；官网/Gallery URL 经 **WebSearch 核实可达**。查不到的标 `待核查`。
+> 核实方式：工具论文的标题/年份/DOI 来自 **OpenAlex API 真实 curl 结果**（2026-06-06）；官网/Gallery URL 经 **WebSearch 核实可达**。查不到的标 `待核查`。
+> **被引数是薄缓存快照**(last_checked=2026-06-06、会增长、仅作可信度背书非权威值)：DOI 已在表内,需最新值按 DOI 查 OpenAlex `works/doi:{DOI}` 即得,本表不保证长期准确。
 
 ---
 
@@ -77,7 +78,7 @@
   annotation_style: 阴影误差带, 标出选定取值的竖虚线
   caption_style: 说明扫描范围/固定其余超参/重复次数
   possible_code_tool: matplotlib/seaborn
-  replication_notes: 仅扫一个超参其余固定; y 轴不截断造假
+  replication_notes: 遵 R1(y 轴不截断造假); 图型特异——仅扫一个超参其余固定
   where_to_place_in_paper: 实验-分析(敏感性)
 
 - figure_type: ROC 曲线(含 AUC)
@@ -155,7 +156,7 @@
   annotation_style: 误差棒 + 显著性星标 + 数值标签
   caption_style: 自洽; 指标定义/重复次数/是否统计检验
   possible_code_tool: matplotlib/seaborn (+ SciencePlots 样式)
-  replication_notes: y 轴从合理基线起且不误导; 多种子算 std
+  replication_notes: 遵 R1(y 轴从合理基线起不误导)/R7(多种子算 std 并注明误差棒类型+n)
   where_to_place_in_paper: 实验-主结果(开篇大图)
 ```
 

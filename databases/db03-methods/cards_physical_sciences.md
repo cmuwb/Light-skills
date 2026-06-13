@@ -21,10 +21,10 @@
   suitable_datasets: QM9、Materials Project、OQMD、MoleculeNet、Open Catalyst OC20/OC22
   implementation_repo: PyTorch Geometric、DGL-LifeSci、DeepChem、CGCNN、MatGL、SchNetPack
   representative_papers:
-    - "Neural Message Passing for Quantum Chemistry | 2017 | cited:3008 | doi:10.48550/arxiv.1704.01212"
-    - "SchNet – A deep learning architecture for molecules and materials | 2018 | cited:2176 | doi:10.1063/1.5019779"
-    - "Crystal Graph Convolutional Neural Networks for an Accurate and Interpretable Prediction of Material Properties | 2018 | cited:2623 | doi:10.1103/physrevlett.120.145301"
-  possible_innovation_points: 等变几何网络、多保真/主动学习、跨材料体系迁移、物理约束损失、预测不确定性驱动的实验/DFT 采样
+    - "Neural Message Passing for Quantum Chemistry | 2017 | cited:3008 | doi:10.48550/arxiv.1704.01212 | checked:2026-06-10"
+    - "SchNet – A deep learning architecture for molecules and materials | 2018 | cited:2176 | doi:10.1063/1.5019779 | checked:2026-06-10"
+    - "Crystal Graph Convolutional Neural Networks for an Accurate and Interpretable Prediction of Material Properties | 2018 | cited:2623 | doi:10.1103/physrevlett.120.145301 | checked:2026-06-10"
+  possible_innovation_points: 等变几何网络、多保真/主动学习、跨材料体系迁移、物理约束损失、预测不确定性驱动的实验/DFT 采样; domain_scope=物理科学
   maturity: 主流  # 2017–2018 后成为材料/分子 ML 主流基线，仍快速迭代到等变网络与基础模型
 
 - method_name: "密度泛函理论 (DFT: Kohn-Sham / PBE)"
@@ -39,9 +39,9 @@
   suitable_datasets: Materials Project、OQMD、AFLOW、JARVIS-DFT、NOMAD
   implementation_repo: VASP、Quantum ESPRESSO、ABINIT、GPAW、CP2K、ASE/pymatgen 工作流
   representative_papers:
-    - "Self-Consistent Equations Including Exchange and Correlation Effects | 1965 | cited:63031 | doi:10.1103/physrev.140.a1133"
-    - "Generalized Gradient Approximation Made Simple | 1996 | cited:210436 | doi:10.1103/physrevlett.77.3865"
-  possible_innovation_points: DFT+ML surrogate、主动学习减少昂贵计算、泛函误差校正、多保真融合、自动高通量工作流与可复现实验记录
+    - "Self-Consistent Equations Including Exchange and Correlation Effects | 1965 | cited:63031 | doi:10.1103/physrev.140.a1133 | checked:2026-06-10"
+    - "Generalized Gradient Approximation Made Simple | 1996 | cited:210436 | doi:10.1103/physrevlett.77.3865 | checked:2026-06-10"
+  possible_innovation_points: DFT+ML surrogate、主动学习减少昂贵计算、泛函误差校正、多保真融合、自动高通量工作流与可复现实验记录; domain_scope=物理科学
   maturity: 经典  # 第一性原理材料模拟的核心范式，机器学习方法多数仍以 DFT 标签为基础
 
 - method_name: "机器学习原子间势 (MLIP: DeePMD / NequIP)"
@@ -56,9 +56,9 @@
   suitable_datasets: Materials Project 派生轨迹、OC20/OC22、自建 DFT-MD、JARVIS、NOMAD
   implementation_repo: DeePMD-kit、NequIP、Allegro、MACE、ASE/LAMMPS 接口
   representative_papers:
-    - "Deep Potential Molecular Dynamics: A Scalable Model with the Accuracy of Quantum Mechanics | 2018 | cited:2191 | doi:10.1103/physrevlett.120.143001"
-    - "E(3)-equivariant graph neural networks for data-efficient and accurate interatomic potentials | 2022 | cited:1642 | doi:10.1038/s41467-022-29939-5"
-  possible_innovation_points: 主动学习闭环、反应/相变 OOD 检测、长程电荷/磁性物理约束、基础势模型微调、多保真势能面
+    - "Deep Potential Molecular Dynamics: A Scalable Model with the Accuracy of Quantum Mechanics | 2018 | cited:2191 | doi:10.1103/physrevlett.120.143001 | checked:2026-06-10"
+    - "E(3)-equivariant graph neural networks for data-efficient and accurate interatomic potentials | 2022 | cited:1642 | doi:10.1038/s41467-022-29939-5 | checked:2026-06-10"
+  possible_innovation_points: 主动学习闭环、反应/相变 OOD 检测、长程电荷/磁性物理约束、基础势模型微调、多保真势能面; domain_scope=物理科学
   maturity: 主流  # DeePMD/NequIP/MACE 已成为计算材料与化学模拟的主流 MLIP 路线
 
 - method_name: EEG 深度解码网络 (EEGNet / Deep ConvNet)
@@ -73,9 +73,9 @@
   suitable_datasets: BCI Competition IV、PhysioNet EEG Motor Movement/Imagery、TUH EEG、Sleep-EDF
   implementation_repo: braindecode、MOABB、EEGNet Keras/PyTorch 复现、MNE-Python
   representative_papers:
-    - "EEGNet: a compact convolutional neural network for EEG-based brain–computer interfaces | 2018 | cited:4204 | doi:10.1088/1741-2552/aace8c"
-    - "Deep learning with convolutional neural networks for EEG decoding and visualization | 2017 | cited:3452 | doi:10.1002/hbm.23730"
-  possible_innovation_points: 跨被试自适应/域泛化、少样本校准、Riemannian+深度融合、可解释频段约束、在线漂移检测
+    - "EEGNet: a compact convolutional neural network for EEG-based brain–computer interfaces | 2018 | cited:4204 | doi:10.1088/1741-2552/aace8c | checked:2026-06-10"
+    - "Deep learning with convolutional neural networks for EEG decoding and visualization | 2017 | cited:3452 | doi:10.1002/hbm.23730 | checked:2026-06-10"
+  possible_innovation_points: 跨被试自适应/域泛化、少样本校准、Riemannian+深度融合、可解释频段约束、在线漂移检测; domain_scope=物理科学
   maturity: 主流  # EEGNet 是 BCI 深度学习强基线，传统 CSP/Riemannian 仍需作为对照
 
 - method_name: AI 中期天气预报 (Pangu-Weather / GraphCast)
@@ -90,9 +90,9 @@
   suitable_datasets: ERA5、WeatherBench、ECMWF 业务分析/预报资料
   implementation_repo: Huawei Pangu-Weather、DeepMind GraphCast、WeatherBench、NVIDIA Modulus/FourCastNet
   representative_papers:
-    - "Accurate medium-range global weather forecasting with 3D neural networks | 2023 | cited:1386 | doi:10.1038/s41586-023-06185-3"
-    - "Learning skillful medium-range global weather forecasting | 2023 | cited:1120 | doi:10.1126/science.adi2336"
-  possible_innovation_points: 物理约束/守恒校正、不确定性集合预报、区域高分辨率下尺度、极端事件专门损失、与传统 NWP 混合
+    - "Accurate medium-range global weather forecasting with 3D neural networks | 2023 | cited:1386 | doi:10.1038/s41586-023-06185-3 | checked:2026-06-10"
+    - "Learning skillful medium-range global weather forecasting | 2023 | cited:1120 | doi:10.1126/science.adi2336 | checked:2026-06-10"
+  possible_innovation_points: 物理约束/守恒校正、不确定性集合预报、区域高分辨率下尺度、极端事件专门损失、与传统 NWP 混合; domain_scope=物理科学
   maturity: 新兴  # 2023 后快速爆发，效果强但业务可信度/物理一致性仍在验证
 
 - method_name: 晶体结构预测 (CALYPSO / USPEX)
@@ -107,8 +107,8 @@
   suitable_datasets: Materials Project、OQMD、ICSD/Crystallography Open Database、自建 DFT 结构库
   implementation_repo: CALYPSO、USPEX、AIRSS、pymatgen/ASE 高通量结构工作流
   representative_papers:
-    - "Crystal structure prediction using ab initio evolutionary techniques: Principles and applications | 2006 | cited:2511 | doi:10.1063/1.2210932"
-    - "CALYPSO: A method for crystal structure prediction | 2012 | cited:2822 | doi:10.1016/j.cpc.2012.05.008"
-  possible_innovation_points: MLIP 加速结构搜索、主动学习选择 DFT 评估、合成可达性约束、生成模型提出候选、压力/成分多目标优化
+    - "Crystal structure prediction using ab initio evolutionary techniques: Principles and applications | 2006 | cited:2511 | doi:10.1063/1.2210932 | checked:2026-06-10"
+    - "CALYPSO: A method for crystal structure prediction | 2012 | cited:2822 | doi:10.1016/j.cpc.2012.05.008 | checked:2026-06-10"
+  possible_innovation_points: MLIP 加速结构搜索、主动学习选择 DFT 评估、合成可达性约束、生成模型提出候选、压力/成分多目标优化; domain_scope=物理科学
   maturity: 主流  # 新材料发现与高压物理中成熟路线，但仍计算昂贵，ML 加速空间大
 ```

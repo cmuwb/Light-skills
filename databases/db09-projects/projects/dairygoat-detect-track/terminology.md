@@ -11,7 +11,7 @@
 | 方法 | 时序动作检测 | TAL | temporal action localization | ActionFormer/BMN，定位发情爬跨事件 |
 | 方法 | 序数回归 | — | ordinal regression | CORAL/CORN，跛行评分 |
 | 方法 | 自监督预训练 | — | self-supervised pretraining | VideoMAE |
-| 数据集 | CherryChèvre | — | CherryChèvre | 山羊检测，CC许可，DOI:10.57745/4C03OG |
+| 数据集 | CherryChèvre | — | CherryChèvre | 山羊检测，CC许可，DOI:10.57745/4C03OG（许可/DOI 快照，权威源 db04 cards_animal_livestock.md 用前重核） |
 | 数据集 | GoatABRD | — | GoatABRD | 山羊行为含跛行，许可待核 |
 | 数据集 | 自建奶山羊行为集 | — | (self-built) | 双视角/17-20关键点/RFID-ID金标准 |
 | 指标 | 检测均值平均精度 | mAP | mean Average Precision | IoU=0.5:0.95 |

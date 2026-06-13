@@ -35,10 +35,10 @@
   suitable_datasets: "FLIR ADAS、KAIST(热通道)、LLVIP、自建奶山羊栏舍热成像集（需自标，无现成）"
   implementation_repo: "ultralytics/ultralytics、open-mmlab/mmdetection、相关 FLIR-YOLO 复现仓库"
   representative_papers:
-    - "Thermal Object Detection in Difficult Weather Conditions Using YOLO | 2020(IEEE Access) | cited:297 | doi:10.1109/access.2020.3007481"
-    - "A Thermal Infrared Pedestrian-Detection Method for Edge Computing Devices | 2022(Sensors) | cited:7 | doi:10.3390/s22176710"
-    - "Robust pedestrian detection in thermal infrared imagery using the wavelet transform | 2010 | cited:83 | doi:10.1016/j.infrared.2010.03.005"
-  possible_innovation_points: "奶山羊栏舍 LWIR 夜间检测基线；体温异常（发热/产羔）与热成像检测联动作健康预警；热串扰粘连分割（群羊聚卧）的奶山羊专用后处理"
+    - "Thermal Object Detection in Difficult Weather Conditions Using YOLO | 2020(IEEE Access) | cited:297 | doi:10.1109/access.2020.3007481 | checked:2026-06-06"
+    - "A Thermal Infrared Pedestrian-Detection Method for Edge Computing Devices | 2022(Sensors) | cited:7 | doi:10.3390/s22176710 | checked:2026-06-06"
+    - "Robust pedestrian detection in thermal infrared imagery using the wavelet transform | 2010 | cited:83 | doi:10.1016/j.infrared.2010.03.005 | checked:2026-06-06"
+  possible_innovation_points: "奶山羊栏舍 LWIR 夜间检测基线；体温异常（发热/产羔）与热成像检测联动作健康预警；热串扰粘连分割（群羊聚卧）的奶山羊专用后处理; domain_scope=cv-夜间多模态"
   maturity: "主流（热域检测工程成熟，但奶山羊场景为空白，需自建数据）"
 ```
 
@@ -55,10 +55,10 @@
   suitable_datasets: "SICE、LOL、自建奶山羊夜间低光集；下游用奶山羊检测集评估"
   implementation_repo: "Li-Chongyi/Zero-DCE、Li-Chongyi/Zero-DCE_extension（Zero-DCE++）"
   representative_papers:
-    - "Zero-Reference Deep Curve Estimation for Low-Light Image Enhancement | 2020(CVPR) | cited:2142 | doi:10.1109/cvpr42600.2020.00185"
-    - "Learning to Enhance Low-Light Image via Zero-Reference Deep Curve Estimation | 2021(TPAMI 扩展) | cited:666 | doi:10.1109/tpami.2021.3063604"
-    - "Zero-Reference Deep Curve Estimation (arXiv 预印本) | 2020 | cited:141 | doi:10.48550/arxiv.2001.06826"
-  possible_innovation_points: "奶山羊夜间微光（弱补光）场景作检测前处理；以「下游检测/行为 mAP」而非视觉质量为增强训练目标（task-driven enhancement）；白羊高反光区域的曲线约束"
+    - "Zero-Reference Deep Curve Estimation for Low-Light Image Enhancement | 2020(CVPR) | cited:2142 | doi:10.1109/cvpr42600.2020.00185 | checked:2026-06-06"
+    - "Learning to Enhance Low-Light Image via Zero-Reference Deep Curve Estimation | 2021(TPAMI 扩展) | cited:666 | doi:10.1109/tpami.2021.3063604 | checked:2026-06-06"
+    - "Zero-Reference Deep Curve Estimation (arXiv 预印本) | 2020 | cited:141 | doi:10.48550/arxiv.2001.06826 | checked:2026-06-06"
+  possible_innovation_points: "奶山羊夜间微光（弱补光）场景作检测前处理；以「下游检测/行为 mAP」而非视觉质量为增强训练目标（task-driven enhancement）；白羊高反光区域的曲线约束; domain_scope=cv-夜间多模态"
   maturity: "主流（轻量低光增强代表作，奶山羊夜间需验证增强是否真提升检测）"
 ```
 
@@ -75,9 +75,9 @@
   suitable_datasets: "自采非配对低光/正常光集、LOL、自建奶山羊夜景"
   implementation_repo: "VITA-Group/EnlightenGAN"
   representative_papers:
-    - "EnlightenGAN: Deep Light Enhancement Without Paired Supervision | 2021(TIP) | cited:2384 | doi:10.1109/tip.2021.3051462"
-    - "EnlightenGAN (arXiv 预印本) | 2019 | cited:205 | doi:10.48550/arxiv.1906.06972"
-  possible_innovation_points: "栏舍非均匀灯光（局部灯下/阴影）下作增强；与 Zero-DCE 对比择优；需警惕 GAN 伪影对发情/跛行细节判读的误导（计量场景慎用）"
+    - "EnlightenGAN: Deep Light Enhancement Without Paired Supervision | 2021(TIP) | cited:2384 | doi:10.1109/tip.2021.3051462 | checked:2026-06-06"
+    - "EnlightenGAN (arXiv 预印本) | 2019 | cited:205 | doi:10.48550/arxiv.1906.06972 | checked:2026-06-06"
+  possible_innovation_points: "栏舍非均匀灯光（局部灯下/阴影）下作增强；与 Zero-DCE 对比择优；需警惕 GAN 伪影对发情/跛行细节判读的误导（计量场景慎用）; domain_scope=cv-夜间多模态"
   maturity: "主流偏经典（无配对增强里程碑，新场景多被更轻的 Zero-DCE 系替代）"
 ```
 
@@ -94,9 +94,9 @@
   suitable_datasets: "LOL、自建奶山羊夜景"
   implementation_repo: "weichen582/RetinexNet（官方）、低光增强综合库"
   representative_papers:
-    - "Deep Retinex Decomposition for Low-Light Enhancement | 2018(BMVC, arXiv) | cited:238 | doi:10.48550/arxiv.1808.04560"
-    - "Low-light image enhancement via deep Retinex decomposition and bilateral learning | 2021 | cited:27 | doi:10.1016/j.image.2021.116466"
-  possible_innovation_points: "分解出的光照图可作栏舍灯光不均的度量；反射图（去光照）或更利于跨昼夜个体外观一致性；与检测联合微调"
+    - "Deep Retinex Decomposition for Low-Light Enhancement | 2018(BMVC, arXiv) | cited:238 | doi:10.48550/arxiv.1808.04560 | checked:2026-06-06"
+    - "Low-light image enhancement via deep Retinex decomposition and bilateral learning | 2021 | cited:27 | doi:10.1016/j.image.2021.116466 | checked:2026-06-06"
+  possible_innovation_points: "分解出的光照图可作栏舍灯光不均的度量；反射图（去光照）或更利于跨昼夜个体外观一致性；与检测联合微调; domain_scope=cv-夜间多模态"
   maturity: "主流偏经典（Retinex 系强基线；需配对数据是栏舍落地短板）"
 ```
 
@@ -113,10 +113,10 @@
   suitable_datasets: "NUAA-SIRST、NUDT-SIRST、IRSTD-1k（均遥感/天空域，无奶山羊）"
   implementation_repo: "YimianDai/open-acm（ACM）、YeRen123455/Infrared-Small-Target-Detection（DNANet）"
   representative_papers:
-    - "Asymmetric Contextual Modulation for Infrared Small Target Detection | 2021(WACV) | cited:720 | doi:10.1109/wacv48630.2021.00099"
-    - "Dense Nested Attention Network for Infrared Small Target Detection | 2022(TIP) | cited:854 | doi:10.1109/tip.2022.3199107"
-    - "YOLOSR-IST: small target detection in infrared remote sensing images based on super-resolution and YOLO | 2023 | cited:157 | doi:10.1016/j.sigpro.2023.108962"
-  possible_innovation_points: "远距/广角栏舍俯拍中**远端羊只成小目标**时借鉴局部对比度模块；新生羊羔/远处个体的小尺度增强；一般近距奶山羊不属此范式（如实标注边界）"
+    - "Asymmetric Contextual Modulation for Infrared Small Target Detection | 2021(WACV) | cited:720 | doi:10.1109/wacv48630.2021.00099 | checked:2026-06-06"
+    - "Dense Nested Attention Network for Infrared Small Target Detection | 2022(TIP) | cited:854 | doi:10.1109/tip.2022.3199107 | checked:2026-06-06"
+    - "YOLOSR-IST: small target detection in infrared remote sensing images based on super-resolution and YOLO | 2023 | cited:157 | doi:10.1016/j.sigpro.2023.108962 | checked:2026-06-06"
+  possible_innovation_points: "远距/广角栏舍俯拍中**远端羊只成小目标**时借鉴局部对比度模块；新生羊羔/远处个体的小尺度增强；一般近距奶山羊不属此范式（如实标注边界）; domain_scope=cv-夜间多模态"
   maturity: "新兴（红外小目标专门方向活跃；但与奶山羊近距场景错配，仅远端小目标可借鉴）"
 ```
 
@@ -133,10 +133,10 @@
   suitable_datasets: "BDD100K(day/night)、KAIST、Cityscapes→Nighttime、自建奶山羊昼夜集"
   implementation_repo: "论文官方仓库（Boosting Day-Night DA）、open-mmlab 域适应检测扩展"
   representative_papers:
-    - "Boosting Object Detection with Zero-Shot Day-Night Domain Adaptation | 2024(CVPR) | cited:51 | doi:10.1109/cvpr52733.2024.01204"
-    - "GAN-Based Day-to-Night Image Style Transfer for Nighttime Vehicle Detection | 2020(T-ITS) | cited:162 | doi:10.1109/tits.2019.2961679"
-    - "Unsupervised thermal-to-visible domain adaptation method for pedestrian detection | 2021 | cited:27 | doi:10.1016/j.patrec.2021.11.024"
-  possible_innovation_points: "用大量日间奶山羊标注迁到夜间 NIR/IR，免夜间重标；白羊昼夜外观差异作域差建模对象；昼夜个体外观一致性约束辅助跨时段 re-id"
+    - "Boosting Object Detection with Zero-Shot Day-Night Domain Adaptation | 2024(CVPR) | cited:51 | doi:10.1109/cvpr52733.2024.01204 | checked:2026-06-06"
+    - "GAN-Based Day-to-Night Image Style Transfer for Nighttime Vehicle Detection | 2020(T-ITS) | cited:162 | doi:10.1109/tits.2019.2961679 | checked:2026-06-06"
+    - "Unsupervised thermal-to-visible domain adaptation method for pedestrian detection | 2021 | cited:27 | doi:10.1016/j.patrec.2021.11.024 | checked:2026-06-06"
+  possible_innovation_points: "用大量日间奶山羊标注迁到夜间 NIR/IR，免夜间重标；白羊昼夜外观差异作域差建模对象；昼夜个体外观一致性约束辅助跨时段 re-id; domain_scope=cv-夜间多模态"
   maturity: "新兴（域适应检测活跃；RGB→热成像跨模态域适应仍偏研究期）"
 ```
 
@@ -155,9 +155,9 @@
   suitable_datasets: "KAIST Multispectral、CVC-14、FLIR Aligned、LLVIP（均行人/交通，无奶山羊）"
   implementation_repo: "SoonminHwang/rgbt-ped-detection（KAIST 官方）、多光谱检测复现仓库"
   representative_papers:
-    - "Multispectral pedestrian detection: Benchmark dataset and baseline | 2015(CVPR) | cited:1121 | doi:10.1109/cvpr.2015.7298706"
-    - "Fusion of multispectral data through illumination-aware deep neural networks for pedestrian detection | 2018 | cited:325 | doi:10.1016/j.inffus.2018.11.017"
-  possible_innovation_points: "栏舍 RGB+热成像双相机昼夜全天检测奶山羊；Miss Rate 作奶山羊夜间漏检的核心指标（漏检=漏报发情/跛行）；配准方案适配栏舍固定机位"
+    - "Multispectral pedestrian detection: Benchmark dataset and baseline | 2015(CVPR) | cited:1121 | doi:10.1109/cvpr.2015.7298706 | checked:2026-06-06"
+    - "Fusion of multispectral data through illumination-aware deep neural networks for pedestrian detection | 2018 | cited:325 | doi:10.1016/j.inffus.2018.11.017 | checked:2026-06-06"
+  possible_innovation_points: "栏舍 RGB+热成像双相机昼夜全天检测奶山羊；Miss Rate 作奶山羊夜间漏检的核心指标（漏检=漏报发情/跛行）；配准方案适配栏舍固定机位; domain_scope=cv-夜间多模态"
   maturity: "经典（多光谱检测奠基，融合范式仍是后续工作起点）"
 ```
 
@@ -174,10 +174,10 @@
   suitable_datasets: "KAIST、CVC-14、自建奶山羊昼夜双模态集"
   implementation_repo: "论文复现仓库（IATDNN / IAF R-CNN）、open-mmlab 多模态扩展"
   representative_papers:
-    - "Illumination-aware faster R-CNN for robust multispectral pedestrian detection | 2018(Pattern Recognition) | cited:475 | doi:10.1016/j.patcog.2018.08.005"
-    - "Illumination-aware Faster R-CNN (arXiv 预印本) | 2018 | cited:20 | doi:10.48550/arxiv.1803.05347"
-    - "Cross-modality interactive attention network for multispectral pedestrian detection | 2018(Information Fusion) | cited:284 | doi:10.1016/j.inffus.2018.09.015"
-  possible_innovation_points: "栏舍灯光开关/昼夜切换的光照门控；黄昏/夜灯混合光下的奶山羊检测可靠性；光照权重可作数据质量指标驱动主动采样"
+    - "Illumination-aware faster R-CNN for robust multispectral pedestrian detection | 2018(Pattern Recognition) | cited:475 | doi:10.1016/j.patcog.2018.08.005 | checked:2026-06-06"
+    - "Illumination-aware Faster R-CNN (arXiv 预印本) | 2018 | cited:20 | doi:10.48550/arxiv.1803.05347 | checked:2026-06-06"
+    - "Cross-modality interactive attention network for multispectral pedestrian detection | 2018(Information Fusion) | cited:284 | doi:10.1016/j.inffus.2018.09.015 | checked:2026-06-06"
+  possible_innovation_points: "栏舍灯光开关/昼夜切换的光照门控；黄昏/夜灯混合光下的奶山羊检测可靠性；光照权重可作数据质量指标驱动主动采样; domain_scope=cv-夜间多模态"
   maturity: "主流（光照自适应融合是多光谱检测主流路线之一）"
 ```
 
@@ -194,10 +194,10 @@
   suitable_datasets: "KAIST、FLIR Aligned、VEDAI、LLVIP"
   implementation_repo: "DocF/multispectral-object-detection（CFT 官方）"
   representative_papers:
-    - "Cross-Modality Fusion Transformer for Multispectral Object Detection | 2022(SSRN/正式版) | cited:167 | doi:10.2139/ssrn.4227745"
-    - "Cross-Modality Fusion Transformer for Multispectral Object Detection (arXiv) | 2021 | cited:14 | doi:10.48550/arxiv.2111.00273"
-    - "ICAFusion: Iterative cross-attention guided feature fusion for multispectral object detection | 2023(Pattern Recognition) | cited:353 | doi:10.1016/j.patcog.2023.109913"
-  possible_innovation_points: "跨模态注意力做奶山羊 RGB-热成像融合；小数据下用预训练+轻量化适配；注意力图可定位「哪模态在该羊只起主导」辅助可靠性评估"
+    - "Cross-Modality Fusion Transformer for Multispectral Object Detection | 2022(SSRN/正式版) | cited:167 | doi:10.2139/ssrn.4227745 | checked:2026-06-06"
+    - "Cross-Modality Fusion Transformer for Multispectral Object Detection (arXiv) | 2021 | cited:14 | doi:10.48550/arxiv.2111.00273 | checked:2026-06-06"
+    - "ICAFusion: Iterative cross-attention guided feature fusion for multispectral object detection | 2023(Pattern Recognition) | cited:353 | doi:10.1016/j.patcog.2023.109913 | checked:2026-06-06"
+  possible_innovation_points: "跨模态注意力做奶山羊 RGB-热成像融合；小数据下用预训练+轻量化适配；注意力图可定位「哪模态在该羊只起主导」辅助可靠性评估; domain_scope=cv-夜间多模态"
   maturity: "新兴（Transformer 跨模态融合当前热点，需解决小数据/部署）"
 ```
 
@@ -214,9 +214,9 @@
   suitable_datasets: "KAIST、FLIR、自建奶山羊多模态集"
   implementation_repo: "Jamie725/Multimodal-Object-Detection-via-Probabilistic-Ensembling"
   representative_papers:
-    - "Multimodal Object Detection via Probabilistic Ensembling | 2022(ECCV) | cited:187 | doi:10.1007/978-3-031-20077-9_9"
-    - "Multimodal Object Detection via Probabilistic Ensembling (arXiv) | 2021 | cited:5 | doi:10.48550/arxiv.2104.02904"
-  possible_innovation_points: "栏舍 RGB/热成像两路独立检测器概率融合，**夜间热成像失效或 RGB 失效时自动降级**；概率校准后的后验可直接传入级联下游缓解误差累积（与第三类卡呼应）"
+    - "Multimodal Object Detection via Probabilistic Ensembling | 2022(ECCV) | cited:187 | doi:10.1007/978-3-031-20077-9_9 | checked:2026-06-06"
+    - "Multimodal Object Detection via Probabilistic Ensembling (arXiv) | 2021 | cited:5 | doi:10.48550/arxiv.2104.02904 | checked:2026-06-06"
+  possible_innovation_points: "栏舍 RGB/热成像两路独立检测器概率融合，**夜间热成像失效或 RGB 失效时自动降级**；概率校准后的后验可直接传入级联下游缓解误差累积（与第三类卡呼应）; domain_scope=cv-夜间多模态"
   maturity: "新兴（决策级概率融合简单强，缺模态鲁棒，契合栏舍多模态降级需求）"
 ```
 
@@ -233,10 +233,10 @@
   suitable_datasets: "KAIST、CVC-14、FLIR、自建奶山羊集"
   implementation_repo: "论文官方仓库（Uncertainty-Guided Cross-Modal，部分待核查）"
   representative_papers:
-    - "Uncertainty-Guided Cross-Modal Learning for Robust Multispectral Pedestrian Detection | 2021(TCSVT) | cited:121 | doi:10.1109/tcsvt.2021.3076466"
-    - "Robust Multispectral Pedestrian Detection via Uncertainty-Aware Cross-Modal Learning | 2021(ACCV) | cited:7 | doi:10.1007/978-3-030-67832-6_32"
-    - "Improving Multispectral Pedestrian Detection by Addressing Modality Imbalance Problems | 2020(ECCV) | cited:263 | doi:10.1007/978-3-030-58523-5_46"
-  possible_innovation_points: "把模态不确定性作为级联误差传播的「显式信号」传给跟踪/行为模块；奶山羊夜间某模态退化时自动降权；不确定性高的检测触发人工复核（主动学习闭环）"
+    - "Uncertainty-Guided Cross-Modal Learning for Robust Multispectral Pedestrian Detection | 2021(TCSVT) | cited:121 | doi:10.1109/tcsvt.2021.3076466 | checked:2026-06-06"
+    - "Robust Multispectral Pedestrian Detection via Uncertainty-Aware Cross-Modal Learning | 2021(ACCV) | cited:7 | doi:10.1007/978-3-030-67832-6_32 | checked:2026-06-06"
+    - "Improving Multispectral Pedestrian Detection by Addressing Modality Imbalance Problems | 2020(ECCV) | cited:263 | doi:10.1007/978-3-030-58523-5_46 | checked:2026-06-06"
+  possible_innovation_points: "把模态不确定性作为级联误差传播的「显式信号」传给跟踪/行为模块；奶山羊夜间某模态退化时自动降权；不确定性高的检测触发人工复核（主动学习闭环）; domain_scope=cv-夜间多模态"
   maturity: "新兴（不确定性引导融合是缓解级联误差的关键桥梁，研究活跃）"
 ```
 
@@ -253,9 +253,9 @@
   suitable_datasets: "KAIST(对齐)、CVC-14(弱对齐)、LLVIP、自建奶山羊双相机集"
   implementation_repo: "标定用 OpenCV；可学习配准见多光谱检测仓库的 align 模块（部分待核查）"
   representative_papers:
-    - "Improving Multispectral Pedestrian Detection by Addressing Modality Imbalance Problems | 2020(ECCV) | cited:263 | doi:10.1007/978-3-030-58523-5_46"
-    - "Cross-modality interactive attention network for multispectral pedestrian detection | 2018(Information Fusion) | cited:284 | doi:10.1016/j.inffus.2018.09.015"
-  possible_innovation_points: "栏舍固定机位 RGB+热成像同轴/双目一次标定方案；对运动奶山羊近距视差的弱配准鲁棒融合（用 ProbEn 决策级规避像素配准）；配准残差作融合可靠性指标"
+    - "Improving Multispectral Pedestrian Detection by Addressing Modality Imbalance Problems | 2020(ECCV) | cited:263 | doi:10.1007/978-3-030-58523-5_46 | checked:2026-06-06"
+    - "Cross-modality interactive attention network for multispectral pedestrian detection | 2018(Information Fusion) | cited:284 | doi:10.1016/j.inffus.2018.09.015 | checked:2026-06-06"
+  possible_innovation_points: "栏舍固定机位 RGB+热成像同轴/双目一次标定方案；对运动奶山羊近距视差的弱配准鲁棒融合（用 ProbEn 决策级规避像素配准）；配准残差作融合可靠性指标; domain_scope=cv-夜间多模态"
   maturity: "主流（配准是多模态落地的工程瓶颈；决策级融合可部分绕过）"
 ```
 
@@ -274,8 +274,8 @@
   suitable_datasets: "MOT16/17/20、自建奶山羊 MOT（无现成）"
   implementation_repo: "Zhongdao/Towards-Realtime-MOT（JDE）、ifzhang/FairMOT"
   representative_papers:
-    - "FairMOT: On the Fairness of Detection and Re-identification in Multiple Object Tracking | 2021(IJCV) | cited:1475 | doi:10.1007/s11263-021-01513-4"
-  possible_innovation_points: "联合范式减少检测→跟踪级联误差；白羊 re-id 弱→以运动/位置为主、re-id 为辅；夜间红外下嵌入退化的降权策略（与本文件第二类不确定性卡结合）"
+    - "FairMOT: On the Fairness of Detection and Re-identification in Multiple Object Tracking | 2021(IJCV) | cited:1475 | doi:10.1007/s11263-021-01513-4 | checked:2026-06-06"
+  possible_innovation_points: "联合范式减少检测→跟踪级联误差；白羊 re-id 弱→以运动/位置为主、re-id 为辅；夜间红外下嵌入退化的降权策略（与本文件第二类不确定性卡结合）; domain_scope=cv-夜间多模态"
   maturity: "主流（one-shot MOT 代表；奶山羊 re-id 难是核心适配挑战，db03 跟踪卡已侧重，此处只强调「联合」减级联思想）"
 ```
 
@@ -292,9 +292,9 @@
   suitable_datasets: "MOT17/20、DanceTrack、BDD100K MOT"
   implementation_repo: "timmeinhardt/trackformer、megvii-research/MOTR"
   representative_papers:
-    - "TrackFormer: Multi-Object Tracking with Transformers | 2022(CVPR) | cited:941 | doi:10.1109/cvpr52688.2022.00864"
-    - "Looking Beyond Two Frames: End-to-End Multi-Object Tracking Using Spatial and Temporal Transformers | 2022(TPAMI) | cited:64 | doi:10.1109/tpami.2022.3213073"
-  possible_innovation_points: "端到端消除检测→跟踪关联级误差，利于下游行为稳定；track query 可延伸携带行为状态做检测-跟踪-行为三级联合（创新空白）；栏舍小数据需大规模预训练+适配"
+    - "TrackFormer: Multi-Object Tracking with Transformers | 2022(CVPR) | cited:941 | doi:10.1109/cvpr52688.2022.00864 | checked:2026-06-06"
+    - "Looking Beyond Two Frames: End-to-End Multi-Object Tracking Using Spatial and Temporal Transformers | 2022(TPAMI) | cited:64 | doi:10.1109/tpami.2022.3213073 | checked:2026-06-06"
+  possible_innovation_points: "端到端消除检测→跟踪关联级误差，利于下游行为稳定；track query 可延伸携带行为状态做检测-跟踪-行为三级联合（创新空白）；栏舍小数据需大规模预训练+适配; domain_scope=cv-夜间多模态"
   maturity: "新兴（端到端 MOT 前沿；落地需解决数据与部署，奶山羊场景空白）"
 ```
 
@@ -311,9 +311,9 @@
   suitable_datasets: "ImageNet VID、自建奶山羊视频检测集"
   implementation_repo: "SJTU-LuHe/TransVOD"
   representative_papers:
-    - "TransVOD: End-to-End Video Object Detection With Spatial-Temporal Transformers | 2022(TPAMI) | cited:181 | doi:10.1109/tpami.2022.3223955"
-    - "End-to-End Video Object Detection with Spatial-Temporal Transformers | 2021(ACM MM) | cited:102 | doi:10.1145/3474085.3475285"
-  possible_innovation_points: "用时序聚合稳住夜间红外单帧难检的奶山羊（运动模糊/低对比），从源头减少级联误差；夜间低帧率/补光闪烁下的时序鲁棒聚合"
+    - "TransVOD: End-to-End Video Object Detection With Spatial-Temporal Transformers | 2022(TPAMI) | cited:181 | doi:10.1109/tpami.2022.3223955 | checked:2026-06-06"
+    - "End-to-End Video Object Detection with Spatial-Temporal Transformers | 2021(ACM MM) | cited:102 | doi:10.1145/3474085.3475285 | checked:2026-06-06"
+  possible_innovation_points: "用时序聚合稳住夜间红外单帧难检的奶山羊（运动模糊/低对比），从源头减少级联误差；夜间低帧率/补光闪烁下的时序鲁棒聚合; domain_scope=cv-夜间多模态"
   maturity: "新兴（端到端 VOD 把时序前置到检测，利于级联稳健性）"
 ```
 
@@ -330,10 +330,10 @@
   suitable_datasets: "UCF101-24、JHMDB、AVA（均人类行为，无奶山羊）"
   implementation_repo: "vkalogeiton/caffe-act（ACT 原始）、后续 PyTorch tubelet transformer 复现"
   representative_papers:
-    - "Action Tubelet Detector for Spatio-Temporal Action Localization | 2017(ICCV) | cited:341 | doi:10.1109/iccv.2017.472"
-    - "An Efficient Spatio-Temporal Pyramid Transformer for Action Detection | 2022(ECCV) | cited:31 | doi:10.1007/978-3-031-19830-4_21"
-    - "STD-TR: End-to-End Spatio-Temporal Action Detection with Transformers | 2021(CAC) | cited:7 | doi:10.1109/cac53003.2021.9727692"
-  possible_innovation_points: "把奶山羊检测+发情/跛行行为合到 tube 级联合学习，绕过「检测→跟踪→行为」逐级误差；爬跨/采食 tube 的时空联合定位；夜间红外 tube 检测"
+    - "Action Tubelet Detector for Spatio-Temporal Action Localization | 2017(ICCV) | cited:341 | doi:10.1109/iccv.2017.472 | checked:2026-06-06"
+    - "An Efficient Spatio-Temporal Pyramid Transformer for Action Detection | 2022(ECCV) | cited:31 | doi:10.1007/978-3-031-19830-4_21 | checked:2026-06-06"
+    - "STD-TR: End-to-End Spatio-Temporal Action Detection with Transformers | 2021(CAC) | cited:7 | doi:10.1109/cac53003.2021.9727692 | checked:2026-06-06"
+  possible_innovation_points: "把奶山羊检测+发情/跛行行为合到 tube 级联合学习，绕过「检测→跟踪→行为」逐级误差；爬跨/采食 tube 的时空联合定位；夜间红外 tube 检测; domain_scope=cv-夜间多模态"
   maturity: "新兴（端到端时空行为检测；奶山羊细粒度行为为空白，是合并级联的直接路径）"
 ```
 
@@ -350,9 +350,9 @@
   suitable_datasets: "COCO/KITTI(概率检测评测)、自建奶山羊集做校准评估"
   implementation_repo: "概率检测综述配套代码、yaringal/DropoutUncertaintyExps（MC-Dropout 原理）"
   representative_papers:
-    - "A Review and Comparative Study on Probabilistic Object Detection in Autonomous Driving | 2021(T-ITS) | cited:303 | doi:10.1109/tits.2021.3096854"
-    - "Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning | 2015(arXiv/ICML) | cited:4159 | doi:10.48550/arxiv.1506.02142"
-  possible_innovation_points: "**缓解级联误差的核心工具**——检测不确定性高时降低其对发情/跛行告警的权重、触发复核；夜间红外检测不确定性普遍升高，可据此自动切换多模态/人工"
+    - "A Review and Comparative Study on Probabilistic Object Detection in Autonomous Driving | 2021(T-ITS) | cited:303 | doi:10.1109/tits.2021.3096854 | checked:2026-06-06"
+    - "Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning | 2015(arXiv/ICML) | cited:4159 | doi:10.48550/arxiv.1506.02142 | checked:2026-06-06"
+  possible_innovation_points: "**缓解级联误差的核心工具**——检测不确定性高时降低其对发情/跛行告警的权重、触发复核；夜间红外检测不确定性普遍升高，可据此自动切换多模态/人工; domain_scope=cv-夜间多模态"
   maturity: "主流（不确定性量化方法成熟；用于级联误差缓解的系统化应用是空白）"
 ```
 
@@ -369,9 +369,9 @@
   suitable_datasets: "无专用集；需自建奶山羊「检测+跟踪+行为」全链路标注序列（如实说明）"
   implementation_repo: "待核查（畜牧领域无现成端到端流水线误差传播仓库；可借鉴自动驾驶感知不确定性传播实现）"
   representative_papers:
-    - "A review of Link-level uncertainty in the perception-decision-control pipeline of connected and autonomous vehicles | 2025 | cited:1 | doi:10.1177/09544070251390424"
-    - "A Review and Comparative Study on Probabilistic Object Detection in Autonomous Driving | 2021(T-ITS) | cited:303 | doi:10.1109/tits.2021.3096854"
-  possible_innovation_points: "**本文件核心创新点**——为奶山羊「检测→跟踪→行为」四级流水线建立不确定性传播框架：前级 soft 信息（不确定性/多假设）下传而非 hard 决策；夜间红外/单模态退化时的端到端可靠性评估；告警阈值随累积不确定性自适应，降低误报发情/跛行；薄弱级归因指导数据补采"
+    - "A review of Link-level uncertainty in the perception-decision-control pipeline of connected and autonomous vehicles | 2025 | cited:1 | doi:10.1177/09544070251390424 | checked:2026-06-06"
+    - "A Review and Comparative Study on Probabilistic Object Detection in Autonomous Driving | 2021(T-ITS) | cited:303 | doi:10.1109/tits.2021.3096854 | checked:2026-06-06"
+  possible_innovation_points: "**本文件核心创新点**——为奶山羊「检测→跟踪→行为」四级流水线建立不确定性传播框架：前级 soft 信息（不确定性/多假设）下传而非 hard 决策；夜间红外/单模态退化时的端到端可靠性评估；告警阈值随累积不确定性自适应，降低误报发情/跛行；薄弱级归因指导数据补采; domain_scope=cv-夜间多模态"
   maturity: "新兴（畜牧行为分析中为空白方向，方法论需自驾感知链迁移+自建数据，创新空间大）"
 ```
 

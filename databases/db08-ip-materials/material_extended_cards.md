@@ -61,7 +61,7 @@
 
 - material_type: 软著源代码鉴别材料
   required_sections: [源代码页眉, 页码, 前30页, 后30页, 脱敏记录, 第三方依赖说明]
-  official_requirement: 通行规则为源程序前后各连续 30 页、每页不少于 50 行，不足 60 页全交；最新口径以 CPCC 当期指南为准
+  official_requirement: 通行规则为源程序前后各连续 30 页、每页不少于 50 行，不足 60 页全交；最新口径以 CPCC 当期指南为准(规则单一真相源见 resources_real.md §2 带 last_checked,本卡不另维护页数口径)
   writing_style: 代码原样连续，必要注释保留；不得插入无关代码/空行充页
   common_mistakes: [代码不连续, 行数不足, 页眉缺软件名版本, 含 token/password, 大量第三方库代码, 与申请软件无关]
   checklist: ["运行 secret 扫描", "移除密钥/个人路径", "页眉=软件全称+版本", "页码连续", "不足60页全交", "第三方开源许可记录"]

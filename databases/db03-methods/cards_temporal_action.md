@@ -43,8 +43,8 @@
   suitable_datasets: "THUMOS14、ActivityNet-1.3、EPIC-Kitchens-100(均为人体/第一视角, 奶山羊须自建时序标注)"
   implementation_repo: "happyharrycn/actionformer_release(官方)、mmaction2(OpenMMLab, 含 TAL 配置)"
   representative_papers:
-    - "ActionFormer: Localizing Moments of Actions with Transformers | 2022 | cited:重(OpenAlex relevance≈2112, 该ECCV/LNCS条目) | doi:10.1007/978-3-031-19772-7_29"
-  possible_innovation_points: "首选 TAL 基线。奶山羊监控长视频先用 VideoMAE/SlowFast 抽片段特征再喂 ActionFormer 定位发情爬跨(秒级)与跛行行走段; 多尺度金字塔利于同时覆盖秒级爬跨与分钟级跛行; 可在回归头并联跛行 1-5 序数评分头做\"定位+评分\"多任务; 长尾稀疏下加 focal loss 提爬跨召回"
+    - "ActionFormer: Localizing Moments of Actions with Transformers | 2022 | cited:重(OpenAlex relevance≈2112, 该ECCV/LNCS条目) | doi:10.1007/978-3-031-19772-7_29 | checked:2026-06-06"
+  possible_innovation_points: "首选 TAL 基线。奶山羊监控长视频先用 VideoMAE/SlowFast 抽片段特征再喂 ActionFormer 定位发情爬跨(秒级)与跛行行走段; 多尺度金字塔利于同时覆盖秒级爬跨与分钟级跛行; 可在回归头并联跛行 1-5 序数评分头做\"定位+评分\"多任务; 长尾稀疏下加 focal loss 提爬跨召回; domain_scope=cv-时序动作"
   maturity: "主流(当前 TAL 最常用强基线/SOTA 起点)"
 ```
 
@@ -61,8 +61,8 @@
   suitable_datasets: "ActivityNet-1.3、THUMOS14(人体, 奶山羊须自建)"
   implementation_repo: "JJBOY/BMN-Boundary-Matching-Network、mmaction2(含 BMN 配置)"
   representative_papers:
-    - "BMN: Boundary-Matching Network for Temporal Action Proposal Generation | 2019 | cited:623 | doi:10.1109/iccv.2019.00399"
-  possible_innovation_points: "奶山羊发情爬跨正样本极稀疏, BMN 高召回密集 proposal 利于\"宁可多召回再筛\"; 可作 ActionFormer 之外的两阶段对照; BM 置信图思路可改造为对周期性跛行步态的区间枚举; 提案阶段加类不可知设计降低长尾偏置"
+    - "BMN: Boundary-Matching Network for Temporal Action Proposal Generation | 2019 | cited:623 | doi:10.1109/iccv.2019.00399 | checked:2026-06-06"
+  possible_innovation_points: "奶山羊发情爬跨正样本极稀疏, BMN 高召回密集 proposal 利于\"宁可多召回再筛\"; 可作 ActionFormer 之外的两阶段对照; BM 置信图思路可改造为对周期性跛行步态的区间枚举; 提案阶段加类不可知设计降低长尾偏置; domain_scope=cv-时序动作"
   maturity: "主流/经典(proposal 生成奠基, 仍是常用召回基线)"
 ```
 
@@ -79,8 +79,8 @@
   suitable_datasets: "ActivityNet-1.3、THUMOS14(人体, 奶山羊须自建)"
   implementation_repo: "wzmsltw/BSN-boundary-sensitive-network、mmaction2"
   representative_papers:
-    - "BSN: Boundary Sensitive Network for Temporal Action Proposal Generation | 2018 | cited:757 | doi:10.1007/978-3-030-01225-0_1"
-  possible_innovation_points: "边界敏感分支适合定位爬跨这种边界明确的瞬时事件起止; 作历史基线与消融对照价值大于直接部署; actionness 序列可迁移为\"是否处于异常步态\"的逐帧打分"
+    - "BSN: Boundary Sensitive Network for Temporal Action Proposal Generation | 2018 | cited:757 | doi:10.1007/978-3-030-01225-0_1 | checked:2026-06-06"
+  possible_innovation_points: "边界敏感分支适合定位爬跨这种边界明确的瞬时事件起止; 作历史基线与消融对照价值大于直接部署; actionness 序列可迁移为\"是否处于异常步态\"的逐帧打分; domain_scope=cv-时序动作"
   maturity: "经典(proposal 生成开创性工作, 现多作基线, 实际部署优先 BMN/ActionFormer)"
 ```
 
@@ -97,8 +97,8 @@
   suitable_datasets: "ActivityNet-1.3、THUMOS14(人体, 奶山羊须自建)"
   implementation_repo: "frostinassiky/gtad(官方)、mmaction2(部分支持)"
   representative_papers:
-    - "G-TAD: Sub-Graph Localization for Temporal Action Detection | 2020 | cited:466 | doi:10.1109/cvpr42600.2020.01017"
-  possible_innovation_points: "图视角可建模奶山羊跛行步态周期内\"支撑相-摆动相\"片段间关系, 或群养多目标的时序-空间联合图; 但实现重, 优先级低于 ActionFormer; 适合做\"时序上下文是否有用\"的方法对照"
+    - "G-TAD: Sub-Graph Localization for Temporal Action Detection | 2020 | cited:466 | doi:10.1109/cvpr42600.2020.01017 | checked:2026-06-06"
+  possible_innovation_points: "图视角可建模奶山羊跛行步态周期内\"支撑相-摆动相\"片段间关系, 或群养多目标的时序-空间联合图; 但实现重, 优先级低于 ActionFormer; 适合做\"时序上下文是否有用\"的方法对照; domain_scope=cv-时序动作"
   maturity: "主流→趋稳(图卷积 TAL 代表作, 现多作对比基线)"
 ```
 
@@ -115,8 +115,8 @@
   suitable_datasets: "THUMOS14、ActivityNet-1.3、HACS(人体, 奶山羊须自建)"
   implementation_repo: "xlliu7/TadTR(官方)"
   representative_papers:
-    - "End-to-End Temporal Action Detection With Transformer (TadTR) | 2022 | cited:260 | doi:10.1109/tip.2022.3195321"
-  possible_innovation_points: "免 NMS 对奶山羊稀疏事件友好(无需调 NMS 阈值); action query 可显式对应\"爬跨\"\"跛行段\"等少数语义槽; query 数与长尾匹配是难点, 可改进匹配代价加入序数评分项实现\"定位即评分\""
+    - "End-to-End Temporal Action Detection With Transformer (TadTR) | 2022 | cited:260 | doi:10.1109/tip.2022.3195321 | checked:2026-06-06"
+  possible_innovation_points: "免 NMS 对奶山羊稀疏事件友好(无需调 NMS 阈值); action query 可显式对应\"爬跨\"\"跛行段\"等少数语义槽; query 数与长尾匹配是难点, 可改进匹配代价加入序数评分项实现\"定位即评分\"; domain_scope=cv-时序动作"
   maturity: "主流(端到端 DETR 式 TAL 代表, 简化流水线)"
 ```
 
@@ -133,8 +133,8 @@
   suitable_datasets: "THUMOS14、ActivityNet-1.3(人体, 奶山羊须自建)"
   implementation_repo: "VividLe/A2Net(官方)"
   representative_papers:
-    - "Revisiting Anchor Mechanisms for Temporal Action Localization (A2Net) | 2020 | cited:205 | doi:10.1109/tip.2020.3016486"
-  possible_innovation_points: "奶山羊事件时长差异极大(爬跨秒级 vs 跛行分钟级), anchor-free 分支专攻短瞬时爬跨、anchor-based 分支稳态覆盖周期跛行段, 天然契合双时长场景; 可作\"是否需双机制\"的消融对照"
+    - "Revisiting Anchor Mechanisms for Temporal Action Localization (A2Net) | 2020 | cited:205 | doi:10.1109/tip.2020.3016486 | checked:2026-06-06"
+  possible_innovation_points: "奶山羊事件时长差异极大(爬跨秒级 vs 跛行分钟级), anchor-free 分支专攻短瞬时爬跨、anchor-based 分支稳态覆盖周期跛行段, 天然契合双时长场景; 可作\"是否需双机制\"的消融对照; domain_scope=cv-时序动作"
   maturity: "主流→趋稳(anchor-free/based 互补思想代表作)"
 ```
 
@@ -151,8 +151,8 @@
   suitable_datasets: "THUMOS14、ActivityNet-1.3、EPIC-Kitchens-100、HACS(人体, 奶山羊须自建)"
   implementation_repo: "dingfengshi/TriDet(官方)、mmaction2(部分)"
   representative_papers:
-    - "TriDet: Temporal Action Detection with Relative Boundary Modeling | 2023 | cited:180 | doi:10.1109/cvpr52729.2023.01808"
-  possible_innovation_points: "跛行步态起止边界本就模糊(逐渐变跛), TriDet 相对边界建模天然适配这种渐变边界; SGP 高效层利于边缘部署长视频; 推荐与 ActionFormer 并列作主力候选与互相对照"
+    - "TriDet: Temporal Action Detection with Relative Boundary Modeling | 2023 | cited:180 | doi:10.1109/cvpr52729.2023.01808 | checked:2026-06-06"
+  possible_innovation_points: "跛行步态起止边界本就模糊(逐渐变跛), TriDet 相对边界建模天然适配这种渐变边界; SGP 高效层利于边缘部署长视频; 推荐与 ActionFormer 并列作主力候选与互相对照; domain_scope=cv-时序动作"
   maturity: "新兴/主流(2023 SOTA 级, 边界建模新思路)"
 ```
 
@@ -169,8 +169,8 @@
   suitable_datasets: "THUMOS14、MUSES、EPIC-Kitchens-100、ActivityNet(人体, 奶山羊须自建)"
   implementation_repo: "TuanTNG/TemporalMaxer(官方)"
   representative_papers:
-    - "TemporalMaxer: Maximize Temporal Context with only Max Pooling for Temporal Action Localization | 2023 | cited:22 | doi:10.48550/arxiv.2303.09055"
-  possible_innovation_points: "奶山羊农场算力受限/边缘盒子部署的首选轻量基线; 验证\"在好特征(VideoMAE 微调)上简单聚合是否够用\"的高性价比方案; 若 max pooling 丢失跛行周期细节, 可作为\"复杂时序模块是否必要\"的下界对照"
+    - "TemporalMaxer: Maximize Temporal Context with only Max Pooling for Temporal Action Localization | 2023 | cited:22 | doi:10.48550/arxiv.2303.09055 | checked:2026-06-06"
+  possible_innovation_points: "奶山羊农场算力受限/边缘盒子部署的首选轻量基线; 验证\"在好特征(VideoMAE 微调)上简单聚合是否够用\"的高性价比方案; 若 max pooling 丢失跛行周期细节, 可作为\"复杂时序模块是否必要\"的下界对照; domain_scope=cv-时序动作"
   maturity: "新兴(2023, 极简高效路线代表)"
 ```
 
@@ -187,9 +187,9 @@
   suitable_datasets: "THUMOS14、ActivityNet-1.3、EPIC-Kitchens-100、FineAction(人体, 奶山羊须自建)"
   implementation_repo: "OpenGVLab/video-mamba-suite(官方, 含 ActionMamba TAL 分支)"
   representative_papers:
-    - "Video Mamba Suite: State Space Model as a Versatile Alternative for Video Understanding | 2024 | cited:19 | doi:10.48550/arxiv.2403.09626"
-    - "Enhancing Temporal Action Localization: Advanced S6 Modeling with Recurrent Mechanism | 2024 | cited:1 | doi:10.48550/arxiv.2407.13078"
-  possible_innovation_points: "奶山羊监控常是数小时连续长视频, Mamba 线性复杂度直接利好\"全天候不切片定位\"; 跛行是分钟级长周期步态, SSM 长程依赖适配周期建模; 作为前沿点可探索\"SSM 时序骨干 + 序数评分头\"的奶山羊定制结构, 创新性高"
+    - "Video Mamba Suite: State Space Model as a Versatile Alternative for Video Understanding | 2024 | cited:19 | doi:10.48550/arxiv.2403.09626 | checked:2026-06-06"
+    - "Enhancing Temporal Action Localization: Advanced S6 Modeling with Recurrent Mechanism | 2024 | cited:1 | doi:10.48550/arxiv.2407.13078 | checked:2026-06-06"
+  possible_innovation_points: "奶山羊监控常是数小时连续长视频, Mamba 线性复杂度直接利好\"全天候不切片定位\"; 跛行是分钟级长周期步态, SSM 长程依赖适配周期建模; 作为前沿点可探索\"SSM 时序骨干 + 序数评分头\"的奶山羊定制结构, 创新性高; domain_scope=cv-时序动作"
   maturity: "新兴(2024 前沿, 生态成长中, 适合做创新基础)"
 ```
 
@@ -210,8 +210,8 @@
   suitable_datasets: "MORPH-2/AFAD/CACD(年龄估计, 人脸)、任意有序评分任务(奶山羊跛行评分须自建)"
   implementation_repo: "Raschka-research-group/coral-cnn(官方)、coral-pytorch(库)"
   representative_papers:
-    - "Rank consistent ordinal regression for neural networks with application to age estimation (CORAL) | 2020 | cited:288 | doi:10.1016/j.patrec.2020.11.008"
-  possible_innovation_points: "奶山羊跛行 locomotion score 1-5 有序且相邻级易混, CORAL 接在 TAL 定位出的步态区间特征后做评分头, 保证\"评分单调不矛盾\"; 比普通 5 分类更契合\"错判相邻级代价小、跨级代价大\"; 长尾(多数为 1-2 级正常)下需配重加权"
+    - "Rank consistent ordinal regression for neural networks with application to age estimation (CORAL) | 2020 | cited:288 | doi:10.1016/j.patrec.2020.11.008 | checked:2026-06-06"
+  possible_innovation_points: "奶山羊跛行 locomotion score 1-5 有序且相邻级易混, CORAL 接在 TAL 定位出的步态区间特征后做评分头, 保证\"评分单调不矛盾\"; 比普通 5 分类更契合\"错判相邻级代价小、跨级代价大\"; 长尾(多数为 1-2 级正常)下需配重加权; domain_scope=cv-时序动作"
   maturity: "主流(深度序数回归常用强基线, 秩一致经典实现)"
 ```
 
@@ -228,9 +228,9 @@
   suitable_datasets: "MORPH-2/AFAD/CACD(年龄估计)、有序评分任务(奶山羊跛行评分须自建)"
   implementation_repo: "Raschka-research-group/corn-ordinal-neuralnet(官方)、coral-pytorch(库, 含 CORN)"
   representative_papers:
-    - "Deep neural networks for rank-consistent ordinal regression based on conditional probabilities (CORN) | 2023 | cited:72 | doi:10.1007/s10044-023-01181-9"
-    - "(预印本) Deep Neural Networks for Rank-Consistent Ordinal Regression Based On Conditional Probabilities | 2021 | cited:6 | doi:10.48550/arxiv.2111.08851"
-  possible_innovation_points: "跛行评分头优先候选(表达力优于 CORAL); 但条件子集训练加剧高分级(重度跛行)样本稀缺问题, 需结合重采样/过采样或与 CORAL 对照取稳; 可探索 CORN 头 + Mamba/ActionFormer 时序特征的联合\"定位+评分\"端到端结构"
+    - "Deep neural networks for rank-consistent ordinal regression based on conditional probabilities (CORN) | 2023 | cited:72 | doi:10.1007/s10044-023-01181-9 | checked:2026-06-06"
+    - "(预印本) Deep Neural Networks for Rank-Consistent Ordinal Regression Based On Conditional Probabilities | 2021 | cited:6 | doi:10.48550/arxiv.2111.08851 | checked:2026-06-06"
+  possible_innovation_points: "跛行评分头优先候选(表达力优于 CORAL); 但条件子集训练加剧高分级(重度跛行)样本稀缺问题, 需结合重采样/过采样或与 CORAL 对照取稳; 可探索 CORN 头 + Mamba/ActionFormer 时序特征的联合\"定位+评分\"端到端结构; domain_scope=cv-时序动作"
   maturity: "主流/新兴(CORAL 的改进版, 秩一致序数回归当前推荐之一)"
 ```
 
@@ -247,9 +247,9 @@
   suitable_datasets: "UCI 序数基准、问卷/分级评分数据(奶山羊跛行评分须自建)"
   implementation_repo: "ayrna/orca(MATLAB 序数回归算法集)、statsmodels(有序 logit, Python)"
   representative_papers:
-    - "Ordinal Regression Methods: Survey and Experimental Study | 2015 | cited:459 | doi:10.1109/tkde.2015.2457911"
-    - "Deep Ordinal Regression Network for Monocular Depth Estimation (DORN, 序数化深度回归代表应用) | 2018 | cited:1907 | doi:10.1109/cvpr.2018.00214"
-  possible_innovation_points: "为奶山羊跛行评分提供方法选型地图——明确\"5 级评分该用序数法而非分类/回归\"的依据; DORN 把连续深度离散成有序区间用序数回归的思路, 可类比把\"跛行严重度连续谱\"离散为有序级别建模; 写 idea/方案的理论支撑卡"
+    - "Ordinal Regression Methods: Survey and Experimental Study | 2015 | cited:459 | doi:10.1109/tkde.2015.2457911 | checked:2026-06-06"
+    - "Deep Ordinal Regression Network for Monocular Depth Estimation (DORN, 序数化深度回归代表应用) | 2018 | cited:1907 | doi:10.1109/cvpr.2018.00214 | checked:2026-06-06"
+  possible_innovation_points: "为奶山羊跛行评分提供方法选型地图——明确\"5 级评分该用序数法而非分类/回归\"的依据; DORN 把连续深度离散成有序区间用序数回归的思路, 可类比把\"跛行严重度连续谱\"离散为有序级别建模; 写 idea/方案的理论支撑卡; domain_scope=cv-时序动作"
   maturity: "经典(综述权威, 方法体系参考基石)"
 ```
 
@@ -266,9 +266,9 @@
   suitable_datasets: "任意有序评分任务(糖网分级 APTOS、作文评分 ASAP; 奶山羊跛行评分须自建)"
   implementation_repo: "scikit-learn(cohen_kappa_score(weights='quadratic'))、ml-metrics"
   representative_papers:
-    - "Weighted kappa: Nominal scale agreement provision for scaled disagreement or partial credit (Cohen 加权 Kappa 原始定义) | 1968 | cited:8510 | doi:10.1037/h0026256"
-    - "Some Paradoxical Results for the Quadratically Weighted Kappa | 2012 | cited:52 | doi:10.1007/s11336-012-9258-4"
-  possible_innovation_points: "奶山羊跛行评分应以 QWK 为主指标——把\"1 级误判为 5 级\"重罚、把\"2 误判为 3\"轻罚, 符合兽医诊断实际代价; 正常级(1-2)占多数的长尾下比 Accuracy 可信; 报告时须同时给混淆矩阵防止边缘分布悖论误读"
+    - "Weighted kappa: Nominal scale agreement provision for scaled disagreement or partial credit (Cohen 加权 Kappa 原始定义) | 1968 | cited:8510 | doi:10.1037/h0026256 | checked:2026-06-06"
+    - "Some Paradoxical Results for the Quadratically Weighted Kappa | 2012 | cited:52 | doi:10.1007/s11336-012-9258-4 | checked:2026-06-06"
+  possible_innovation_points: "奶山羊跛行评分应以 QWK 为主指标——把\"1 级误判为 5 级\"重罚、把\"2 误判为 3\"轻罚, 符合兽医诊断实际代价; 正常级(1-2)占多数的长尾下比 Accuracy 可信; 报告时须同时给混淆矩阵防止边缘分布悖论误读; domain_scope=cv-时序动作"
   maturity: "经典(有序评分评测金标准指标)"
 ```
 
@@ -285,8 +285,8 @@
   suitable_datasets: "任意有序评分任务(年龄估计、跛行评分; 奶山羊须自建)"
   implementation_repo: "scikit-learn(mean_absolute_error 配整数标签)、ayrna/orca(含 MAE/MZE/AMAE)"
   representative_papers:
-    - "Ordinal Regression Methods: Survey and Experimental Study (定义并系统使用 MAE/MZE/AMAE 评测) | 2015 | cited:459 | doi:10.1109/tkde.2015.2457911"
-  possible_innovation_points: "奶山羊跛行评分用 MAE 报\"平均评分偏差\"对兽医直观(差半级 vs 差两级一目了然); 但 1-5 级严重度未必等距(轻跛到中跛 vs 重跛到卧地跨度不同), 建议报 AMAE(各类 MAE 宏平均)抵消长尾, 并与 QWK 联合; 提醒勿单用 MAE 下结论"
+    - "Ordinal Regression Methods: Survey and Experimental Study (定义并系统使用 MAE/MZE/AMAE 评测) | 2015 | cited:459 | doi:10.1109/tkde.2015.2457911 | checked:2026-06-06"
+  possible_innovation_points: "奶山羊跛行评分用 MAE 报\"平均评分偏差\"对兽医直观(差半级 vs 差两级一目了然); 但 1-5 级严重度未必等距(轻跛到中跛 vs 重跛到卧地跨度不同), 建议报 AMAE(各类 MAE 宏平均)抵消长尾, 并与 QWK 联合; 提醒勿单用 MAE 下结论; domain_scope=cv-时序动作"
   maturity: "经典(序数评测标准辅助指标, 须与 QWK 组合使用)"
 ```
 

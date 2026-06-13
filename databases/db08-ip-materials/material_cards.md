@@ -14,7 +14,12 @@
   legal_risk:
   reuse_scope:
   final_review_needed:
+  # —— 可选(db08 重构新增,不进必填 schema,CI 不强校验) ——
+  source_pointer:           # 卡内引用的官方口径外链(如 CPCC 指南/CNIPA 公告/当届评审规则),把易变行政口径外链化
+  last_checked:             # 卡内引用的官方口径核查日 YYYY-MM-DD;费用/页数/权重等以官方当期公告为准、提交前重核
 ```
+
+> db08 是方法论库:10 字段是跨学科行政程序+写作方法论(留本地精养)。卡内引用的官方口径(软著页数/加急费/评分权重/竞赛链接)**绝大多数无 API**,走指针模型:存口径文字/【待核查】+ source_pointer 指向官方源 + last_checked,**不缓存数值假权威值**,提交前以官方当期公告强制核查。
 
 ## Canonical 索引（原 seed 已迁移）
 

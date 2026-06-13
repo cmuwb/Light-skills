@@ -35,9 +35,9 @@
   suitable_datasets: COCO、PASCAL VOC、自建奶山羊检测集（需自标，无现成）
   implementation_repo: open-mmlab/mmdetection、facebookresearch/detectron2、torchvision.models.detection
   representative_papers:
-    - "Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks | 2016(TPAMI) | cited:53939 | doi:10.1109/tpami.2016.2577031"
-    - "Faster R-CNN (arXiv 预印本) | 2015 | cited:18238 | doi:10.48550/arxiv.1506.01497"
-  possible_innovation_points: 奶山羊俯拍密集场景作高精度离线标注/伪标签生成器（非实时）；小目标羊羔用 FPN+高分辨 RoIAlign；红外域微调 backbone
+    - "Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks | 2016(TPAMI) | cited:53939 | doi:10.1109/tpami.2016.2577031 | checked:2026-06-06"
+    - "Faster R-CNN (arXiv 预印本) | 2015 | cited:18238 | doi:10.48550/arxiv.1506.01497 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊俯拍密集场景作高精度离线标注/伪标签生成器（非实时）；小目标羊羔用 FPN+高分辨 RoIAlign；红外域微调 backbone; domain_scope=cv-检测跟踪
   maturity: 经典（仍是强基线与精度上界参考，实时部署已被单阶段/DETR 取代）
 ```
 
@@ -54,8 +54,8 @@
   suitable_datasets: COCO、PASCAL VOC
   implementation_repo: open-mmlab/mmdetection、weiliu89/caffe(ssd 原始)、torchvision(ssd300_vgg16)
   representative_papers:
-    - "SSD: Single Shot MultiBox Detector | 2016(ECCV) | cited:20846 | doi:10.1007/978-3-319-46448-0_2"
-  possible_innovation_points: 历史基线，奶山羊场景不推荐新用；可作教学/对比项
+    - "SSD: Single Shot MultiBox Detector | 2016(ECCV) | cited:20846 | doi:10.1007/978-3-319-46448-0_2 | checked:2026-06-06"
+  possible_innovation_points: 历史基线，奶山羊场景不推荐新用；可作教学/对比项; domain_scope=cv-检测跟踪
   maturity: 过时（被 YOLO 现代版与 anchor-free 取代，仅作对比基线）
 ```
 
@@ -72,9 +72,9 @@
   suitable_datasets: COCO、PASCAL VOC
   implementation_repo: open-mmlab/mmdetection、facebookresearch/detectron2、torchvision(retinanet)
   representative_papers:
-    - "Focal Loss for Dense Object Detection | 2017(ICCV) | cited:25515 | doi:10.1109/iccv.2017.324"
-    - "Focal Loss for Dense Object Detection | 2018(TPAMI 扩展) | cited:9532 | doi:10.1109/tpami.2018.2858826"
-  possible_innovation_points: Focal Loss 直接迁移到奶山羊密集栏舍缓解类别/难例不均衡；红外小目标羊羔加权
+    - "Focal Loss for Dense Object Detection | 2017(ICCV) | cited:25515 | doi:10.1109/iccv.2017.324 | checked:2026-06-06"
+    - "Focal Loss for Dense Object Detection | 2018(TPAMI 扩展) | cited:9532 | doi:10.1109/tpami.2018.2858826 | checked:2026-06-06"
+  possible_innovation_points: Focal Loss 直接迁移到奶山羊密集栏舍缓解类别/难例不均衡；红外小目标羊羔加权; domain_scope=cv-检测跟踪
   maturity: 主流偏经典（Focal Loss 仍广用；RetinaNet 本体作强基线，已非首选 SOTA）
 ```
 
@@ -91,8 +91,8 @@
   suitable_datasets: COCO、PASCAL VOC
   implementation_repo: AlexeyAB/darknet、ultralytics(早期)、open-mmlab/mmdetection(yolov3)
   representative_papers:
-    - "YOLOv3: An Incremental Improvement | 2018(arXiv 技术报告) | cited:5887 | doi:10.48550/arxiv.1804.02767"
-  possible_innovation_points: 历史基线，奶山羊新项目建议直接用 v8/v11；保留作轻量对比
+    - "YOLOv3: An Incremental Improvement | 2018(arXiv 技术报告) | cited:5887 | doi:10.48550/arxiv.1804.02767 | checked:2026-06-06"
+  possible_innovation_points: 历史基线，奶山羊新项目建议直接用 v8/v11；保留作轻量对比; domain_scope=cv-检测跟踪
   maturity: 过时（被 v5/v8/v11 取代，仅基线/教学）
 ```
 
@@ -109,9 +109,9 @@
   suitable_datasets: COCO、自建奶山羊集（迁移学习友好）
   implementation_repo: ultralytics/yolov5
   representative_papers:
-    - "ultralytics/yolov5: v5.0 - YOLOv5-P6 1280 models 等 (Zenodo 软件发布记录) | 2021 | cited:390 | doi:10.5281/zenodo.4679653"
-    - "ultralytics/yolov5: v3.1 (Zenodo 软件发布) | 2020 | cited:507 | doi:10.5281/zenodo.4154370"
-  possible_innovation_points: 奶山羊小数据迁移训练首选之一；P6 大输入利于俯拍小目标；红外微调；与 ByteTrack 串联做计数/行为
+    - "ultralytics/yolov5: v5.0 - YOLOv5-P6 1280 models 等 (Zenodo 软件发布记录) | 2021 | cited:390 | doi:10.5281/zenodo.4679653 | checked:2026-06-06"
+    - "ultralytics/yolov5: v3.1 (Zenodo 软件发布) | 2020 | cited:507 | doi:10.5281/zenodo.4154370 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊小数据迁移训练首选之一；P6 大输入利于俯拍小目标；红外微调；与 ByteTrack 串联做计数/行为; domain_scope=cv-检测跟踪
   maturity: 主流（工业部署广泛；学术上 v8/v11 更新，但 v5 仍稳）
 ```
 
@@ -128,9 +128,9 @@
   suitable_datasets: COCO、自建奶山羊集
   implementation_repo: ultralytics/ultralytics
   representative_papers:
-    - "YOLOv8: A Novel Object Detection Algorithm with Enhanced Performance and Robustness | 2024 | cited:1506 | doi:10.1109/adics58448.2024.10533619 [注：第三方评测/应用论文，非官方原始发布；官方仅代码]"
-    - "UAV-YOLOv8: Small-Object-Detection Model Based on Improved YOLOv8 for UAV | 2023 | cited:841 | doi:10.3390/s23167190 [小目标改进代表作]"
-  possible_innovation_points: 奶山羊场景一体化首选——检测+姿态(跛行/发情行为)+内置跟踪计数；俯拍小目标用小目标头改进(参考 UAV-YOLOv8)；红外微调
+    - "YOLOv8: A Novel Object Detection Algorithm with Enhanced Performance and Robustness | 2024 | cited:1506 | doi:10.1109/adics58448.2024.10533619 [注：第三方评测/应用论文，非官方原始发布；官方仅代码] | checked:2026-06-06"
+    - "UAV-YOLOv8: Small-Object-Detection Model Based on Improved YOLOv8 for UAV | 2023 | cited:841 | doi:10.3390/s23167190 [小目标改进代表作] | checked:2026-06-06"
+  possible_innovation_points: 奶山羊场景一体化首选——检测+姿态(跛行/发情行为)+内置跟踪计数；俯拍小目标用小目标头改进(参考 UAV-YOLOv8)；红外微调; domain_scope=cv-检测跟踪
   maturity: 主流（当前工业与农牧 CV 落地最常用之一）
 ```
 
@@ -147,9 +147,9 @@
   suitable_datasets: COCO、DOTA(OBB)、自建奶山羊集
   implementation_repo: ultralytics/ultralytics
   representative_papers:
-    - "Research on object detection and recognition in remote sensing images based on YOLOv11 | 2025 | cited:141 | doi:10.1038/s41598-025-96314-x [应用代表作，非官方原始]"
-    - "MAS-YOLOv11: Improved Underwater Object Detection Based on YOLOv11 | 2025 | cited:24 | doi:10.3390/s25113433"
-  possible_innovation_points: 奶山羊俯拍可用 OBB 旋转框贴合羊只朝向；轻量版上场端盒子；与跟踪串联做夜间红外计数
+    - "Research on object detection and recognition in remote sensing images based on YOLOv11 | 2025 | cited:141 | doi:10.1038/s41598-025-96314-x [应用代表作，非官方原始] | checked:2026-06-06"
+    - "MAS-YOLOv11: Improved Underwater Object Detection Based on YOLOv11 | 2025 | cited:24 | doi:10.3390/s25113433 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊俯拍可用 OBB 旋转框贴合羊只朝向；轻量版上场端盒子；与跟踪串联做夜间红外计数; domain_scope=cv-检测跟踪
   maturity: 新兴主流（2024 最新稳定版，快速普及中）
 ```
 
@@ -166,8 +166,8 @@
   suitable_datasets: COCO、自建奶山羊集
   implementation_repo: Megvii-BaseDetection/YOLOX
   representative_papers:
-    - "YOLOX: Exceeding YOLO Series in 2021 | 2021(arXiv) | cited:3016 | doi:10.48550/arxiv.2107.08430"
-  possible_innovation_points: 作 ByteTrack 检测前端用于奶山羊跟踪；SimOTA 缓解密集羊只标签分配；红外微调
+    - "YOLOX: Exceeding YOLO Series in 2021 | 2021(arXiv) | cited:3016 | doi:10.48550/arxiv.2107.08430 | checked:2026-06-06"
+  possible_innovation_points: 作 ByteTrack 检测前端用于奶山羊跟踪；SimOTA 缓解密集羊只标签分配；红外微调; domain_scope=cv-检测跟踪
   maturity: 主流（ByteTrack 生态常用检测器；通用检测被 v8/v11 部分替代）
 ```
 
@@ -184,8 +184,8 @@
   suitable_datasets: COCO
   implementation_repo: facebookresearch/detr、open-mmlab/mmdetection
   representative_papers:
-    - "End-to-End Object Detection with Transformers | 2020(ECCV) | cited:831 | doi:10.1007/978-3-030-58452-8_13 [注：DETR 原论文影响力远高，OpenAlex 该 ECCV 记录被引偏低，另有 arXiv/会议合并条目分散计数，待核查合并]"
-  possible_innovation_points: 无 NMS 特性利于奶山羊密集遮挡(免重叠框抑制误删)；但小目标弱+收敛慢，红外小数据慎用
+    - "End-to-End Object Detection with Transformers | 2020(ECCV) | cited:831 | doi:10.1007/978-3-030-58452-8_13 [注：DETR 原论文影响力远高，OpenAlex 该 ECCV 记录被引偏低，另有 arXiv/会议合并条目分散计数，待核查合并] | checked:2026-06-06"
+  possible_innovation_points: 无 NMS 特性利于奶山羊密集遮挡(免重叠框抑制误删)；但小目标弱+收敛慢，红外小数据慎用; domain_scope=cv-检测跟踪
   maturity: 经典/奠基（开创 DETR 范式；本体已被 Deformable/DINO/RT-DETR 全面超越，少直接用）
 ```
 
@@ -202,8 +202,8 @@
   suitable_datasets: COCO
   implementation_repo: fundamentalvision/Deformable-DETR、open-mmlab/mmdetection
   representative_papers:
-    - "Deformable DETR: Deformable Transformers for End-to-End Object Detection | 2020(arXiv/ICLR2021) | cited:1868 | doi:10.48550/arxiv.2010.04159"
-  possible_innovation_points: 多尺度可变形注意力利于俯拍奶山羊尺度差异；小目标羊羔较 DETR 友好；deformable 算子部署需评估
+    - "Deformable DETR: Deformable Transformers for End-to-End Object Detection | 2020(arXiv/ICLR2021) | cited:1868 | doi:10.48550/arxiv.2010.04159 | checked:2026-06-06"
+  possible_innovation_points: 多尺度可变形注意力利于俯拍奶山羊尺度差异；小目标羊羔较 DETR 友好；deformable 算子部署需评估; domain_scope=cv-检测跟踪
   maturity: 主流（DETR 系实用化关键节点，后续 DINO/RT-DETR 的基础）
 ```
 
@@ -220,9 +220,9 @@
   suitable_datasets: COCO、自建奶山羊集
   implementation_repo: lyuwenyu/RT-DETR（PaddlePaddle/PyTorch）、ultralytics(rtdetr)
   representative_papers:
-    - "DETRs Beat YOLOs on Real-time Object Detection | 2024(CVPR) | cited:3234 | doi:10.1109/cvpr52733.2024.01605"
-    - "DETRs Beat YOLOs on Real-time Object Detection | 2023(arXiv) | cited:231 | doi:10.48550/arxiv.2304.08069"
-  possible_innovation_points: 奶山羊密集栏舍免 NMS 实时检测，缓解遮挡羊只被 NMS 误删；与 ByteTrack 串联；红外需较大数据微调
+    - "DETRs Beat YOLOs on Real-time Object Detection | 2024(CVPR) | cited:3234 | doi:10.1109/cvpr52733.2024.01605 | checked:2026-06-06"
+    - "DETRs Beat YOLOs on Real-time Object Detection | 2023(arXiv) | cited:231 | doi:10.48550/arxiv.2304.08069 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊密集栏舍免 NMS 实时检测，缓解遮挡羊只被 NMS 误删；与 ByteTrack 串联；红外需较大数据微调; domain_scope=cv-检测跟踪
   maturity: 新兴主流（实时 DETR 代表，2024 起快速落地）
 ```
 
@@ -239,9 +239,9 @@
   suitable_datasets: COCO、Objects365(预训练)
   implementation_repo: IDEA-Research/DINO、open-mmlab/mmdetection
   representative_papers:
-    - "DINO: DETR with Improved DeNoising Anchor Boxes for End-to-End Object Detection | 2022(arXiv/ICLR2023) | cited:758 | doi:10.48550/arxiv.2203.03605"
-    - "Mask DINO: Towards A Unified Transformer-based Framework for Detection and Segmentation | 2023(CVPR) | cited:476 | doi:10.1109/cvpr52729.2023.00297"
-  possible_innovation_points: 追求奶山羊检测精度上界/离线标注时可用；去噪训练利于密集小目标；实时与边缘场景不优先
+    - "DINO: DETR with Improved DeNoising Anchor Boxes for End-to-End Object Detection | 2022(arXiv/ICLR2023) | cited:758 | doi:10.48550/arxiv.2203.03605 | checked:2026-06-06"
+    - "Mask DINO: Towards A Unified Transformer-based Framework for Detection and Segmentation | 2023(CVPR) | cited:476 | doi:10.1109/cvpr52729.2023.00297 | checked:2026-06-06"
+  possible_innovation_points: 追求奶山羊检测精度上界/离线标注时可用；去噪训练利于密集小目标；实时与边缘场景不优先; domain_scope=cv-检测跟踪
   maturity: 主流（DETR 系高精度代表；实时需求转向 RT-DETR）
 ```
 
@@ -258,9 +258,9 @@
   suitable_datasets: COCO、PASCAL VOC
   implementation_repo: open-mmlab/mmdetection、facebookresearch/detectron2
   representative_papers:
-    - "Cascade R-CNN: Delving Into High Quality Object Detection | 2018(CVPR) | cited:6750 | doi:10.1109/cvpr.2018.00644"
-    - "Cascade R-CNN (arXiv) | 2017 | cited:397 | doi:10.48550/arxiv.1712.00726"
-  possible_innovation_points: 奶山羊高精度离线标注/精确定位（如乳房/蹄部测量）可用；实时计数不推荐
+    - "Cascade R-CNN: Delving Into High Quality Object Detection | 2018(CVPR) | cited:6750 | doi:10.1109/cvpr.2018.00644 | checked:2026-06-06"
+    - "Cascade R-CNN (arXiv) | 2017 | cited:397 | doi:10.48550/arxiv.1712.00726 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊高精度离线标注/精确定位（如乳房/蹄部测量）可用；实时计数不推荐; domain_scope=cv-检测跟踪
   maturity: 主流偏经典（高精度强基线；实时场景非首选）
 ```
 
@@ -277,8 +277,8 @@
   suitable_datasets: COCO、PASCAL VOC
   implementation_repo: xingyizhou/CenterNet、open-mmlab/mmdetection
   representative_papers:
-    - "Objects as Points | 2019(arXiv) | cited:739 | doi: (OpenAlex 无 DOI，arXiv:1904.07850，待核查 DOI)"
-  possible_innovation_points: 中心点范式利于奶山羊计数与中心轨迹跟踪(CenterTrack)；密集遮挡羊只中心粘连需改进
+    - "Objects as Points | 2019(arXiv) | cited:739 | doi: (OpenAlex 无 DOI，arXiv:1904.07850，待核查 DOI) | checked:2026-06-06"
+  possible_innovation_points: 中心点范式利于奶山羊计数与中心轨迹跟踪(CenterTrack)；密集遮挡羊只中心粘连需改进; domain_scope=cv-检测跟踪
   maturity: 主流偏经典（anchor-free 奠基之一；通用检测被 YOLO/DETR 系超越）
 ```
 
@@ -295,9 +295,9 @@
   suitable_datasets: COCO、PASCAL VOC
   implementation_repo: tianzhi0549/FCOS、open-mmlab/mmdetection、facebookresearch/detectron2
   representative_papers:
-    - "FCOS: Fully Convolutional One-Stage Object Detection | 2019(ICCV) | cited:6063 | doi:10.1109/iccv.2019.00972"
-    - "FCOS (arXiv) | 2019 | cited:802 | doi:10.48550/arxiv.1904.01355"
-  possible_innovation_points: anchor-free 利于俯拍奶山羊多朝向；center-ness 思想可缓解栏栅边缘误检；作 anchor-free 对比基线
+    - "FCOS: Fully Convolutional One-Stage Object Detection | 2019(ICCV) | cited:6063 | doi:10.1109/iccv.2019.00972 | checked:2026-06-06"
+    - "FCOS (arXiv) | 2019 | cited:802 | doi:10.48550/arxiv.1904.01355 | checked:2026-06-06"
+  possible_innovation_points: anchor-free 利于俯拍奶山羊多朝向；center-ness 思想可缓解栏栅边缘误检；作 anchor-free 对比基线; domain_scope=cv-检测跟踪
   maturity: 主流偏经典（anchor-free 经典强基线；非当前 SOTA）
 ```
 
@@ -316,8 +316,8 @@
   suitable_datasets: MOT15/16/17、MOT20
   implementation_repo: abewley/sort
   representative_papers:
-    - "Simple online and realtime tracking | 2016(ICIP) | cited:3873 | doi:10.1109/icip.2016.7533003"
-  possible_innovation_points: 奶山羊外观相似 re-id 难时，纯运动 SORT 反而稳；但栏舍遮挡重→ID switch 多，建议升级到 OC-SORT/ByteTrack
+    - "Simple online and realtime tracking | 2016(ICIP) | cited:3873 | doi:10.1109/icip.2016.7533003 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊外观相似 re-id 难时，纯运动 SORT 反而稳；但栏舍遮挡重→ID switch 多，建议升级到 OC-SORT/ByteTrack; domain_scope=cv-检测跟踪
   maturity: 经典（实时基线常青；现代多用其改进版）
 ```
 
@@ -334,9 +334,9 @@
   suitable_datasets: MOT15/16/17、MOT20
   implementation_repo: nwojke/deep_sort、levan92/deep_sort_realtime
   representative_papers:
-    - "Simple online and realtime tracking with a deep association metric | 2017(ICIP) | cited:4634 | doi:10.1109/icip.2017.8296962"
-    - "DeepSORT (arXiv) | 2017 | cited:119 | doi:10.48550/arxiv.1703.07402"
-  possible_innovation_points: 奶山羊同品种白色外观高度相似，通用 re-id embedding 区分度低→易误关联；建议改用花纹/耳标/部位特征训练专用 re-id，或弱化外观权重
+    - "Simple online and realtime tracking with a deep association metric | 2017(ICIP) | cited:4634 | doi:10.1109/icip.2017.8296962 | checked:2026-06-06"
+    - "DeepSORT (arXiv) | 2017 | cited:119 | doi:10.48550/arxiv.1703.07402 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊同品种白色外观高度相似，通用 re-id embedding 区分度低→易误关联；建议改用花纹/耳标/部位特征训练专用 re-id，或弱化外观权重; domain_scope=cv-检测跟踪
   maturity: 经典/主流（行业广用基线；外观相似家畜场景需谨慎）
 ```
 
@@ -353,9 +353,9 @@
   suitable_datasets: MOT17、MOT20、DanceTrack
   implementation_repo: ifzhang/ByteTrack（官方）、ultralytics 内置
   representative_papers:
-    - "ByteTrack: Multi-object Tracking by Associating Every Detection Box | 2022(ECCV) | cited:2018 | doi:10.1007/978-3-031-20047-2_1"
-    - "ByteTrack (arXiv) | 2021 | cited:105 | doi:10.48550/arxiv.2110.06864"
-  possible_innovation_points: 奶山羊场景强烈推荐——低分框二次关联恰好救回栏舍遮挡羊只；无需 re-id 规避外观相似难题；与 YOLOv8/v11 串联做计数
+    - "ByteTrack: Multi-object Tracking by Associating Every Detection Box | 2022(ECCV) | cited:2018 | doi:10.1007/978-3-031-20047-2_1 | checked:2026-06-06"
+    - "ByteTrack (arXiv) | 2021 | cited:105 | doi:10.48550/arxiv.2110.06864 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊场景强烈推荐——低分框二次关联恰好救回栏舍遮挡羊只；无需 re-id 规避外观相似难题；与 YOLOv8/v11 串联做计数; domain_scope=cv-检测跟踪
   maturity: 主流（当前 MOT 事实标准强基线，落地极广）
 ```
 
@@ -372,8 +372,8 @@
   suitable_datasets: MOT17、MOT20、DanceTrack
   implementation_repo: NirAharon/BoT-SORT（官方）、ultralytics 内置
   representative_papers:
-    - "BoT-SORT: Robust Associations Multi-Pedestrian Tracking | 2022(arXiv) | cited:309 | doi:10.48550/arxiv.2206.14651"
-  possible_innovation_points: 奶山羊俯拍若用云台/移动相机，CMC 补偿很有用；建议关闭/弱化 re-id（外观相似）只用运动+CMC；栏舍固定相机时退化为 ByteTrack 即可
+    - "BoT-SORT: Robust Associations Multi-Pedestrian Tracking | 2022(arXiv) | cited:309 | doi:10.48550/arxiv.2206.14651 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊俯拍若用云台/移动相机，CMC 补偿很有用；建议关闭/弱化 re-id（外观相似）只用运动+CMC；栏舍固定相机时退化为 ByteTrack 即可; domain_scope=cv-检测跟踪
   maturity: 主流（ByteTrack 强化版，ultralytics 默认跟踪器之一）
 ```
 
@@ -390,9 +390,9 @@
   suitable_datasets: MOT17、MOT20、DanceTrack（非线性运动强项）
   implementation_repo: noahcao/OC_SORT、ultralytics(可选)
   representative_papers:
-    - "Observation-Centric SORT: Rethinking SORT for Robust Multi-Object Tracking | 2023(CVPR) | cited:830 | doi:10.1109/cvpr52729.2023.00934"
-    - "OC-SORT (arXiv) | 2022 | cited:33 | doi:10.48550/arxiv.2203.14360"
-  possible_innovation_points: 奶山羊跳跃/转身等非线性运动 + 遮挡后重现，OC-SORT 的观测回溯很契合；无 re-id 依赖恰避开外观相似难题，强烈推荐与 ByteTrack 并列候选
+    - "Observation-Centric SORT: Rethinking SORT for Robust Multi-Object Tracking | 2023(CVPR) | cited:830 | doi:10.1109/cvpr52729.2023.00934 | checked:2026-06-06"
+    - "OC-SORT (arXiv) | 2022 | cited:33 | doi:10.48550/arxiv.2203.14360 | checked:2026-06-06"
+  possible_innovation_points: 奶山羊跳跃/转身等非线性运动 + 遮挡后重现，OC-SORT 的观测回溯很契合；无 re-id 依赖恰避开外观相似难题，强烈推荐与 ByteTrack 并列候选; domain_scope=cv-检测跟踪
   maturity: 主流（DanceTrack 等遮挡/非线性基准强；家畜场景潜力大）
 ```
 
@@ -409,9 +409,9 @@
   suitable_datasets: MOT17、MOT20
   implementation_repo: dyhBUPT/StrongSORT、mikel-brostrom/boxmot
   representative_papers:
-    - "StrongSORT: Make DeepSORT Great Again | 2023(TMM) | cited:991 | doi:10.1109/tmm.2023.3240881"
-    - "StrongSORT (arXiv) | 2022 | cited:20 | doi:10.48550/arxiv.2202.13514"
-  possible_innovation_points: GSI 插值可补奶山羊遮挡断轨；但强 re-id 在相似白羊上增益有限，建议保留 GSI/AFLink、改用专用 re-id；计算重不利边缘
+    - "StrongSORT: Make DeepSORT Great Again | 2023(TMM) | cited:991 | doi:10.1109/tmm.2023.3240881 | checked:2026-06-06"
+    - "StrongSORT (arXiv) | 2022 | cited:20 | doi:10.48550/arxiv.2202.13514 | checked:2026-06-06"
+  possible_innovation_points: GSI 插值可补奶山羊遮挡断轨；但强 re-id 在相似白羊上增益有限，建议保留 GSI/AFLink、改用专用 re-id；计算重不利边缘; domain_scope=cv-检测跟踪
   maturity: 主流（高精度离线 MOT 选择；实时/边缘逊于 ByteTrack）
 ```
 
@@ -428,8 +428,8 @@
   suitable_datasets: MOT15/16/17、MOT20
   implementation_repo: ifzhang/FairMOT
   representative_papers:
-    - "FairMOT: On the Fairness of Detection and Re-identification in Multiple Object Tracking | 2021(IJCV) | cited:1475 | doi:10.1007/s11263-021-01513-4"
-  possible_innovation_points: one-shot 省算力适合边缘奶山羊跟踪；但其卖点 re-id 在相似白羊上优势缩水→可借其框架改用部位/花纹分支；夜间红外需重训
+    - "FairMOT: On the Fairness of Detection and Re-identification in Multiple Object Tracking | 2021(IJCV) | cited:1475 | doi:10.1007/s11263-021-01513-4 | checked:2026-06-06"
+  possible_innovation_points: one-shot 省算力适合边缘奶山羊跟踪；但其卖点 re-id 在相似白羊上优势缩水→可借其框架改用部位/花纹分支；夜间红外需重训; domain_scope=cv-检测跟踪
   maturity: 主流偏经典（one-shot MOT 代表；纯指标上 ByteTrack 系更优）
 ```
 
@@ -446,9 +446,9 @@
   suitable_datasets: MOT15/16/17
   implementation_repo: Zhongdao/Towards-Realtime-MOT
   representative_papers:
-    - "Towards Real-Time Multi-Object Tracking | 2020(ECCV) | cited:1065 | doi:10.1007/978-3-030-58621-8_7"
-    - "Towards Real-Time Multi-Object Tracking (arXiv) | 2019 | cited:32 | doi:10.48550/arxiv.1909.12605"
-  possible_innovation_points: 历史 one-shot 基线；奶山羊新项目建议直接用 FairMOT 后继或 ByteTrack，JDE 作对比
+    - "Towards Real-Time Multi-Object Tracking | 2020(ECCV) | cited:1065 | doi:10.1007/978-3-030-58621-8_7 | checked:2026-06-06"
+    - "Towards Real-Time Multi-Object Tracking (arXiv) | 2019 | cited:32 | doi:10.48550/arxiv.1909.12605 | checked:2026-06-06"
+  possible_innovation_points: 历史 one-shot 基线；奶山羊新项目建议直接用 FairMOT 后继或 ByteTrack，JDE 作对比; domain_scope=cv-检测跟踪
   maturity: 过时偏经典（被 FairMOT 等改进取代，作 one-shot 起点参考）
 ```
 
@@ -465,9 +465,9 @@
   suitable_datasets: MOT17、DanceTrack、BDD100K
   implementation_repo: megvii-research/MOTR
   representative_papers:
-    - "MOTR: End-to-End Multiple-Object Tracking with Transformer | 2022(ECCV) | cited:578 | doi:10.1007/978-3-031-19812-0_38"
-    - "MOTR (arXiv) | 2021 | cited:16 | doi:10.48550/arxiv.2105.03247"
-  possible_innovation_points: 端到端 query 传播理论上利于奶山羊密集遮挡(免关联启发式)；但训练贵、边缘难、小数据不友好，目前研究性强于落地
+    - "MOTR: End-to-End Multiple-Object Tracking with Transformer | 2022(ECCV) | cited:578 | doi:10.1007/978-3-031-19812-0_38 | checked:2026-06-06"
+    - "MOTR (arXiv) | 2021 | cited:16 | doi:10.48550/arxiv.2105.03247 | checked:2026-06-06"
+  possible_innovation_points: 端到端 query 传播理论上利于奶山羊密集遮挡(免关联启发式)；但训练贵、边缘难、小数据不友好，目前研究性强于落地; domain_scope=cv-检测跟踪
   maturity: 新兴（端到端 MOT 研究主线；工程落地不及 tracking-by-detection）
 ```
 
@@ -484,8 +484,8 @@
   suitable_datasets: MOT17、MOT20
   implementation_repo: PeizeSun/TransTrack
   representative_papers:
-    - "TransTrack: Multiple Object Tracking with Transformer | 2020(arXiv) | cited:359 | doi:10.48550/arxiv.2012.15460"
-  possible_innovation_points: Transformer MOT 早期代表，奶山羊场景作研究对比；落地建议优先 ByteTrack/OC-SORT
+    - "TransTrack: Multiple Object Tracking with Transformer | 2020(arXiv) | cited:359 | doi:10.48550/arxiv.2012.15460 | checked:2026-06-06"
+  possible_innovation_points: Transformer MOT 早期代表，奶山羊场景作研究对比；落地建议优先 ByteTrack/OC-SORT; domain_scope=cv-检测跟踪
   maturity: 新兴偏过时（开创 query-based MOT，已被 MOTR 等超越，作里程碑参考）
 ```
 

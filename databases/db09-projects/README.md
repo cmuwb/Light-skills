@@ -2,8 +2,23 @@
 
 为每个科研项目建立**独立**知识库，长期陪伴项目从选题到成果转化。这是 a02(记忆PM)、a07(一致性) 的状态中枢，所有技能的产出都在此登记。
 
+## 这个库是什么(诚实卖点)
+
+db09 是**项目状态中枢 + B-fact 回指在线源**。与其他 8 库不同,**本库卡数/字段不缩水**(~82% 是项目状态 C 类,在线源不知道"你上周决定弃用 re-id",这正是它存在的唯一理由,必须本地)——重构只是把卡内少量对外部事实的引用(venue 计量/数据集许可/DOI)的**引用方式变严**:不再隐含"db09 自带权威计量",改为带时间戳的快照线索 + 回指真相源。这与其他库"卡数缩水"性质不同。
+
+- **状态层(C 类,本地精养,核心)**:project_card 14 字段、decision_log、version_history、terminology、saved_search、known_dois、watch_report——项目专属、在线不可得,不动 schema、不转实时。
+- **方法论层(A 通用,本地)**:lessons.md 跨项目过程教训,归档时去偏科化回写。
+- **B-fact 引用三件套(对外部事实的引用)**:见下纪律节。
+
 ## project_card schema
 `project_name, goal, current_stage, confirmed_idea, data_status, method_status, experiment_status, paper_status, ppt_status, code_status, risk_list, next_actions, decision_log, version_history`
+
+## B-fact 引用三件套纪律（硬性）
+db09 卡内凡引用 **venue 计量 / 数据集许可/DOI / 外部数值** 等他库权威事实,**不当自带权威**,必须写成三件套:**快照值(可带 ≈) + `[snapshot YYYY-MM-DD, src=dbNN:文件#定位, 用前重核, 冲突信在线]`**。`palette.json` 是既成样板(每 token 带 source 回指 db05/db06 + last_checked + 顶层 `$aligned_with`)。
+- **存值但标快照**:允许本地留数值(无网时有线索),但带 last_checked,绝不假装是当前值。
+- **超期重核(a02 读卡时)**:计量值(h_index/被引)>90 天、许可类 >365 天给"需重核"提示,投稿/用前以在线/官方源为准。
+- **冲突信在线**:重核后不一致就地更新快照值 + last_checked。
+- 现存三处:decision_log venue 计量(回指 db01:venues.csv)、project_card/terminology 数据集许可DOI(回指 db04)、palette hex(回指 db05 DTCG)。
 
 - `current_stage`: 资料调研 | idea 构思 | 方案确认 | 数据准备 | 实验实现 | 结果分析 | 论文写作 | 图表制作 | 投稿准备 | 答辩展示 | 成果转化
 - `archived`（可选，归档专用）：项目完结后加 `archived: YYYY-MM-DD`（可再加 `archive_reason:`）。属**可选**字段，不在上述 14 必填字段内，check_databases 校验只认 14 必填、对额外字段兼容。归档协议见下「项目归档」节，执行者是 a02(light-memory-pm)。
@@ -41,7 +56,7 @@ projects/<project_name>/
 ```
 
 ## palette.json — 跨材料共享色板（视觉 SSOT 实例）
-解决"slides 与 figure 风格统一只能靠 a07 人工把关"：项目级一份 `palette.json`，论文图(m11/db07)、PPT(m16/db06，含 R6 style_anchor)、前端(a05/db05)三方共读——**有则必用**，谁都不另起一套色板；a07 的"跨材料配色一致"检查改为对照本文件。
+解决"slides 与 figure 风格统一只能靠 a07 人工把关"：项目级一份 `palette.json`，论文图(m11/db07)、PPT(m16/db06)、前端(a05/db05)三方共读——**有则必用**，谁都不另起一套色板；a07 的"跨材料配色一致"检查改为对照本文件。
 
 它是 db05 `design_tokens.template.json`（DTCG 视觉 SSOT，色值锚点真相源，a05/a07 维护）在本项目的**落地副本/扁平视图**，字段与之对齐，色值最终以 db05 DTCG 模板为准。改色只改这一份并触发 a07 变更广播回扫下游。
 

@@ -21,9 +21,9 @@
   suitable_datasets: World Bank WDI、OECD、Penn World Table、上市公司面板、城市/地区政策面板
   implementation_repo: R did/fixest、Stata csdid/reghdfe、Python linearmodels/statsmodels
   representative_papers:
-    - "Difference-in-Differences with multiple time periods | 2020 | cited:1413 | doi:10.1016/j.jeconom.2020.12.001"
-    - "Synthetic Control Methods for Comparative Case Studies: Estimating the Effect of California’s Tobacco Control Program | 2010 | cited:5388 | doi:10.1198/jasa.2009.ap08746"
-  possible_innovation_points: 异质处理效应估计、空间溢出 DiD、机器学习构造对照组、政策强度连续处理、多源数据融合的动态效应
+    - "Difference-in-Differences with multiple time periods | 2020 | cited:1413 | doi:10.1016/j.jeconom.2020.12.001 | checked:2026-06-10"
+    - "Synthetic Control Methods for Comparative Case Studies: Estimating the Effect of California’s Tobacco Control Program | 2010 | cited:5388 | doi:10.1198/jasa.2009.ap08746 | checked:2026-06-10"
+  possible_innovation_points: 异质处理效应估计、空间溢出 DiD、机器学习构造对照组、政策强度连续处理、多源数据融合的动态效应; domain_scope=统计经济金融
   maturity: 主流  # 政策评估核心工具；多期 DiD 新规范已逐渐取代简单 TWFE
 
 - method_name: 工具变量与局部平均处理效应 (IV / LATE)
@@ -38,9 +38,9 @@
   suitable_datasets: 劳动经济、教育政策、医疗政策、金融冲击、自然实验数据
   implementation_repo: R ivreg/AER、Stata ivreg2、Python linearmodels.iv
   representative_papers:
-    - "Identification of Causal Effects Using Instrumental Variables | 1996 | cited:4203 | doi:10.1080/01621459.1996.10476902"
-    - "Double/debiased machine learning for treatment and structural parameters | 2017 | cited:2420 | doi:10.1111/ectj.12097"
-  possible_innovation_points: 高维控制下的 DML-IV、弱工具稳健推断、空间/网络工具变量、机器学习发现候选工具后的人工识别审查
+    - "Identification of Causal Effects Using Instrumental Variables | 1996 | cited:4203 | doi:10.1080/01621459.1996.10476902 | checked:2026-06-10"
+    - "Double/debiased machine learning for treatment and structural parameters | 2017 | cited:2420 | doi:10.1111/ectj.12097 | checked:2026-06-10"
+  possible_innovation_points: 高维控制下的 DML-IV、弱工具稳健推断、空间/网络工具变量、机器学习发现候选工具后的人工识别审查; domain_scope=统计经济金融
   maturity: 经典  # 计量经济学核心识别工具，DML 扩展让高维控制场景更可用
 
 - method_name: 断点回归设计 (Regression Discontinuity Design, RDD)
@@ -55,9 +55,9 @@
   suitable_datasets: 教育录取线、社保/医保资格线、最低工资/税收门槛、金融监管阈值
   implementation_repo: R rdrobust/rdd、Stata rdrobust、Python rdd/linearmodels 自实现
   representative_papers:
-    - "Regression Discontinuity Designs in Economics | 2010 | cited:65 | doi:10.1257/jel.48.2.281"
-    - "The central role of the propensity score in observational studies for causal effects | 1983 | cited:30848 | doi:10.1093/biomet/70.1.41"
-  possible_innovation_points: 多阈值/空间 RDD、fuzzy RDD 与 IV 结合、机器学习辅助带宽/异质效应、阈值操纵鲁棒诊断
+    - "Regression Discontinuity Designs in Economics | 2010 | cited:65 | doi:10.1257/jel.48.2.281 | checked:2026-06-10"
+    - "The central role of the propensity score in observational studies for causal effects | 1983 | cited:30848 | doi:10.1093/biomet/70.1.41 | checked:2026-06-10"
+  possible_innovation_points: 多阈值/空间 RDD、fuzzy RDD 与 IV 结合、机器学习辅助带宽/异质效应、阈值操纵鲁棒诊断; domain_scope=统计经济金融
   maturity: 主流  # 准实验研究常用设计；需要严格图示和稳健性检查
 
 - method_name: 倾向得分与匹配/加权 (Propensity Score Matching / IPW)
@@ -72,9 +72,9 @@
   suitable_datasets: MIMIC-IV/临床观察数据、社会调查、政策项目评估、用户增长/营销数据
   implementation_repo: R MatchIt/WeightIt/cobalt、Python causalinference/EconML/DoWhy
   representative_papers:
-    - "The central role of the propensity score in observational studies for causal effects | 1983 | cited:30848 | doi:10.1093/biomet/70.1.41"
-    - "Machine learning in the estimation of causal effects: targeted minimum loss-based estimation and double/debiased machine learning | 2019 | cited:79 | doi:10.1093/biostatistics/kxz042"
-  possible_innovation_points: ML 倾向得分、双重稳健估计、重叠性自动诊断、临床研究报告规范化、未观测混杂敏感性可视化
+    - "The central role of the propensity score in observational studies for causal effects | 1983 | cited:30848 | doi:10.1093/biomet/70.1.41 | checked:2026-06-10"
+    - "Machine learning in the estimation of causal effects: targeted minimum loss-based estimation and double/debiased machine learning | 2019 | cited:79 | doi:10.1093/biostatistics/kxz042 | checked:2026-06-10"
+  possible_innovation_points: ML 倾向得分、双重稳健估计、重叠性自动诊断、临床研究报告规范化、未观测混杂敏感性可视化; domain_scope=统计经济金融
   maturity: 经典  # 观察性研究标准工具，但必须强调“只能平衡可观测协变量”
 
 - method_name: 金融波动与时序模型 (GARCH / VAR)
@@ -89,9 +89,9 @@
   suitable_datasets: FRED-MD、Fama-French 因子、WRDS/CRSP、Yahoo Finance、Wind/CSMAR(授权)
   implementation_repo: R rugarch/vars、Python arch/statsmodels、MATLAB Econometrics Toolbox
   representative_papers:
-    - "Generalized autoregressive conditional heteroskedasticity | 1986 | cited:22242 | doi:10.1016/0304-4076(86)90063-1"
-    - "Macroeconomics and Reality | 1980 | cited:12679 | doi:10.2307/1912017"
-  possible_innovation_points: GARCH+深度混合、宏观高维因子+VAR、结构突变检测、尾部风险/极端事件建模、可解释 ML 与传统时序对照
+    - "Generalized autoregressive conditional heteroskedasticity | 1986 | cited:22242 | doi:10.1016/0304-4076(86)90063-1 | checked:2026-06-10"
+    - "Macroeconomics and Reality | 1980 | cited:12679 | doi:10.2307/1912017 | checked:2026-06-10"
+  possible_innovation_points: GARCH+深度混合、宏观高维因子+VAR、结构突变检测、尾部风险/极端事件建模、可解释 ML 与传统时序对照; domain_scope=统计经济金融
   maturity: 经典  # 金融/宏观时序标准基线，任何新模型都应与之比较
 
 - method_name: 分位数回归与异质效应建模 (Quantile Regression / Causal Forest)
@@ -106,8 +106,8 @@
   suitable_datasets: 收入/工资分布、信用风险、医疗治疗效果、市场营销 uplift 数据
   implementation_repo: R quantreg/grf、Python statsmodels QuantReg、EconML/causalml、LightGBM quantile objective
   representative_papers:
-    - "Regression Quantiles | 1978 | cited:12772 | doi:10.2307/1913643"
-    - "Generalized random forests | 2019 | cited:16 | doi:10.1214/18-aos1709"
-  possible_innovation_points: 公平性下的分布效应、尾部风险个体化预警、CATE 与机制解释结合、稳健分位数因果推断
+    - "Regression Quantiles | 1978 | cited:12772 | doi:10.2307/1913643 | checked:2026-06-10"
+    - "Generalized random forests | 2019 | cited:16 | doi:10.1214/18-aos1709 | checked:2026-06-10"
+  possible_innovation_points: 公平性下的分布效应、尾部风险个体化预警、CATE 与机制解释结合、稳健分位数因果推断; domain_scope=统计经济金融
   maturity: 主流  # 分位数回归经典，因果森林是异质效应主流现代工具
 ```

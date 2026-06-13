@@ -15,7 +15,7 @@
   annotation_style: 轴标注明指标方向(如"Calibration(1-ECE)""Brier(inverted)"避免读反); 图例置底部横排
   caption_style: 说明各轴归一方式与方向, 强调"高=好"已统一; 注明数据来源与聚合方式
   possible_code_tool: matplotlib polar subplot (subplot_kw=dict(polar=True))
-  replication_notes: 雷达图易误导——轴顺序/缩放会改变形状观感; 必须统一方向并标注, 指标数≤6; 不可只挑对自己有利的轴
+  replication_notes: 遵 R3(雷达统一方向标注/指标数≤6); 图型特异——轴顺序/缩放会改变形状观感, 不可只挑对自己有利的轴
   where_to_place_in_paper: 结果-总体权衡概览(或答辩首图)
 
 - figure_type: 小提琴图+散点(分布对比)
@@ -28,7 +28,7 @@
   annotation_style: 散点抖动避免重叠, 均值用大菱形, 基线用 muted 虚线参照
   caption_style: 说明每个分布的样本量与聚合维度; 强调看的是"分布宽窄/偏移"而非单点
   possible_code_tool: matplotlib violinplot + scatter 抖动 (seaborn violinplot 亦可)
-  replication_notes: 小提琴在小样本下 KDE 会失真——务必叠原始散点让读者看真实分布; 不要只画小提琴隐藏点数
+  replication_notes: 遵 R5(小样本叠原始散点); 图型特异——小提琴在小样本下 KDE 会失真, 不要只画小提琴隐藏点数
   where_to_place_in_paper: 结果-稳定性/方差分析
 
 - figure_type: 斜率图(前后配对变化)
@@ -41,7 +41,7 @@
   annotation_style: 端点直接标数值与数据集名, 隐藏多余坐标轴(去 top/right/bottom spine)
   caption_style: 说明两状态含义与配对单位; 强调"几乎全部下行"这一一致性
   possible_code_tool: matplotlib 两点连线 + text 标注
-  replication_notes: 斜率图只适合配对/前后对比, 线条交叉多时改用其他图; y 轴不截断以免夸大斜率
+  replication_notes: 遵 R1(y 轴不截断以免夸大斜率); 图型特异——只适合配对/前后对比, 线条交叉多时改用其他图
   where_to_place_in_paper: 结果-校准修复效果
 
 - figure_type: 气泡散点图(三变量, 含 log 轴)
@@ -54,7 +54,7 @@
   annotation_style: 引导线把标签拉到空白处避免压点; 标注 n 值; 面积非半径编码数值
   caption_style: 说明三个变量映射(x/y/面积)与对数轴; 注明面积编码的量
   possible_code_tool: matplotlib scatter (s=面积) + annotate 引导线 + set_xscale('log')
-  replication_notes: 气泡面积须按"面积∝数值"而非半径(否则视觉夸大平方倍); 重叠点用引导线而非堆叠标签
+  replication_notes: 遵 R2(气泡面积∝数值非半径,否则视觉夸大平方倍); 图型特异——重叠点用引导线而非堆叠标签
   where_to_place_in_paper: 结果-规模/不平衡影响分析
 
 - figure_type: 发散条形图(带符号增减)
@@ -67,7 +67,7 @@
   annotation_style: 0 轴线加粗, x 轴标签显式写方向语义; 图例区分两组
   caption_style: 说明差值相对谁、正负含义、分组维度
   possible_code_tool: matplotlib barh (height 分两组) + axvline(0)
-  replication_notes: 必须显式标注正负方向语义(读者不会默认哪边好); 别用颜色单独编码正负(色盲不可辨)
+  replication_notes: 遵 R8(别用颜色单独编码正负,色盲不可辨); 图型特异——必须显式标注正负方向语义(读者不会默认哪边好)
   where_to_place_in_paper: 结果-跨模型稳健性
 ```
 
@@ -82,7 +82,7 @@
   annotation_style: 每格标数值, 文字颜色随背景明暗切换保证可读; 行列标签清晰
   caption_style: 说明指标、颜色方向(越红越差)、聚合方式与 vmin/vmax
   possible_code_tool: matplotlib imshow + 双层循环 text 标注 + colorbar
-  replication_notes: 跨多张热力图比较时必须固定同一 vmin/vmax; 注数防重叠需控字号; 与"混淆矩阵热力图"是两类不同用途, 勿混名
+  replication_notes: 遵 R6(跨多张热力图固定同一 vmin/vmax); 图型特异——注数防重叠需控字号; 与"混淆矩阵热力图"是两类不同用途, 勿混名
   where_to_place_in_paper: 结果-全条件总览(附录或主结果旁)
 
 - figure_type: 山脊图/joyplot(多组密度堆叠)
