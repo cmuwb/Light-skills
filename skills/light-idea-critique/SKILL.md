@@ -74,6 +74,13 @@ m03 在立项卡里自报了"核心撞车检查"四问的检索证据——**你
 ## 可选：calibration mode
 怀疑自己过严/过松时，喂一批"已知结局"的 idea，用本技能判决跑 `scripts/calibration.py` 做**三分类**校准（accept/revise/reject）：`strict_FNR`（把最终会被接收的 idea 误判为不通过=过严误杀）/ `FPR`（把真被拒 idea 放行=过松/谄媚）/ `revise_match`（"需修订"识别准确度）。**关键**：有条件通过=回 m03 迭代（最终常被接收），不等于拒稿——三分类避免旧二分类把"需修订"当"拒稿"而高估 FNR。据 interpret 建议调 `DEFAULT_THRESHOLDS`。⚠ Light 当前无公开 idea 标注集，校准须用**用户自己的已知结局数据**，无数据时不假装阈值经过反推。
 
+## 可选：批量评审排序（多卡 idea_candidates）
+m03 常一次产出多张立项卡（`idea_candidates.md`）。**逐卡完整严审（Step 1–6 不省）**后，用 `scripts/score_aggregate.py` 的 `rank_batch()` 做汇总排序，输出 top-k 放行名单：
+- 每卡仍须走完盲审/检索/五视角/反谄媚的完整流程得出八维分（批量不是"预筛省算力"——否则等于跳过严审）；`rank_batch` 只做"逐卡 decide + 按档位与 Weighted 降序 + 截 top-k"。
+- 排序键：判决档位优先（通过>有条件通过>有条件通过(重大)>不通过），同档按 Weighted 降序，再按 id 升序（确定性可复现）。
+- **gate 不因排序放宽**：只有判决=通过的卡进 passlist；top-k 只在已通过的卡里取，不会把不通过的卡排进放行名单。有条件通过/不通过的卡各带 Revision Roadmap 回 m03。
+- 输出：`ranked`（全卡排序）+ `passlist`（放行，截 top-k）+ `not_passed`（附各自判决理由）。便于一次性比较一批 idea 选最优先推进的。
+
 ## anti-patterns（详见 protocol.md 第 2 节）
 伪多样四视角 / 谄媚抬分 / 泛泛反馈 / 未检索宣称新颖 / 被反驳即软化 / 量纲混用 / 越权改写 idea —— 每条配"为何失败→正确做法"。
 

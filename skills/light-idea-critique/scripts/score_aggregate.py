@@ -180,6 +180,45 @@ def weight_sensitivity(scores: dict, delta: float = 0.02,
             "robust": len(flips) == 0}
 
 
+def rank_batch(candidates: list, top_k: int | None = None,
+               thresholds: dict | None = None) -> dict:
+    """批量评审排序：摄入 m03 的多张 idea 立项卡（idea_candidates），逐卡完整八维判决，
+    再按"先放行档位、再 Weighted 降序"汇总排序，输出 top-k 放行名单 + 余下附判决理由。
+
+    candidates: [{"id": str, "scores": {dim:0-100}, "unresolved_critical": bool}]
+      —— scores 仍须由逐卡完整严审（Step1-5：盲审/检索/五视角/反谄媚）得出，本函数
+      只做"逐卡 decide + 汇总排序"，不替代严审（口径见 SKILL 批量工作流）。
+    top_k: 放行前 k 名（None=不截断，全排序）。
+
+    排序键：先按判决档位（通过 > 有条件通过 > 有条件通过(重大) > 不通过），同档再按 Weighted 降序。
+    诚实约定：只有判决=通过的卡才计入 passlist（与单卡 decide 一致，gate 不因排序放宽）。
+    """
+    rank_order = {"通过": 3, "有条件通过": 2, "有条件通过（重大）": 1, "不通过": 0}
+    rows = []
+    for c in candidates:
+        cid = c.get("id", "?")
+        v = decide(c["scores"], unresolved_critical=c.get("unresolved_critical", False),
+                   thresholds=thresholds)
+        rows.append({"id": cid, "weighted": v.weighted, "overall": v.overall,
+                     "decision": v.decision, "reasons": v.reasons})
+    # 稳定排序：先档位降序，再 Weighted 降序，再 id 升序（确定性，便于复现/测试）
+    rows.sort(key=lambda r: (-rank_order.get(r["decision"], 0), -r["weighted"], r["id"]))
+    passlist = [r for r in rows if r["decision"] == "通过"]
+    if top_k is not None:
+        passlist = passlist[:top_k]
+    pass_ids = {r["id"] for r in passlist}
+    return {
+        "n": len(rows),
+        "ranked": rows,                       # 全部卡，已排序
+        "passlist": passlist,                 # 判决=通过的（截到 top_k）
+        "pass_count": len(passlist),
+        "top_k": top_k,
+        "note": ("仅判决=通过的 idea 计入 passlist 放行 m05；有条件通过/不通过带 Roadmap 回 m03。"
+                 "排序不放宽否决项 gate——top-k 只在已通过的卡里取，不会把不通过的卡排进放行名单。"),
+        "not_passed": [r["id"] for r in rows if r["id"] not in pass_ids],
+    }
+
+
 def _selftest():
     _check_weights()
     print("[1] weights sum to 1.0 ... OK")
@@ -244,6 +283,26 @@ def _selftest():
     sens_b = weight_sensitivity(border, delta=0.02)
     print(f"[H'] border idea: base={sens_b['base_decision']} flips={sens_b['flip_count']}")
     assert "WEIGHTS" in globals() and abs(round(sum(WEIGHTS.values()), 6) - 1.0) < 1e-9, "权重未被敏感性分析破坏"
+
+    # 案例I: 批量排序——3 卡(strong 通过 / mid 有条件 / derm 不通过)，验证排序与 passlist
+    batch = [
+        {"id": "mid", "scores": mid},
+        {"id": "strong", "scores": strong},
+        {"id": "derm", "scores": derm, "unresolved_critical": True},
+    ]
+    rb = rank_batch(batch)
+    print(f"[I] batch rank: n={rb['n']} pass={rb['pass_count']} order={[r['id'] for r in rb['ranked']]}")
+    # strong 应排第一(通过)，derm 最后(不通过)
+    assert rb["ranked"][0]["id"] == "strong" and rb["ranked"][-1]["id"] == "derm", rb["ranked"]
+    # 只有 strong 进 passlist（通过）；mid 有条件、derm 不通过都不放行
+    assert rb["passlist"] == [r for r in rb["passlist"]] and rb["pass_count"] == 1, rb
+    assert rb["passlist"][0]["id"] == "strong", rb["passlist"]
+    assert set(rb["not_passed"]) == {"mid", "derm"}, rb["not_passed"]
+    # top_k 截断：两个通过卡时取 top_k=1
+    batch2 = [{"id": "s1", "scores": strong}, {"id": "s2", "scores": strong}, {"id": "bad", "scores": derm}]
+    rb2 = rank_batch(batch2, top_k=1)
+    assert rb2["pass_count"] == 1 and rb2["passlist"][0]["id"] == "s1", rb2  # 同分按 id 升序确定性
+    print(f"[I'] top_k=1 of 2 passing -> {rb2['passlist'][0]['id']}")
 
     print("\nALL SELFTESTS PASSED")
 

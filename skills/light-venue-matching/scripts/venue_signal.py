@@ -98,6 +98,45 @@ def oa_author_by_name(name: str, fetch) -> dict | None:
     return results[0] if results else None
 
 
+# ---- DOAJ 收录核查（白名单正面信号；免 key REST）-----------------------
+
+DOAJ = "https://doaj.org/api"
+
+
+def doaj_by_issn(issn: str, fetch) -> dict:
+    """DOAJ 收录核查：按 ISSN 查 DOAJ Articles/Journals API（免 key）。
+
+    DOAJ 收录是 OA 期刊质量白名单的正面信号（区别于 OpenAlex 的 is_in_doaj 标志——
+    此处直查 DOAJ 官方库做独立交叉确认，OpenAlex 的标志可能滞后）。
+    返回三态：in_doaj=True/False/None（None=查询失败，未知，不等于未收录）。
+    诚实约定：查不到记 status=unavailable + reason，绝不把"查询失败"当成"未被收录"。
+    """
+    url = f"{DOAJ}/search/journals/issn:{urllib.parse.quote(issn)}"
+    try:
+        data = fetch(url)
+    except Exception as e:  # noqa: BLE001
+        return {"status": "unavailable", "in_doaj": None,
+                "reason": f"DOAJ 查询失败({e.__class__.__name__})——未知，非"
+                          f"未收录；投前人工核 doaj.org"}
+    total = (data or {}).get("total")
+    if total is None:
+        return {"status": "unavailable", "in_doaj": None,
+                "reason": "DOAJ 响应无 total 字段，无法判定"}
+    in_doaj = int(total) > 0
+    out = {"status": "ok", "in_doaj": in_doaj, "doaj_hits": int(total),
+           "source": "doaj.org/api/search/journals"}
+    if in_doaj:
+        # 取首条的 Seal 标记（DOAJ Seal 是更高质量信号）
+        results = (data or {}).get("results") or []
+        if results:
+            bib = (results[0] or {}).get("bibjson") or {}
+            out["doaj_seal"] = bool(bib.get("boai") or bib.get("seal"))
+        out["note"] = "DOAJ 收录=OA 期刊白名单正面信号；非质量保证，仍须看分区/预警名单"
+    else:
+        out["note"] = "DOAJ 未收录——可能是非 OA 刊（正常）或确未收录；结合其他信号判断，勿单独据此劝退"
+    return out
+
+
 # ---- 五信号 ------------------------------------------------------------
 
 def signal_volume_trend(source: dict) -> dict:
@@ -339,6 +378,12 @@ def assemble(issn: str, author_name: str, card: dict | None, fetch) -> dict:
             else {"status": "unavailable", "reason": "未提供 --author"},
             "5_apc_quartile": signal_apc_quartile(card, source),
         },
+        # 白名单正面信号（DOAJ 收录核查，独立于五个打分信号；预警筛查用）
+        "whitelist": {
+            "doaj": doaj_by_issn(issn, fetch) if issn
+            else {"status": "unavailable", "in_doaj": None, "reason": "未提供 --issn"},
+            "openalex_is_in_doaj": (source or {}).get("is_in_doaj") if source else None,
+        },
     }
     if issn and source is None:
         report["venue"]["fetch_error"] = locals().get("src_err", "未取到 source")
@@ -358,6 +403,8 @@ class _MockFetcher:
         self._work_ids = [f"W{i:02d}" for i in range(80)]
 
     def __call__(self, url: str) -> dict:
+        if "doaj.org/api" in url:  # DOAJ 收录核查 mock：命中 1 条带 seal
+            return {"total": 1, "results": [{"bibjson": {"seal": True}}]}
         if "/sources/issn:" in url:
             return self._source()
         if "/authors?" in url:
@@ -428,6 +475,19 @@ def _selftest() -> int:
     assert sig["4_author_match"]["match_level"] in ("高", "中"), sig["4_author_match"]
     assert sig["5_apc_quartile"]["status"] == "ok", sig["5_apc_quartile"]
     assert rep["summary"]["signals_ok"] == 5, rep["summary"]
+
+    # DOAJ 白名单核查（mock 命中 1 条带 seal）
+    wl = rep["whitelist"]["doaj"]
+    assert wl["status"] == "ok" and wl["in_doaj"] is True, wl
+    assert wl["doaj_hits"] == 1 and wl.get("doaj_seal") is True, wl
+    # DOAJ 查询失败 → unavailable + in_doaj=None（绝不当成未收录）
+    def doaj_boom(url):
+        if "doaj.org" in url:
+            raise urllib.error.URLError("offline")
+        return fetch(url)
+    rep_d = assemble("1234-5678", "", card, doaj_boom)
+    assert rep_d["whitelist"]["doaj"]["status"] == "unavailable", rep_d["whitelist"]["doaj"]
+    assert rep_d["whitelist"]["doaj"]["in_doaj"] is None, rep_d["whitelist"]["doaj"]
 
     # 降级路径：无卡 + 无作者 → 信号3/4 unavailable，不崩
     rep2 = assemble("1234-5678", "", None, fetch)

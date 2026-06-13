@@ -69,6 +69,7 @@ python scripts/venue_signal.py --issn 1234-5678 --card-fields review_cycle="约8
 - **每信号独立降级**：取数失败标 `status:"unavailable"`+reason，不编数；能查多少出多少。
 - **作者匹配度**按姓名取首个命中、未排歧，输出带 `disambiguation_caveat`，须 ORCID/机构二次确认，对应 rubric「作者相对实力」的 h-index 同名排歧纪律。
 - 自引率是**外向自引粗估**（非官方入向期刊自引率），输出已注明 method，命中 >25% 提示对照预警筛查（异常自引）。
+- **DOAJ 白名单核查**：输出 `whitelist.doaj`（直查 doaj.org 官方库，免 key）——`in_doaj`(True/False/None)、`doaj_hits`、`doaj_seal`；与 OpenAlex 的 `is_in_doaj` 并列做交叉确认（OpenAlex 标志可能滞后）。**查询失败标 `in_doaj:None`+unavailable，绝不当成"未被收录"**；DOAJ 未收录可能只是非 OA 刊，勿单独据此劝退。喂预警筛查白名单环节。
 - OpenAlex 接入口径（key/限流/计费）见 m01 references「OpenAlex 接入真相源」节，脚本不复写数字。
 
 ## 产出
@@ -77,6 +78,17 @@ python scripts/venue_signal.py --issn 1234-5678 --card-fields review_cycle="约8
    —— 注意：**全程无百分比**，"待核查"如实保留。
 2. 投稿策略建议（先投哪、被拒后转投顺序）。
 3. 风险提示（预警/周期长/费用高/匿名要求）。
+
+## 转投顺序：可执行排序规则（不靠拍脑袋）
+被拒后从候选池里选下一个投哪——按以下**字典序**对剩余候选排序，逐条取下一个，而非凭感觉：
+
+1. **方向匹配度 ↓**（高>中>低）：scope 越贴合越优先，错配重投是浪费周期。来源：db01 `subject_area` 命中 / OpenAlex 作者主题重叠（venue_signal 信号4）。
+2. **录用可能性信号 ↓**（高>中>低）：用五信号汇总档位，不是百分比。被高档拒了就往下一档走，别原地平移同档。
+3. **审稿周期 ↑**（短>长）：同档同匹配时，周期短的先投（毕业/deadline 敏感者尤甚）。来源：db01 `review_cycle`。
+4. **APC ↑**（低>高）：预算敏感（本科生/无经费）时此项权重前移；有经费可下调优先级。来源：db01 `apc_fee`。
+5. **预警状态**：命中中科院预警名单/掠夺特征的**直接剔除候选池**，不参与排序（联动 a10）。
+
+实操：被拒后回本技能，对剩余候选按上述键排序给 fallback 链（如 `A刊(稳)→B刊(稳)→C会(保)`），并标明每步的降档理由。**按拒稿原因调权**：若被拒理由是"scope 不符"→ 方向匹配权重再加强；若是"创新性不足/被审稿人比下去"→ 整体降一档投，别在同档硬刚。降档与剔除都写进决策记录入 db09。
 
 ## 衔接
 选定后 → m12 套对应模板、m10 调引用格式；投稿记录与决策入 db09；被拒后转投时回本技能重排。所有期刊数据投前重新核查(CONVENTIONS §1)。**db09 是 venue_signal.py 的下游消费方**:db09 decision_log/project_card 内嵌的 venue 计量值为带 last_checked 的快照,投前用 `venue_signal.py --issn` 重核、冲突信在线,口径互指不复写。

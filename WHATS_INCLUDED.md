@@ -21,6 +21,7 @@
 | figure-drawing | `scripts/color_palettes.py` | 投稿级配色工具：Okabe-Ito、连续/离散色图、灰度与色盲模拟预览 |
 | figure-drawing | `scripts/figure_export.py` | 按目标期刊栏宽精确导出矢量+位图，校验物理尺寸与缩放后字号 |
 | figure-drawing | `scripts/figure_integrity_lint.py` | 图表诚实性静态扫描：y 轴截断、双 y 轴、bar 无误差棒、jet/rainbow、3D 扭曲等 |
+| figure-planning | `scripts/validate_plan_card.py` | 规划卡契约校验：target_journal/column 命中 figure_export JOURNAL_SPECS、figure_id 唯一、source_card 必填，把 m11 打回前移到规划阶段 |
 | file-reading | `scripts/docx_read.py` | DOCX 结构读取：段落、表格、标题层级与基本元数据归一化 |
 | file-reading | `scripts/pdf_ops.py` | PDF 读取与结构操作：文本/页级信息抽取、合并拆分等轻量操作 |
 | file-reading | `scripts/xlsx_read.py` | XLSX 工作簿读取与数据画像：sheet、表头、行列、缺失与样例预览 |
