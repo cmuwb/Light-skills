@@ -45,8 +45,12 @@ def build_preprocessor(X):
     return pre, num_cols, cat_cols
 
 
-def pick_cv(task, n_splits=5, group=None, y=None):
-    """Return (cv_object, needs_groups, rationale)."""
+def pick_cv(task, n_splits=5, group=None, y=None, group_is_clf=None):
+    """Return (cv_object, needs_groups, rationale).
+
+    group_is_clf: group 任务时是否按分类处理（用 StratifiedGroupKFold 保类别平衡）。
+      显式传入优先；不传则回退到启发式（整数且低基数 → 视为分类），但会在 rationale 标注是猜的。
+    """
     if task == "clf":
         return (StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=0),
                 False, "StratifiedKFold keeps class proportions per fold.")
@@ -58,13 +62,41 @@ def pick_cv(task, n_splits=5, group=None, y=None):
                 "TimeSeriesSplit trains only on the past — no future leakage. "
                 "Do NOT shuffle time-ordered data.")
     if task == "group":
-        if y is not None and pd.Series(y).nunique() <= 20:
+        if group_is_clf is None:
+            # 回退启发式：仅当未显式声明时用，且标注"猜测"提醒用户用 --group-clf/--group-reg 明确
+            ys = pd.Series(y)
+            is_int = ys.dropna().apply(lambda v: float(v).is_integer()).all() if ys.notna().any() else False
+            group_is_clf = bool(is_int and ys.nunique() <= 20)
+            hint = "（按启发式猜测，建议用 --group-clf / --group-reg 显式声明）"
+        else:
+            hint = "（按显式声明）"
+        if group_is_clf:
             return (StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=0),
-                    True, "StratifiedGroupKFold: no entity spans folds AND class "
-                          "balance preserved.")
+                    True, f"StratifiedGroupKFold: 实体不跨折 + 保类别平衡{hint}。")
         return (GroupKFold(n_splits=n_splits), True,
-                "GroupKFold: the same entity never appears in both train and val.")
+                f"GroupKFold: 同一实体绝不同时进训练/验证{hint}。")
     raise ValueError(f"unknown task: {task}")
+
+
+def prepare_timeseries(X, y, time_col=None):
+    """timeseries 任务的时序正确性护栏：按 time_col 排序并校验。
+
+    TimeSeriesSplit 假设数据已按时间升序；乱序会导致用未来预测过去（穿越）。
+    - 给了 time_col：按它升序重排 X/y（稳定排序），返回排序后的 (X, y)。
+    - 未给 time_col：检查是否疑似已按某列单调升序；若无法确认，返回警告字符串让上层显式报错，
+      而不是静默用乱序数据跑出错误结果。
+    """
+    if time_col:
+        if time_col not in X.columns:
+            raise ValueError(f"--time-col '{time_col}' 不在列中：{list(X.columns)}")
+        order = X[time_col].argsort(kind="stable")
+        Xs = X.iloc[order].reset_index(drop=True)
+        ys = y.iloc[order].reset_index(drop=True)
+        if not Xs[time_col].is_monotonic_increasing:
+            raise ValueError(f"按 '{time_col}' 排序后仍非单调升序（含 NaN？重复时间？），请先清洗时间列")
+        return Xs, ys, f"已按 '{time_col}' 升序重排，时序正确性 OK"
+    return X, y, ("⚠ 未提供 --time-col：TimeSeriesSplit 假设数据已按时间升序，"
+                  "若数据乱序会产生穿越（用未来预测过去）。请确认数据已排序，或提供 --time-col 让脚本排序")
 
 
 def make_full_pipeline(X, task, estimator=None):
@@ -140,6 +172,11 @@ def main():
     ap.add_argument("--target")
     ap.add_argument("--task", choices=["clf", "reg", "timeseries", "group"])
     ap.add_argument("--group-col")
+    ap.add_argument("--time-col", help="timeseries 任务：按此列升序排序并校验单调性，防乱序穿越")
+    ap.add_argument("--group-clf", action="store_true",
+                    help="group 任务：目标是分类（用 StratifiedGroupKFold 保类别平衡）")
+    ap.add_argument("--group-reg", action="store_true",
+                    help="group 任务：目标是回归（用 GroupKFold）")
     ap.add_argument("--n-splits", type=int, default=5)
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args()
@@ -158,6 +195,23 @@ def main():
             print(f"  [{task:10s}] CV={type(cv).__name__:22s} "
                   f"{metric}={scores.mean():.3f}±{scores.std():.3f}  | {why}")
         print("\n[selftest] PASS — all four tasks ran leakage-safe CV.")
+
+        # D-2 时序正确性：乱序数据按 time_col 排序后单调；显式 group 分类判定
+        Xt, yt, _ = make_synth("timeseries")
+        shuffled = Xt.sample(frac=1, random_state=1).reset_index(drop=True)
+        ys = yt.sample(frac=1, random_state=1).reset_index(drop=True)
+        Xo, yo, note = prepare_timeseries(shuffled, ys, time_col="t")
+        assert Xo["t"].is_monotonic_increasing, "prepare_timeseries 未把乱序排成单调"
+        assert "升序重排" in note, note
+        # 未给 time_col 返回警告而非静默
+        _, _, warn = prepare_timeseries(Xt, yt, time_col=None)
+        assert "未提供" in warn and "穿越" in warn, warn
+        # 显式 group 分类 → StratifiedGroupKFold；显式回归 → GroupKFold（不靠 nunique 猜）
+        cv_clf, _, why_clf = pick_cv("group", group_is_clf=True, y=[1, 2, 3])
+        assert type(cv_clf).__name__ == "StratifiedGroupKFold" and "显式" in why_clf, why_clf
+        cv_reg, _, _ = pick_cv("group", group_is_clf=False, y=list(range(50)))
+        assert type(cv_reg).__name__ == "GroupKFold", type(cv_reg).__name__
+        print("[selftest] PASS — 时序排序护栏 + 显式 group 判定 OK。")
         return
 
     if not (args.csv and args.target and args.task):
@@ -166,9 +220,27 @@ def main():
     y = df[args.target]
     groups = df[args.group_col].values if args.group_col else None
     X = df.drop(columns=[args.target] + ([args.group_col] if args.group_col else []))
+
+    # 时序正确性护栏：timeseries 任务按 --time-col 排序并校验单调，防乱序穿越
+    if args.task == "timeseries":
+        X, y, ts_note = prepare_timeseries(X, y, args.time_col)
+        print(f"[timeseries] {ts_note}")
+        if not args.time_col:
+            print("[timeseries] ⚠ 强烈建议提供 --time-col；当前依赖'数据已排序'的假设。", file=sys.stderr)
+
+    # group 任务分类/回归显式声明（不靠 nunique 猜）
+    group_is_clf = None
+    if args.task == "group":
+        if args.group_clf and args.group_reg:
+            ap.error("--group-clf 与 --group-reg 只能选一个")
+        if args.group_clf:
+            group_is_clf = True
+        elif args.group_reg:
+            group_is_clf = False
+
     pipe, num_cols, cat_cols = make_full_pipeline(X, args.task)
     cv, needs_groups, why = pick_cv(args.task, n_splits=args.n_splits,
-                                    group=groups, y=y)
+                                    group=groups, y=y, group_is_clf=group_is_clf)
     if needs_groups and groups is None:
         ap.error(f"task '{args.task}' needs --group-col")
     g = groups if needs_groups else None

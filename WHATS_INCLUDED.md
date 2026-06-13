@@ -15,9 +15,11 @@
 | competition | `scripts/roadmap_gen.py` | 里程碑 JSON 渲染技术路线图 / 甘特图，支撑申报书与路演路线页 |
 | consistency | `scripts/consistency_audit.py` | 读取 db09 术语/方法/指标事实源，跨论文/PPT/文档检测术语、指标名、指标值与覆盖缺口 |
 | data-engineering | `scripts/check_access_level.py` | 数据访问分级守门：阻断 raw 数据流向 paper/figure/public-repo 等公开产物 |
+| data-engineering | `scripts/croissant_export.py` | 数据卡字段 → Croissant JSON-LD（MLCommons 机器可读标准），便于发布 HF/Kaggle/OpenML 被自动索引（最小骨架，标注须官方库校验） |
 | data-engineering | `scripts/data_doctor.py` | CSV → Markdown 数据体检报告：形状、类型、缺失、重复、异常值、强相关、泄漏提示 |
 | data-engineering | `scripts/quality_gate.py` | 按 YAML 规则校验 CSV，输出 PASS/FAIL 数据质量门报告，退出码可接 CI |
 | data-engineering | `scripts/safe_split.py` | 构建防泄漏 split + Pipeline/ColumnTransformer，支持 clf/reg/timeseries/group 任务 |
+| data-engineering | `scripts/sample_size_check.py` | 数据规模充足性经验预警：分类每类最小样本/回归样本特征比(EPV)/检测每类实例数，把"四问"之规模变可计算（标注非 power analysis） |
 | figure-drawing | `scripts/color_palettes.py` | 投稿级配色工具：Okabe-Ito、连续/离散色图、灰度与色盲模拟预览 |
 | figure-drawing | `scripts/figure_export.py` | 按目标期刊栏宽精确导出矢量+位图，校验物理尺寸与缩放后字号 |
 | figure-drawing | `scripts/figure_integrity_lint.py` | 图表诚实性静态扫描：y 轴截断、双 y 轴、bar 无误差棒、jet/rainbow、3D 扭曲等 |

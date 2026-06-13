@@ -71,6 +71,9 @@ def diagnose(df, target=None, corr_thresh=0.9, card_thresh=0.5, outlier_cap=20):
             f["constant_cols"].append(c)
 
     # high-cardinality (object/category): unique ratio over threshold
+    # card_thresh 随行数自适应：小表天然高基数比例高，阈值放宽避免误报（n<200 用 0.9，否则用传入值）
+    eff_card_thresh = max(card_thresh, 0.9) if n_rows < 200 else card_thresh
+    f["card_thresh_used"] = eff_card_thresh
     f["high_card"] = []
     obj_cols = df.select_dtypes(include=["object", "category", "string"]).columns
     for c in obj_cols:
@@ -78,8 +81,20 @@ def diagnose(df, target=None, corr_thresh=0.9, card_thresh=0.5, outlier_cap=20):
         if non_null == 0:
             continue
         ratio = df[c].nunique(dropna=True) / non_null
-        if ratio >= card_thresh:
+        if ratio >= eff_card_thresh:
             f["high_card"].append((c, df[c].nunique(dropna=True), round(ratio, 3)))
+
+    # ID-like 列：unique_ratio≈1（几乎每行唯一），数值或类别皆查。
+    # 这类列（行号/自增 ID/哈希/时间戳唯一键）通常无泛化价值，且若与采集顺序相关易造成泄漏，
+    # 入模型前应剔除或显式说明。区别于 high_card：ID-like 看的是"近乎唯一"而非"较高基数"。
+    f["id_like"] = []
+    for c in df.columns:
+        non_null = df[c].notna().sum()
+        if non_null < 10:
+            continue
+        ratio = df[c].nunique(dropna=True) / non_null
+        if ratio >= 0.98:
+            f["id_like"].append((c, str(df[c].dtype), round(ratio, 3)))
 
     # numeric outliers via IQR
     f["outliers"] = []
@@ -112,13 +127,49 @@ def diagnose(df, target=None, corr_thresh=0.9, card_thresh=0.5, outlier_cap=20):
                     f["high_corr"].append((cols[i], cols[j], round(float(v), 4)))
         f["high_corr"].sort(key=lambda x: -abs(x[2]))
 
-    # target leakage hint: feature near-perfectly correlated with numeric target
+    # target leakage hint: 覆盖数值目标(高相关) + 分类目标(单特征近乎可分)
     f["leakage_hint"] = []
-    if target and target in df.columns and target in num_cols:
-        tcorr = df[num_cols].corr(numeric_only=True)[target].drop(target)
-        for c, v in tcorr.items():
-            if pd.notna(v) and abs(v) >= 0.98:
-                f["leakage_hint"].append((c, round(float(v), 4)))
+    if target and target in df.columns:
+        # 目标是否按"数值回归"处理：在数值列 且 不是低基数整数编码的分类目标
+        ty = df[target]
+        is_int_like = ty.dropna().apply(lambda v: float(v).is_integer()).all() if ty.notna().any() else False
+        treat_numeric = (target in num_cols) and not (is_int_like and ty.nunique(dropna=True) <= 20)
+        if treat_numeric:
+            # 数值目标：特征与目标 |pearson|≥0.98 视为疑似泄漏
+            tcorr = df[num_cols].corr(numeric_only=True)[target].drop(target)
+            for c, v in tcorr.items():
+                if pd.notna(v) and abs(v) >= 0.98:
+                    f["leakage_hint"].append((c, f"|corr|={round(float(v),4)} 与数值目标近乎共线"))
+        else:
+            # 分类目标：数值特征用"相关比 η"(组间方差占比)，类别特征用"条件纯度"近似预测力。
+            # η²≈1 或 某特征值几乎决定某个类 → 单特征近乎可分，疑似泄漏(纯 numpy/pandas)。
+            y = df[target]
+            for c in num_cols:
+                if c == target:
+                    continue  # 跳过目标自身（self-η²=1 非泄漏）
+                sub = df[[c]].assign(_y=y).dropna()
+                if sub[c].nunique() < 2 or sub["_y"].nunique() < 2:
+                    continue
+                grand = sub[c].mean()
+                ss_tot = ((sub[c] - grand) ** 2).sum()
+                if ss_tot == 0:
+                    continue
+                ss_between = sub.groupby("_y")[c].apply(
+                    lambda g: len(g) * (g.mean() - grand) ** 2).sum()
+                eta2 = ss_between / ss_tot
+                if eta2 >= 0.98:
+                    f["leakage_hint"].append((c, f"η²={round(float(eta2),4)} 数值特征几乎完全分离各类目标"))
+            cat_cols = [c for c in df.columns
+                        if c != target and c not in num_cols]
+            for c in cat_cols:
+                sub = df[[c]].assign(_y=y).dropna()
+                if sub[c].nunique() < 2 or len(sub) < 10:
+                    continue
+                # 条件纯度：按特征值分组，每组目标是否近乎单一类（加权平均最大类占比）
+                purity = sub.groupby(c)["_y"].apply(
+                    lambda g: g.value_counts(normalize=True).max() * len(g)).sum() / len(sub)
+                if purity >= 0.99 and sub[c].nunique() < len(sub):
+                    f["leakage_hint"].append((c, f"条件纯度={round(float(purity),4)} 类别特征几乎决定目标类"))
     return f
 
 
@@ -149,8 +200,11 @@ def render(df, f, target=None):
         issues.append(("HIGH", f"{len(hi_miss)} column(s) >=50% missing: "
                        f"{', '.join(hi_miss)}"))
     if f["leakage_hint"]:
-        issues.append(("HIGH", f"possible target leakage (|corr|>=0.98 to target): "
+        issues.append(("HIGH", "possible target leakage（单特征近乎决定目标）: "
                        f"{', '.join(c for c, _ in f['leakage_hint'])}"))
+    if f.get("id_like"):
+        issues.append(("MED", f"{len(f['id_like'])} 个 ID-like 列（近乎逐行唯一，无泛化价值/疑似泄漏）: "
+                       f"{', '.join(c for c, *_ in f['id_like'])}"))
     if f["high_corr"]:
         issues.append(("MED", f"{len(f['high_corr'])} highly-correlated numeric pair(s)"))
     if f["high_card"]:
@@ -193,6 +247,22 @@ def render(df, f, target=None):
         L.append("## High-Cardinality Categoricals")
         L.append(_md_table(["column", "n_unique", "unique_ratio"],
                            [[f"`{c}`", n, r] for c, n, r in f["high_card"]]))
+        L.append(f"> 高基数阈值（已随行数自适应）= {f.get('card_thresh_used', '?')}")
+        L.append("")
+
+    if f.get("id_like"):
+        L.append("## ID-like 列（近乎逐行唯一）")
+        L.append(_md_table(["column", "dtype", "unique_ratio"],
+                           [[f"`{c}`", dt, r] for c, dt, r in f["id_like"]]))
+        L.append("> 这类列通常应在建模前剔除（行号/自增ID/哈希）；若与采集顺序相关还可能泄漏。")
+        L.append("")
+
+    if f["leakage_hint"]:
+        L.append("## ⚠ 疑似目标泄漏（单特征近乎决定目标）")
+        L.append(_md_table(["column", "信号"],
+                           [[f"`{c}`", sig] for c, sig in f["leakage_hint"]]))
+        L.append("> 单个特征几乎完全决定目标，常是泄漏（把答案当输入）或同义重复列。"
+                 "务必核查该特征是否在预测时点真实可得，否则剔除。")
         L.append("")
 
     L.append("## Verdict (fill in after review)")
@@ -216,6 +286,11 @@ def make_synth(seed=0):
         "score": rng.normal(0, 1, n),
     })
     df["score_copy"] = df["score"] * 2 + 1e-9            # ~perfect corr
+    # 分类目标 + 泄漏特征：label 为二分类，leak_num 按 label 完全分离（数值，η²≈1），
+    # leak_cat 的取值几乎决定 label（条件纯度≈1）——用于验证分类目标泄漏检测。
+    df["label"] = (df["score"] > 0).astype(int)
+    df["leak_num"] = df["label"] * 1000.0 + rng.normal(0, 0.01, n)
+    df["leak_cat"] = df["label"].map({0: "neg", 1: "pos"})
     df.loc[rng.choice(n, 60, replace=False), "income"] = np.nan  # missing
     df.loc[rng.choice(n, 5, replace=False), "income"] = 5e6      # extreme outliers
     df = pd.concat([df, df.iloc[:10]], ignore_index=True)        # duplicates
@@ -246,6 +321,13 @@ def main():
         assert any(c == "income" for c, *_ in f["outliers"]), "outlier detector failed"
         assert any({a, b} == {"score", "score_copy"} for a, b, _ in f["high_corr"]), \
             "correlation detector failed"
+        # ID-like 检测：id 列近乎逐行唯一
+        assert any(c == "id" for c, *_ in f["id_like"]), "id-like 检测失败"
+        # 分类目标泄漏：用 label 当目标，leak_num(数值η²≈1)与 leak_cat(条件纯度≈1)都应命中
+        fc = diagnose(df, target="label")
+        leak_cols = {c for c, _ in fc["leakage_hint"]}
+        assert "leak_num" in leak_cols, f"分类目标-数值特征泄漏检测失败: {leak_cols}"
+        assert "leak_cat" in leak_cols, f"分类目标-类别特征泄漏检测失败: {leak_cols}"
         print(md)
         print("\n[selftest] PASS — all detectors fired on synthetic data.",
               file=sys.stderr)

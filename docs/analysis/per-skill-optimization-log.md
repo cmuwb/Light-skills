@@ -24,4 +24,24 @@
 ---
 
 ## 后续站（科研主线顺序，待逐个做）
-data-engineering → idea-generation → idea-critique(已深做P1,补剩余) → research-plan → result-analysis(顺手补 R/MATLAB 作图三选) → paper-drafting → paper-polishing → figure-planning(已补E1) → figure-drawing → citation → typesetting → venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。
+
+---
+
+## 站 2：light-data-engineering（科研主线第 2 站，进行中）
+
+详档 7 条可优化点（用户拍板"尽量全做 + 借鉴点也做"）：
+- ✅ D-1 泄漏检测强化：data_doctor 加分类目标泄漏（数值特征 η² 相关比 + 类别特征条件纯度，纯 numpy/pandas）、ID-like 列检测（近乎逐行唯一）、低基数整数目标自动当分类、高基数阈值随行数自适应；selftest 加分类泄漏(leak_num η²/leak_cat 条件纯度)+id_like 断言全过；SKILL 同步
+- ✅ D-2 safe_split 时序修正：prepare_timeseries() 按 --time-col 升序重排+校验单调（不给则显式警告非静默穿越）；pick_cv 加 group_is_clf 显式参数（--group-clf/--group-reg，不靠 nunique 猜），回退启发式标注"猜测"提醒；selftest 加乱序排序+警告+显式判定断言；SKILL 同步
+- ✅ D-3 规模充足性判据：新建 sample_size_check.py（clf 每类最小样本/reg 样本特征比 EPV/detection 每类实例/二分类正例 EPV Peduzzi，ok/warn/insufficient 三档，--per-class 按最小类更严谨）；明确标注"非 power analysis 是经验粗筛、主结论须正式功效论证"；纯标准库 selftest 全过；登记+SKILL 四问引用
+- ✅ D-4 worked_example + quality_gate 加固：quality_gate 加 severity(error/warn 分级，退出码只看 error；warn 仅警示)+ regex_mode(search/fullmatch)；新建 examples/worked_example.md 端到端走查(体检→规模→门禁→防泄漏划分→数据卡→四问总结，奶山羊场景)；selftest 加 severity/fullmatch 断言
+- ✅ D-5 GitHub 借鉴（croissant）：新建 croissant_export.py 把数据卡字段→Croissant JSON-LD（MLCommons 机读标准，name/license/url/citation+RecordSet 字段字典+dtype 映射）；标"最小骨架须官方库校验"、缺字段 warn 不臆造；selftest 全过；登记+SKILL
+- ✅ D-CI 四 CI 全绿（scripts 57→59）+ 6 脚本 selftest 全过 + 记忆更新
+
+> 本站新增 2 脚本（sample_size_check/croissant_export），改 3 脚本（data_doctor 泄漏强化、safe_split 时序、quality_gate severity），加 1 worked_example。暂不做：非表格模态脚本、访问分级细化（单列）。
+
+> 暂不做：非表格模态脚本(image_aug_check 等，模态鸿沟大单列)、访问分级细化(偏低优先)。
+
+---
+
+## 待做站（科研主线顺序）
+idea-generation → idea-critique(已深做P1,补剩余) → research-plan → result-analysis(顺手补 R/MATLAB 作图三选) → paper-drafting → paper-polishing → figure-planning(已补E1) → figure-drawing → citation → typesetting → venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。
