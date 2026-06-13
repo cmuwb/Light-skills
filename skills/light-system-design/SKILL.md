@@ -17,7 +17,7 @@ user-invocable: false
 - **可观测**：科研 AI 服务用 **OpenTelemetry** 统一采 trace/metric/log（`opentelemetry-instrument` 零改代码自动埋点，OTLP 导出到 Jaeger/Prometheus），定位"一次推理耗时花在哪、哪步报错"，别用 print 调试；注意采样率与别把密钥/PII 写进 span。详见 references「OpenTelemetry」节。
 
 ## 数据库设计
-- **ER 图**：实体、关系、基数。可用 `scripts/er_diagram.py` 把表结构定义（YAML/JSON：entities + columns(PK/FK/UK) + relationships(基数)）一键转成 Mermaid `erDiagram` 文本，粘进 Markdown/软著文档或 mermaid.live 预览（`python scripts/er_diagram.py --in schema.yaml`，纯离线）。
+- **ER 图**：实体、关系、基数。可用 `scripts/er_diagram.py` 把表结构定义（YAML/JSON：entities + columns(PK/FK/UK) + relationships(基数)）一键转成 Mermaid `erDiagram` 文本，粘进 Markdown/软著文档或 mermaid.live 预览（`python scripts/er_diagram.py --in schema.yaml`，纯离线）。**需要更强表达力/可编辑矢量源/纳入 Git 版本控制**（复杂 ER、系统架构图、分层图、数据流转图，尤其软著功能说明/论文系统描述用的正式图）时，用 **Draw.io MCP**（diagram-as-code，官方 jgraph/drawio-mcp，`.drawio` 即 XML 可程序化生成与版本管理，导出 PNG/SVG/PDF）——比 Mermaid 排版更可控、可反复改稿（配置见 README 推荐 MCP 表，规划走 m09 figure-planning）。
 - **表结构**：字段、类型、约束、主外键、范式 vs 反范式权衡。刻意选型，别无脑 text/超大 numeric。
 - **索引**：按查询模式选型——B-Tree(等值/范围/排序/前缀 `LIKE 'x%'`)、GIN(数组/JSONB/全文/trigram)、BRIN(超大表+物理有序时间列)、GiST(几何/最近邻)、Hash(纯等值)。**外键必须建索引**(最常见漏建)；生产建索引用 `CREATE INDEX CONCURRENTLY` 避免锁表；上线前 `EXPLAIN ANALYZE` 验证计划。
 - **迁移**：Alembic `revision --autogenerate` 生成后**必须人工审**（检不出重命名/匿名约束，报成 drop+add），`upgrade head` 应用，CI `alembic check`；Prisma 开发 `migrate dev`、**生产只能 `migrate deploy`**（不 reset/shadow DB），手改 SQL 用 `--create-only`。
