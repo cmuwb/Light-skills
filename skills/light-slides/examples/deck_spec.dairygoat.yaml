@@ -1,0 +1,71 @@
+# deck_spec.dairygoat.yaml — imggen-enhanced 流水线「有 key 端到端实跑」样例（5 页）
+# 关闭 R6.6#4 GAP 用：本 spec 配 OPENAI key 经中转实跑，生图元素走 imagegen.py
+# (openai/gpt-image-2)，数据图走真数据 add_picture，装配为可编辑 pptx。
+# 复现：见 _verification_log/R-imggen-deck-e2e.md。
+# 主题 agriculture(畜牧场景)，与 dairygoat 项目 palette 对齐，沉 db06 风格卡。
+
+deck:
+  title: "边缘端奶山羊发情行为识别系统 · 答辩"
+  aspect: "16:9"
+  theme: agriculture
+  palette:
+    primary: "4E7D2C"        # 取自 themes.AGRICULTURE，与项目 palette.json 同源
+    accent: "E08A1E"
+  font_pair: {title: "Microsoft YaHei", body: "Microsoft YaHei"}
+  style_anchor: "现代农业科技感，叶绿主色#4E7D2C 暖橙点缀#E08A1E，几何渐变，克制留白，扁平矢量插画风，柔和内发光，无拟物阴影、无照片写实、无文字"
+
+pages:
+  # ---- p01 封面 ----
+  - page_id: p01
+    page_type: cover
+    action_title: "边缘端奶山羊发情行为识别系统"
+    key_message: "低算力 · 高召回 · 牧场可落地"
+    elements:
+      - {id: e1, type: background, bbox: [0.0, 0.0, 1.0, 1.0], source: "p01_e1_background.png", desc: "深叶绿到暖橙的几何渐变 hero 背景，左下抽象牧场丘陵剪影与光点，大面积留白"}
+      - {id: e2, type: title, bbox: [0.07, 0.32, 0.86, 0.18], text: "边缘端奶山羊发情行为识别系统", font_size: 40, color: "FFFFFF"}
+      - {id: e3, type: body,  bbox: [0.07, 0.54, 0.70, 0.10], bullets: ["低算力 · 高召回 · 牧场可落地 · 2026"], font_size: 18, color: "FFFFFF"}
+
+  # ---- p02 背景与痛点 ----
+  - page_id: p02
+    page_type: content
+    action_title: "人工查情漏检高，规模牧场迫切要自动化"
+    key_message: "发情窗口短、夜间难观察，漏配直接拉低产奶与繁殖效率"
+    elements:
+      - {id: e1, type: title, bbox: [0.06, 0.06, 0.88, 0.12], text: "人工查情漏检高，规模牧场迫切要自动化", font_size: 26, color: text}
+      - {id: e2, type: body, bbox: [0.06, 0.26, 0.52, 0.58], font_size: 18, color: text,
+         bullets: ["发情窗口仅 18–24 小时，夜间占比高", "人工巡查漏检率高、依赖经验", "漏配 = 空怀延长 + 产奶损失", "需要 7×24 自动识别替代人盯"]}
+      - {id: e3, type: illustration, bbox: [0.62, 0.28, 0.32, 0.42], source: "p02_e3_illustration.png", desc: "奶山羊侧面剪影与红外摄像头监控示意，扁平矢量"}
+
+  # ---- p03 方法/管线 ----
+  - page_id: p03
+    page_type: content
+    action_title: "三段式管线把识别延迟压到 80ms"
+    key_message: "采集→轻量检测→行为时序判定，全部端上完成"
+    elements:
+      - {id: e1, type: title, bbox: [0.06, 0.06, 0.88, 0.12], text: "三段式管线把识别延迟压到 80ms", font_size: 26, color: text}
+      - {id: e2, type: body, bbox: [0.06, 0.26, 0.50, 0.58], font_size: 18, color: text,
+         bullets: ["采集层：红外摄像 + 关键帧采样", "检测层：蒸馏后的轻量主干（YOLO 系）", "判定层：行为时序窗口投票降误报", "全链路端上运行，无需回传云端"]}
+      - {id: e3, type: icon, bbox: [0.60, 0.28, 0.12, 0.16], source: "p03_e3_icon.png", desc: "三段流程箭头与芯片图标，扁平", style: flat}
+      - {id: e4, type: illustration, bbox: [0.58, 0.48, 0.34, 0.36], source: "p03_e4_illustration.png", desc: "边缘计算盒子与摄像头到识别结果的数据流示意，扁平矢量"}
+
+  # ---- p04 结果（真数据图）----
+  - page_id: p04
+    page_type: result
+    action_title: "召回率 92% 且推理功耗仅 3.1W"
+    key_message: "自建数据集上全面达标，可太阳能供电"
+    elements:
+      - {id: e1, type: title, bbox: [0.06, 0.06, 0.88, 0.12], text: "召回率 92% 且推理功耗仅 3.1W", font_size: 26, color: text}
+      - {id: e2, type: chart, bbox: [0.06, 0.24, 0.50, 0.60], source: "metrics_bar.png"}
+      - {id: e3, type: body, bbox: [0.60, 0.24, 0.34, 0.60], font_size: 18, color: text,
+         bullets: ["召回 92%，越过实用线", "误报率较基线降 11 个百分点", "功耗 3.1W，可挂太阳能供电", "单帧推理 80ms，满足实时"]}
+
+  # ---- p05 结论 ----
+  - page_id: p05
+    page_type: conclusion
+    action_title: "端上识别让查情从靠人盯变成靠系统"
+    key_message: "下一步：多场景泛化 + 长周期现场验证"
+    elements:
+      - {id: e1, type: background, bbox: [0.0, 0.0, 1.0, 1.0], source: "p05_e1_background.png", desc: "深叶绿几何渐变收尾背景，右侧暖橙光晕，大面积留白"}
+      - {id: e2, type: title, bbox: [0.07, 0.30, 0.86, 0.18], text: "端上识别让查情从靠人盯变成靠系统", font_size: 32, color: "FFFFFF"}
+      - {id: e3, type: body, bbox: [0.07, 0.54, 0.70, 0.16], font_size: 18, color: "FFFFFF",
+         bullets: ["已验证：低算力高召回可落地", "下一步：多品种多场景泛化", "下一步：长周期牧场现场验证"]}

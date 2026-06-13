@@ -1,8 +1,8 @@
 # db06 扩展卡 — 高级 PPT 页型与叙事模式
 
 > schema: `scenario, theme_style, page_type, layout_structure, color_palette, font_pairing, visual_hierarchy, chart_style, icon_style, transition_style, speaker_notes_style, reuse_template_notes`
-> 核验日期：2026-06-10（前 8 卡）/ 2026-06-12（开题、课程教学 2 卡）。Marp、reveal.js、python-pptx、PptxGenJS 官方文档均脚本 HTTP 200 可达；本文件总结可复用”页型/叙事模式”，不复制任何商用模板素材。
-> **来源诚信说明**：新增「开题报告答辩」「课程教学」两卡的调色板/字体配对取自 db06 自家已验证的 `light-slides/assets/themes.py`（academic / light_elegant 主题，selftest 绿），版式逻辑参照下列公开来源（HTTP 200 核验 2026-06-12）。R6.5 声明的”每出一套 imggen deck 落一张风格卡”因有 key 端到端实跑仍是 GAP（见 PROGRESS R6.6#4），故本批不以 imggen 实跑为来源，待 R6 实跑补做后再沉对应风格卡。
+> 核验日期：2026-06-10（前 8 卡）/ 2026-06-12（开题、课程教学、智慧农业 imggen 实跑 3 卡）。Marp、reveal.js、python-pptx、PptxGenJS 官方文档均脚本 HTTP 200 可达；本文件总结可复用”页型/叙事模式”，不复制任何商用模板素材。
+> **来源诚信说明**：「开题报告答辩」「课程教学」两卡的调色板/字体配对取自 db06 自家已验证的 `light-slides/assets/themes.py`（academic / light_elegant 主题，selftest 绿），版式逻辑参照公开来源（HTTP 200 核验 2026-06-12）。「智慧农业项目答辩 — imggen 生图元素」卡来源为 **R6.5 声明的 imggen-enhanced 有 key 端到端实跑**（2026-06-12 经中转 gpt-image-2 实跑 5 页 deck，关闭 PROGRESS R6.6#4 GAP，留痕 `_verification_log/R-imggen-deck-e2e.md`）。
 
 ```yaml
 - scenario: 学术论文答辩 — action-title 结果页
@@ -134,4 +134,24 @@
   transition_style: 淡入/轻推; 分步揭示(逐条出现)降低一次性信息量, 配合讲解节奏
   speaker_notes_style: "每页讲解锚点 + 预设课堂提问/易错点; 按一节课 45 min 配 15-25 页, 留活动与答疑时间"
   reuse_template_notes: 与答辩/汇报不同——教学重'循序渐进与认知负荷', 多用分步揭示与示例; 章节封面/目标页/小结页可模板化复用。版式逻辑参考 CMU 教学设计 https://www.cmu.edu/teaching/designteach/teach/instructionalstrategies/lectures.html
+
+# ---- 以下卡来源：imggen-enhanced 流水线有 key 端到端实跑（2026-06-12，关闭 R6.6#4 GAP）----
+# 后端 OpenAI gpt-image-2（经中转）；spec=light-slides/examples/deck_spec.dairygoat.yaml；
+# 留痕=_verification_log/R-imggen-deck-e2e.md。配色/字体取自实跑生效的 style_anchor 与 agriculture 主题。
+- scenario: 智慧农业项目答辩 — imggen 生图元素 + 真数据图混排（实跑沉淀）
+  theme_style: 农业主题/叶绿暖橙/扁平矢量插画
+  page_type: 封面 / 内容 / 流程 / 结果 / 结论（5 页完整序列）
+  layout_structure: 封面与结论用整屏 AI 渐变背景压白字；内容/流程页左文(50%)右生图插画(图标+示意双层)；结果页左真数据柱状图(50%)右 so-what 解读
+  color_palette: 叶绿主色 #4E7D2C + 暖橙点缀 #E08A1E + 浅绿表面 #EAF3DE + 深绿字 #2E3A22（取 themes.AGRICULTURE，与项目 palette 同源）
+  font_pairing: 微软雅黑标题 + 微软雅黑正文（中文答辩）；数字等宽
+  visual_hierarchy: 行动式标题(陈述结论的整句) > 生图插画/真数据图 > so-what bullet(≤4 条)；封面/结论靠大留白与渐变背景聚焦标题
+  chart_style: 数据图一律 m11 真数据出图后 add_picture（硬边界：生图模型绝不画数据图）；柱状图标注百分比 + 实用线虚线 + baseline 灰
+  icon_style: 生图模型出扁平矢量图标/插画，全 deck 复用同一 style_anchor 锁风格（叶绿暖橙、无拟物阴影、无照片写实、无文字）；图标与插画分层摆放
+  transition_style: 淡入；封面→结论渐变背景呼应收尾
+  speaker_notes_style: 每页 1-2 句锚点，结果页只讲 so-what 不复述每个数；答辩控时按页配速
+  reuse_template_notes: |
+    实跑要点(回灌自真实 e2e)：①中转 POST 后只回 CDN url，二次下载也须带浏览器 UA 否则 WAF 403；
+    ②gpt-image 单图 60-120s+，超时给到 300s；③生图元素经 deck_spec 的 source 字段按 bbox 装回，
+    文本保持原生 TextFrame 可编辑（非烤进图）；④style_anchor 是全 deck 风格唯一真相源，改风格只改一处。
+    与 m17 竞赛路演、a05 前端 moodboard 同源复用本封装。
 ```

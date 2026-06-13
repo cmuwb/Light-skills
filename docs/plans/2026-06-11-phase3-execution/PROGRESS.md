@@ -66,6 +66,7 @@
 - [2026-06-11] R5.9 — scaffold 目录有本地 `.pytest_cache/`(被 .gitignore:7 覆盖、未追踪),属跑测试的本地产物非仓库内容,未提交。pyproject 加 [tool.mypy] 后用 tomllib 实测可解析。
 - [2026-06-12] R6.1 — 三家生图 API 已联网核实(2026-06-12)端点/参数/尺寸/透明支持,逐条留痕 `_verification_log/R6-imggen-api.md`并回填 references.md「生图后端」节。关键真相:①透明背景**仅 OpenAI gpt-image 有显式 `background:transparent`**,Gemini/Seedream 无开关(标 GAP,做透明图标优先 OpenAI 或 PIL 去底);②三家 seed 都不稳(OpenAI/Gemini 官方未列,Seedream 5.0 系列亦未明列),风格一致性改靠唯一 style_anchor+图生图参考,不靠 seed;③Seedream `watermark` 默认 true,封装层已默认置 false(否则 PPT 元素带"AI 生成"水印);④Gemini 图像走通用 generateContent 无独立 images 端点;⑤OpenAI size 仅固定档,16:9 用 1536x1024 近似。
 - [2026-06-12] R6.6#4 — `GAP：待实测(2026-06-XX)`:有 key 端到端实跑(≥5 页 deck、五阶段产物齐全、QA 两项新检查、db06 沉风格卡)**未做**。执行环境探测到平台级 `OPENAI_API_KEY`,但真实生图请求会向第三方传 prompt 且计费,属外部副作用,未经用户显式授权不触发(与 selftest 离线纪律一致)。无 key 装配链(R6.6#3)已端到端实测 PASS:3 页 deck_spec 模板 + imagegen.py mock 占位 PNG → assemble_from_spec.py 产 3 页可编辑 pptx,重开校验 6 原生文本框(=title/body 元素数,守边界三文本未栅格化)+ 4 图片 + 0 warning。
+  - **[2026-06-13 已关闭]** 用户显式授权后实跑:经 OpenAI 兼容中转 gpt-image-2 出 5 个生图元素(2 背景+2 插画+1 图标)+ m11 真数据图,assemble 出 5 页可编辑 pptx(10 原生文本框 + 6 图片 + 0 warning,数据图未生图)。踩坑回灌 imagegen.py(中转两跳/CDN 下载需浏览器 UA/超时/重试/manifest model)。实测记录回填 imggen_pipeline.md,db06 沉「智慧农业项目答辩 — imggen 实跑」卡,spec=`light-slides/examples/deck_spec.dairygoat.yaml`,留痕 `_verification_log/R-imggen-deck-e2e.md`。
 - [2026-06-12] R6 跨技能引用 — 又踩 check_skill_links 陷阱(PROGRESS 已多次记):在 a05/a10/m17 用反引号写 m16 的 `references/imggen_pipeline.md` 被当本技能内部路径报缺失,全部加 `light-slides/` 前缀修正。imagegen.py mock selftest 在 Windows 下 `Image.open` 不 `.load()` 会锁文件致 TemporaryDirectory 清理失败(WinError 32),改 `with Image.open() as im: im.load()` 释放句柄。
 - [2026-06-12] R6.2 — assemble_from_spec.py 装配 chart 元素**只 add_picture 真数据图(figures/),绝不在装配层生图**(守边界一);资产缺失画占位框+warn 不静默跳过(诚信纪律,与 to_pdf.py 同);themes.py 跨目录 import 失败时用内置兜底色板,保证离线 selftest 不依赖 import 路径。
 - [2026-06-12] R7 行数目标 — 计划把 F 组瘦身列在 m07/m08/m15/m16/m17 等**手动技能**，但 -15% 目标是对**常驻 11 技能**。两者交集小（F 组直接命中常驻的只有 a03/a09），且 E 组(R7.5-R7.12)给常驻**增**内容(a08 分级档+8、orchestrator passport/并行、a01 视频)。故按 F 组「正文留决策+一行指针、细节下沉 references」手法**横向施于全部常驻**：a03 代码例/调试四法下沉 code_examples.md(-32)、consistency 工具视角+检查维度合并(-37)、orchestrator §2 契约表镜像下沉 pipelines.md + §0 探针下沉 checkpoints.md(-18)、frontend 框架 how-to 指 references(-16)、system-design 部署/RLS/迁移多 bullet 合并(-12)、memory-pm 工具映射+写入示例压缩(-10)、project-structure 质量门/模板列表压缩(-10)。最终 901→763(-15.3%)。**严格只下沉不删能力**：每处删除的正文内容均已在对应 references 存在或同轮补入，新建 a03/code_examples.md 与 m08/examples/full_pipeline_walkthrough.md 承接。
@@ -188,7 +189,7 @@
 
 ### 遗留 backlog（非本期范围，诚实登记）
 
-- R6.6#4 有 key 端到端生图实跑(配 OPENAI/GEMINI/ARK key 跑≥5 页 deck 回填 imggen_pipeline.md「实测记录」+沉 db06 风格卡)——无 key 装配链已实测，有 key 链标 GAP。
+- R6.6#4 有 key 端到端生图实跑(配 OPENAI/GEMINI/ARK key 跑≥5 页 deck 回填 imggen_pipeline.md「实测记录」+沉 db06 风格卡)——无 key 装配链已实测，有 key 链标 GAP。**[2026-06-13 已关闭]** 用户授权后经中转 gpt-image-2 实跑 5 页 deck,五阶段齐全、0 warning、守边界,留痕 `_verification_log/R-imggen-deck-e2e.md`。
 - evals Tier2 20 任务实跑(本期只要求 Tier1)，下季度评测节律滚动补成 28/28 全覆盖。
 - 第三方备用档(DeepSeek V4 Pro 等)弱模型实测——本环境无 API，标 GAP。
 - README 演示 GIF 实渲染——`assets/demo.tape` 已备，待装 vhs 的环境产出。
