@@ -21,6 +21,7 @@
 | figure-drawing | `scripts/color_palettes.py` | 投稿级配色工具：Okabe-Ito、连续/离散色图、灰度与色盲模拟预览 |
 | figure-drawing | `scripts/figure_export.py` | 按目标期刊栏宽精确导出矢量+位图，校验物理尺寸与缩放后字号 |
 | figure-drawing | `scripts/figure_integrity_lint.py` | 图表诚实性静态扫描：y 轴截断、双 y 轴、bar 无误差棒、jet/rainbow、3D 扭曲等 |
+| figure-planning | `scripts/recommend_chart.py` | 图型启发式推荐：数据字段+分析任务→候选图型排序+理由（Cleveland-McGill 感知精度先验），喂规划卡再校验 |
 | figure-planning | `scripts/validate_plan_card.py` | 规划卡契约校验：target_journal/column 命中 figure_export JOURNAL_SPECS、figure_id 唯一、source_card 必填，把 m11 打回前移到规划阶段 |
 | file-reading | `scripts/docx_read.py` | DOCX 结构读取：段落、表格、标题层级与基本元数据归一化 |
 | file-reading | `scripts/pdf_ops.py` | PDF 读取与结构操作：文本/页级信息抽取、合并拆分等轻量操作 |
@@ -28,6 +29,7 @@
 | frontend-design | `scripts/ai_tell_lint.py` | 机械检测“AI 生成感”前端文案/界面痕迹，提示模板腔、空泛词和常见坏味道 |
 | frontend-design | `scripts/audit_checklist.py` | 前端布局质量可计算检查：对齐、间距、层级、密度、可读性等清单化输出 |
 | idea-critique | `scripts/calibration.py` | idea 审查 calibration 模式：用已知结局样本估计 FNR/FPR，校准严格度 |
+| idea-critique | `scripts/novelty_audit.py` | 新颖性检索证否四阶段留痕(抽论断→检索证据→撞车对比→判定)+一致性勾稽：抓"声称新但证据有 same 撞车"等自相矛盾，喂回否决项 |
 | idea-critique | `scripts/score_aggregate.py` | idea 八维评分加权聚合、否决项处理与 verdict 映射 |
 | idea-critique | `scripts/sycophancy_guard.py` | 反谄媚协议的可计算检查，约束 idea 评审不要迎合式放行 |
 | ip-application | `scripts/copyright_source_prep.py` | 软件著作权源代码材料整理：过滤/抽样/编号，避免提交敏感或无关代码 |
@@ -55,6 +57,7 @@
 | result-analysis | `scripts/significance_test.py` | 显著性检验工具：p 值、效应量、置信区间、BH-FDR 多重校正 |
 | review-rebuttal | `scripts/fetch_openreview.py` | 抓取 OpenReview 公开评审语料，校准模拟审稿与 rebuttal 话术 |
 | review-rebuttal | `scripts/rebuttal_budget.py` | 会议 rebuttal 字数/页数预算检查，纯 stdlib 离线，中英混排分别计词、超限返回码 1 |
+| slides | `scripts/pptx_eval.py` | PPT 可量化质量评测：内容密度/设计一致/连贯性三维扣分制，对照 SKILL 硬尺度逐页给分+扣分理由，把视觉 QA 从肉眼查升级为可回归指标 |
 | slides | `scripts/thumbnail.py` | 把 PPTX/PDF 渲染成缩略图网格，快速做整套 deck 视觉 QA |
 | slides | `scripts/to_pdf.py` | PPTX 转 PDF，优先 LibreOffice `soffice` 无头转换，用于后续视觉审查 |
 | tool-selection | `scripts/detect_stack.py` | 读取项目清单文件识别技术栈，给出工具/技能选型建议 |

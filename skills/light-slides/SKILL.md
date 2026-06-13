@@ -53,6 +53,7 @@ description: 制作精美 PPT。当用户需要为论文、项目、竞赛、答
 - `patterns.md`：python-pptx 可直接跑的版式片段——封面/目录/过渡/内容/结果(左图右解读)/对比(高亮列表格)/时间线/结论/References，含 `fill_bg`(无原生页背景的全幅矩形法)、`add_text`(margin=0)、`rect` 等共用工具函数。
 - `examples/build_deck.py`：端到端生成 5 页学术 pptx(封面+内容+结果+对比+References)，每页配 speaker notes，自带幽灵 deck 测试。`python build_deck.py --theme tech -o tech_demo.pptx`，无需外部数据即可跑。
 - `scripts/thumbnail.py`：pptx→缩略图网格做视觉 QA。优先 LibreOffice 像素渲染(需 soffice + PyMuPDF/pdftoppm)；无 soffice 时自动回退纯 python(读 python-pptx 几何用 PIL 画版式示意图)，足以抓重叠/溢出/空页/对齐/版式重复。`python scripts/thumbnail.py deck.pptx --cols 4`。
+- `scripts/pptx_eval.py`：**PPT 可量化评测**(借 PPTAgent/PPTEval 思路)。把视觉 QA 从肉眼查升级为可打分、可回归——内容密度/设计一致/连贯性三维扣分制(对照本节硬尺度：每页≤7 要点、字号区间、配色数、禁纯文字页/同版式)，逐页给分+扣分理由。`python scripts/pptx_eval.py deck.pptx`。**只算结构性指标，配色品味/叙事质量/图是否真数据仍须人工 + thumbnail 肉眼复核**。与 thumbnail 互补：thumbnail 给人看、pptx_eval 给分。
 - `scripts/to_pdf.py`：pptx→pdf 的 soffice 无头封装。本环境未装 LibreOffice，脚本会明确报 unavailable 并给安装指引+备选(不静默假成功)。`python scripts/to_pdf.py deck.pptx`，`--check` 只探测引擎。
 
 ## QA（当 bug 猎，别当确认）

@@ -25,6 +25,7 @@ description: 以顶刊/顶会审稿人标准严格判断 idea 是否真有突破
 - `scripts/score_aggregate.py` — 八维度加权 + 否决项 + 判决映射 + 阈值可调(DEFAULT_THRESHOLDS)/权重敏感性(weight_sensitivity)（`python scripts/score_aggregate.py` 自测）。
 - `scripts/sycophancy_guard.py` — concession-rate / 连续让步 / 让步挂证据检查。
 - `scripts/calibration.py` — 可选 calibration mode（三分类 accept/revise/reject，算 strict_FNR/FPR/revise_match）。
+- `scripts/novelty_audit.py` — 检索证否四阶段留痕 + 一致性勾稽（抓"声称新却有 same 撞车"等矛盾，输出 verdict hooks 喂否决项）。
 
 ## 可执行步骤
 
@@ -40,6 +41,7 @@ description: 以顶刊/顶会审稿人标准严格判断 idea 是否真有突破
 
 ### Step 2 — 检索取证（落地"证据先于结论"）
 宣称新颖前真检索：OpenAlex（`api.openalex.org/works?search=...&mailto=`）/ Semantic Scholar bulk / arXiv，**至少 2 库交叉验证**（与 m03 撞车复核同口径，复核者不得弱于自报者），**记 HTTP 码 + 最像 3 篇 + 量化 delta + confidence**。无检索 → 创新性维度封顶并标 evidence-missing（rubric.md 第 0 节）。可拉 OpenReview 同主题真实 review 看审稿人怎么挑同类工作（端点见 references.md 第 2 条）。
+> **检索证否四阶段结构化（借 OpenNovelty）**：把上面散着的检索证否填成结构化留痕（阶段1 抽原子论断→2 每论断每库检索证据+HTTP+最像命中→3 逐命中判撞车 same/extension/unrelated+delta→4 novelty 判定），跑 `python scripts/novelty_audit.py --in audit.json` 做**一致性勾稽**：自动抓"声称 novel 却有 same 撞车（NOVELTY-OVERCLAIM）""无 HTTP 200 证据却标 novel（evidence-missing）""单库<2 交叉""extension 缺 delta"等自相矛盾，并输出 verdict hooks（same 撞车→创新性<45 block、overclaim/evidence-missing）喂回 Step 6 否决项。脚本不做检索本身（检索靠 m01），只保证"结论不与自己的证据打架"。
 
 #### Step 2 必做：核心撞车复核（一票否决，不可跳过）
 m03 在立项卡里自报了"核心撞车检查"四问的检索证据——**你的职责是独立复查，不是采信**。曾有 idea 自报新颖性 70、做完整套实验和论文后才发现核心结论已被前作（Dal Pozzolo 2015）发表，真实新颖性 35-45，投稿必被"已做过"秒拒。根除此类事故是本步最高优先级：
