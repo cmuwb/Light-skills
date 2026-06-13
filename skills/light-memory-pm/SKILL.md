@@ -52,7 +52,9 @@ databases/db09-projects/projects/<project_name>/
 
 **触发→写入对照**：idea 定稿→改 `confirmed_idea` + 追加 decision_log；实验跑完→改 `experiment_status` + `next_actions`；论文/PPT/代码出新版→改对应 `*_status` + 追加 version_history（并打 git tag）；方案变更/取舍→追加 decision_log；新术语/指标/创新点定名→补 terminology.md。
 
-**跨项目教训回写（节制，避免噪声）**：仅当某决策产生了**可跨项目复用的过程教训**——踩坑、被审稿/导师否掉、复现失败、某流程显著省时/避雷——才在追加 decision_log 的**同时**回写一条 lesson 到 db09 顶层 `lessons.md`（格式：`- [YYYY-MM-DD] 阶段/场景 — 做法 — 结果(有效|失败) — 适用条件 — 来源项目slug`）。日常项目内决策**不强制**回写。边界：方法选型事实归 db03 方法卡，个人偏好归 feedback 记忆，二者不进 lessons.md。
+**B-fact 引用三件套（硬性，禁裸写数值）**：写 decision_log/data_status 引用 **venue 计量(h_index/被引/分区) / 数据集许可/DOI / 外部数值** 时,不当 db09 自带权威,必带三件套——**快照值(可带 ≈) + `[snapshot YYYY-MM-DD, src=dbNN:文件#定位, 用前重核, 冲突信在线]`**(venue 回指 db01:venues.csv、数据集回指 db04 卡、色值回指 db05 DTCG;palette.json 是样板)。**读卡恢复状态时**:带 last_checked 的快照若超期(计量 >90 天/许可 >365 天)给"需重核"提示,不直接当当前值汇报,投稿/用前以在线(venue_signal.py)或官方源重核。
+
+**跨项目教训回写（节制，避免噪声）**：仅当某决策产生了**可跨项目复用的过程教训**——踩坑、被审稿/导师否掉、复现失败、某流程显著省时/避雷——才在追加 decision_log 的**同时**回写一条 lesson 到 db09 顶层 `lessons.md`（格式：`- [YYYY-MM-DD] 阶段/场景 — 做法 — 结果(有效|失败) — 适用条件 — 来源项目slug`）。日常项目内决策**不强制**回写。边界：方法选型事实归 db03 方法卡，个人偏好归 feedback 记忆，二者不进 lessons.md。**去偏科化（回写时）**：lesson 须剥离研究方向前提、抽到对任意学科成立的层面(如"三模块纯串联当创新点会被拒,须有方法层 delta"对任何 CV/ML 成立=可上;"白羊外观同质化弃 re-id"带方向前提=留 decision_log 不上 lessons);a02 起草、归档确认点由用户拍板。
 
 ### 写入步骤示例（落地一次实验进展）
 刚跑完检测 baseline（项目 `dairygoat-detect-track`）的五步：① **读现状**：Read project_card.md 看 `experiment_status`/`next_actions` 当前值；② **改项目卡**：Edit 把 `experiment_status` 改为带具体指标的实测描述（如「E1 baseline 已跑：YOLOv11@1280，mAP 0.71」），同步勾掉/替换 `next_actions` 首条；③ **追加决策日志**：decision_log.md 末尾加 `- [日期] 决策 — 理由 — 来源`；④ **记版本**：有可复现 tag 则 version_history.md 加行并 `git tag -a`；⑤ **跨会话索引**：涉用户长期偏好/项目背景则写 Light 记忆文件 + MEMORY.md 索引行。日期一律绝对日期（今天=系统 currentDate）。

@@ -47,8 +47,8 @@
 ### 与 AI 使用声明对接（m07）
 凡论文用过任何 AI（含本规范允许的方法学例外），须在 m07（light-paper-drafting）`light-paper-drafting/references/mandatory_inclusions.md` 第 3 节「AI 使用声明模板」按 venue 取用对应声明，scope 与实际一致——别声明没做的，也别瞒做了的。图像若属方法学例外，声明须落到 methods 节可复现描述。
 
-### 与 R6 生图流水线的边界（严格隔离）
-Light 的 m16（light-slides）R6 PPT 生图流水线**只服务 PPT/路演/前端灵感图**，**严禁任何产物进入论文图链路**——这是本规范与 m16 互相指认的硬边界（m16 references 工具清单同条声明）。论文图一律走 m11（light-figure-drawing）的数据驱动绘制，不碰生成式模型。
+### 与 PPT 链路的边界（严格隔离）
+PPT/路演/前端可借外部 AI 生图工具做**装饰/灵感图**，但**严禁任何 AI 生成产物进入论文图链路**——这是诚信底线。论文图一律走 m11（light-figure-drawing）的数据驱动绘制，不碰生成式模型；PPT(m16) 里要放实验数据图，从 m11 成品重画适配投影，不让生成式模型造数据图。
 
 
 - 显著性星标（*/**/***）要在 caption 给出对应的 p 阈值和检验方法。

@@ -6,7 +6,7 @@ description: 根据目标期刊/会议/学校/比赛要求做 LaTeX 或 Word 排
 # LaTeX / Word 排版与导出
 
 ## 开工前
-确认目标 venue 的官方模板与要求(db01: template_url, reference_style, 单双栏, 页数限制)。优先官方模板，不自造。取模板优先级：venue 官网 author kit > Overleaf 官方模板页(`overleaf.com/gallery/tagged/…` 或 "Open as Template") > CTAN 包。注意会议模板有年度版本(如 NDSS `bare_conf_LAST-X2026.tex`)，务必用当届指定版本，旧版会被 desk-reject。从官方骨架文件改(IEEE `bare_conf.tex`、ACM `sample-*.tex`)，不从空文件起。
+确认目标 venue 的官方模板与要求(db01: template_url, reference_style, 单双栏, 页数限制)。`reference_style` → LaTeX 文档类/bst 的映射查 **db01 references.md §2**（与 m10 引用同源，不各读各的）；`template_url` 是易腐链接，取用前校验 200，失链回 venue 官网 author kit。优先官方模板，不自造。取模板优先级：venue 官网 author kit > Overleaf 官方模板页(`overleaf.com/gallery/tagged/…` 或 "Open as Template") > CTAN 包。注意会议模板有年度版本(如 NDSS `bare_conf_LAST-X2026.tex`)，务必用当届指定版本，旧版会被 desk-reject。从官方骨架文件改(IEEE `bare_conf.tex`、ACM `sample-*.tex`)，不从空文件起。
 
 ## LaTeX 路线
 套用官方 cls，关键起手式：

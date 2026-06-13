@@ -13,12 +13,13 @@ user-invocable: false
 4. **Differentiation**：一个会被记住的唯一视觉/交互记忆点(不是堆特效)。
 据此定 **设计语言**：调色板(主/辅/强调/中性) + 字体系统 + 间距栅格 + 圆角阴影 + 图标风格，落到 Design Tokens，登记 db05。**项目有 `databases/db09-projects/projects/<project_name>/palette.json` 则必用其取色**（与论文图 m11/PPT m16 共享的视觉 SSOT 实例，前端不另立色板；schema 见 db09 README，色值锚点真相源是 db05 `design_tokens.template.json`）。设计长在已有语境(品牌/代码库/UI kit/真实截图)上而非凭空造。简报太空(如"做个好看的")时进 Advisor 模式：从风格库提 3 个差异化方向让用户选，再押注其一(canvas-design)。涉及品牌则先按 Core Asset Protocol 收集 logo/产品图/UI 截图/品牌色字，写入 brand-spec.md 当一等公民。
 设计系统持久化：用一个全局真相源(如 MASTER.md/design tokens)+ 页级覆盖文件(页文件覆盖全局，无页文件则用全局)，避免跨页风格漂移(ui-ux-pro-max)。
+取 db05 卡时按项目学科用 `domain_scope=` 过滤(如农业项目看 general + agri-tech 卡,不被他方向偏科卡干扰;无标注的卡默认 general 对所有可见)。引用任何组件库 license/版本时**不信卡内散文**,跑 `databases/db05-frontend-styles/scripts/style_signal.py --npm <包名>` 实时查 registry.npmjs.org,冲突信官方在线源、无网用快照并标 stale;Pro/定价层无 API,指向官方 pricing 页人工核。
 
 ## 设计原则（可量化）
 - 视觉层次清晰，留白充足，对齐严格；"主色 + 锐利强调色" 优于均匀分布的怯懦调色板。
 - 字体：避开 Inter/Roboto/Arial/系统字体，展示字配精炼正文字，pair 出个性。
 - 一致性：组件复用、token 化、风格统一(a07)；用 CSS 变量承载主题。
-- 可访问性(WCAG 2.1 AA)：正文对比 ≥4.5:1、大字 ≥3:1、UI 组件 ≥3:1；键盘可达 + 焦点态可见；颜色不作唯一信息载体；图片有意义 alt；尊重 prefers-reduced-motion。
+- 可访问性(WCAG 2.1 AA)：正文对比 ≥4.5:1、大字 ≥3:1、UI 组件 ≥3:1；键盘可达 + 焦点态可见；颜色不作唯一信息载体；图片有意义 alt；尊重 prefers-reduced-motion。完整阈值/触控目标/4-8pt 栅格判据见 [references/visual-a11y-rules.md](references/visual-a11y-rules.md)；玻璃拟态/新拟物等范式专属 a11y 风险见 db05 对应卡 implementation_notes。
 - 克制动效：HTML 优先纯 CSS、React 用 Motion/GSAP；一次编排良好的页面载入 + 错峰揭示(animation-delay) > 散落微交互；hover/交互过渡 150-300ms。
 - **反 AI-slop 禁令**：紫/粉渐变配白底、emoji 当图标(用 SVG: Lucide/Heroicons)、rounded-card-左边框、gradient-orb 代表 AI、CSS 剪影冒充产品图、千篇一律模板布局。
 - 可调三旋钮(taste-skill)：VARIANCE(布局实验度)/MOTION(动效深度)/DENSITY(每屏信息量)，按场景拨——大屏调高 DENSITY，落地页调高 VARIANCE，后台调低两者。
@@ -75,7 +76,7 @@ user-invocable: false
 可运行前端代码 + 设计说明(风格/色板/字体/组件清单) + 截图。设计系统登记 db05 与 db09。
 
 ## 衔接
-数据接口对接 a04；与 PPT(m16)/论文图(m11) 视觉风格协调(a07)；无鉴权接口风险提示(security_awareness)。视觉灵感图/moodboard 可复用 m16 imggen-enhanced 的生图封装(`light-slides/scripts/imagegen.py`)与 style_anchor 写法(见 m16 `light-slides/references/imggen_pipeline.md`)——同一项目 palette 由 a07 统一，生图元素配色不另起一套。
+数据接口对接 a04；与 PPT(m16)/论文图(m11) 视觉风格协调(a07)；无鉴权接口风险提示(security_awareness)。同一项目 palette 由 a07 统一，前端配色与 PPT/论文图同源，不另起一套。
 
 ---
 逐工具核查笔记(真实端点/命令/参数/坑)见同目录 references.md。
