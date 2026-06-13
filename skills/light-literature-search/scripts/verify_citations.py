@@ -82,6 +82,68 @@ def fetch_doi_csl(doi: str) -> tuple[int, dict | None]:
         return 0, None
 
 
+_ARXIV_RE = re.compile(r"(\d{4}\.\d{4,5})(v\d+)?$|^([a-z\-]+(\.[A-Z]{2})?/\d{7})")
+
+
+def _extract_arxiv_id(s: str) -> str:
+    """从字符串里抽 arXiv id（新式 2401.01234 或旧式 cs.AI/0701001）；抽不到返回空。"""
+    s = (s or "").strip().replace("arXiv:", "").replace("arxiv:", "")
+    m = _ARXIV_RE.search(s)
+    if not m:
+        return ""
+    return (m.group(1) or m.group(3) or "").strip()
+
+
+def verify_arxiv(arxiv_id: str) -> tuple[int, dict | None]:
+    """打 export.arxiv.org/api/query 核验 arXiv id 是否真实存在，返回 (http_code, meta_or_None)。
+    解决 arXiv-only（无 DOI）条目过去只能落 NO_DOI 的盲区。"""
+    aid = _extract_arxiv_id(arxiv_id)
+    if not aid:
+        return 0, None
+    url = "http://export.arxiv.org/api/query?" + urllib.parse.urlencode(
+        {"id_list": aid, "max_results": "1"})
+    req = urllib.request.Request(url, headers={"User-Agent": _user_agent()})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+            raw = resp.read().decode("utf-8", "replace")
+            code = resp.getcode()
+    except urllib.error.HTTPError as e:  # noqa
+        return e.code, None
+    except Exception:
+        return 0, None
+    # Atom 里有 <entry> 且 title 不是 "Error" 即命中（不引 XML 库，正则取 title）
+    if "<entry>" not in raw:
+        return code, None
+    mt = re.search(r"<entry>.*?<title>(.*?)</title>", raw, re.S)
+    title = re.sub(r"\s+", " ", (mt.group(1) if mt else "")).strip()
+    if not title or title.lower() == "error":
+        return code, None
+    return code, {"arxiv_id": aid, "title": title}
+
+
+def crossref_reverse_lookup(title: str, max_n: int = 3) -> list[dict]:
+    """无 DOI 时按标题反查 Crossref 候选 DOI 给人工确认（不自动采信，只给候选）。"""
+    if not (title or "").strip():
+        return []
+    params = {"query.bibliographic": title, "rows": str(max_n),
+              "select": "DOI,title,author,issued"}
+    if _MAILTO:
+        params["mailto"] = _MAILTO
+    url = "https://api.crossref.org/works?" + urllib.parse.urlencode(params)
+    req = urllib.request.Request(url, headers={"User-Agent": _user_agent(), "Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+            data = json.loads(resp.read().decode("utf-8", "replace"))
+    except Exception:
+        return []
+    out = []
+    for it in (data.get("message", {}) or {}).get("items", [])[:max_n]:
+        ttl = (it.get("title") or [""])[0]
+        out.append({"doi": _norm_doi(it.get("DOI", "")), "title": ttl,
+                    "title_sim": _title_sim(title, ttl)})
+    return out
+
+
 def _meta_from_csl(m: dict) -> dict:
     """CSL-JSON 或 Crossref message -> 统一元数据。"""
     title = m.get("title")
@@ -109,8 +171,26 @@ def verify_one(claim: dict) -> dict:
     doi = _norm_doi(claim.get("doi", ""))
     rep: dict[str, Any] = {"claim": claim, "doi": doi}
     if not doi:
+        # 无 DOI：先试 arXiv id 核验，再按标题反查 Crossref 候选 DOI（给人工确认，不自动采信）
+        aid_src = claim.get("arxiv") or claim.get("arxiv_id") or claim.get("title", "") or claim.get("url", "")
+        ax_code, ax_meta = verify_arxiv(aid_src) if _extract_arxiv_id(aid_src) else (0, None)
+        if ax_meta:
+            rep["verdict"] = "ARXIV_VERIFIED"
+            rep["arxiv"] = ax_meta
+            rep["http_code"] = ax_code
+            if claim.get("title"):
+                rep["title_similarity"] = _title_sim(claim["title"], ax_meta["title"])
+            rep["note"] = ("arXiv 预印本核验存在（export.arxiv.org）；预印本未经同行评审，"
+                          "引用须注明 preprint 或换正式发表版 DOI。")
+            return rep
+        candidates = crossref_reverse_lookup(claim.get("title", "")) if claim.get("title") else []
         rep["verdict"] = "NO_DOI"
-        rep["note"] = "无 DOI，无法自动核验，需人工查证（疑似来源不明）。"
+        rep["candidates"] = candidates
+        if candidates:
+            rep["note"] = ("无 DOI；已按标题反查 Crossref 候选 DOI（见 candidates，按 title_sim 排序），"
+                          "请人工确认是否匹配后补全 DOI 再核验——不自动采信。")
+        else:
+            rep["note"] = "无 DOI 且标题反查无候选，需人工查证（疑似来源不明）。"
         return rep
     code, meta = fetch_doi_csl(doi)
     rep["http_code"] = code
@@ -153,7 +233,7 @@ def report_text(batch: dict) -> str:
     lines = ["# 引用核查报告", "",
              f"共 {batch['total']} 条。判定分布：{batch['summary']}", ""]
     flag = {"VERIFIED": "[OK]", "METADATA_MISMATCH": "[!]",
-            "DOI_NOT_FOUND": "[幻觉?]", "NO_DOI": "[需人工]"}
+            "DOI_NOT_FOUND": "[幻觉?]", "NO_DOI": "[需人工]", "ARXIV_VERIFIED": "[arXiv预印本]"}
     for i, r in enumerate(batch["results"], 1):
         lines.append(f"## {i}. {flag.get(r['verdict'], '')} {r['verdict']}  DOI={r.get('doi') or 'NA'}")
         if r.get("http_code") is not None:
@@ -207,7 +287,27 @@ def _selftest() -> int:
     assert summary.get("NO_DOI") == 1, summary
     txt = report_text(batch)
     assert "[OK]" in txt and "[幻觉?]" in txt and "[需人工]" in txt, txt
-    print("[selftest] PASS verify_citations offline")
+
+    # arXiv id 抽取
+    assert _extract_arxiv_id("arXiv:2401.01234v2") == "2401.01234", _extract_arxiv_id("arXiv:2401.01234v2")
+    assert _extract_arxiv_id("no id here") == "", "应抽不到"
+
+    # 无 DOI 但有 arXiv id → ARXIV_VERIFIED（mock verify_arxiv）
+    global verify_arxiv, crossref_reverse_lookup
+    ova, ocrl = verify_arxiv, crossref_reverse_lookup
+    try:
+        verify_arxiv = lambda s: (200, {"arxiv_id": "2401.01234", "title": "A preprint on goats"})
+        r_ax = verify_one({"doi": "", "arxiv": "arXiv:2401.01234", "title": "A preprint on goats"})
+        assert r_ax["verdict"] == "ARXIV_VERIFIED" and r_ax["arxiv"]["arxiv_id"] == "2401.01234", r_ax
+        # 无 DOI 无 arXiv 但有标题 → NO_DOI + 反查候选
+        verify_arxiv = lambda s: (0, None)
+        crossref_reverse_lookup = lambda t, max_n=3: [{"doi": "10.1/cand", "title": t, "title_sim": 0.9}]
+        r_nd = verify_one({"doi": "", "title": "Some real title"})
+        assert r_nd["verdict"] == "NO_DOI" and r_nd["candidates"][0]["doi"] == "10.1/cand", r_nd
+    finally:
+        verify_arxiv, crossref_reverse_lookup = ova, ocrl
+
+    print("[selftest] PASS verify_citations offline (含 arXiv 核验 + 无DOI反查)")
     return 0
 
 

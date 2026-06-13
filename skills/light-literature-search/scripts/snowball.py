@@ -291,7 +291,8 @@ def dedup_neighbors(records: list[dict]) -> list[dict]:
 
 # ----------------------------- 编排 -----------------------------
 def snowball(seed: str, hops: int = 1, provider: str = "openalex",
-             limit: int = 50, offline_sample: bool = False) -> dict:
+             limit: int = 50, offline_sample: bool = False,
+             expand_top: int = 3) -> dict:
     offline = False
     all_recs: list[dict] = []
     seed_title = seed
@@ -316,7 +317,7 @@ def snowball(seed: str, hops: int = 1, provider: str = "openalex",
                 all_recs = refs + cites
                 # 两跳：对一跳邻居中被引最高的若干篇再做一次后向参考。
                 if hops >= 2 and refs:
-                    one = dedup_neighbors(refs + cites)[:3]
+                    one = dedup_neighbors(refs + cites)[:max(1, expand_top)]
                     for nb in one:
                         if nb.get("oa_id"):
                             c2, w2 = oa_resolve_seed(nb["oa_id"])
@@ -405,6 +406,8 @@ def main() -> None:
     ap.add_argument("seed", nargs="?", default="10.1016/j.compag.2021.100001",
                     help="DOI / OpenAlex workid(W..) / 标题")
     ap.add_argument("--hops", type=int, default=1, choices=[1, 2])
+    ap.add_argument("--expand-top", type=int, default=3,
+                    help="两跳时对一跳邻居中被引最高的前 N 篇再扩展（默认 3，可配）")
     ap.add_argument("--provider", default="openalex",
                     choices=["openalex", "s2"])
     ap.add_argument("--limit", type=int, default=50)
@@ -432,7 +435,8 @@ def main() -> None:
         sys.exit(_selftest())
 
     result = snowball(args.seed, hops=args.hops, provider=args.provider,
-                      limit=args.limit, offline_sample=args.offline)
+                      limit=args.limit, offline_sample=args.offline,
+                      expand_top=args.expand_top)
     md = to_markdown(result)
 
     if args.json_out:

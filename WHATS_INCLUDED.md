@@ -37,9 +37,11 @@
 | literature-search | `scripts/arxiv_search.py` | 预印本检索（arXiv Atom + 可选 bioRxiv/medRxiv），标注 preprint 与是否已转正式发表 |
 | literature-search | `scripts/biomedical_search.py` | 生医文献检索（Europe PMC + PubMed E-utilities），支持 MeSH 检索式透传、跨源 DOI 去重 |
 | literature-search | `scripts/cn_journal_probe.py` | 读取 ISSN 清单批量探测 OpenAlex source 体量，用于中文期刊/来源可见性初筛 |
+| literature-search | `scripts/pipeline.py` | 端到端编排：串检索→相关度过滤→滚雪球→引用核验→(PRISMA 勾稽)→出 literature_review 骨架，复用 5 脚本不重复实现 |
 | literature-search | `scripts/prisma_flow.py` | 系统综述 PRISMA 2020 流程留痕：核对筛选计数勾稽并产结构化流程数据 |
 | literature-search | `scripts/search_normalize.py` | 多源文献检索与规范化，首轮即带后向引用边(OpenAlex / Crossref)；`--from-date`+`--known-dois` 做定期追踪增量重跑与新增去重 |
 | literature-search | `scripts/snowball.py` | 按一篇文献的前向被引与后向参考做“引用滚雪球”，扩展相关文献 |
+| literature-search | `scripts/tracker.py` | 文献定期追踪 SQLite 持久化：检索结果 upsert 去重、记 first/last_seen 与 new/seen/read 状态、被引快照随轮次更新、增量列新增、多格式导出 |
 | literature-search | `scripts/verify_citations.py` | DOI 引用核验与幻觉引用标记，辅助文献真实性检查 |
 | paper-drafting | `scripts/draft_lint.py` | 论文草稿诚信门机检：claim 无源、结果/引用 GAP、夸大词与占位符风险 |
 | paper-polishing | `scripts/mechanical_check.py` | 离线学术文稿机械检查：弱词、夸大、被动堆叠、占位符、句式坏味道 |

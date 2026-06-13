@@ -104,88 +104,110 @@ def _norm_doi(doi: str | None) -> str:
 
 
 # ----------------------------- OpenAlex -----------------------------
-def search_openalex(query: str, per_page: int = 10, from_date: str = "") -> tuple[int, list[dict]]:
-    params = {
-        "search": query,
-        "per-page": str(per_page),
-        "sort": "cited_by_count:desc",
-        "select": "id,doi,title,publication_year,cited_by_count,"
-                  "authorships,primary_location,abstract_inverted_index,type,"
-                  "referenced_works",
+def _oa_rec(w: dict) -> dict:
+    """OpenAlex work -> 统一记录。"""
+    auths = [a.get("author", {}).get("display_name", "")
+             for a in w.get("authorships", [])][:8]
+    loc = w.get("primary_location") or {}
+    src = loc.get("source") or {}
+    return {
+        "source_api": "OpenAlex",
+        "title": w.get("title") or "",
+        "authors": [a for a in auths if a],
+        "year": w.get("publication_year"),
+        "venue": src.get("display_name") or "",
+        "doi": _norm_doi(w.get("doi")),
+        "cited_by": w.get("cited_by_count"),
+        "cited_by_src": "OpenAlex",
+        "type": w.get("type") or "",
+        "abstract": restore_abstract(w.get("abstract_inverted_index")),
+        "url": w.get("id") or "",
+        "referenced_works": w.get("referenced_works") or [],
     }
-    # 定期追踪：只取 from_date 之后发表的（增量重跑用，YYYY-MM-DD）。
-    if from_date:
-        params["filter"] = "from_publication_date:" + from_date
-    url = "https://api.openalex.org/works?" + urllib.parse.urlencode(_oa_params(params))
-    code, data = _get_json(url)
+
+
+def search_openalex(query: str, per_page: int = 10, from_date: str = "",
+                    max_results: int = 0) -> tuple[int, list[dict]]:
+    """OpenAlex /works 检索。max_results>per_page 时用 cursor=* 深翻页直到取够或翻完
+    （让"穷尽"深度档真可用）；max_results<=0 表示只取一页 per_page 条（默认行为）。"""
+    select = ("id,doi,title,publication_year,cited_by_count,"
+              "authorships,primary_location,abstract_inverted_index,type,referenced_works")
+    target = max_results if max_results and max_results > per_page else per_page
+    page_size = min(200, target)  # OpenAlex 单页上限 200
     out: list[dict] = []
-    if data and "results" in data:
-        for w in data["results"]:
-            auths = [a.get("author", {}).get("display_name", "")
-                     for a in w.get("authorships", [])][:8]
-            loc = w.get("primary_location") or {}
-            src = loc.get("source") or {}
-            out.append({
-                "source_api": "OpenAlex",
-                "title": w.get("title") or "",
-                "authors": [a for a in auths if a],
-                "year": w.get("publication_year"),
-                "venue": src.get("display_name") or "",
-                "doi": _norm_doi(w.get("doi")),
-                "cited_by": w.get("cited_by_count"),
-                "cited_by_src": "OpenAlex",
-                "type": w.get("type") or "",
-                "abstract": restore_abstract(w.get("abstract_inverted_index")),
-                "url": w.get("id") or "",
-                "referenced_works": w.get("referenced_works") or [],
-            })
-    return code, out
+    cursor = "*"
+    last_code = 0
+    while len(out) < target:
+        params = {"search": query, "per-page": str(page_size),
+                  "sort": "cited_by_count:desc", "select": select, "cursor": cursor}
+        if from_date:
+            params["filter"] = "from_publication_date:" + from_date
+        url = "https://api.openalex.org/works?" + urllib.parse.urlencode(_oa_params(params))
+        last_code, data = _get_json(url)
+        if not data or "results" not in data:
+            break
+        out += [_oa_rec(w) for w in data["results"]]
+        cursor = ((data.get("meta") or {}).get("next_cursor"))
+        if not cursor or not data["results"]:
+            break  # 翻完了
+    return last_code, out[:target]
 
 
 # ----------------------------- Crossref -----------------------------
-def search_crossref(query: str, rows: int = 10, from_date: str = "") -> tuple[int, list[dict]]:
-    params = {
-        "query.bibliographic": query,
-        "rows": str(rows),
-        "sort": "is-referenced-by-count",
-        "order": "desc",
-        "select": "DOI,title,author,issued,container-title,"
-                  "is-referenced-by-count,type,abstract",
+def _cr_rec(it: dict) -> dict:
+    """Crossref item -> 统一记录。"""
+    auths = []
+    for a in it.get("author", []) or []:
+        nm = (a.get("given", "") + " " + a.get("family", "")).strip()
+        if nm:
+            auths.append(nm)
+    year = None
+    dp = it.get("issued", {}).get("date-parts", [[None]])
+    if dp and dp[0]:
+        year = dp[0][0]
+    ct = it.get("container-title") or [""]
+    ttl = it.get("title") or [""]
+    abs = re.sub(r"<[^>]+>", "", it.get("abstract", "") or "").strip()
+    return {
+        "source_api": "Crossref",
+        "title": ttl[0] if ttl else "",
+        "authors": auths[:8],
+        "year": year,
+        "venue": ct[0] if ct else "",
+        "doi": _norm_doi(it.get("DOI")),
+        "cited_by": it.get("is-referenced-by-count"),
+        "cited_by_src": "Crossref",
+        "type": it.get("type") or "",
+        "abstract": abs,
+        "url": "https://doi.org/" + it.get("DOI") if it.get("DOI") else "",
     }
-    # 定期追踪：只取 from_date 之后发表的（Crossref 用 from-pub-date 过滤）。
-    if from_date:
-        params["filter"] = "from-pub-date:" + from_date
-    url = "https://api.crossref.org/works?" + urllib.parse.urlencode(_cr_params(params))
-    code, data = _get_json(url)
+
+
+def search_crossref(query: str, rows: int = 10, from_date: str = "",
+                    max_results: int = 0) -> tuple[int, list[dict]]:
+    """Crossref /works 检索。max_results>rows 时用 cursor=* 深翻页（Crossref deep paging）。"""
+    select = "DOI,title,author,issued,container-title,is-referenced-by-count,type,abstract"
+    target = max_results if max_results and max_results > rows else rows
+    page_size = min(100, target)  # 礼貌取 ≤100
     out: list[dict] = []
-    if data and data.get("message", {}).get("items"):
-        for it in data["message"]["items"]:
-            auths = []
-            for a in it.get("author", []) or []:
-                nm = (a.get("given", "") + " " + a.get("family", "")).strip()
-                if nm:
-                    auths.append(nm)
-            year = None
-            dp = it.get("issued", {}).get("date-parts", [[None]])
-            if dp and dp[0]:
-                year = dp[0][0]
-            ct = it.get("container-title") or [""]
-            ttl = it.get("title") or [""]
-            abs = re.sub(r"<[^>]+>", "", it.get("abstract", "") or "").strip()
-            out.append({
-                "source_api": "Crossref",
-                "title": ttl[0] if ttl else "",
-                "authors": auths[:8],
-                "year": year,
-                "venue": ct[0] if ct else "",
-                "doi": _norm_doi(it.get("DOI")),
-                "cited_by": it.get("is-referenced-by-count"),
-                "cited_by_src": "Crossref",
-                "type": it.get("type") or "",
-                "abstract": abs,
-                "url": "https://doi.org/" + it.get("DOI") if it.get("DOI") else "",
-            })
-    return code, out
+    cursor = "*"
+    last_code = 0
+    while len(out) < target:
+        params = {"query.bibliographic": query, "rows": str(page_size),
+                  "sort": "is-referenced-by-count", "order": "desc",
+                  "select": select, "cursor": cursor}
+        if from_date:
+            params["filter"] = "from-pub-date:" + from_date
+        url = "https://api.crossref.org/works?" + urllib.parse.urlencode(_cr_params(params))
+        last_code, data = _get_json(url)
+        items = (data or {}).get("message", {}).get("items") if data else None
+        if not items:
+            break
+        out += [_cr_rec(it) for it in items]
+        cursor = ((data.get("message") or {}).get("next-cursor"))
+        if not cursor:
+            break
+    return last_code, out[:target]
 
 
 # ----------------------------- 去重归并 -----------------------------
@@ -224,6 +246,56 @@ def dedup_merge(records: list[dict]) -> list[dict]:
     return merged
 
 
+# ----------------------------- 相关度过滤 -----------------------------
+def _term_hit(text: str, term: str) -> bool:
+    """词命中：归一化大小写后子串匹配（中英通用，不做词干）。"""
+    return term.lower().strip() in (text or "").lower()
+
+
+def relevance_score(rec: dict, query: str) -> float:
+    """标题×query 词重叠（Jaccard），0~1。用于辅助排序/截断，纯启发式非真值。"""
+    q = set(re.findall(r"[a-z0-9]+|[一-鿿]", (query or "").lower()))
+    t = set(re.findall(r"[a-z0-9]+|[一-鿿]", (rec.get("title") or "").lower()))
+    if not q or not t:
+        return 0.0
+    return round(len(q & t) / len(q | t), 3)
+
+
+def filter_relevance(records: list[dict], query: str = "",
+                     require_terms: list | None = None,
+                     exclude_terms: list | None = None,
+                     min_score: float = 0.0) -> tuple[list[dict], list[dict]]:
+    """对去重后的文献做相关度过滤，返回 (kept, dropped)。
+
+    解决"宽 query + 纯被引排序顶出跑题高被引文"的硬伤：
+    - require_terms：标题或摘要须**全部**含这些词（AND）
+    - exclude_terms：标题或摘要命中**任一**即剔（OR 排除）
+    - min_score：标题×query 词重叠 Jaccard 低于此值剔（默认 0=不按分截断）
+    每条附 relevance_score；dropped 记 drop_reason 便于人工复核（不静默丢弃）。
+    """
+    require_terms = [t for t in (require_terms or []) if t.strip()]
+    exclude_terms = [t for t in (exclude_terms or []) if t.strip()]
+    kept, dropped = [], []
+    for r in records:
+        hay = (r.get("title") or "") + " " + (r.get("abstract") or "")
+        r["relevance_score"] = relevance_score(r, query)
+        reason = None
+        if require_terms and not all(_term_hit(hay, t) for t in require_terms):
+            miss = [t for t in require_terms if not _term_hit(hay, t)]
+            reason = f"缺必含词 {miss}"
+        elif exclude_terms and any(_term_hit(hay, t) for t in exclude_terms):
+            hit = [t for t in exclude_terms if _term_hit(hay, t)]
+            reason = f"命中排除词 {hit}"
+        elif min_score > 0 and r["relevance_score"] < min_score:
+            reason = f"标题相关度 {r['relevance_score']}<{min_score}"
+        if reason:
+            r["drop_reason"] = reason
+            dropped.append(r)
+        else:
+            kept.append(r)
+    return kept, dropped
+
+
 # ----------------------------- 输出 -----------------------------
 def to_markdown(records: list[dict], query: str) -> str:
     lines = [f"# 文献表：{query}", "",
@@ -241,12 +313,14 @@ def to_markdown(records: list[dict], query: str) -> str:
 
 
 def run(query: str, per_page: int = 10, offline_sample: bool = False,
-        from_date: str = "", known_dois: set | None = None) -> dict:
+        from_date: str = "", known_dois: set | None = None,
+        require_terms: list | None = None, exclude_terms: list | None = None,
+        min_score: float = 0.0, max_results: int = 0) -> dict:
     offline = False
     recs: list[dict] = []
     if not offline_sample:
-        oa_code, oa = search_openalex(query, per_page, from_date)
-        cr_code, cr = search_crossref(query, per_page, from_date)
+        oa_code, oa = search_openalex(query, per_page, from_date, max_results)
+        cr_code, cr = search_crossref(query, per_page, from_date, max_results)
         print(f"[HTTP] OpenAlex={oa_code} Crossref={cr_code}", file=sys.stderr)
         recs = oa + cr
         if oa_code == 0 and cr_code == 0:
@@ -257,7 +331,22 @@ def run(query: str, per_page: int = 10, offline_sample: bool = False,
         print("[OFFLINE] 网络不可达，使用内置合成样本验证管线。", file=sys.stderr)
     merged = dedup_merge(recs)
     out = {"query": query, "offline": offline, "from_date": from_date,
-           "raw_count": len(recs), "merged_count": len(merged), "records": merged}
+           "raw_count": len(recs), "merged_count": len(merged)}
+    # 相关度过滤：剔跑题（解决宽 query 顶出高被引跑题文）。dropped 留痕不静默丢。
+    if require_terms or exclude_terms or min_score > 0:
+        kept, dropped = filter_relevance(merged, query, require_terms, exclude_terms, min_score)
+        out["filtered"] = True
+        out["dropped_count"] = len(dropped)
+        out["dropped_records"] = dropped
+        out["filter_note"] = ("已按 require/exclude/min-score 剔跑题；dropped 留痕供人工复核。"
+                              "relevance_score 为标题×query 词重叠启发式、非真值。")
+        merged = kept
+        out["merged_count"] = len(merged)
+    else:
+        # 即便不过滤也附 relevance_score，便于人工看相关度
+        for r in merged:
+            r["relevance_score"] = relevance_score(r, query)
+    out["records"] = merged
     # 定期追踪：给了已读库 DOI 集合，则切出"新增（去重后未见过）"条目做增量 diff。
     if known_dois is not None:
         known = {_norm_doi(d) for d in known_dois if d}
@@ -306,7 +395,21 @@ def _selftest() -> int:
     assert "10.1016/j.compag.2021.100001" not in new_dois, incr  # 已读，被剔
     assert "10.3390/ani9120999" in new_dois, incr                # 未读，留作新增
     assert incr["new_count"] == len(incr["new_records"]) >= 1, incr
-    print("[selftest] PASS search_normalize (含 --from-date 增量 diff)")
+
+    # 相关度过滤：require/exclude/min-score 三路 + dropped 留痕
+    r_req = run("dairy goat behavior", offline_sample=True, require_terms=["goat"])
+    assert all(_term_hit((x.get("title") or "")+(x.get("abstract") or ""), "goat")
+               for x in r_req["records"]), r_req
+    r_exc = run("dairy goat behavior", offline_sample=True, exclude_terms=["accelerometer"])
+    assert r_exc.get("filtered") and r_exc["dropped_count"] >= 1, r_exc
+    assert all("accelerometer" not in ((x.get("title") or "")+(x.get("abstract") or "")).lower()
+               for x in r_exc["records"]), r_exc
+    # dropped 留痕带 reason，不静默丢
+    assert all(d.get("drop_reason") for d in r_exc["dropped_records"]), r_exc
+    # 不过滤时也附 relevance_score
+    r_plain = run("dairy goat behavior", offline_sample=True)
+    assert all("relevance_score" in x for x in r_plain["records"]), r_plain
+    print("[selftest] PASS search_normalize (含 --from-date 增量 diff + 相关度过滤)")
     return 0
 
 
@@ -326,6 +429,14 @@ def main() -> None:
                     help="礼貌池邮箱（也可设环境变量 OPENALEX_MAILTO / CROSSREF_MAILTO）；不传则匿名查")
     ap.add_argument("--api-key", default="",
                     help="OpenAlex API key（也可设环境变量 OPENALEX_API_KEY）；口径见本技能 references")
+    ap.add_argument("--require-terms", default="",
+                    help="相关度过滤：标题/摘要须全部含这些词（逗号分隔，AND），剔跑题")
+    ap.add_argument("--exclude-terms", default="",
+                    help="相关度过滤：标题/摘要命中任一即剔（逗号分隔，OR 排除）")
+    ap.add_argument("--min-score", type=float, default=0.0,
+                    help="相关度过滤：标题×query 词重叠 Jaccard 低于此值剔（0=不按分截断）")
+    ap.add_argument("--max-results", type=int, default=0,
+                    help="穷尽检索：用 cursor 深翻页取到这么多条（>per-page 才生效，0=只取一页）")
     args = ap.parse_args()
 
     global _MAILTO, _API_KEY
@@ -337,13 +448,18 @@ def main() -> None:
     if args.selftest:
         sys.exit(_selftest())
 
+    req = [t.strip() for t in args.require_terms.split(",") if t.strip()]
+    exc = [t.strip() for t in args.exclude_terms.split(",") if t.strip()]
+
     known: set | None = None
     if args.known_dois:
         with open(args.known_dois, encoding="utf-8") as f:
             known = {ln.strip() for ln in f if ln.strip() and not ln.startswith("#")}
 
     result = run(args.query, args.per_page, offline_sample=args.offline,
-                 from_date=args.from_date, known_dois=known)
+                 from_date=args.from_date, known_dois=known,
+                 require_terms=req, exclude_terms=exc, min_score=args.min_score,
+                 max_results=args.max_results)
     md = to_markdown(result["records"], args.query)
 
     if args.json_out:
@@ -360,6 +476,8 @@ def main() -> None:
         summary += f" from_date={args.from_date}"
     if "new_count" in result:
         summary += f" known={result['known_count']} new={result['new_count']}"
+    if result.get("filtered"):
+        summary += f" dropped={result['dropped_count']}(相关度过滤,留痕见 JSON dropped_records)"
     print(summary)
 
 
