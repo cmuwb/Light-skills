@@ -10,6 +10,7 @@ All notable changes are documented here.
 
 ### Changed
 - **推荐配置重构**:Harness(Claude Code/Codex)+ 模型(Opus 4.8/GPT 5.5,备 DeepSeek V4 Pro)+ 环境(Git/Python/R,排版补 LaTeX)+ 推荐 MCP(Canva/Figma 免费、MATLAB/BioRender 标注付费门槛)。
+- **推荐 MCP 表重订(实测校正 + 扩 3D/绘图)**:据 2026-06 联网实测调整为 **Figma · Canva · Draw.io · Blender · MATLAB** 五项,各标官方/社区 MCP、能力、费用、热门项目 star(实测值)。变更点——①**移除 BioRender**:其官方 connector/MCP 仅查询不能作图,不作为出图路径(需图标库时仍可手工用,降为说明);②**MATLAB 费用校正**:MathWorks 2025-11 开源 MATLAB MCP Core Server,跑本地 MATLAB 即可、**不需 Production Server 商业许可**(原表述已过时),但本地 MATLAB 本身付费、学生/家庭版能否用于 MCP 须自查许可;③**Figma 校正**:Remote server 免费账号可用、能读能写(原仅写 Dev Mode 付费);④**新增 Draw.io**(开源,官方 jgraph/drawio-mcp,diagram-as-code,配 m09)、**Blender**(开源,社区 ahujasid/官方 Lab MCP,3D 科学可视化/路演渲染,配 m09/m16)。论文数据图禁 AI 生成底线不变;Draw.io/Blender 均非 AI 生图,3D 渲染作论文图须数据真实可复现。
 
 ## [3.0.0] - 2026-06-12
 

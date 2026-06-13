@@ -42,7 +42,7 @@ Light 最核心的价值是**可核查**。任何贡献都必须遵守 [CONVENTI
 
 下列一致性自动化暂不强校验,改 PR 时人工核对:
 - **API key 口径一致**:README「关于 API key」节列出的 key 清单,须与 m15(专利检索 Lens/EPO/USPTO)等技能内的 key 说明一致;改任一处 key 口径时同步另一处。
-- **推荐配置同步**:README 推荐配置(Harness/模型/MCP/环境)若变更,核对各技能的工具/模型默认值不矛盾;MCP 的费用门槛(MATLAB/BioRender 付费)如实标注。
+- **推荐配置同步**:README 推荐配置(Harness/模型/MCP/环境)若变更,核对各技能的工具/模型默认值不矛盾;MCP 的费用门槛如实标注(Figma/Canva 核心免费、Draw.io/Blender 开源免费;MATLAB 官方 Core Server 不需 Production Server 但本地 MATLAB 付费、学生/家庭版用于 MCP 须自查许可);star/能力为联网实测值,变更时标注核查日期,查不到标 unknown。论文数据图禁 AI 生成底线不受 MCP 增减影响。
 
 ## 加知识库条目 / Adding knowledge-base entries
 

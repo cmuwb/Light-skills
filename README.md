@@ -84,18 +84,19 @@ Light 在任意 Claude Code / Codex 环境都能跑;想要最佳体验,建议这
 | Harness | **Claude Code** / **Codex** | 两端一键安装,技能自动触发 |
 | 模型 | **Claude Opus 4.8** · **GPT 5.5** | 主力档;备用:DeepSeek V4 Pro 等 |
 | 环境 | **Git · Python · R** | 三件套基础;排版建议补 **LaTeX(TinyTeX/TeX Live)**,部分 MCP/前端用 **Node.js**(可选) |
-| MCP(按需) | **Canva** · **Figma** · MATLAB · BioRender | 接外部设计/计算工具,见下表 |
+| MCP(按需) | **Figma** · **Canva** · **Draw.io** · **Blender** · MATLAB | 接外部设计/绘图/3D/计算工具,见下表 |
 
-**🔌 推荐 MCP(按需接,均非必装)**:Light 本体是技能包,不依赖 MCP;但接上这几个能扩展设计与计算能力。
+**🔌 推荐 MCP(按需接,均非必装)**:Light 本体是技能包,不依赖 MCP;但接上这几个能扩展设计、绘图、3D 与计算能力。star 为 2026-06 GitHub 实测,会变动;费用以官方页为准、投入前自查。
 
 | MCP | 用途 | 费用 | 接入 |
 |---|---|---|---|
-| **Canva**(官方) | 路演/海报版式、品牌模板批量填充 | 免费注册,核心功能免费 | 官方 MCP server,账号授权后接入 |
-| **Figma**(官方 Dev Mode) | 读设计稿→前端实现(配合 [`light-frontend-design`](skills/light-frontend-design/SKILL.md)) | 免费注册,读取免费 | 官方 Dev Mode MCP server |
-| **MATLAB**(官方) | 信号/控制/数值计算(配合 [`light-tool-selection`](skills/light-tool-selection/SKILL.md)) | ⚠️ 官方 MCP 需 **MATLAB Production Server 商业许可**,个人用户无法免费申请 | MathWorks 官方框架,需本地 MATLAB + 商业许可 |
-| **BioRender** | 生物医学示意图/通路图(生医方向) | ⚠️ 官方 connector **仅只读**,高清无水印导出需 **Premium 付费订阅** | 官方 connector,账号授权 |
+| **Figma**(官方) | 读设计稿→前端实现(配合 [`light-frontend-design`](skills/light-frontend-design/SKILL.md)) | **Remote server 免费账号即可用**(读+写 canvas,写功能 beta 期免费);Desktop 版需付费 seat | 官方 Figma MCP server(developers.figma.com);热门社区 GLips/Figma-Context-MCP(~15.1k★) |
+| **Canva**(官方) | 路演/海报版式、品牌模板批量填充 | 免费注册,生成/编辑/导出等核心功能免费;缩放需 Pro、autofill/brand template 需 Enterprise | 官方 `mcp.canva.com/mcp`(canva.dev/docs/mcp) |
+| **Draw.io**(官方) | 框架图/系统图/流程图,diagram-as-code 可版本控制(配合 [`light-figure-planning`](skills/light-figure-planning/SKILL.md)) | **开源免费**(Apache-2.0) | 官方 jgraph/drawio-mcp(~4.4k★);社区 lgazo/drawio-mcp-server(~1.3k★) |
+| **Blender**(官方+社区) | 3D 科学可视化/路演渲染(配合 [`light-figure-planning`](skills/light-figure-planning/SKILL.md) / [`light-slides`](skills/light-slides/SKILL.md)) | **开源免费**(GPL);需本地装 Blender | 社区 ahujasid/blender-mcp(~22.7k★);Blender 基金会官方 Lab MCP(需 Blender 4.2+) |
+| **MATLAB**(官方) | 信号/控制/数值计算/Simulink(配合 [`light-tool-selection`](skills/light-tool-selection/SKILL.md)) | 官方 MCP Core Server(~965★,2025-11 开源)**跑本地 MATLAB 即可、不需 Production Server 商业许可**;但**本地 MATLAB 本身需购买**,学生/家庭版能否用于 MCP 自动化官方未明写,须自查 MathWorks 许可协议 | MathWorks 官方 matlab-mcp-core-server,需本地 MATLAB(R2021a+) |
 
-> 接入任何第三方 MCP 都等于授权外部指令与代码,先评估来源与安全(详见 [`light-tool-selection`](skills/light-tool-selection/SKILL.md))。MATLAB / BioRender 的免费档能力受限,按真实预算与方向取舍。
+> 接入任何第三方 MCP 都等于授权外部指令与代码,先评估来源与安全(详见 [`light-tool-selection`](skills/light-tool-selection/SKILL.md))。**论文数据图仍须程序化绘制(m11),不用 AI 生图;Draw.io 是 diagram-as-code、Blender 是程序化建模渲染,均非 AI 生图,但 3D 渲染作论文图需保证数据真实可复现,路演展示用更稳妥。** MATLAB 需本地付费软件;Blender MCP 驱动科研可视化目前实践尚少,成熟路子是直接用 Molecular Nodes/SciBlend 等插件。
 
 <details>
 <summary><b>低配/备用档模型的已知限制</b></summary>

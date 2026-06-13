@@ -214,25 +214,28 @@
 - 程序化：标准 XML，可用 Python `xml.etree.ElementTree` 或 Node `fast-xml-parser` 改 value/style/几何后回写——适合"代码生成/批量改图"。
 - 导出：SVG（矢量）、PNG/JPEG、PDF、HTML 嵌入。
 - 集成：VS Code 扩展 "Draw.io Integration"（Henning Dieterichs）直接编辑 `.drawio`；桌面版 CLI `drawio --export --format pdf --output out.pdf in.drawio`（可 `--page-index`）；存储接 Drive/GitHub/Confluence 等。
+- **MCP（让 AI 生成/编辑 .drawio）**：官方 jgraph/drawio-mcp（~4.4k★ 实测 2026-06，Apache-2.0，4 种集成：App Server/Tool Server `@drawio/mcp`/Claude Code Skill+CLI/Project Instructions，含 10000+ 形状索引）；社区 lgazo/drawio-mcp-server（~1.3k★，v2.1.1 2026-06，npm `drawio-mcp-server` + PyPI `drawio-mcp`）。选型注意区分官方与同名 fork。
 
-【链接】https://www.drawio.com/ ；VS Code 扩展 https://marketplace.visualstudio.com/items?itemName=hediet.vscode-drawio
+【链接】https://www.drawio.com/ ；VS Code 扩展 https://marketplace.visualstudio.com/items?itemName=hediet.vscode-drawio ；官方 MCP https://github.com/jgraph/drawio-mcp （文档 drawio.com/docs/manual/generate/drawio-mcp-server）
 
-【已知坑】2024-12 起仓库部分源被替换为压缩版、一般不接外部 patch；CLI 导出需桌面版 Electron 环境（headless/CI 需 xvfb）。
+【已知坑】2024-12 起仓库部分源被替换为压缩版、一般不接外部 patch；CLI 导出需桌面版 Electron 环境（headless/CI 需 xvfb-run）；**CLI flag 在 26.0→26.2 间有不兼容变更（issue #2057），脚本化须锁版本并对照该版 `--help`**。
 
 ---
 
-## BioRender
+## Blender（3D 科学可视化 / 路演渲染）
 
-【是什么】网页版生命科学制图工具，5 万+经专家验证的科学准确图标 + 模板，无需设计技能即可做机制图/实验流程图。
+【是什么】开源免费（GPL）3D 建模/渲染软件，**程序化建模渲染、非 AI 生图**（凡 Blender Python `bpy` 能做的都可脚本化/MCP 驱动）。可用于 3D 结构/分子/天文/数据可视化与路演产品渲染。
 
 【可复用方法】
-- 规划层面可借鉴：图标库覆盖细胞/分子/动物/设备，适合机制示意、实验工作流（wet-lab pipeline）、通路图。
-- 模板加速：CONSORT/通路/实验设计类有现成模板。
-- 高校常有 premium 许可（按院系）；投稿/出版需注意其授权条款（免费层有水印/出版限制，发表通常需 publication-license）。
+- **MCP**：社区 ahujasid/blender-mcp（~22.7k★ 实测 2026-06，MIT，自然语言建模/改材质/查场景/跑任意 bpy/Poly Haven 资源/Hyper3D 生成模型；需 Blender 3.0+、Python 3.10+、uv）；**Blender 基金会官方 Lab MCP**（Anthropic 2026-04 赞助，需 Blender 4.2+ 与 Claude Desktop、拖放安装、偏场景分析/技术美术）。两端架构：Blender 内 addon 起 socket，外部 MCP server 连它，每 session 手动 Connect。
+- **成熟科研路子是直接用专用插件（不经 MCP）**：Molecular Nodes（蛋白/PDB/轨迹，Geometry Nodes，PyPI 维护中）、SciBlend（科研数据可视化，Blender Extensions 上架）、AstroBlend（天文）、TheorChem2Blender（计算化学，J. Cheminformatics 发表）。
+- 安全：`execute_blender_code` 跑任意 Python，操作前先存盘；有 300s 工具超时、响应长度上限、同时单实例等限制。
 
-【链接】https://www.biorender.com/
+【链接】社区 https://github.com/ahujasid/blender-mcp ；官方 https://www.blender.org/lab/mcp-server/ ；插件 Molecular Nodes https://github.com/BradyAJohnston/MolecularNodes 、SciBlend https://github.com/SciBlend/SciBlend
 
-【已知坑】非开源、付费，免费层导出/出版受限；闭环 SaaS，无 diagram-as-code（不可脚本批量生成）；偏生命科学，CS/工程领域图标少。本页未给出免费层精确导出格式，投稿前需查 BioRender 官方授权页。
+【已知坑/诚实标注】**"用 MCP 让 AI 自然语言驱动科研可视化"目前实践尚少、无成熟案例**——上述科研插件大多是手工/脚本直接用 Blender，非 MCP 驱动，技能里按"探索方向"对待。3D 渲染图作论文图须保证数据真实可复现（标清渲染参数/数据来源），否则更适合路演展示（→ m16）。Blender 是网格建模非参数化 CAD。官方 Lab MCP 的 star 在 Blender 自有 Gitea 无法读，标 unknown。
+
+> 生命科学通路/机制示意图（细胞/分子/通路），若需专业验证图标库可用 **BioRender** 等 SaaS **手工**做（5 万+图标、CONSORT/通路模板；非开源付费、免费层有水印/出版限制，投稿前查其授权页）。**注意：BioRender 官方 connector/MCP 仅支持查询、不能作图，故不作为程序化/MCP 出图路径**，只在需要其图标库时手工使用。
 
 ---
 
@@ -281,9 +284,9 @@
 
 - **统计图/定量结果**：Python 栈 matplotlib（精排）+ seaborn（统计便捷）；R 用户 ggplot2；要 mm 级期刊列宽直接 `ggsave`/`savefig` 设 size。交互补充材料用 Plotly/Altair。
 - **出版级矢量、公式标签多**：TikZ/PGFPlots（与 LaTeX 同源）。
-- **框架图/系统图/技术路线，要精排可编辑源**：diagrams.net（XML 可程序化），或 TikZ。
+- **框架图/系统图/技术路线，要精排可编辑源**：diagrams.net/Draw.io（XML 可程序化，有官方 MCP），或 TikZ。
 - **关系/依赖/自动布局**：Graphviz。
 - **文档内嵌草图/流程，快速**：Mermaid。
-- **生命科学机制/实验流程图**：BioRender（注意出版授权）。
+- **3D 结构/分子/天文/科学数据可视化**：Blender（开源，程序化建模渲染非 AI 生图；成熟路子是 Molecular Nodes/SciBlend 等插件，MCP 驱动尚属探索）。生命科学通路/机制示意图若需专业图标库，BioRender 等 SaaS 手工做（其 MCP 仅查询不能作图，注意出版授权）。
 - **从自然语言快速出示意图（可接受 AI 生图、需人工核字）**：Scientific Schematics 式迭代生图+评分。
 - **配色统一**：全程 Okabe-Ito（离散）+ viridis 系（连续），灰度+色盲双测。

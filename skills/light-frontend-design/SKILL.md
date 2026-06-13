@@ -39,6 +39,7 @@ user-invocable: false
 - **Mobbin**：真实生产 App(iOS/Android/web)的截图与用户流程——定信息架构/交互顺序前，先找 2-3 个同类真实 flow 对照。
 - **Awwwards**：高水准网页创意，并直接借用其评审 rubric 自评(见下)。
 - 其余：Dribbble、Behance、Land-book、Godly、Siteinspire、Figma Community、Tailwind UI、Vercel templates。总结"为什么好看、适合什么场景、需要哪些组件"，沉淀进 db05。
+- **Figma MCP（读设计稿→前端实现）**：已有 Figma 设计稿时，用官方 Figma MCP server 把选中 frame 的布局/样式/design context 喂给 AI 在 IDE 里直接出码（适合科研工具/数据标注界面/项目主页）。**Remote server 免费账号即可用，能读也能写 canvas**（写功能 beta 期免费）；Desktop 版需付费 seat。热门社区 GLips/Figma-Context-MCP（~15.1k★，实测 2026-06）专做"Figma 链接→喂 AI 编码"。注意：Figma MCP 用于**前端界面**，不用于生成论文 figure（学术 figure 无可靠 MCP 实践、且论文图须程序化绘制）。
 - **image-to-code 三段法(taste-skill)**：拿不准视觉方向时，先 Generate(出参考板/hero 图)→ Analyze(拆版式/字体/间距/动效线索)→ Implement(照参考帧出码)，比直接凭空写更稳。
 
 ## 机械门禁（脚本即真相，规则全文见脚本 selftest）

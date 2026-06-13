@@ -84,18 +84,19 @@ Light runs in any Claude Code / Codex environment; for the best experience, this
 | Harness | **Claude Code** / **Codex** | both one-command installs, skills auto-trigger |
 | Model | **Claude Opus 4.8** · **GPT 5.5** | main tier; backup: DeepSeek V4 Pro etc. |
 | Environment | **Git · Python · R** | the base trio; for typesetting add **LaTeX (TinyTeX/TeX Live)**, and **Node.js** (optional) for some MCPs/frontend |
-| MCP (as needed) | **Canva** · **Figma** · MATLAB · BioRender | external design/compute tools, see table below |
+| MCP (as needed) | **Figma** · **Canva** · **Draw.io** · **Blender** · MATLAB | external design/diagram/3D/compute tools, see table below |
 
-**🔌 Recommended MCPs (all optional, none required).** Light is a skill pack and needs no MCP; adding these extends its design & compute reach.
+**🔌 Recommended MCPs (all optional, none required).** Light is a skill pack and needs no MCP; adding these extends its design, diagram, 3D & compute reach. Stars are 2026-06 GitHub live counts (will drift); verify cost on official pages before investing.
 
 | MCP | Use | Cost | Setup |
 |---|---|---|---|
-| **Canva** (official) | pitch/poster layouts, brand-template batch fill | free account, core features free | official MCP server, connect after account auth |
-| **Figma** (official Dev Mode) | read designs → frontend implementation (with [`light-frontend-design`](skills/light-frontend-design/SKILL.md)) | free account, reads free | official Dev Mode MCP server |
-| **MATLAB** (official) | signal/control/numerical computing (with [`light-tool-selection`](skills/light-tool-selection/SKILL.md)) | ⚠️ official MCP needs a **MATLAB Production Server commercial license**; individuals can't apply for free | MathWorks official framework, needs local MATLAB + commercial license |
-| **BioRender** | biomedical schematics/pathway figures (biomed) | ⚠️ official connector is **read-only**; high-res watermark-free export needs a **paid Premium subscription** | official connector, account auth |
+| **Figma** (official) | read designs → frontend implementation (with [`light-frontend-design`](skills/light-frontend-design/SKILL.md)) | **Remote server works on free accounts** (read + write canvas; write is free during beta); Desktop server needs a paid seat | official Figma MCP server (developers.figma.com); popular community GLips/Figma-Context-MCP (~15.1k★) |
+| **Canva** (official) | pitch/poster layouts, brand-template batch fill | free account; generate/edit/export core features free; resize needs Pro, autofill/brand template need Enterprise | official `mcp.canva.com/mcp` (canva.dev/docs/mcp) |
+| **Draw.io** (official) | framework/system/flow diagrams, diagram-as-code under version control (with [`light-figure-planning`](skills/light-figure-planning/SKILL.md)) | **open-source free** (Apache-2.0) | official jgraph/drawio-mcp (~4.4k★); community lgazo/drawio-mcp-server (~1.3k★) |
+| **Blender** (official+community) | 3D scientific visualization / pitch rendering (with [`light-figure-planning`](skills/light-figure-planning/SKILL.md) / [`light-slides`](skills/light-slides/SKILL.md)) | **open-source free** (GPL); needs local Blender | community ahujasid/blender-mcp (~22.7k★); Blender Foundation official Lab MCP (needs Blender 4.2+) |
+| **MATLAB** (official) | signal/control/numerical computing/Simulink (with [`light-tool-selection`](skills/light-tool-selection/SKILL.md)) | official MCP Core Server (~965★, open-sourced 2025-11) **runs on local MATLAB, no Production Server commercial license needed**; but **local MATLAB itself is paid**, and whether student/home editions may be used for MCP automation isn't stated by MathWorks — check the license agreement | MathWorks official matlab-mcp-core-server, needs local MATLAB (R2021a+) |
 
-> Connecting any third-party MCP authorizes external instructions and code — vet the source and security first (see [`light-tool-selection`](skills/light-tool-selection/SKILL.md)). MATLAB / BioRender free tiers are limited; choose by real budget and field.
+> Connecting any third-party MCP authorizes external instructions and code — vet the source and security first (see [`light-tool-selection`](skills/light-tool-selection/SKILL.md)). **Paper data figures must still be drawn programmatically (m11), not AI-generated; Draw.io is diagram-as-code and Blender is programmatic modeling/rendering — neither is AI image generation, but a 3D render used as a paper figure must stay data-true and reproducible, so it's safer for pitch/display.** MATLAB needs paid local software; MCP-driven scientific visualization in Blender is still nascent in practice — the mature path is using plugins like Molecular Nodes / SciBlend directly.
 
 <details>
 <summary><b>Known limits of low-tier / backup models</b></summary>

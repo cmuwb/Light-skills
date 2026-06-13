@@ -260,7 +260,7 @@ SciencePlots（garrettj403）是流行的 matplotlib 期刊风格包；本 skill
 
 ## BioRender
 
-【是什么】面向生命科学的在线科研插图工具，内置数万个经专家绘制的图标（细胞/蛋白/器官/实验装置），强在快速做机制图、实验流程图、graphical abstract。
+【是什么】面向生命科学的在线科研插图工具，内置数万个经专家绘制的图标（细胞/蛋白/器官/实验装置），强在快速做机制图、实验流程图、graphical abstract。**仅手工网页使用——其官方 connector/MCP 只支持查询、不能作图，故不作为程序化/MCP 出图路径**（不在推荐 MCP 表内）。3D 结构/分子可视化改用 Blender（开源程序化，见 m09 figure-planning references「Blender」节）。
 
 【可复用方法/工作流】
 - 拖拽式画布：从图标库检索元素 → 拼装 → 连箭头/加文字 → 套模板。核心价值是**省去自己画生物结构**且风格统一专业。
