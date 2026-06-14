@@ -43,5 +43,17 @@
 
 ---
 
+## 站 3：light-idea-generation（科研主线第 3 站，已完成）
+
+原零脚本（纯流程编排），详档核心矛盾"量化环节全靠手工不可复现"。本站把量化环节脚本化 + 补黄金样例：
+- ✅ G-1 card_gate.py 立项卡交接门禁：校验 (m04复核) 字段非空/最近邻≥3带留痕/新颖性归档三档/撞车自评选档/无模糊词，残卡拒绝交 m04
+- ✅ G-2 rank_ideas.py 候选排序：影响×工作量性价比确定性排序+先做/缓做/砍，收敛三套评分为唯一裁定
+- ✅ G-3 candidate_dedup.py 去重/伪多样性：零依赖文本相似度(默认)或 SPECTER2 余弦(--emb)，批内 mean+1σ 自动标变体，把含糊阈值算法化
+- ✅ G-4 examples/idea_candidates.example.md：2 张分层卡(稳/冲)，撞车四问留痕合格写法，可过 card_gate
+- ✅ G-5 文档修：SKILL 三套评分分工(三维triage/影响工作量主排序/五维终检)+发散收敛漏斗(≥15→3-6)+脚本examples入文；references 未来日期文献标"待核"
+- ✅ G-CI 四 CI 全绿（scripts 59→62）+ 记忆
+
+---
+
 ## 待做站（科研主线顺序）
-idea-generation → idea-critique(已深做P1,补剩余) → research-plan → result-analysis(顺手补 R/MATLAB 作图三选) → paper-drafting → paper-polishing → figure-planning(已补E1) → figure-drawing → citation → typesetting → venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。
+idea-critique(已深做P1,补剩余) → research-plan → result-analysis(顺手补 R/MATLAB 作图三选) → paper-drafting → paper-polishing → figure-planning(已补E1) → figure-drawing → citation → typesetting → venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。

@@ -34,6 +34,9 @@
 | idea-critique | `scripts/novelty_audit.py` | 新颖性检索证否四阶段留痕(抽论断→检索证据→撞车对比→判定)+一致性勾稽：抓"声称新但证据有 same 撞车"等自相矛盾，喂回否决项 |
 | idea-critique | `scripts/score_aggregate.py` | idea 八维评分加权聚合、否决项处理与 verdict 映射 |
 | idea-critique | `scripts/sycophancy_guard.py` | 反谄媚协议的可计算检查，约束 idea 评审不要迎合式放行 |
+| idea-generation | `scripts/card_gate.py` | 立项卡交接门禁：校验 (m04复核) 字段非空、最近邻≥3带留痕、新颖性归档三档、撞车自评选档，残卡拒绝交 m04 |
+| idea-generation | `scripts/candidate_dedup.py` | 候选 idea 去重/伪多样性检测：文本相似度(零依赖)或 SPECTER2 余弦(可选)，批内 mean+1σ 自动标疑似变体对，把含糊阈值算法化 |
+| idea-generation | `scripts/rank_ideas.py` | 候选 idea 排序(m03 triage)：影响×工作量性价比确定性排序+先做/缓做/砍建议，收敛三套评分为唯一裁定 |
 | ip-application | `scripts/copyright_source_prep.py` | 软件著作权源代码材料整理：过滤/抽样/编号，避免提交敏感或无关代码 |
 | ip-application | `scripts/patent_search.py` | 在先技术检索辅助，支持引用图一跳扩展 `--snowball` |
 | literature-search | `scripts/arxiv_search.py` | 预印本检索（arXiv Atom + 可选 bioRxiv/medRxiv），标注 preprint 与是否已转正式发表 |

@@ -21,7 +21,7 @@
 
 ## The AI Scientist v1 (Sakana AI, 2024)
 
-**【是什么】** 首个端到端自动科研系统：idea 生成 → 新颖性检索 → 跑实验 → 写论文 → 自动评审。arXiv 2408.06292，2026 年其后续工作登 Nature (Lu et al., 2026, Nature 651:914-919)。基于固定"模板"（NanoGPT / 2D Diffusion / Grokking）在某领域内迭代。
+**【是什么】** 首个端到端自动科研系统：idea 生成 → 新颖性检索 → 跑实验 → 写论文 → 自动评审。arXiv 2408.06292。其后续工作据称登 Nature（Lu et al.；**卷页 Nature 651:914-919 为待核条目，引用前须核验真实出处，勿当既成事实**）。基于固定"模板"（NanoGPT / 2D Diffusion / Grokking）在某领域内迭代。
 
 **【可复用方法/真实端点】**
 - **idea 三维自评分**：`generate_ideas.py` 让 LLM 对每个候选 idea 输出 JSON，含字段 `Name / Title / Experiment / Interestingness / Feasibility / Novelty`，后三者均为 **1–10 打分**，prompt 明确要求"打分谨慎、贴近现实"。→ 本技能可借用 Interestingness+Feasibility+Novelty 这套轻量三维快评。
@@ -70,7 +70,7 @@
 
 ## MAGenIdeas / 迭代规划检索 (Chen et al., ISSI 2025)
 
-**【是什么】** "组合创新 + 多智能体迭代检索"提升 LLM 研究 idea 的新颖性与多样性。对应两篇：原始方法 arXiv 2410.14255（Iterative Planning and Search），扩展版 arXiv 2604.20548 / Scientometrics 2026。代码仓 `ChenShuai00/MAGenIdeas`，基于 AgentScope，数据用 ACL 2024 long papers。
+**【是什么】** "组合创新 + 多智能体迭代检索"提升 LLM 研究 idea 的新颖性与多样性。对应：原始方法 arXiv 2410.14255（Iterative Planning and Search）。**其扩展版（曾记 arXiv 2604.20548 / Scientometrics）编号与出处为待核条目，未核实前勿当既成事实引用。** 代码仓 `ChenShuai00/MAGenIdeas`，基于 AgentScope，数据用 ACL 2024 long papers。
 
 **【可复用方法】**
 - **有目的地规划"该去检索什么外部知识"**：不是一次检索完，而是迭代地规划下一步检索目标，逐步把更广更深的知识喂给 idea 生成。带规划检索后唯一新颖 idea 数是不带时的 **3.4 倍**。
@@ -78,7 +78,7 @@
 - **专家 + 批评家多角色多轮讨论**：功能特化 agent（expert、critic）多轮交互做创意迭代优化。
 - **Swiss Tournament 评选**：用瑞士轮两两比拼对大量候选 idea 排序选 top（在 170 篇种子论文上，top-rated idea 数是 SOTA 的 ≥2.5 倍）。→ 本技能产出多个 idea 时可借瑞士轮/两两 PK 做排序而非单独打分。
 
-**【链接】** https://arxiv.org/abs/2410.14255 ｜ https://arxiv.org/abs/2604.20548 ｜ https://github.com/ChenShuai00/MAGenIdeas
+**【链接】** https://arxiv.org/abs/2410.14255 ｜ https://github.com/ChenShuai00/MAGenIdeas （2604.20548 链接为待核，暂不列）
 
 **【已知坑/局限】** 评测显示生成 idea 质量"介于被接收与被拒论文之间"，离顶会接收还有差距；实验仅在 NLP 域验证。
 
