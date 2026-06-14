@@ -34,6 +34,11 @@ PLACEHOLDER_RE = re.compile(r"^\s*(\{\{.*\}\}|[-—–]|n/?a|tbd|待定|待填|\
 # 实验行 ID 形态：EXP-01 / ABL-02 / SEN-01 / GEN/ROB 等
 EXP_ID_RE = re.compile(r"^[A-Z]{2,4}-?\d+$")
 HYP_RE = re.compile(r"\bH\d+\b")
+# 可量化阈值：含数字、不等号、p 值、百分比等——停止条件应可量化而非纯定性
+QUANT_RE = re.compile(r"\d|[<>≥≤=]|p\s*[<>=]|%|百分", re.I)
+# 纯定性词（停止条件只写这些 = 不可验收）
+QUALITATIVE_ONLY = ("效果好", "有提升", "更优", "表现好", "可行", "成功", "提高", "改善",
+                    "better", "improve", "good", "works")
 
 
 def _is_blank(cell: str) -> bool:
@@ -100,6 +105,8 @@ def lint(text: str) -> dict:
     idx = {el: _col_index(header, el) for el in COL_ALIASES}
     missing_cols = [el for el, i in idx.items() if i is None]
     findings = []
+    warnings = []           # 语义弱校验（不翻 ok 退出码，但提示"绿了可能仍错"）
+    hyp_to_exps = {}        # 假设 → 该假设下的实验 ID 列表（覆盖度检查）
     checked = 0
     for r in rows:
         if not r or not EXP_ID_RE.match((r[0] or "").strip()):
@@ -109,8 +116,12 @@ def lint(text: str) -> dict:
         gaps = []
         # 假设
         i = idx["hypothesis"]
+        hyp_val = r[i] if (i is not None and i < len(r)) else ""
         if i is None or i >= len(r) or _is_blank(r[i]) or not HYP_RE.search(r[i]):
             gaps.append("假设(对应假设列空或非 H#)")
+        else:
+            for h in HYP_RE.findall(hyp_val):
+                hyp_to_exps.setdefault(h, []).append(exp_id)
         # 变量：数据集 + baseline 都要有
         for el, label in (("dataset", "数据集"), ("baseline", "baseline")):
             j = idx[el]
@@ -118,17 +129,61 @@ def lint(text: str) -> dict:
                 gaps.append(f"变量({label}空)")
         # 指标
         k = idx["metric"]
+        metric_val = r[k] if (k is not None and k < len(r)) else ""
         if k is None or k >= len(r) or _is_blank(r[k]):
             gaps.append("指标(空)")
         # 停止条件
         m = idx["stop"]
+        stop_val = r[m] if (m is not None and m < len(r)) else ""
         if m is None or m >= len(r) or _is_blank(r[m]):
             gaps.append("停止条件(完成判定空)")
+        else:
+            # 语义弱校验1：停止条件应可量化（含数字/不等号/p值），纯定性词给 warning
+            if not QUANT_RE.search(stop_val):
+                warnings.append(f"{exp_id}: 完成判定「{stop_val[:30]}」无可量化阈值（数字/不等号/p值），"
+                                f"难以客观验收——EXP-Bench 最忌结论判定不可量化")
+            elif any(q in stop_val.lower() for q in QUALITATIVE_ONLY) and not QUANT_RE.search(stop_val):
+                warnings.append(f"{exp_id}: 完成判定含定性词且无量化门槛")
+            # 语义弱校验2：完成判定是否提到了该行的指标（判定与指标对齐）
+            if metric_val and not _is_blank(metric_val):
+                # 提取指标关键 token：字母(数字)混合名(F1/R2/top-1/acc/mAP)或中文词，含短名
+                mtokens = re.findall(r"[A-Za-z]+[\-\d]*|[一-鿿]{2,}", metric_val.lower())
+                mtokens = [t for t in mtokens if len(t) >= 2 or any(ch.isdigit() for ch in t)]
+                if mtokens and not any(t in stop_val.lower() for t in mtokens):
+                    warnings.append(f"{exp_id}: 完成判定未提及指标「{metric_val[:20]}」关键词，"
+                                    f"判定与指标可能脱节（绿了但判定对错存疑）")
         if gaps:
             findings.append({"exp_id": exp_id, "gaps": gaps})
+
+    # 语义弱校验3：假设-实验覆盖度——每个假设最好有 ≥1 主实验(EXP) + ≥1 消融(ABL)
+    coverage_warnings = []
+    for h, exps in sorted(hyp_to_exps.items()):
+        prefixes = {re.match(r"^[A-Z]+", e).group(0) for e in exps if re.match(r"^[A-Z]+", e)}
+        if "ABL" not in prefixes:
+            coverage_warnings.append(f"假设 {h} 无消融实验(ABL-)，仅靠 {sorted(set(exps))} 验证——"
+                                     f"缺消融难归因增益来自创新点本身")
+    warnings.extend(coverage_warnings)
+
+    # 严谨性评分卡（借 ARA Rigor Reviewer）：把"齐全/语义/覆盖"汇成 0-100 严谨度，分项可审计。
+    # 经验扣分制（非真值，可调）：每个硬缺项行扣 15、每条语义 warning 扣 5，封底 0。
+    rigor = 100
+    rigor -= 15 * len(findings)
+    rigor -= 5 * len(warnings)
+    rigor = max(0, rigor)
+    rigor_breakdown = {
+        "form_complete": len(findings) == 0,              # 四要素齐全
+        "quantifiable_verdicts": not any("无可量化阈值" in w for w in warnings),
+        "verdict_metric_aligned": not any("脱节" in w for w in warnings),
+        "ablation_coverage": not any("消融" in w for w in warnings),
+        "n_hard_gaps": len(findings),
+        "n_semantic_warnings": len(warnings),
+    }
+
     return {"ok": len(findings) == 0 and not missing_cols,
+            "rigor_score": rigor, "rigor_breakdown": rigor_breakdown,
             "checked_rows": checked, "missing_columns": missing_cols,
-            "findings": findings}
+            "findings": findings, "warnings": warnings,
+            "hypotheses": {h: sorted(set(e)) for h, e in hyp_to_exps.items()}}
 
 
 def _print_report(rep: dict) -> None:
@@ -143,6 +198,17 @@ def _print_report(rep: dict) -> None:
             print(f"  ✗ {f['exp_id']}: 缺 {', '.join(f['gaps'])}")
     else:
         print("  ✓ 所有实验行四要素齐全（假设/变量/指标/停止条件）")
+    # 语义弱校验（warning：不影响退出码，但提示"形式齐全≠语义正确"）
+    if rep.get("warnings"):
+        print(f"  —— 语义弱校验 {len(rep['warnings'])} 条 warning（形式齐全≠语义正确，人工核） ——")
+        for w in rep["warnings"]:
+            print(f"  ⚠ {w}")
+    # 严谨性评分卡（借 ARA Rigor Reviewer）
+    if "rigor_score" in rep:
+        b = rep["rigor_breakdown"]
+        print(f"  —— 严谨性评分 {rep['rigor_score']}/100（经验扣分制，可审计；非真值） ——")
+        print(f"     四要素齐全={b['form_complete']} 判定可量化={b['quantifiable_verdicts']} "
+              f"判定指标对齐={b['verdict_metric_aligned']} 有消融覆盖={b['ablation_coverage']}")
 
 
 def _selftest() -> int:
@@ -179,7 +245,42 @@ def _selftest() -> int:
     # 无实验表 → 报错而非崩
     rep3 = lint("# 没有表格\n普通文字。")
     assert not rep3["ok"] and rep3.get("error"), rep3
-    print("[selftest] PASS plan_lint（齐全/缺项/无表三路径）")
+
+    # 语义弱校验：完成判定不可量化 + 判定与指标脱节 + 假设无消融
+    sem = """
+| 实验ID | 对应假设 | 数据集 | baseline | 指标 | 完成判定 |
+|--------|----------|--------|----------|------|----------|
+| EXP-01 | H1 | ImageNet | ResNet50 | top-1 acc | 效果比 baseline 好 |
+| EXP-02 | H2 | CIFAR | VGG | F1 | top-1 > 0.9 |
+"""
+    rs = lint(sem)
+    # 四要素齐全(形式) → ok=True，但应有语义 warning
+    assert rs["ok"], rs
+    wtext = " ".join(rs["warnings"])
+    # EXP-01 完成判定"效果比baseline好"无量化阈值
+    assert any("EXP-01" in w and "无可量化阈值" in w for w in rs["warnings"]), rs["warnings"]
+    # EXP-02 指标是 F1 但判定写 top-1（脱节）
+    assert any("EXP-02" in w and "脱节" in w for w in rs["warnings"]), rs["warnings"]
+    # H1/H2 都无 ABL 消融 → 覆盖度 warning
+    assert any("H1" in w and "消融" in w for w in rs["warnings"]), rs["warnings"]
+
+    # 有消融时不报覆盖度 warning
+    with_abl = """
+| 实验ID | 对应假设 | 数据集 | baseline | 指标 | 完成判定 |
+|--------|----------|--------|----------|------|----------|
+| EXP-01 | H1 | ImageNet | ResNet50 | top-1 | top-1 > baseline 且 p<0.05 |
+| ABL-01 | H1 | ImageNet | 移除X | top-1 | top-1 下降 > 2% 证明X有效 |
+"""
+    rab = lint(with_abl)
+    assert not any("消融" in w for w in rab["warnings"]), rab["warnings"]
+
+    # 严谨性评分卡：齐全+对齐+有消融 → 高分；缺项/多 warning → 低分
+    assert rab["rigor_score"] >= 90, rab["rigor_score"]          # with_abl 干净
+    assert rab["rigor_breakdown"]["ablation_coverage"], rab
+    assert rs["rigor_score"] < rab["rigor_score"], (rs["rigor_score"], rab["rigor_score"])  # sem 有 warning 应更低
+    assert rep2["rigor_score"] < 100, rep2["rigor_score"]        # bad 有硬缺项
+
+    print("[selftest] PASS plan_lint（齐全/缺项/无表 + 语义弱校验 + 覆盖度 + 严谨性评分）")
     return 0
 
 

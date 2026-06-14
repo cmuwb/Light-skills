@@ -53,7 +53,8 @@
 | paper-polishing | `scripts/polish.py` | LanguageTool 云端/本地降级的语法风格检查，输出结构化发现与 HTTP 元数据 |
 | paper-polishing | `scripts/style_fingerprint.py` | 从用户过往文稿提取文风指纹，润色时校准作者声音而非通用模板 |
 | project-structure | `scripts/scaffold.py` | 一条命令生成规范科研项目骨架，含 data/src/docs/experiments/figures/paper 等目录 |
-| research-plan | `scripts/plan_lint.py` | 实验矩阵四要素齐全性检查：假设/变量/指标/停止条件，缺一即提示，离线只读可接 CI |
+| research-plan | `scripts/plan_lint.py` | 实验矩阵四要素齐全性检查：假设/变量/指标/停止条件，缺一即提示，离线只读可接 CI；另含语义弱校验(完成判定可量化/判定指标对齐/假设-消融覆盖度) |
+| research-plan | `scripts/power_check.py` | 统计功效反推：输入效应量+重复数→实际 power+达标最小重复数，纠"≥5 种子"对中效应欠功效误区(d=0.5 需 64/组)，statsmodels 优先缺失降级正态近似 |
 | system-design | `scripts/er_diagram.py` | 表结构定义(YAML/JSON) → Mermaid erDiagram 文本，支持 PK/FK/UK 与关系基数，纯离线 |
 | research-ethics | `scripts/check_retractions.py` | 批量撤稿/更正检查，通过 Crossref 等公开元数据标记 retraction risk |
 | research-ethics | `scripts/text_overlap.py` | 离线自查重，定位与给定语料最长逐字重合片段，辅助学术规范审查 |
@@ -96,6 +97,7 @@
 | research-plan | `templates/research-plan.md` | 研究方案填空骨架，每节带成功标准/验证方式 |
 | research-plan | `templates/experiment_matrix.md` | 实验矩阵：实验ID × 假设 × 数据集 × baseline × 指标 × 种子，含派生数据规格 |
 | research-plan | `templates/reproducibility-checklist.md` | 可复现性勾选清单（环境/目录/配置/版本/流水线） |
+| research-plan | `templates/reproduction-log.md` | 复现已有论文的逐次日志表：改了什么/得到的数/与目标差/下一步假设 + 失败三分归因 |
 | paper-drafting | `templates/01_imrad.md` | IMRaD 实证论文章节骨架 |
 | paper-drafting | `templates/02_review_survey.md` | 综述/survey 论文章节骨架 |
 | paper-drafting | `templates/03_theory.md` | 理论/方法型论文章节骨架 |
