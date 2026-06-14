@@ -55,5 +55,16 @@
 
 ---
 
+## 站 4：light-idea-critique（科研主线第 4 站，已完成）
+
+P1/P2/E3 已深做 7 条（阈值可调/权重敏感性/结构化多样性/领域profile/calibration三分类/批量排序/novelty_audit）。本站补详档剩余 3 条 + 1 借鉴：
+- ✅ C-1 离线降级检索协议：SKILL Step2 加状态机——evidence-missing 时创新性封顶、整体最高"有条件通过"绝不放行"通过"、联网二次检索补齐才改判；无网时闸门只收紧不放松（与 m10/a10 离线降级同脉）
+- ✅ C-2 sycophancy_guard 修小 N 脆弱：N<4 用绝对让步计数门限补百分比阈值脆弱（2 条 1 让步=50% 不报警的盲区）；autonomous 模式连续让步第二条自动降级到 3（不留人工口子）；selftest 加小N/自主/大N 用例
+- ✅ C-3 输出压缩纪律：protocol.md 加「输出压缩纪律」（共识去重只列一次/每视角≤150字/判决正文只留可执行项/一个关切一处），治五视角+DA+IF+反驳栈冗长
+- ✅ C-4 GitHub 借鉴（SciMuse）：score_aggregate decide(interestingness=) 边界复核——idea 被否决压到不通过但 Weighted 近通过线+有趣度高时出"边界复核建议"提示人工，只提示绝不自动放行（缓解二元否决误杀）；selftest 加边界用例
+- ✅ C-CI 四 CI 全绿 + SKILL 同步（Step5 小N/自主、Step6 边界复核+压缩）
+
+---
+
 ## 待做站（科研主线顺序）
-idea-critique(已深做P1,补剩余) → research-plan → result-analysis(顺手补 R/MATLAB 作图三选) → paper-drafting → paper-polishing → figure-planning(已补E1) → figure-drawing → citation → typesetting → venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。
+research-plan → result-analysis(顺手补 R/MATLAB 作图三选) → paper-drafting → paper-polishing → figure-planning(已补E1) → figure-drawing → citation → typesetting → venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。

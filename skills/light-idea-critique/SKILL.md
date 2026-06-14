@@ -42,6 +42,7 @@ description: 以顶刊/顶会审稿人标准严格判断 idea 是否真有突破
 ### Step 2 — 检索取证（落地"证据先于结论"）
 宣称新颖前真检索：OpenAlex（`api.openalex.org/works?search=...&mailto=`）/ Semantic Scholar bulk / arXiv，**至少 2 库交叉验证**（与 m03 撞车复核同口径，复核者不得弱于自报者），**记 HTTP 码 + 最像 3 篇 + 量化 delta + confidence**。无检索 → 创新性维度封顶并标 evidence-missing（rubric.md 第 0 节）。可拉 OpenReview 同主题真实 review 看审稿人怎么挑同类工作（端点见 references.md 第 2 条）。
 > **检索证否四阶段结构化（借 OpenNovelty）**：把上面散着的检索证否填成结构化留痕（阶段1 抽原子论断→2 每论断每库检索证据+HTTP+最像命中→3 逐命中判撞车 same/extension/unrelated+delta→4 novelty 判定），跑 `python scripts/novelty_audit.py --in audit.json` 做**一致性勾稽**：自动抓"声称 novel 却有 same 撞车（NOVELTY-OVERCLAIM）""无 HTTP 200 证据却标 novel（evidence-missing）""单库<2 交叉""extension 缺 delta"等自相矛盾，并输出 verdict hooks（same 撞车→创新性<45 block、overclaim/evidence-missing）喂回 Step 6 否决项。脚本不做检索本身（检索靠 m01），只保证"结论不与自己的证据打架"。
+> **离线降级协议（无网/检索不可达时核心闸门不被架空）**：检索是本技能创新性判定的硬地基，无网时**不能假装已核验**。明确状态机——①标注**检索覆盖度**（查了哪几个库、哪些可达哪些 HTTP=0 不可达）；②任一核心论断处于 `evidence-missing`（无 HTTP 200 检索证据）时，创新性维度封顶（rubric §0），且**整体判决最高只能"有条件通过"，绝不放行"通过"**；③"通过"必须等联网二次检索补齐证据、重跑 novelty_audit 无 NOVELTY-OVERCLAIM 后才可改判。即：无网时闸门**只收紧不放松**，宁可卡住也不放过自以为新的 idea。与 m10/a10 的离线降级（无网=未核验非已核验）同脉。
 
 #### Step 2 必做：核心撞车复核（一票否决，不可跳过）
 m03 在立项卡里自报了"核心撞车检查"四问的检索证据——**你的职责是独立复查，不是采信**。曾有 idea 自报新颖性 70、做完整套实验和论文后才发现核心结论已被前作（Dal Pozzolo 2015）发表，真实新颖性 35-45，投稿必被"已做过"秒拒。根除此类事故是本步最高优先级：
@@ -59,7 +60,7 @@ m03 在立项卡里自报了"核心撞车检查"四问的检索证据——**你
 - **结构化多样性强制（可机检，防单模型伪多样）**：四视角每个必须显式带 `anchor_dim`（主锚维度，四个互不同）/ `cited_prior`（引一篇 Step 2 检索到的具体前作，四篇互不同、DOI/标题可核）/ `blind_spot`（别视角会漏的风险，去重后≥3 条不同）三标签，汇总前过 protocol.md 的可机检清单，任一不过即作废重抽。条件允许时优先用真·多 agent/多模型并行，而非单模型角色扮演。
 
 ### Step 5 — 反谄媚反驳环节
-作者反驳时，按 contract.md B 节给每条反驳 1–5 分（5 撤回/4 降级/3 保持/2 重述/1 加强）：让步必须挂新证据；禁连续让步；用 `scripts/sycophancy_guard.py` 算 concession-rate，>50% 输出 `⚠ SYCOPHANCY-ALERT`。未被 5 分新证据撤回的 CRITICAL 仍有效。
+作者反驳时，按 contract.md B 节给每条反驳 1–5 分（5 撤回/4 降级/3 保持/2 重述/1 加强）：让步必须挂新证据；禁连续让步；用 `scripts/sycophancy_guard.py` 算 concession-rate。报警双判据：**大 N 看 concession-rate>50%**；**小 N(<4) 改用绝对让步计数门限**（2 条里 1 条让步=50% 在百分比下不报警但小样本可疑，故 N<4 且让步≥1 即报警，修小 N 脆弱）。自主 agent 模式传 `autonomous=True`：**连续让步的第二条自动降级到 3**（不再只标"需人工复核"——那在 agent 里形同虚设）。未被 5 分新证据撤回的 CRITICAL 仍有效。
 - **开场即上强度（grill 规则）**：评判**首句就直接给出三个最致命弱点**，禁止"总体不错/思路有意思"式客套开场与缓冲——缓冲句本身就是谄媚信号。三个弱点按严重度排序，每个一句话点到要害，再展开。
 
 ### Step 6 — 聚合与判决
@@ -69,6 +70,8 @@ m03 在立项卡里自报了"核心撞车检查"四问的检索证据——**你
 - **不通过**：给原因 + ≥3 个具体改进方向，回 m03。
 判决用 `templates/verdict_template.md` 成文。**标准工件：判决落盘为 `critique_verdict.md`**（交 m05 / 回 m03 的交接工件，命名见 CONVENTIONS §6.1）。
 > **阈值是经验默认值、可调超参**（通过线 80、权重 0.20/0.18… 非 NeurIPS 官方值，详见 rubric.md 依据声明）。默认偏严（pass_line=80≈strong-accept）。需调松/调严：传 `decide(thresholds={...})` 或改脚本 `DEFAULT_THRESHOLDS`；判决对权重微扰是否稳健可跑脚本 `weight_sensitivity()`。**不假装阈值有数据背书**，调整须记录理由。
+> **边界复核（借 SciMuse 有趣度，缓解二元否决误杀）**：给 `decide(interestingness=0-100)` 传一个有趣度/价值预判，当 idea 被否决项压到"不通过"但 Weighted 其实接近通过线且有趣度高时，输出"边界复核建议"提示人工二次确认是否误杀——**只提示、绝不自动放行**（撞车/否决仍按原判）。降低"高潜力但卡在某条 gate"的边界 case 被一刀切误杀。
+> **输出压缩纪律**：五视角+DA+IF+反驳栈叠加易冗长重复——汇总按 protocol.md「输出压缩纪律」：共识关切只列一次、每视角≤150 字、判决正文只留可执行项（过程细节折叠到 verdict_template 附表）。
 
 ### Step 7 — 强制衔接与写回
 不通过/有条件通过的 idea 带 Roadmap 回 m03 重新生成，循环到无 block、无未化解 CRITICAL、Weighted≥pass_line（默认 80，可调）才放行 m05（仿 ResearchAgent/AI Scientist 评审→再 ideation 闭环）。判决与理由写入 db09 的 decision_log。

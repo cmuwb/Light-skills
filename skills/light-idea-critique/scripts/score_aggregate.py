@@ -61,6 +61,7 @@ class Verdict:
     overall: int
     decision: str
     reasons: list = field(default_factory=list)
+    border_review: str = ""   # SciMuse 式边界复核建议（仅否决边界 case 有值，参考非放行）
 
 
 def _check_weights():
@@ -86,11 +87,13 @@ def to_overall(weighted: float) -> int:
 
 
 def decide(scores: dict, unresolved_critical: bool = False,
-           thresholds: dict | None = None) -> Verdict:
+           thresholds: dict | None = None, interestingness: float | None = None) -> Verdict:
     """否决项与 decision mapping 取更严者。
 
     thresholds: 可选，覆盖 DEFAULT_THRESHOLDS 的任意子集（便于 calibration 反推后注入，
     或按场景调松/调严）。未传的键回退默认值。
+    interestingness: 可选 0-100（借 SciMuse 式有趣度/价值预判）。仅在 idea 被否决项压到"不通过"
+    但 Weighted 接近通过线时，输出"边界复核建议"提示人工二次确认是否误杀——不改 gate、不自动放行。
     """
     t = dict(DEFAULT_THRESHOLDS)
     if thresholds:
@@ -141,7 +144,22 @@ def decide(scores: dict, unresolved_critical: bool = False,
             final = "有条件通过"
             reasons.append(f"降级:通过要求核心维度>={t['pass_core_floor']},但{low_floor}<{t['pass_core_floor']}")
 
-    return Verdict(weighted=w, overall=ov, decision=final, reasons=reasons)
+    # 边界复核建议（借 SciMuse 可量化有趣度，缓解二元否决的边界误杀，不改 gate 本身）：
+    # 当 idea 被 gate 压到"不通过"、但 Weighted 其实不低(接近 pass_line)且有趣度高时，
+    # 提示"这是边界 case，建议人工二次复核是否误杀"——只提示，绝不自动放行（撞车否决仍有效）。
+    border_note = None
+    if interestingness is not None and final == "不通过":
+        near_pass = w >= t["pass_line"] - 15  # 距通过线 15 分内算边界
+        if near_pass and interestingness >= 70:
+            border_note = (f"边界复核建议：本 idea 被否决项压到不通过，但 Weighted={w}（距通过线 "
+                           f"{t['pass_line']} 仅 {round(t['pass_line']-w,1)} 分）且有趣度={interestingness} 偏高——"
+                           f"建议人工二次确认是否为边界误杀（撞车/否决仍按原判，此为参考不自动放行）。")
+            reasons.append(border_note)
+
+    v = Verdict(weighted=w, overall=ov, decision=final, reasons=reasons)
+    if border_note:
+        v.border_review = border_note
+    return v
 
 
 def weight_sensitivity(scores: dict, delta: float = 0.02,
@@ -303,6 +321,22 @@ def _selftest():
     rb2 = rank_batch(batch2, top_k=1)
     assert rb2["pass_count"] == 1 and rb2["passlist"][0]["id"] == "s1", rb2  # 同分按 id 升序确定性
     print(f"[I'] top_k=1 of 2 passing -> {rb2['passlist'][0]['id']}")
+
+    # 案例J: SciMuse 边界复核——idea 被否决项压到不通过，但 Weighted 近通过线 + 有趣度高 → 出复核建议
+    # 构造：originality=44(<45 触发否决) 但其余维度高 → Weighted 接近 pass_line
+    border = dict(originality=44, soundness=85, data=82, experiment=84,
+                  contribution=86, delta=80, feasibility=85, impact=82)
+    vJ = decide(border, interestingness=85)
+    assert vJ.decision == "不通过", vJ.decision           # 否决仍生效，不自动放行
+    assert vJ.border_review, "应给出边界复核建议"
+    assert "边界" in vJ.border_review and "不自动放行" in vJ.border_review, vJ.border_review
+    print(f"[J] border review fired: {vJ.border_review[:40]}...")
+    # 有趣度低则不提示
+    vJ2 = decide(border, interestingness=40)
+    assert not vJ2.border_review, "低有趣度不应出复核建议"
+    # 不传 interestingness 时行为不变（向后兼容）
+    vJ3 = decide(border)
+    assert vJ3.decision == "不通过" and not vJ3.border_review, vJ3
 
     print("\nALL SELFTESTS PASSED")
 
