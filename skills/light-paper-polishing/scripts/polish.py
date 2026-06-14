@@ -26,6 +26,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 import argparse
 import json
 import re
+import time
 import urllib.parse
 import urllib.request
 import urllib.error
@@ -33,6 +34,9 @@ import urllib.error
 LT_ENDPOINT = "https://api.languagetool.org/v2/check"
 MAX_CHUNK = 18000          # stay safely under anonymous ~20k char cap
 TIMEOUT = 30
+# 匿名端点限流 ~20 req/min + 75KB/min；chunk 间隔 sleep 控速，429 指数退避重试。
+CHUNK_SLEEP = 3.2          # 秒：~20 req/min 的安全间隔
+MAX_RETRY = 3              # 429/5xx 重试次数
 
 
 def split_chunks(text, max_chunk=MAX_CHUNK):
@@ -74,27 +78,32 @@ def offset_to_linecol(text, offset):
     return line, col
 
 
-def check_chunk(chunk, language, level, mother_tongue):
-    """POST one chunk to LanguageTool. Returns (http_code, matches_list)."""
+def check_chunk(chunk, language, level, mother_tongue, _sleep=time.sleep):
+    """POST one chunk to LanguageTool with 429/5xx 指数退避重试。返回 (http_code, matches_list)。"""
     data = {"text": chunk, "language": language, "level": level}
     if mother_tongue:
         data["motherTongue"] = mother_tongue
     body = urllib.parse.urlencode(data).encode("utf-8")
-    req = urllib.request.Request(
-        LT_ENDPOINT, data=body,
-        headers={"Content-Type": "application/x-www-form-urlencoded",
-                 "Accept": "application/json",
-                 "User-Agent": "light-paper-polishing/1.0"},
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-            code = resp.getcode()
-            payload = json.loads(resp.read().decode("utf-8"))
-            return code, payload.get("matches", [])
-    except urllib.error.HTTPError as e:
-        return e.code, None
-    except Exception as e:  # network down, DNS, timeout, SSL...
-        return None, None
+    last_code = None
+    for attempt in range(MAX_RETRY):
+        req = urllib.request.Request(
+            LT_ENDPOINT, data=body,
+            headers={"Content-Type": "application/x-www-form-urlencoded",
+                     "Accept": "application/json",
+                     "User-Agent": "light-paper-polishing/1.0"},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+                return resp.getcode(), json.loads(resp.read().decode("utf-8")).get("matches", [])
+        except urllib.error.HTTPError as e:
+            last_code = e.code
+            if e.code in (429, 500, 502, 503) and attempt < MAX_RETRY - 1:
+                _sleep(2 ** attempt * 2)   # 指数退避 2s,4s,8s
+                continue
+            return e.code, None
+        except Exception:  # network down, DNS, timeout, SSL...
+            return None, None
+    return last_code, None
 
 
 # ---- offline fallback rules (no network) ----
@@ -128,41 +137,65 @@ def local_check(text):
     return findings
 
 
-def run(text, language, level, mother_tongue):
-    chunks = split_chunks(text)
+def run(text, language, level, mother_tongue, _sleep=time.sleep, max_chunk=MAX_CHUNK):
+    chunks = split_chunks(text, max_chunk=max_chunk)
     findings = []
     http_codes = []
-    online_ok = True
-    for off, chunk in chunks:
-        code, matches = check_chunk(chunk, language, level, mother_tongue)
+    n_online, n_fallback = 0, 0
+    for i, (off, chunk) in enumerate(chunks):
+        if i > 0:
+            _sleep(CHUNK_SLEEP)   # 控速，避开 ~20 req/min 限流
+        code, matches = check_chunk(chunk, language, level, mother_tongue, _sleep=_sleep)
         http_codes.append(code)
-        if code != 200 or matches is None:
-            online_ok = False
-            break
-        for m in matches:
-            abs_off = off + m["offset"]
-            line, col = offset_to_linecol(text, abs_off)
-            reps = [r["value"] for r in m.get("replacements", [])][:3]
-            findings.append({
-                "line": line, "col": col,
-                "rule": m.get("rule", {}).get("id", ""),
-                "issue": m.get("message", ""),
-                "suggestion": "; ".join(reps) if reps else None,
-                "context": m.get("context", {}).get("text", ""),
-                "source": "languagetool",
-            })
-    if not online_ok:
-        findings = local_check(text)
+        if code == 200 and matches is not None:
+            n_online += 1
+            for m in matches:
+                abs_off = off + m["offset"]
+                line, col = offset_to_linecol(text, abs_off)
+                reps = [r["value"] for r in m.get("replacements", [])][:3]
+                findings.append({
+                    "line": line, "col": col,
+                    "rule": m.get("rule", {}).get("id", ""),
+                    "issue": m.get("message", ""),
+                    "suggestion": "; ".join(reps) if reps else None,
+                    "context": m.get("context", {}).get("text", ""),
+                    "source": "languagetool",
+                })
+        else:
+            # 仅该 chunk 降级本地规则（其余 chunk 的 LanguageTool 结果保留，不全篇丢弃）
+            n_fallback += 1
+            for f in local_check(chunk):
+                f["line"], f["col"] = offset_to_linecol(text, off + _chunk_local_off(chunk, f))
+                findings.append(f)
+    findings.sort(key=lambda f: (f["line"], f["col"]))
+    if n_online and n_fallback:
+        mode = "mixed(部分chunk降级本地)"
+    elif n_online:
+        mode = "languagetool"
+    else:
+        mode = "local-fallback"
     return {
         "_meta": {
             "endpoint": LT_ENDPOINT,
             "http_codes": http_codes,
-            "mode": "languagetool" if online_ok else "local-fallback",
+            "mode": mode,
             "n_chunks": len(chunks),
+            "n_chunks_online": n_online,
+            "n_chunks_fallback": n_fallback,
             "n_findings": len(findings),
         },
         "findings": findings,
     }
+
+
+def _chunk_local_off(chunk, finding):
+    """local_check 的 finding 已带 chunk 内 line/col，但我们需要它的 chunk 内绝对 offset 来重映射。
+    重新按 context 在 chunk 里定位（local_check 的 context 是命中点±25 字符，足够定位）。"""
+    # local_check 内部已算好 chunk 内 line/col；这里把它转回 chunk 内 offset
+    lines = chunk.splitlines(keepends=True)
+    li = finding["line"] - 1
+    off = sum(len(l) for l in lines[:li]) + (finding["col"] - 1)
+    return off
 
 
 
@@ -176,7 +209,42 @@ def _selftest() -> int:
     assert len(chunks) > 1, chunks
     line, col = offset_to_linecol("a\nbc", 3)
     assert (line, col) == (2, 2), (line, col)
-    print(f"[selftest] PASS polish local_findings={len(findings)} chunks={len(chunks)}")
+
+    # PP-4 每 chunk 独立降级：mock check_chunk —— chunk0 返回 200、其余 429 → 仅该 chunk 降级
+    big = ("Para zero is clean.\n\n" + "x" * 30 + "\n\n"
+           "Para two has used used dup and dont apostrophe.")
+    calls = {"i": 0}
+
+    def fake_check(chunk, lang, lvl, mt, _sleep=None):
+        calls["i"] += 1
+        return (200, []) if calls["i"] == 1 else (429, None)
+    g = globals()
+    orig = g["check_chunk"]
+    try:
+        g["check_chunk"] = fake_check
+        res = run(big, "en-US", "picky", "zh-CN", _sleep=lambda s: None, max_chunk=25)
+    finally:
+        g["check_chunk"] = orig
+    meta = res["_meta"]
+    assert meta["n_chunks_online"] >= 1 and meta["n_chunks_fallback"] >= 1, meta
+    assert meta["mode"].startswith("mixed"), meta
+    assert res["findings"], "降级 chunk 的本地 findings 应保留"
+
+    # check_chunk 429 退避重试：mock 一直 429，应重试 MAX_RETRY 次后返回 429
+    retry = {"n": 0}
+
+    def always_429(req, timeout=None):
+        retry["n"] += 1
+        raise urllib.error.HTTPError(LT_ENDPOINT, 429, "rate", {}, None)
+    orig_open = urllib.request.urlopen
+    try:
+        urllib.request.urlopen = always_429
+        code, m = check_chunk("x", "en-US", "picky", "zh-CN", _sleep=lambda s: None)
+    finally:
+        urllib.request.urlopen = orig_open
+    assert code == 429 and m is None and retry["n"] == MAX_RETRY, (code, retry["n"])
+
+    print(f"[selftest] PASS polish local={len(findings)} chunks={len(chunks)} +per-chunk-fallback+retry")
     return 0
 
 

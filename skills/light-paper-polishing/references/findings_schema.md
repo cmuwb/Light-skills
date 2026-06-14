@@ -40,7 +40,8 @@
 > `(line, col)` 排序合并展示。
 
 ## 3. mechanical_check 的 category 取值
-- `overclaim` — 无证据夸大词（significant/novel/outperforms…）
+- `overclaim` — 无证据夸大词（significant/novel/outperforms…）；统计语境的 significant 已豁免不报
+- `claim_strength` — 强主张词（prove/conclusively/guarantees/always…）给降级替换建议（Hedging 校准阶梯，见 argument_review.md §2）
 - `ai_tone` — AI 腔/填充语（in conclusion/it is worth noting…）
 - `hedge_stacking` — 一句内堆叠 >=2 个 hedge
 - `passive_overuse` — 段落被动句占比超阈值（默认 0.4）
@@ -52,7 +53,7 @@
 
 | severity | 对应类别 | 处理 |
 |----------|----------|------|
-| major | overclaim（裸论断）、passive_overuse、soundness 类 | 必改，可能影响录用 |
+| major | overclaim（裸论断）、claim_strength（强主张超证据）、passive_overuse、soundness 类 | 必改，可能影响录用 |
 | minor | ai_tone、hedge_stacking、punctuation、单条 grammar | 表述层，统一清理 |
 
 ## 5. 与四步流水线（distill->critique->polish->audit）对接
