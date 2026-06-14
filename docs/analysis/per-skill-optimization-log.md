@@ -149,5 +149,17 @@ P0/P1 已修邮箱硬编码(B2-B4)+verify_refs sim 阈值(M1)。本站补剩余 
 
 ---
 
+## 站 12：light-typesetting（科研主线第 12 站，已完成）
+
+详档 6 条可优化点（用户拍板"全做 + 借鉴一个"）：
+- ✅ TS-1 新建 submission_check.py：投稿合规/匿名雷区扫描（双盲未匿名 \author/致谢/基金/可识别链接、PDF 元数据 /Author 露名、页数上限、残留 TODO），补零自动化的 desk-reject 盲区；纯标准库 PDF 元数据正则扫
+- ✅ TS-2 precheck_log.py 加 --strict（undefined ref/cite/重复 label 升级致命阻断）+ de-wrap（79 列硬折行拼回再匹配，消除长引用名漏报）
+- ✅ TS-3 docx_template.js 重写：删 topBottom(width) 死参、加真多级列表（numbering LevelFormat 自动连号替手敲编号）、默认字体加 eastAsia CJK（中英混排不回退）；node --check 语法过
+- ✅ TS-4（并入 SKILL）：precheck/submission/docx 新能力写进 SKILL 步骤+脚本描述；骨架补全要点随说明
+- ✅ TS-5 GitHub 借鉴（arxiv-latex-cleaner）：SKILL 加投稿出包前净化说明（去注释真名/压图/删冗余 bib，配 submission_check 双保险）
+- ✅ TS-CI 四 CI 全绿（scripts 64→65）+ 记忆
+
+---
+
 ## 待做站（科研主线顺序）
-typesetting → venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。 → paper-polishing → figure-planning(已补E1) → figure-drawing → citation → typesetting → venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。
+venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。 → paper-polishing → figure-planning(已补E1) → figure-drawing → citation → typesetting → venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。

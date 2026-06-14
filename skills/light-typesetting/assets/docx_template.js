@@ -35,7 +35,8 @@ const DXA = {
 const PAGE = DXA.A4;            // 或 DXA.LETTER
 
 // --- 三线表 (booktabs 风格: 仅顶/中/底横线) ----------------------------
-function topBottom(width) {
+// (删除原 topBottom(width) 的死参 width——它从未被使用)
+function topBottom() {
   return { top: { style: BorderStyle.SINGLE, size: 8, color: "000000" },
            bottom: { style: BorderStyle.SINGLE, size: 8, color: "000000" },
            left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } };
@@ -62,16 +63,36 @@ const doc = new Document({
   title: "Sample Document",
   // 自定义样式: 覆盖标题字体/字号, 并通过 outlineLevel 决定大纲层级(导航窗格/TOC)
   styles: {
+    // 默认字体: 西文 Times New Roman + 中文 eastAsia 宋体, 中英混排不回退默认字体(修无 CJK 字体)
+    default: {
+      document: {
+        run: { font: { ascii: "Times New Roman", hAnsi: "Times New Roman", eastAsia: "SimSun" }, size: 24 },
+      },
+    },
     paragraphStyles: [
       { id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", quickFormat: true,
-        run: { size: 32, bold: true, color: "2E2E2E" },
+        run: { size: 32, bold: true, color: "2E2E2E", font: { eastAsia: "SimHei" } },
         paragraph: { outlineLevel: 0, spacing: { before: 240, after: 120 } } },
       { id: "Heading2", name: "Heading 2", basedOn: "Normal", next: "Normal", quickFormat: true,
-        run: { size: 26, bold: true },
+        run: { size: 26, bold: true, font: { eastAsia: "SimHei" } },
         paragraph: { outlineLevel: 1, spacing: { before: 200, after: 100 } } },
       { id: "Caption", name: "Caption", basedOn: "Normal", next: "Normal",
         run: { size: 18, italics: true }, paragraph: { spacing: { before: 60, after: 120 } } },
     ],
+  },
+  // 真·多级列表(LevelFormat 自动连号), 替代手敲 "1./1.1"; 引用处用 reference:"multilevel"
+  numbering: {
+    config: [{
+      reference: "multilevel",
+      levels: [
+        { level: 0, format: LevelFormat.DECIMAL, text: "%1.", alignment: AlignmentType.START,
+          style: { paragraph: { indent: { left: 360, hanging: 360 } } } },
+        { level: 1, format: LevelFormat.DECIMAL, text: "%1.%2", alignment: AlignmentType.START,
+          style: { paragraph: { indent: { left: 720, hanging: 432 } } } },
+        { level: 2, format: LevelFormat.LOWER_LETTER, text: "(%3)", alignment: AlignmentType.START,
+          style: { paragraph: { indent: { left: 1080, hanging: 432 } } } },
+      ],
+    }],
   },
   sections: [{
     properties: {
@@ -100,6 +121,14 @@ const doc = new Document({
       new Paragraph({ text: "1.1 Background", heading: HeadingLevel.HEADING_2 }),
       new Paragraph("二级标题下的内容。"),
       new Paragraph({ text: "2. Method", heading: HeadingLevel.HEADING_1 }),
+      // 真·多级列表: 用 numbering reference + level 自动连号(替手敲 "1./1.1/(a)"),
+      // 增删条目自动重排, 不会出现手敲编号漏改的错乱
+      new Paragraph({ text: "方法分三步:", spacing: { before: 80 } }),
+      new Paragraph({ numbering: { reference: "multilevel", level: 0 }, children: [new TextRun("数据预处理")] }),
+      new Paragraph({ numbering: { reference: "multilevel", level: 1 }, children: [new TextRun("清洗与去重")] }),
+      new Paragraph({ numbering: { reference: "multilevel", level: 1 }, children: [new TextRun("划分训练/验证集")] }),
+      new Paragraph({ numbering: { reference: "multilevel", level: 0 }, children: [new TextRun("模型训练(中英混排示例: training with 对比学习)")] }),
+      new Paragraph({ numbering: { reference: "multilevel", level: 2 }, children: [new TextRun("超参网格搜索")] }),
       makeTriLineTable(),
       new Paragraph({ text: "Table 1. 实验结果对比 (三线表).", style: "Caption" }),
       new Paragraph({ text: "3. Conclusion", heading: HeadingLevel.HEADING_1 }),

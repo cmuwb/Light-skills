@@ -77,19 +77,45 @@ RULES = [
 ]
 
 
-def scan(text: str) -> dict:
-    """扫描 log 文本，返回结构化结果。"""
+def _dewrap(text: str) -> str:
+    """LaTeX log 把行硬折在 ~79 字符（max_print_line），长引用名/文件名被折断 → 正则漏报。
+    启发式拼回：一行恰好 79/80 字符且下一行非空、不以已知行首标记开头，视为被折断，拼接。
+    保守：只拼"看起来被机械折断"的行，不动正常段落。"""
+    lines = text.split("\n")
+    out, i = [], 0
+    # 这些行首是 log 里独立条目的开头，遇到它们不该把上一行往后拼
+    starts = ("!", "Overfull", "Underfull", "Package", "LaTeX", "Missing",
+              "Document", "This is", "(", ")", "[", "<", "Output", "Rerun")
+    while i < len(lines):
+        cur = lines[i]
+        # 79/80 列硬折：当前行长度达阈值且下一行存在、非空、不是新条目开头 → 拼接
+        while (len(cur) in (79, 80) and i + 1 < len(lines)
+               and lines[i + 1].strip()
+               and not lines[i + 1].lstrip().startswith(starts)):
+            i += 1
+            cur = cur + lines[i]
+        out.append(cur)
+        i += 1
+    return "\n".join(out)
+
+
+def scan(text: str, strict: bool = False) -> dict:
+    """扫描 log 文本，返回结构化结果。先 de-wrap 拼回硬折行再匹配（消除长名漏报）。
+    strict=True 时把 undefined ref/cite/multiply_label 提升为 error（交付门要拦）。"""
+    text = _dewrap(text)
     findings = {}
+    strict_promote = {"undef_ref", "undef_cite", "multiply_label"}
     for key, sev, rx, desc in RULES:
         hits = []
         for m in rx.finditer(text):
-            # 取第一个非空捕获组作为可读详情；无组则取整行
             groups = [g for g in m.groups() if g]
             detail = " | ".join(groups) if groups else m.group(0).strip()
             hits.append(detail.strip())
         if hits:
-            findings[key] = {"severity": sev, "desc": desc,
-                             "count": len(hits), "items": hits}
+            eff_sev = "error" if (strict and key in strict_promote) else sev
+            findings[key] = {"severity": eff_sev, "desc": desc,
+                             "count": len(hits), "items": hits,
+                             "promoted_by_strict": strict and key in strict_promote}
     return findings
 
 
@@ -159,7 +185,26 @@ def _selftest() -> int:
     assert "errors=" in report and "warnings=" in report, report
     clean = scan("This is a clean LaTeX log.\nOutput written on paper.pdf")
     assert not has_fatal(clean) and summarize(clean).startswith("OK:"), clean
-    print("[selftest] PASS precheck_log")
+
+    # TS-2 strict 模式：undefined ref/cite 在普通模式是 warning，strict 下提升为 error → fatal
+    warn_log = "LaTeX Warning: Reference `fig:x' on page 1 undefined on input line 5."
+    f_normal = scan(warn_log, strict=False)
+    f_strict = scan(warn_log, strict=True)
+    assert not has_fatal(f_normal), "普通模式 undef_ref 不该 fatal"
+    assert has_fatal(f_strict), "strict 模式 undef_ref 应 fatal"
+    assert f_strict["undef_ref"]["promoted_by_strict"], f_strict
+
+    # TS-2 de-wrap：被 79 列硬折断的长引用名拼回后仍能匹配（消除漏报）
+    long_ref = "x" * 40
+    wrapped = ("LaTeX Warning: Citation `" + long_ref[:30] + "\n"
+               + long_ref[30:] + "' on page 2 undefined on input line 9.")
+    # 折断处构造成 79 列触发 de-wrap
+    line1 = "LaTeX Warning: Citation `verylongcitationkey2024deeplearningmethodfoo"
+    line1 = line1 + "x" * (79 - len(line1))   # 垫到 79 列
+    wrapped2 = line1 + "\n" + "bar' on page 2 undefined on input line 9."
+    f_wrap = scan(wrapped2, strict=True)
+    assert "undef_cite" in f_wrap, f"de-wrap 后应匹配到被折断的 undefined citation: {f_wrap}"
+    print("[selftest] PASS precheck_log (+strict +de-wrap)")
     return 0
 
 
@@ -169,6 +214,8 @@ def main(argv=None):
     p.add_argument("--json", action="store_true", help="输出 JSON")
     p.add_argument("--max", type=int, default=8, help="每类最多展示条数")
     p.add_argument("--selftest", action="store_true", help="run built-in log parser self-test")
+    p.add_argument("--strict", action="store_true",
+                   help="把 undefined ref/cite/multiply label 提升为 error（交付门拦截，退出码非0）")
     args = p.parse_args(argv)
 
     if args.selftest:
@@ -182,12 +229,12 @@ def main(argv=None):
         text = SAMPLE_LOG
         src = "<内置样例 log（自测）>"
 
-    findings = scan(text)
+    findings = scan(text, strict=args.strict)
     if args.json:
-        print(json.dumps({"source": src, "fatal": has_fatal(findings),
+        print(json.dumps({"source": src, "strict": args.strict, "fatal": has_fatal(findings),
                           "findings": findings}, ensure_ascii=False, indent=2))
     else:
-        print(f"# precheck_log 报告 — 来源: {src}\n")
+        print(f"# precheck_log 报告 — 来源: {src}" + ("  [strict]" if args.strict else "") + "\n")
         print(summarize(findings, args.max))
     return 1 if has_fatal(findings) else 0
 
