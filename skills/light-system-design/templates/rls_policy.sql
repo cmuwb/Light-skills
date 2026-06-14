@@ -1,6 +1,23 @@
 -- PostgreSQL 行级安全 (RLS) 骨架（多租户起手模板）
 -- 约定要点见 ../references.md 与 SKILL.md「安全与运维 / 行级安全」段。
 -- 配合 schema.sql 使用；落地前用真实角色跑通再上线。
+--
+-- ⚠ 关于下文的 auth.tenant_id()：它【不是】内置函数，必须自行定义。
+--   - Supabase 内置的只有 auth.uid() / auth.jwt()，并【没有】 auth.tenant_id()。
+--   - 可移植做法（不依赖 Supabase）：用会话变量取租户 id，连接建立后由应用
+--     执行 `SET app.tenant_id = '<id>';`（或事务级 SET LOCAL），policy 里读：
+--       create or replace function auth.tenant_id() returns bigint
+--       language sql stable as $$
+--         select nullif(current_setting('app.tenant_id', true), '')::bigint
+--       $$;
+--     第二参 true 表示变量未设置时返回 NULL 而非报错（未设置即拒绝所有行）。
+--   - Supabase 场景另一做法：从 JWT 取，如
+--       create or replace function auth.tenant_id() returns bigint
+--       language sql stable as $$
+--         select nullif(auth.jwt() -> 'app_metadata' ->> 'tenant_id', '')::bigint
+--       $$;
+--     租户 id 务必放 raw_app_meta_data（用户改不了），别放 raw_user_meta_data。
+--   先建好上面任一函数，下面的 policy 才能跑通。
 
 -- 1. 开启 RLS（开启后默认拒绝所有访问，必须显式加 policy）
 alter table app_user enable row level security;

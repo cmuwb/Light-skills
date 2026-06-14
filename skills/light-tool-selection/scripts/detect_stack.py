@@ -22,7 +22,8 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     tomllib = None
 
-# 依赖名(小写子串) -> (类别, 选型建议)。命中即触发。
+# 依赖名(规整后精确匹配) -> (类别, 选型建议)。suggest() 按 dep==key
+# 或 dep==key 的连字符转下划线 变体精确相等命中，不做子串匹配。
 RULES = {
     # ---- Python 数据 ----
     "pandas": ("数据处理", "中小数据(<2GB)主力；超内存切 polars/dask"),
@@ -37,10 +38,18 @@ RULES = {
     "statsmodels": ("统计推断", "回归/检验/时序，要 p 值/置信区间选它"),
     "scikit-learn": ("机器学习", "经典 ML 主力；深度学习转 torch"),
     "sklearn": ("机器学习", "经典 ML 主力；深度学习转 torch"),
+    "xgboost": ("机器学习", "梯度提升树；表格数据强基线，调参看 early_stopping"),
+    "lightgbm": ("机器学习", "高效 GBDT；大表格/类别特征比 xgboost 更省内存"),
     "torch": ("深度学习", "PyTorch；GPU 训练考虑 Modal 云算力"),
     "pytorch": ("深度学习", "PyTorch(conda 包名)；GPU 训练考虑 Modal 云算力"),
+    "torchvision": ("深度学习", "PyTorch 视觉数据集/模型/变换，配 torch 用"),
     "tensorflow": ("深度学习", "TF；环境用 conda 协调 CUDA"),
     "transformers": ("深度学习", "HF 模型；大模型推理可上 Modal/serverless"),
+    "opencv-python": ("计算机视觉", "图像/视频处理；导入名 cv2，重计算可上 GPU/云"),
+    # ---- LLM/API ----
+    "openai": ("大模型API", "OpenAI SDK；密钥走环境变量/Secrets，勿硬编码"),
+    "anthropic": ("大模型API", "Anthropic Claude SDK；密钥走环境变量/Secrets，勿硬编码"),
+    "langchain": ("大模型编排", "LLM 应用编排/RAG；注意版本拆分(langchain-core 等)"),
     # ---- 绘图 ----
     "matplotlib": ("绘图", "投稿矢量图(pdf/svg)；演示用 png"),
     "seaborn": ("绘图", "统计图速成，底层 matplotlib"),
@@ -53,6 +62,9 @@ RULES = {
     "sqlalchemy": ("数据库", "ORM；参数化查询防注入"),
     "psycopg": ("数据库", "Postgres 驱动"),
     "redis": ("数据库", "缓存/队列"),
+    # ---- 演示/原型 ----
+    "gradio": ("演示界面", "ML 模型快速 Web demo；分享/评测原型首选"),
+    "streamlit": ("演示界面", "数据应用/看板原型；纯 Python 交互页面"),
     # ---- 文档/排版 ----
     "python-docx": ("文档", "程序化生成 Word"),
     "python-pptx": ("PPT", "程序化生成 PPT；模板化幻灯片"),
@@ -233,6 +245,55 @@ def _detect_ci(project_dir):
             "CI 已配置；事件触发/定时/matrix 复现走 Actions，本地数据依赖编排仍用 Snakemake/Make")
 
 
+def _detect_lang_stacks(project_dir):
+    """探测 SKILL 宣称但无依赖清单的科研语言栈：R/MATLAB/LaTeX/Jupyter。
+
+    靠特征文件存在性 + 顶层扩展名扫描判断（与 MANIFESTS 一致的浅层扫描，
+    确定性、不臆造）。返回结论字符串列表。
+    """
+    hits = []
+    try:
+        entries = os.listdir(project_dir)
+    except OSError:
+        entries = []
+    names = set(entries)
+
+    def _has_ext(ext):
+        return any(e.lower().endswith(ext) for e in entries)
+
+    # ---- R ----
+    r_signals = []
+    if "DESCRIPTION" in names:
+        r_signals.append("DESCRIPTION")
+    if "renv.lock" in names:
+        r_signals.append("renv.lock")
+    if _has_ext(".rproj"):
+        r_signals.append(".Rproj")
+    if r_signals:
+        hits.append(f"检测到 R 项目({', '.join(r_signals)})："
+                    "高级统计/混合模型/ggplot2 出图用 R；"
+                    "依赖复现用 renv(`renv::restore()`)")
+    # ---- MATLAB ----
+    if _has_ext(".m"):
+        hits.append("检测到 MATLAB 源码(.m)："
+                    "信号/控制/数值/Simulink 场景用 MATLAB；"
+                    "可复现脚本化运行、跨语言可经 conda 协调")
+    # ---- LaTeX ----
+    tex_signals = []
+    if _has_ext(".tex"):
+        tex_signals.append(".tex")
+    if "latexmkrc" in names or ".latexmkrc" in names:
+        tex_signals.append("latexmkrc")
+    if tex_signals:
+        hits.append(f"检测到 LaTeX 排版({', '.join(tex_signals)})："
+                    "用 latexmk 一键编译(TinyTeX/TeX Live)，矢量 PDF 投稿")
+    # ---- Jupyter ----
+    if _has_ext(".ipynb"):
+        hits.append("检测到 Jupyter Notebook(.ipynb)："
+                    "探索/演示用；投稿/复现把稳定逻辑抽进 .py 脚本，配 nbconvert")
+    return hits
+
+
 def scan(project_dir):
     """扫描目录，返回 (deps集合, 命中清单文件, env提示, 解析备注)。"""
     deps, found_manifests, env_hits, notes = [], [], [], []
@@ -249,6 +310,7 @@ def scan(project_dir):
     ci = _detect_ci(project_dir)
     if ci:
         env_hits.append(ci)
+    env_hits.extend(_detect_lang_stacks(project_dir))
     return sorted(set(deps)), found_manifests, env_hits, notes
 
 
@@ -288,6 +350,11 @@ def print_report(rep):
     print(f"技术栈检测报告  目录: {rep['project_dir']}")
     print("=" * 60)
     if not rep["manifests_found"]:
+        if rep["env_recommendations"]:
+            print("未发现依赖清单文件，但检测到以下语言栈/环境信号：")
+            for h in rep["env_recommendations"]:
+                print(f"  - {h}")
+            return
         print("未发现任何清单文件 (package.json/pyproject.toml/requirements.txt/"
               "environment.yml/Pipfile)。无信号，无法建议。")
         return
@@ -325,7 +392,8 @@ def self_test():
         # 合成一个 Python 数据科学 + conda 项目
         with open(os.path.join(tmp, "requirements.txt"), "w", encoding="utf-8") as f:
             f.write("pandas>=2.0\nscikit-learn==1.4.0\nmatplotlib\n"
-                    "fastapi\nsome-private-internal-lib==9.9\n# comment\n")
+                    "fastapi\nxgboost\nopencv-python\ngradio\n"
+                    "some-private-internal-lib==9.9\n# comment\n")
         with open(os.path.join(tmp, "environment.yml"), "w", encoding="utf-8") as f:
             f.write("name: demo\nchannels:\n  - conda-forge\n"
                     "dependencies:\n  - numpy\n  - pytorch\n  - pip:\n"
@@ -344,6 +412,13 @@ def self_test():
                     "    runs-on: ubuntu-latest\n    steps:\n"
                     "      - uses: actions/checkout@v6\n")
 
+        # 合成 SKILL 宣称的科研语言栈特征文件：R/MATLAB/LaTeX/Jupyter
+        open(os.path.join(tmp, "DESCRIPTION"), "w").close()
+        open(os.path.join(tmp, "renv.lock"), "w").close()
+        open(os.path.join(tmp, "analysis.m"), "w").close()
+        open(os.path.join(tmp, "paper.tex"), "w").close()
+        open(os.path.join(tmp, "explore.ipynb"), "w").close()
+
         rep = build_report(tmp)
         print_report(rep)
         print("\n--- 自检断言 ---")
@@ -352,6 +427,9 @@ def self_test():
             "命中 fastapi": "fastapi" in rep["matched"],
             "命中 next(JS)": "next" in rep["matched"],
             "命中 wandb(conda pip 子列表)": "wandb" in rep["matched"],
+            "命中 xgboost(新增别名)": "xgboost" in rep["matched"],
+            "命中 opencv-python(新增别名)": "opencv-python" in rep["matched"],
+            "命中 gradio(新增别名)": "gradio" in rep["matched"],
             "私有库归入 no-signal": "some-private-internal-lib"
                 in rep["unmatched_no_signal"],
             "识别 uv.lock 环境": any("uv.lock" in h
@@ -359,6 +437,14 @@ def self_test():
             "识别 conda 环境": any("conda" in h
                 for h in rep["env_recommendations"]),
             "识别 GitHub Actions CI": any("GitHub Actions" in h
+                for h in rep["env_recommendations"]),
+            "识别 R 项目(DESCRIPTION/renv.lock)": any("R 项目" in h
+                for h in rep["env_recommendations"]),
+            "识别 MATLAB(.m)": any("MATLAB" in h
+                for h in rep["env_recommendations"]),
+            "识别 LaTeX(.tex)": any("LaTeX" in h
+                for h in rep["env_recommendations"]),
+            "识别 Jupyter(.ipynb)": any("Jupyter" in h
                 for h in rep["env_recommendations"]),
             "三个清单都解析到": set(rep["manifests_found"]) >=
                 {"package.json", "requirements.txt", "environment.yml"},

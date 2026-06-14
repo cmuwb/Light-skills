@@ -207,6 +207,8 @@
 
 【是什么】静态分析平台，查 bug、安全漏洞、code smell、重复率，跟踪覆盖率，用 Quality Gate 卡阈值。
 
+【适用边界】SonarQube 是重型基建（服务器/SonarCloud 账号、token、scanner、Quality Gate 维护），不是默认起手项。**值得上**：多人团队、长期维护的代码库、有合规/审计要求（需可追溯的质量与安全门）。**别急着上**：单人脚本、一次性实验、短命原型——本地 `ruff` + `mypy` + `pytest --cov` 已覆盖绝大部分价值，加 SonarQube 是徒增维护面（呼应 SKILL 的 YAGNI：必要时才上）。
+
 【可复用方法】
 - 配置 `sonar-project.properties`（项目根）：`sonar.projectKey`(唯一标识)、`sonar.organization`(SonarCloud 必填)、`sonar.sources`(源目录如 `src` 或 `.`)、`sonar.tests`(测试目录)、`sonar.host.url`(如 https://sonarcloud.io)、`sonar.token`(认证 token)。
 - Python 覆盖率：`sonar.python.coverage.reportPaths=coverage.xml`（先 `coverage xml` 或 `pytest --cov-report=xml` 生成）。

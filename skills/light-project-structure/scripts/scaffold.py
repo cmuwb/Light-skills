@@ -7,10 +7,10 @@
 
 行为:
     1. 创建标准科研目录树 (data 四分层 / src / experiments / ... 见 DIRS)。
-    2. 从本脚本同目录拷贝 6 个模板, 去掉 .template 后缀落到项目根:
-       README / CHANGELOG / PROJECT_PLAN / .gitignore / .editorconfig /
-       .pre-commit-config.yaml。.pre-commit-config.yaml 在 `pre-commit install`
-       前完全惰性, 故与 .editorconfig 一样默认始终落地。
+    2. 从本脚本同目录拷贝 7 个模板, 去掉 .template 后缀落到项目根:
+       README / CHANGELOG / PROJECT_PLAN / PROJECT_STRUCTURE / .gitignore /
+       .editorconfig / .pre-commit-config.yaml。.pre-commit-config.yaml 在
+       `pre-commit install` 前完全惰性, 故与 .editorconfig 一样默认始终落地。
     3. pyproject.toml 始终落地; 依赖管理后端默认 uv (--uv, 与 a03 推荐一致),
        --poetry 切到 Poetry 备选。两者互斥。
     4. --dvc:    写 dvc.yaml 占位管线; 若本机有 dvc 则顺带 dvc init。
@@ -46,6 +46,7 @@ TEMPLATE_MAP = {
     "README.template.md": "README.md",
     "CHANGELOG.template.md": "CHANGELOG.md",
     "PROJECT_PLAN.template.md": "PROJECT_PLAN.md",
+    "PROJECT_STRUCTURE.md": "PROJECT_STRUCTURE.md",
     "python-research.gitignore": ".gitignore",
     "editorconfig.template": ".editorconfig",
     "pre-commit-config.template.yaml": ".pre-commit-config.yaml",
@@ -119,8 +120,35 @@ stages:
     cmd: python -m {module}.dataset
     deps:
       - data/raw
+      - src/{module}/dataset.py
     outs:
       - data/processed
+'''
+
+# --dvc 生成的最小可跑桩, 让 `dvc repro` 首跑不报 "module not found"。
+# 真正使用时把 main() 换成实际的 raw->processed 转换逻辑。
+DATASET_PY = '''"""{module}.dataset — DVC prepare 阶段占位脚本。
+
+读 data/raw, 写 data/processed。当前仅占位, 把 raw 下文件名清单
+落到 processed/manifest.txt, 保证 `dvc repro` 首跑能产出 outs。
+真正使用时替换 main() 为实际的数据转换逻辑。
+"""
+from pathlib import Path
+
+RAW = Path("data/raw")
+PROCESSED = Path("data/processed")
+
+
+def main() -> None:
+    PROCESSED.mkdir(parents=True, exist_ok=True)
+    names = sorted(p.name for p in RAW.glob("*") if p.is_file())
+    (PROCESSED / "manifest.txt").write_text(
+        "\\n".join(names) + "\\n", encoding="utf-8"
+    )
+
+
+if __name__ == "__main__":
+    main()
 '''
 
 
@@ -160,6 +188,7 @@ def _selftest() -> int:
         rc = main([str(target), "--name", "demo-project", "--module", "demo_project"])
         assert rc == 0, rc
         required = [target / "README.md", target / "CHANGELOG.md", target / "PROJECT_PLAN.md",
+                    target / "PROJECT_STRUCTURE.md",
                     target / ".pre-commit-config.yaml", target / "src" / "demo_project" / "__init__.py",
                     target / "pyproject.toml", target / "data" / "raw" / ".gitkeep",
                     target / ".light" / ".gitkeep", target / ".light" / "handoff" / ".gitkeep"]
@@ -179,7 +208,17 @@ def _selftest() -> int:
         assert "[tool.poetry]" in poetry_toml and "poetry-core" in poetry_toml, "Poetry 备选后端未写入"
         if tomllib:
             assert tomllib.loads(poetry_toml)["project"]["name"] == "demo-poetry"
-    print("[selftest] PASS scaffold (uv 默认 + poetry 备选两路径)")
+        # 路径三: --dvc 写 dvc.yaml + prepare 桩 (不依赖本机 dvc/git 二进制)
+        target3 = Path(tmp) / "demo-dvc"
+        rc4 = main([str(target3), "--name", "demo-dvc", "--module", "demo_dvc", "--dvc"])
+        assert rc4 == 0, rc4
+        assert (target3 / "dvc.yaml").exists(), "dvc.yaml 未落地"
+        stub = target3 / "src" / "demo_dvc" / "dataset.py"
+        assert stub.exists(), "prepare 桩 dataset.py 未生成"
+        assert "def main" in stub.read_text(encoding="utf-8"), "dataset.py 桩缺 main()"
+        dvc_yaml = (target3 / "dvc.yaml").read_text(encoding="utf-8")
+        assert "demo_dvc.dataset" in dvc_yaml, "dvc.yaml cmd 未指向桩模块"
+    print("[selftest] PASS scaffold (uv 默认 + poetry 备选 + dvc 三路径)")
     return 0
 
 
@@ -227,14 +266,24 @@ def main(argv=None) -> int:
     if args.dvc:
         write_text(root / "dvc.yaml", DVC_YAML.format(module=module))
         extras.append("dvc.yaml")
+        write_text(root / "src" / module / "dataset.py", DATASET_PY.format(module=module))
+        extras.append(f"src/{module}/dataset.py (prepare 桩)")
         if shutil.which("dvc"):
+            # dvc init 默认要求处于 git 仓库内 (与 SKILL.md 的 git init→dvc init 一致)。
+            # 无 .git 时先 git init, 让 dvc 接管 git 而非 --no-scm 脱离版本控制。
+            if not (root / ".git").exists() and shutil.which("git"):
+                try:
+                    subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+                    extras.append(".git/ (git init)")
+                except subprocess.CalledProcessError as e:
+                    print(f"警告: git init 失败 ({e}); 跳过 dvc init", file=sys.stderr)
             try:
-                subprocess.run(["dvc", "init", "--no-scm", "-q"], cwd=root, check=True)
+                subprocess.run(["dvc", "init", "-q"], cwd=root, check=True)
                 extras.append(".dvc/ (dvc init)")
             except subprocess.CalledProcessError as e:
                 print(f"警告: dvc init 失败 ({e}); 仅写了 dvc.yaml", file=sys.stderr)
         else:
-            print("提示: 未找到 dvc 命令, 仅写了 dvc.yaml (装 dvc 后跑 `dvc init`)")
+            print("提示: 未找到 dvc 命令, 仅写了 dvc.yaml (装 dvc 后跑 `git init && dvc init`)")
 
     print(f"已生成项目: {root}")
     print(f"  名称={name}  模块=src/{module}/")

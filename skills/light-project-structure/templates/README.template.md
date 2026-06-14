@@ -19,16 +19,12 @@
 ## 环境与安装
 
 ```bash
-# 推荐用 Poetry（提交 poetry.lock 保证团队/CI 一致）
-poetry install
-poetry run python -m {{module_name}} --help
-
-# 或 conda
-conda env create -f environment.yml
-conda activate {{env_name}}
+# 推荐用 uv（提交 uv.lock 保证团队/CI 一致）
+uv sync
+uv run python -m {{module_name}} --help
 ```
 
-依赖锁定：应用项目提交 lock 文件（poetry.lock / uv.lock）。Python 版本要求见 pyproject.toml 的 requires-python。
+依赖锁定：应用项目提交 lock 文件（uv.lock；Poetry 备选则 poetry.lock）。Python 版本要求见 pyproject.toml 的 requires-python。
 
 ## 目录结构
 

@@ -17,6 +17,7 @@
     with check ( <写入约束> );  -- 控制新行/改后行是否合法（insert/update）
   ```
 - 辅助函数：`auth.uid()` 取当前用户 id；`auth.jwt()` 取 JWT。授权信息用 `raw_app_meta_data`（用户改不了），别用 `raw_user_meta_data`（用户可改）。
+- **区分内置与自定义**：`auth.uid()`/`auth.jwt()` 是 Supabase **内置**函数；`auth.tenant_id()` 之类**不是内置**，必须自行定义（从 `auth.jwt()->'app_metadata'` 取，或用会话变量 `current_setting('app.tenant_id', true)`）。多租户模板 `templates/rls_policy.sql` 顶部给了两种可移植实现。
 - 三个内置角色：`anon`（未登录）、`authenticated`（已登录）、`service_role`（服务端、绕过 RLS）。
 - 性能五条（官方 benchmark 显著）：
   1. 把函数包进 select 触发 initPlan 缓存：`using ((select auth.uid()) = user_id)`（179ms→9ms）。
@@ -215,11 +216,16 @@
 【是什么】API 契约规范，YAML/JSON 描述端点，可生成文档/客户端/Mock。
 
 【可复用方法 / 顶层结构】
-- `openapi`(必填,如 `3.0.4`)、`info`(title/version 必填, description 选填)、`servers`(完整 base URL，替代 2.0 的 host/basePath/schemes)。
+- `openapi`(必填,如 `3.1.0`；模板 `templates/openapi.yaml` 即用此版本)、`info`(title/version 必填, description 选填)、`servers`(完整 base URL，替代 2.0 的 host/basePath/schemes)。
 - `paths`：每路径下 get/post/... 含 `summary`/`parameters`(path/query/header/cookie)/`requestBody`/`responses`(至少一个状态码+description+content schema)。
 - `components`：复用 `schemas`/`securitySchemes`/`parameters`/`responses` 等，用 `$ref: '#/components/schemas/User'` 引用保持 DRY。
 - `securitySchemes` 支持 apiKey/oauth2/http bearer/openIdConnect/basic；`security` 可全局或按操作应用。
 - 关键字大小写敏感；YAML/JSON 等价可互换。
+
+【3.1 vs 3.0 关键差异（写模板/选版本必看）】
+- **nullable 关键字**：3.0 用 `type: string, nullable: true`；**3.1 移除了 `nullable`**，改用 JSON Schema 的类型数组 `type: [string, "null"]`。版本声明写 3.1.x 却仍写 `nullable: true` 是常见 bug（被忽略或报错）。
+- **JSON Schema 对齐**：3.1 的 Schema Object 与 JSON Schema 2020-12 完全兼容（`examples` 用数组、`$ref` 旁可并列其他关键字、支持 `const`/`if-then-else` 等）；3.0 是 JSON Schema 的子集。
+- **顶层版本号**：选好一个版本贯穿全文档与工具链，别 3.1 与 3.0 语法混用。本笔记与模板统一用 `3.1.0`。
 
 【链接】https://swagger.io/docs/specification/v3_0/basic-structure/
 

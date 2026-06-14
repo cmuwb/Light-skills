@@ -82,7 +82,7 @@
 
 ## 7. 扩能力：发现已有 skill / MCP / 自建
 
-决策序（详见 skill_discovery.md）：
+决策序（详见 assets/skill_discovery_report.md）：
 
 1. 先查现成 skill（skills.sh 排行榜 → `npx skills find`）。质量阈值见下。
 2. 接外部数据/工具 → 找 MCP server（registry.modelcontextprotocol.io）。

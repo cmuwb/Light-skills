@@ -4,7 +4,7 @@
 
 ## find-skills（技能发现）
 - 【是什么】Vercel Labs 开源的 skill，当用户问"怎么做 X / 有没有做 X 的工具"时触发，去开放 agent-skill 生态里检索并安装合适的 skill。
-- 【可复用工作流】1) 判断领域与任务、估计是否已有 skill；2) 看 skills.sh 排行榜（按总安装量排序的实战款，顶部如 vercel-labs/agent-skills 的 React/Next.js/web 设计、anthropics/skills 的 frontend-design/文档处理，均 100K+ 安装）；3) `npx skills find [关键词]` 搜索；4) 校验质量（**安装量优先 1K+，<100 要谨慎**；来源信誉，官方源 vercel-labs/anthropics/microsoft 更可信；**GitHub star <100 的仓库需怀疑**）；5) 给用户列出 名称/用途/安装量/来源/安装命令/链接；6) 同意后 `npx skills add <owner/repo@skill> -g -y`。没有命中就坦白没有，转为直接用通用能力帮忙，并建议 `npx skills init <name>` 自建。
+- 【可复用工作流】1) 判断领域与任务、估计是否已有 skill；2) 看 skills.sh 排行榜（按总安装量排序的实战款，顶部如 vercel-labs/agent-skills 的 React/Next.js/web 设计、anthropics/skills 的 frontend-design/文档处理，均 100K+ 安装）；3) `npx skills find [关键词]` 搜索；4) 校验质量（安装量/GitHub star/来源信誉的数值阈值权威版见 references/decision_matrix.md 第 7 节，本处不复写数字）；5) 给用户列出 名称/用途/安装量/来源/安装命令/链接；6) 同意后 `npx skills add <owner/repo@skill> -g -y`。没有命中就坦白没有，转为直接用通用能力帮忙，并建议 `npx skills init <name>` 自建。
 - 【链接】https://github.com/vercel-labs/skills/blob/main/skills/find-skills/SKILL.md
 - 【已知坑】依赖 skills.sh 生态与安装量信号；冷门领域可能无可用 skill，别硬塞。
 

@@ -38,8 +38,7 @@ project-name/
 ├── PROJECT_PLAN.md        实现计划（用 PROJECT_PLAN.template.md）
 ├── .gitignore             用 python-research.gitignore
 ├── .editorconfig          用 editorconfig.template
-├── pyproject.toml         依赖与工具配置（Poetry/Ruff）
-└── environment.yml        conda 环境（可选，与 pyproject 二选一或并存）
+└── pyproject.toml         依赖与工具配置（uv/Ruff）
 ```
 
 ## 命名规范
@@ -63,8 +62,8 @@ project-name/
 ## 快速生成
 
 ```bash
-# 方式一（推荐）：本目录 scaffold.py 一条命令建全树 + 拷模板 + 可选 dvc/poetry
-python scaffold.py ./my-proj --name my-proj --poetry --dvc
+# 方式一（推荐）：本目录 scaffold.py 一条命令建全树 + 拷模板 + 可选 dvc/uv|poetry
+python scaffold.py ./my-proj --name my-proj --dvc
 
 # 方式二：CCDS 脚手架（交互式选依赖管理/lint/存储/测试/文档）
 pipx install cookiecutter-data-science

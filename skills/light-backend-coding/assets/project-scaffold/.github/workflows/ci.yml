@@ -1,10 +1,10 @@
-# 最小 Python CI：checkout -> setup-python(cache) -> uv sync -> ruff -> pytest。
+# 最小 Python CI：checkout -> setup-python(cache) -> uv sync -> ruff -> mypy -> pytest。
 # action 版本 2026-06 经 GitHub API 实测：checkout@v6 / setup-python@v6 存在。
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main]   # 仅 main 分支的 push 触发；功能分支靠下面 pull_request 触发
   pull_request:
 
 jobs:
@@ -27,5 +27,7 @@ jobs:
         run: |
           uv run ruff check .
           uv run ruff format --check .
+      - name: Type check
+        run: uv run mypy src
       - name: Test with coverage
         run: uv run pytest --cov=src --cov-report=xml --cov-report=term-missing

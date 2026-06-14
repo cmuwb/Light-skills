@@ -31,6 +31,7 @@
 用法：
     python er_diagram.py --in schema.yaml
     python er_diagram.py --in schema.json --out er.mmd
+    python er_diagram.py --in schema.yaml --strict   # 关系端点必须已定义实体，否则报错
     python er_diagram.py --selftest
 """
 from __future__ import annotations
@@ -87,8 +88,13 @@ def _col_line(col: dict) -> str:
     return line
 
 
-def build_mermaid(spec: dict) -> str:
-    """把表结构 spec 渲染为 erDiagram 文本。"""
+def build_mermaid(spec: dict, strict: bool = False) -> str:
+    """把表结构 spec 渲染为 erDiagram 文本。
+
+    strict=True 时校验：每条关系的 from/to 都必须在 entities 中已定义，否则 raise
+    ValueError（防把实体名写错却静默漏画该表）。默认 False 以兼容"先写关系、实体
+    后补"的草稿用法——此时未定义的实体不报错，但也不会被渲染成块。
+    """
     if not isinstance(spec, dict):
         raise ValueError("spec 顶层必须是对象/字典")
     entities = spec.get("entities") or {}
@@ -97,7 +103,7 @@ def build_mermaid(spec: dict) -> str:
         raise ValueError("spec 缺 entities（至少一个实体表）")
 
     lines = ["erDiagram"]
-    # 关系先写（Mermaid 习惯），引用的实体即便无列也会被渲染
+    # 已定义实体的 sanitized 名集合，供 strict 校验关系端点引用
     known = {_sanitize(e) for e in entities}
     for r in rels:
         a = _sanitize(r.get("from", ""))
@@ -107,10 +113,15 @@ def build_mermaid(spec: dict) -> str:
         rtype = (r.get("type") or "one-to-many").lower()
         if rtype not in CARD:
             raise ValueError(f"未知关系基数 '{rtype}'，可选: {list(CARD)}")
+        if strict:
+            missing = [x for x in (a, b) if x not in known]
+            if missing:
+                raise ValueError(
+                    f"关系引用了未在 entities 定义的实体 {missing}: {r}"
+                    "（去掉 --strict 可放行先写关系后补实体的草稿）"
+                )
         label = _sanitize(r.get("label", "rel")) or "rel"
         lines.append(f"    {a} {CARD[rtype]} {b} : {label}")
-        # 关系里出现但 entities 未定义的实体，记下以便后面空块渲染
-        known.update({a, b})
 
     # 实体列块
     for ename, edef in entities.items():
@@ -178,6 +189,26 @@ def _selftest() -> int:
             raise AssertionError(f"应对错误输入抛异常: {bad}")
         except ValueError:
             pass
+
+    # --strict：关系端点引用未定义实体应抛 ValueError
+    dangling = {
+        "entities": {"User": {"columns": [{"name": "id", "type": "int", "key": "PK"}]}},
+        "relationships": [{"from": "User", "to": "Ghost", "type": "one-to-many"}],
+    }
+    try:
+        build_mermaid(dangling, strict=True)
+        raise AssertionError("strict 模式应对未定义实体 Ghost 抛异常")
+    except ValueError:
+        pass
+    # 非 strict（默认）应放行草稿：不抛，且不渲染未定义实体块
+    draft = build_mermaid(dangling)
+    assert "User ||--o{ Ghost" in draft, draft
+    assert sum(1 for ln in draft.splitlines() if ln.strip().endswith("{")) == 1, draft
+    # strict 下端点都已定义则正常渲染
+    ok = build_mermaid(spec, strict=True)
+    assert ok == out, "strict 对合法 spec 应与非 strict 输出一致"
+    print("[selftest] strict 校验 OK")
+
     print("[selftest] PASS er_diagram")
     return 0
 
@@ -186,6 +217,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="表结构定义(YAML/JSON) → Mermaid erDiagram")
     ap.add_argument("--in", dest="infile", help="输入 YAML/JSON 路径")
     ap.add_argument("--out", dest="outfile", default="", help="输出 .mmd 路径（默认打印到 stdout）")
+    ap.add_argument("--strict", action="store_true",
+                    help="校验关系 from/to 必须是已定义实体，否则报错")
     ap.add_argument("--selftest", action="store_true", help="离线样例自测")
     args = ap.parse_args()
 
@@ -198,7 +231,7 @@ def main() -> None:
         text = f.read()
     prefer_yaml = not args.infile.lower().endswith(".json")
     spec = load_spec(text, prefer_yaml=prefer_yaml)
-    mermaid = build_mermaid(spec)
+    mermaid = build_mermaid(spec, strict=args.strict)
     if args.outfile:
         with open(args.outfile, "w", encoding="utf-8") as f:
             f.write(mermaid + "\n")

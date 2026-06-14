@@ -27,7 +27,7 @@ user-invocable: false
   - Ruff：`[tool.ruff.lint]` 用 `select`/`extend-select`(如加 `B`)/`ignore`(如 `E501`)；`[tool.ruff]` 设 `line-length`/`target-version`；CI 分别跑 `ruff check .` 与 `ruff format --check .`(linter 与 formatter 是两个命令)。
   - **静态类型检查（mypy / pyright）**：按项目性质选档——**新项目/科研代码用 pyright basic（或 mypy 基础档，仅检明显类型错、不强制全注解）起步**，**库代码/对外 API 用 `mypy --strict`（要求全量注解，最严）**。CI 加一步 `mypy src`；第三方无 stub 时 `ignore_missing_imports`（库代码按模块 override 收紧），测试代码可 `ignore_errors`。scaffold 的 `pyproject.toml` 已带 `[tool.mypy]` 基础配置 + strict 切换注释，与 uv 路线不冲突。
   - pre-commit：`.pre-commit-config.yaml` 的 `repos` 用 `rev` 锁版本(tag/SHA，勿用浮动分支)；接 `astral-sh/ruff-pre-commit` 的 `ruff`(`args:[--fix]`)+`ruff-format`；`pre-commit install` 启用，CI 跑 `pre-commit run --all-files`。
-  - SonarQube(必要时)：`sonar-project.properties` 设 `sonar.sources`/`sonar.tests`/`sonar.python.coverage.reportPaths=coverage.xml`；Quality Gate 卡阈值；token 走 secrets。
+  - SonarQube(必要时)：`sonar-project.properties` 设 `sonar.sources`/`sonar.tests`/`sonar.python.coverage.reportPaths=coverage.xml`；Quality Gate 卡阈值；token 走 secrets。**仅团队/长期维护/有合规要求时才上**——单人脚本、一次性实验靠本地 ruff+mypy+pytest 即够，别为重型基建徒增维护面(YAGNI)；适用边界详见 `references.md` SonarQube 节。
 - **CI**：GitHub Actions 放 `.github/workflows/*.yml`；`actions/checkout@v6` + `actions/setup-python@v6`(`cache:"pip"`，缓存默认关须显式开)；`strategy.matrix.python-version` 多版本并行；典型流水线 checkout → 装依赖 → `ruff check` → `pytest`；secrets 用 `${{ secrets.X }}` 注入。
 - **维护元规则（仓库有清单/脚本时）**：资产清单防漂移（manifest 按精确键校验防漏登、AST 查脚本入口、warning 升 hard gate）与脚本自测入口治理（显式 `--selftest`、离线合成断言、可选依赖"可用则验证不可用则降级"）两套元规则细节见 `references/asset_manifest_governance.md` 与 `references/skill_selftest_ci.md`。
 - **文档**：README(安装/运行/复现命令)、关键模块注释、运行说明。

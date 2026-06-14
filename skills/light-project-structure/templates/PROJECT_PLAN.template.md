@@ -24,7 +24,7 @@
 
 ## 前置条件（Setup Required）
 
-- [ ] 环境就绪：`poetry install` 或 `conda env create -f environment.yml`，验证 `python -c "import {{module}}"` 无报错。
+- [ ] 环境就绪：`uv sync`，验证 `uv run python -c "import {{module}}"` 无报错。
 - [ ] 数据就绪：`dvc pull` 后 `data/raw/` 存在 {{具体文件名}}；校验 `ls data/raw/` 含该文件。
 - [ ] 需要的 env var / 密钥：{{KEY 名，不写值}}。
 
@@ -35,7 +35,7 @@
 ### 切片 1 — {{端到端能跑通的最小路径}}
 - [ ] 1.1 在 `src/{{file}}.py` 新增函数 `{{fn(args) -> ret}}`：{{它做什么}}。
 - [ ] 1.2 在 `tests/test_{{file}}.py` 写 `test_{{case}}`，断言 {{具体输入→具体输出}}。
-- [ ] 1.3 验证：`poetry run pytest tests/test_{{file}}.py -q` → 期望 `1 passed`。
+- [ ] 1.3 验证：`uv run pytest tests/test_{{file}}.py -q` → 期望 `1 passed`。
 
 ### 切片 2 — {{下一条独立路径}}
 - [ ] 2.1 {{动作 + 精确路径}}。

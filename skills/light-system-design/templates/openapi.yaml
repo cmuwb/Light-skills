@@ -22,7 +22,7 @@ paths:
                 type: object
                 properties:
                   items: { type: array, items: { $ref: "#/components/schemas/Project" } }
-                  next_cursor: { type: string, nullable: true }
+                  next_cursor: { type: [string, "null"] }   # 3.1 用类型数组表 nullable；3.0 才用 nullable: true
         "401": { $ref: "#/components/responses/Unauthorized" }
     post:
       summary: 创建项目

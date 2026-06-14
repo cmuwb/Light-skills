@@ -3,7 +3,8 @@
 把 src/ 加入 import 路径，使 `import example.stats` 在未安装包时也能跑测试。
 ✅ 已实测：`pip install -e ".[dev]"` 装包成功后，删掉下面的 sys.path hack
 仍可 `import example.stats`（解析到已安装包），故正式项目装包后应删除此 hack。
-（本环境无 uv，uv sync 路径未实测；pip 可编辑安装路径已实测通过。）
+✅ 已实测：`uv sync --extra dev` 同样能装包（uv 0.11.21 / Python 3.11，2026-06），
+随后 `uv run ruff/mypy/pytest` 四道质量门全绿；故 README 的 uv 路线已跑通。
 """
 
 import sys

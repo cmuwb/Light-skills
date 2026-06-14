@@ -27,7 +27,7 @@ project-name/
 ├── assets/          图标/模板/素材
 ├── notebooks/       探索性分析
 ├── .light/          编排台账 passport.yaml + handoff/ 会话衔接卡（纳入版本控制）
-├── README.md  CHANGELOG.md  .gitignore  pyproject.toml/environment.yml
+├── README.md  CHANGELOG.md  .gitignore  pyproject.toml
 ```
 
 数据分层沿用 Cookiecutter Data Science：`raw/`(原始不可变) `interim/`(中间) `processed/`(建模用最终) `external/`(第三方源)。notebooks 用"编号-缩写-描述"命名（如 `1.0-jl-eda.ipynb`）。
@@ -50,7 +50,7 @@ project-name/
 ## 整理动作
 1. 盘点已有项目（借 repo-intake-and-plan 思路）：先读 README→扫 setup 脚本与文档化命令→把工作流归类为 推理/训练/评估，再据此给散落文件归位。
 2. 新项目骨架：**首选 `scripts/scaffold.py`**——一条命令建全树 + 拷模板 + 可选 `--dvc/--uv|--poetry`：
-   `python scripts/scaffold.py ./my-proj --name my-proj --dvc`（生成 data 四分层 + notebooks 探索/报告分流 + src 包 + `.light/`（passport 台账 + handoff/ 衔接卡目录，纳入版本控制）+ 落地 6 模板 + pyproject.toml；目标非空需 `--force`）。pyproject 默认 **uv 后端**（与 a03 推荐一致），加 `--poetry` 切 Poetry 备选。或用 CCDS（`pipx install cookiecutter-data-science` 后 `ccds`）；或按上面骨架手工生成。无论哪种，都要落 README/CHANGELOG/PROJECT_PLAN/.gitignore/.editorconfig/pyproject.toml。
+   `python scripts/scaffold.py ./my-proj --name my-proj --dvc`（生成 data 四分层 + notebooks 探索/报告分流 + src 包 + `.light/`（passport 台账 + handoff/ 衔接卡目录，纳入版本控制）+ 落地 7 模板 + pyproject.toml；目标非空需 `--force`）。pyproject 默认 **uv 后端**（与 a03 推荐一致），加 `--poetry` 切 Poetry 备选。或用 CCDS（`pipx install cookiecutter-data-science` 后 `ccds`）；或按上面骨架手工生成。无论哪种，都要落 README/CHANGELOG/PROJECT_PLAN/.gitignore/.editorconfig/pyproject.toml。
 3. 重命名规范化→补 README/CHANGELOG→产出"文件归位说明"（借 handoff 结构：Key Decisions 表 + 失败尝试 + 警告）。
 
 ## 版本与依赖
@@ -65,8 +65,8 @@ project-name/
 目录结构与 db09 project_card 的各 status 字段一一对应（paper_status↔paper/，code_status↔src/，data_status↔data/…），便于 a02 跟踪进度。
 
 ## 现成模板（本技能目录 `templates/`，可直接复制使用）
-- `scripts/scaffold.py` — **一条命令生成全套骨架**：建目录树 + 拷 6 模板到项目根（去 `.template` 后缀）+ 写 `src/<module>/__init__.py` + 始终落 `pyproject.toml`（默认 **uv** 后端，`--poetry` 切备选，均带 Ruff）；`--dvc` 加写 `dvc.yaml`，`--force` 覆盖非空。已实测两路径 selftest 通过。
-- 6 份模板：`PROJECT_STRUCTURE.md`（目录规范+命名+db09 对应）、`README.template.md`、`PROJECT_PLAN.template.md`（可勾选任务+No-Placeholders）、`CHANGELOG.template.md`（Keep a Changelog+SemVer）、`python-research.gitignore`（基线取 GitHub 官方 Python.gitignore，HTTP 200@2026-06-06，补科研条目）、`editorconfig.template`、`pre-commit-config.template.yaml`（rev 钉死 tag，`pre-commit autoupdate --freeze` 维护，仅 git 仓库内 `pre-commit install` 后生效）。各模板用途与配置项细节见 `references.md`。
+- `scripts/scaffold.py` — **一条命令生成全套骨架**：建目录树 + 拷 7 模板到项目根（去 `.template` 后缀）+ 写 `src/<module>/__init__.py` + 始终落 `pyproject.toml`（默认 **uv** 后端，`--poetry` 切备选，均带 Ruff）；`--dvc` 加写 `dvc.yaml`，`--force` 覆盖非空。已实测两路径 selftest 通过。
+- 7 份模板：`PROJECT_STRUCTURE.md`（目录规范+命名+db09 对应）、`README.template.md`、`PROJECT_PLAN.template.md`（可勾选任务+No-Placeholders）、`CHANGELOG.template.md`（Keep a Changelog+SemVer）、`python-research.gitignore`（基线取 GitHub 官方 Python.gitignore，HTTP 200@2026-06-06，补科研条目）、`editorconfig.template`、`pre-commit-config.template.yaml`（rev 钉死 tag，`pre-commit autoupdate --freeze` 维护，仅 git 仓库内 `pre-commit install` 后生效）。各模板用途与配置项细节见 `references.md`。
 
 新建项目时优先 `python scripts/scaffold.py <dir> [--poetry --dvc]` 一步到位；或手工把上述文件复制到项目根（gitignore/editorconfig 去掉模板后缀），填充 README/CHANGELOG/PROJECT_PLAN 中的 `{{占位符}}` 即可。
 
