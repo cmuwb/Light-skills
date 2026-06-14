@@ -111,16 +111,19 @@ def _title_match(a: str, b: str) -> float:
     return len(sa & sb) / len(sa | sb)
 
 
-def verify_one(doi: str, self_authors=None):
-    """核验单个 DOI，返回结构化记录。"""
+def verify_one(doi: str, self_authors=None, claimed=None):
+    """核验单个 DOI，返回结构化记录。
+    claimed: 可选 {"title": 声称标题, "first_author": 声称首作者姓}——用于**嵌合引用检测**
+    （Chimeric Citation：DOI 真实存在、标题也对，但作者被换成别人，借 PHY041）。"""
     self_authors = [s.lower() for s in (self_authors or [])]
+    claimed = claimed or {}
     doi = doi.strip().replace("https://doi.org/", "").replace("doi:", "")
     rec = {"doi": doi, "found_crossref": False, "found_openalex": False,
            "http": {}, "title": None, "year": None,
            "cited_by_count": None, "is_cn": False, "is_self_cite": False,
            "is_oa": None, "oa_status": None, "venue": None,
            "is_in_doaj": None, "oa_type": None, "version": None,
-           "is_retracted": False, "retraction_flags": [],
+           "is_retracted": False, "retraction_flags": [], "is_chimeric": False,
            "unverified_offline": False, "errors": [], "warnings": []}
 
     # --- Crossref ---
@@ -141,6 +144,23 @@ def verify_one(doi: str, self_authors=None):
         auth = m.get("author", []) or []
         authors_str = " ".join((a.get("family", "") + " " + a.get("given", "")) for a in auth)
         rec["is_cn"] = bool(CN_RE.search(cr_title or "")) or "China" in authors_str
+        # 嵌合引用检测（Chimeric Citation，借 PHY041）：DOI 真实、标题也对得上，但声称的首作者
+        # 不在真实作者列表里 —— 典型 AI 幻觉"真标题配错作者"。仅在提供 claimed.first_author 时查。
+        claimed_fa = (claimed.get("first_author") or "").strip().lower()
+        if claimed_fa:
+            real_fams = [(a.get("family", "") or "").strip().lower() for a in auth]
+            real_fams = [f for f in real_fams if f]
+            # 声称首作者姓未出现在任何真实作者姓里 → 疑似嵌合（姓做子串双向匹配，容缩写/音译差异）
+            hit = any(claimed_fa == f or claimed_fa in f or f in claimed_fa for f in real_fams)
+            claimed_title = (claimed.get("title") or "").strip().lower()
+            title_match = (not claimed_title) or (cr_title and
+                          _title_match(claimed_title, cr_title.lower()) >= TITLE_SIM_WARN)
+            if title_match and real_fams and not hit:
+                rec["is_chimeric"] = True
+                rec["errors"].append({"severity": "high",
+                    "msg": f"疑似嵌合引用（Chimeric）：DOI/标题真实，但声称首作者『{claimed.get('first_author')}』"
+                           f"不在真实作者 {[a.get('family') for a in auth][:4]} 中——典型'真标题配错作者'"
+                           f"幻觉，核对原文作者后改正"})
         # --- 撤稿检测（复用 check_retractions.py 口径，同一份 message，不新增 HTTP）---
         for u in (m.get("update-to") or []):
             utype = (u.get("type") or "").lower().replace("-", "_")
@@ -221,11 +241,20 @@ def verify_one(doi: str, self_authors=None):
             rec["errors"].append({"severity": "high",
                                   "msg": f"Crossref+OpenAlex 双源均查不到（HTTP {code}/{code2}）——高度疑似臆造"})
 
-    # --- 自引判断 ---
-    if self_authors and authors_str:
+    # --- 自引判断（按作者姓精确词匹配，而非整串子串：避免 "li" 误命中 "Smolin" 等高频姓子串）---
+    if self_authors and auth:
+        real_fams = {(a.get("family", "") or "").strip().lower() for a in auth if a.get("family")}
+        # 精确姓匹配 + 全名兜底（中文整名塞 family 时）；不再用 `sa in 整串` 的脆弱子串
+        if any(sa in real_fams or any(sa == f for f in real_fams) for sa in self_authors):
+            rec["is_self_cite"] = True
+        else:
+            rec["self_cite_note"] = "按作者姓精确匹配未判为自引（旧子串匹配可能误报，已升级）"
+    elif self_authors and authors_str:
+        # auth 缺失（仅有拼接串）时退回子串但标注不可靠
         low = authors_str.lower()
         if any(sa in low for sa in self_authors):
             rec["is_self_cite"] = True
+            rec["warnings"].append("自引按整串子串判定（无结构化作者列表），高频姓可能误报，人工复核")
 
     # --- 时效性 ---
     if rec["year"] and rec["year"] <= THIS_YEAR - 6 and (rec["cited_by_count"] or 0) < 5:
@@ -256,6 +285,13 @@ def build_report(dois, self_authors=None):
         "missing_recent_2y": recent == 0 and n > 0,
         "preprint_count": preprint_n,
         "retracted_count": retracted_n,
+        "retraction_signals_used": ["crossref:update-to[retraction/withdrawal]", "title:RETRACTED 前缀"],
+        "retraction_coverage": (
+            f"已用上述 2 类信号扫了 {n} 条；命中 {retracted_n} 条。"
+            "⚠ retracted_count=0 ≠ 保证全部未撤稿——经典撤稿常不暴露 Crossref update-to[]，"
+            "本脚本主路径会漏报。高风险/高龄引用须**交叉查 Retraction Watch**（"
+            "可选第二跳：跑 a10 `light-research-ethics/scripts/check_retractions.py --file dois.txt` "
+            "独立复核，其口径同源但单独成报，把'已查信号'与'未覆盖经典撤稿'分开看）。"),
         "retraction_note": "撤稿判定复用 check_retractions.py 口径（Crossref update-to + 标题 RETRACTED 前缀）；无信号≠保证未撤稿，高风险引用须交叉查 Retraction Watch",
         "authority_note": "权威性/掠夺性判定需人工+查 DOAJ/分区/预警名单；脚本仅给 OA 线索，oa_status 反映开放性≠权威性",
         "offline_note": ("⚠ 有 %d 条引用因网络不可达【未核验】（非疑似臆造）：离线降级不放行核验闸门，"
@@ -378,6 +414,30 @@ def _selftest():
     assert r_ti["is_retracted"] and r_ti["retraction_flags"][0]["source"] == "crossref:title", r_ti
     assert not r_co["is_retracted"] and any("更正" in w or "correction" in w for w in r_co["warnings"]), r_co
     assert not r_cl["is_retracted"] and not any(e.get("msg", "").startswith("该文献已被撤稿") for e in r_cl["errors"]), r_cl
+
+    # --- CT-5 嵌合引用检测：DOI 真实+标题对，但声称首作者不在真实作者列表 ---
+    def fake_get_chimeric(url, timeout=30):
+        if "crossref" not in url:
+            return 404, None
+        return 200, {"message": {
+            "title": ["Attention Is All You Need"], "issued": {"date-parts": [[2017]]},
+            "author": [{"family": "Vaswani", "given": "Ashish"},
+                       {"family": "Shazeer", "given": "Noam"}]}}
+    try:
+        _get_json = fake_get_chimeric
+        # 声称首作者 "Smith"（真实是 Vaswani）→ 嵌合
+        r_chi = verify_one("10.0000/real.doi", claimed={"first_author": "Smith",
+                           "title": "Attention Is All You Need"})
+        # 声称首作者 "Vaswani"（对得上）→ 不嵌合
+        r_okc = verify_one("10.0000/real.doi", claimed={"first_author": "Vaswani"})
+    finally:
+        _get_json = orig_get_json
+    assert r_chi["is_chimeric"] and any("嵌合" in e["msg"] for e in r_chi["errors"]), r_chi
+    assert not r_okc["is_chimeric"], r_okc
+
+    # --- CT-2 撤稿覆盖度：summary 显式区分"已用信号"与"未覆盖经典撤稿" ---
+    assert "retraction_coverage" in s and "retraction_signals_used" in s, s
+    assert "Retraction Watch" in s["retraction_coverage"], s["retraction_coverage"]
 
     # --- 离线降级分支：两源 code=0(网络失败) → unverified_offline，不诬为"疑似臆造"high error ---
     def fake_get_offline(url, timeout=30):

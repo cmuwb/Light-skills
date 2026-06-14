@@ -8,6 +8,7 @@
 
 | 技能 | 脚本 | 作用 |
 |------|------|------|
+| citation | `scripts/citekey_audit.py` | \cite 键↔.bib 键双向对账：缺失键(编译??)/冗余键/重复定义/authorYearWord 命名校验，支持 LaTeX 与 pandoc 语法 |
 | citation | `scripts/doi_to_any.py` | DOI 转 BibTeX / CSL-JSON / GB/T 7714，中文条目自动注入 `langid` |
 | citation | `scripts/verify_citation_edge.py` | 核验“A 是否引用 B”，返回 confirmed / not_in_open_index / unknown 三态(OpenCitations / Semantic Scholar) |
 | citation | `scripts/verify_refs.py` | 批量 DOI 真实性、元数据一致性与开放获取状态核验，产 JSON 报告 |

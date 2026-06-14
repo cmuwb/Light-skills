@@ -114,22 +114,36 @@ _TYPE_TAG = {
 }
 
 
+def _has_cjk(s: str) -> bool:
+    """是否含 CJK 汉字（中日韩统一表意文字区段）。中文名不能套西文缩写。"""
+    return any("一" <= ch <= "鿿" or "㐀" <= ch <= "䶿" for ch in (s or ""))
+
+
 def _fmt_authors_gbt(authors, limit: int = 3) -> str:
-    """GB/T 7714：作者≤3 全列，>3 取前 limit 加 '等'。姓前名后，名取首字母大写。"""
+    """GB/T 7714：作者≤3 全列，>3 取前 limit 加 '等'。
+    西文：姓前名后、名取首字母大写（FamilyName G. M.）。
+    中文（CJK）：整名作单元，**姓名连写不缩写、不加点**（如"张伟"非"张 W."）——修中文名被西文
+    缩写逻辑误处理的 bug。literal/混合也按是否含 CJK 分流。"""
     if not authors:
         return "[佚名]"
     names = []
     for a in authors:
         if "literal" in a:
-            names.append(a["literal"])
+            lit = a["literal"]
+            # literal 整名：含 CJK 原样保留（中文常把整名塞 literal/family），否则原样
+            names.append(lit)
             continue
         fam = (a.get("family") or "").strip()
         giv = (a.get("given") or "").strip()
-        if fam and giv:
-            # 西文：FamilyName G. M.（缩写名）；中文姓名 family 已含全名时直接用
+        # CJK 作者：family/given 任一含汉字 → 整名连写，不缩写
+        if _has_cjk(fam) or _has_cjk(giv):
+            names.append((fam + giv).strip() or fam or giv)
+        elif fam and giv:
+            # 西文：FamilyName G. M.（缩写名）
             initials = " ".join(p[0].upper() + "." for p in giv.replace(".", " ").split() if p)
             names.append(f"{fam} {initials}".strip())
         else:
+            # 只有 family（可能是整名 literal 塞进 family）：含 CJK 原样，否则原样
             names.append(fam or giv or a.get("name", ""))
     if len(names) > limit:
         return ", ".join(names[:limit]) + ", 等"
@@ -149,6 +163,12 @@ def csljson_to_gbt7714(csl: dict) -> str:
     issue = csl.get("issue", "")
     page = csl.get("page", "")
     doi = csl.get("DOI") or csl.get("DOI".lower(), "")
+    url = csl.get("URL") or csl.get("url") or ""
+    # 访问日期（电子资源 [EB/OL] 国标要求）：CSL accessed
+    acc = csl.get("accessed", {}).get("date-parts", [[None]])
+    acc_date = ""
+    if acc and acc[0] and acc[0][0]:
+        acc_date = "-".join(str(x).zfill(2) if i else str(x) for i, x in enumerate(acc[0]))
 
     parts = [f"{authors}. {title}[{tag}]."]
     if container:
@@ -164,8 +184,16 @@ def csljson_to_gbt7714(csl: dict) -> str:
         parts.append(seg + ".")
     elif year:
         parts.append(f" {year}.")
+    # 电子资源 [EB/OL]/[DS]：国标要求带访问日期与 URL；缺则显式占位提示补全（不静默丢）
+    if tag in ("EB/OL", "DS"):
+        if acc_date:
+            parts.append(f" [{acc_date}].")
+        else:
+            parts.append(" [访问日期待补].")
     if doi:
         parts.append(f" DOI: {doi}.")
+    elif url and tag in ("EB/OL", "DS"):
+        parts.append(f" {url}.")
     return "".join(parts)
 
 
@@ -255,6 +283,31 @@ def _selftest():
     gbt = csljson_to_gbt7714(csl)
     assert "Smith J. M." in gbt and ", 等" in gbt, gbt
     assert "A Reliable Dataset[J]." in gbt and "DOI: 10.1234/demo." in gbt, gbt
+
+    # CT-1 CJK 作者特判：中文名整名连写、不缩写不加点（修被西文逻辑误处理的 bug）
+    cn_csl = {"type": "article-journal",
+              "author": [{"family": "张", "given": "伟"}, {"family": "李娜"},
+                         {"literal": "王建国"}],
+              "title": "深度学习综述", "container-title": "计算机学报",
+              "issued": {"date-parts": [[2023]]}, "volume": "46", "page": "1-20"}
+    cn_gbt = csljson_to_gbt7714(cn_csl)
+    assert "张伟" in cn_gbt, f"中文名应整名连写: {cn_gbt}"
+    assert "张 W." not in cn_gbt and "张 伟" not in cn_gbt, f"中文名不应西文缩写: {cn_gbt}"
+    assert "李娜" in cn_gbt and "王建国" in cn_gbt, cn_gbt
+    # 西文与中文混合：西文仍缩写、中文不缩写
+    assert _has_cjk("张伟") and not _has_cjk("Smith"), "_has_cjk 判定"
+
+    # CT-1 电子资源 [EB/OL]：带访问日期占位（缺则显式提示补全，不静默丢）
+    eb_csl = {"type": "webpage", "author": [{"literal": "OpenAI"}],
+              "title": "GPT-X Technical Report", "URL": "https://example.org/x",
+              "issued": {"date-parts": [[2024]]}}
+    eb_gbt = csljson_to_gbt7714(eb_csl)
+    assert "[EB/OL]" in eb_gbt, eb_gbt
+    assert "访问日期待补" in eb_gbt, f"缺访问日期应显式占位: {eb_gbt}"
+    assert "https://example.org/x" in eb_gbt, eb_gbt
+    # 带访问日期则用真实日期
+    eb_csl2 = dict(eb_csl, accessed={"date-parts": [[2026, 6, 14]]})
+    assert "2026-06-14" in csljson_to_gbt7714(eb_csl2), csljson_to_gbt7714(eb_csl2)
 
     # 新增格式已注册到内容协商表（apa/ieee/ris 直出，离线只验注册与 Accept 头，不打网）
     for k in ("apa", "ieee", "ris"):
