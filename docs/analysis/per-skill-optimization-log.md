@@ -224,5 +224,33 @@ E2 已补 pptx_eval。本站补剩余 + 借鉴：
 
 ---
 
-## 待做站
-科研主线 17 站全部完成 ✅。剩余常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需优化。
+## 常驻技能优化（11 技能，2026-06-14，workflow 并行 + 主干串行收口）
+
+科研主线 17 站全部完成后，11 个常驻技能用 workflow 并行优化。**先跑只读核实 workflow（戳穿详档多处事实错误，不盲信）**，再分两组 worktree 隔离并行执行、主干合并验证。
+
+**详档订正（核实后不照搬的误判）**：research-ethics 硬编码 QQ 邮箱"待移除"——早已用 CROSSREF_MAILTO 环境变量；self-review 的 m04/m06/a07 "悬空引用待确认"——ROUTER.md 全有映射；tool-selection "无 eval 用例"——evals/tasks/a09 已覆盖、__pycache__ 已 gitignore；orchestrator "闸门声明式可能不存在"——四下游闸门全真实存在；consistency "db09 无贡献数据"——terminology.md 已有创新点1/2/3；backend ci.yml "触发分支矛盾"——已有 pull_request 触发；file-reading "docx 漏表格文字"——read_tables 已覆盖。另发现详档没发现的真 bug（system-design openapi nullable:true 在 3.1 已移除）。
+
+**第一批 5 技能（纯改自身文件，commit 04e2c10）**：
+- ✅ project-structure：scaffold 三模板 poetry→uv 统一；PROJECT_STRUCTURE.md 进 TEMPLATE_MAP 修悬空引用+计数对齐 7；--dvc 改先 git init 再 dvc init + dataset.py 桩；删 conda 断头路
+- ✅ tool-selection：修 decision_matrix:85 死引用；detect_stack 注释纠正+科研别名；新增 R/MATLAB/LaTeX/Jupyter 语言栈检测；三处重复收敛
+- ✅ system-design：rls_policy auth.tenant_id() 可移植实现注释；openapi nullable:true→type:[string,"null"]+版本统一；er_diagram 死代码 known 激活为 --strict 校验
+- ✅ backend-coding：ci.yml 补 mypy；新增 reproducibility.py（set_global_seed）+测试 importorskip 降级；SonarQube 适用边界；README 转 Poetry diff；本环境实测 uv sync 全链路跑通
+- ✅ self-review：grill 三弱点开场收口重产出档；excuse 第 27 条堵"轻任务不用全量"（26→27 同步）；放行需带证据校准条；论文段结论支撑改逐句定位
+
+**第二批 6 技能 + 边界项（commit 20a4c0d）**：
+- ✅ file-reading：中文标题 bug（outlineLvl 脱离语言）；三脚本 argparse 子命令处理真实文件；try-import；docx 递归表格+页眉页脚+core_props；新增 understanding-note 模板 + IMG-REF
+- ✅ memory-pm：新增 check_project_card.py（补 CI 未覆盖的日期/枚举/行格式/handoff 链）+ version_tag_reconcile.py；SKILL 两套记忆 SSOT 决策表
+- ✅ orchestrator：新增 passport.py（.light/passport.yaml 工具化+schema 校验+返修轮次，PyYAML 降级内置解析）+ examples 快照；checkpoints 返修配额跨会话不重置
+- ✅ frontend-design：两 linter 加文件输入兑现"可跑"；修 em-dash 误命中中文破折号/版本号误杀 changelog；新增 contrast_lint.py（WCAG 门禁）；代号词表
+- ✅ consistency：清死代码（重复 return、本文方法 hack 改 placeholder 字段）；数值比对修静默丢弃（GROSS_MISMATCH+单位归一化）；新增贡献漂移检测兑现头号承诺；COVERAGE_GAP 分级降噪
+- ✅ research-ethics：决策树编号物理对齐 A/B/C/D；新增 cn_compliance.md 中国合规（带待核标注）；常驻强制触发契约；新增 stat_consistency.py（GRIM/p值-自由度自洽）
+- ✅ 边界项：CONVENTIONS §6.1 补 m07/m08 写作润色行 + m12 排版行，三技能产出节双向声明；撤稿标记抽成共享常量 retraction_flag_types.json（check_retractions×verify_refs 同源+内联回退）
+
+全量 72 脚本 selftest 全过、产物残留 gate 通过，四 CI 全绿（scripts 67→72、templates 47→48）。
+
+**留主干评估未做的低价值/过早优化项**：orchestrator _index.md、memory-pm 乐观锁/Hermes 抽象（单用户单项目过早）、frontend headless 渲染/Node 构建 smoke（破 stdlib 约定）、research-ethics 图像 Pillow pHash（依赖顾虑）、self-review 11 项重组（偏好性）、各技能 examples 扩展等——如后续有真实需求再做。
+
+---
+
+## 全部完成 🎉
+科研主线 17 站 + 11 常驻技能全部优化完毕（28 技能）。
