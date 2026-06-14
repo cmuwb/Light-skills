@@ -28,14 +28,32 @@ TAIL_PAGES = 30
 
 _EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
 _PHONE = re.compile(r"(?<!\d)(?:\+?86)?1[3-9]\d{9}(?!\d)")
-_SECRET = re.compile(r"(?i)(password|passwd|secret|api[_-]?key|token)\s*[=:]\s*\S+")
+_SECRET = re.compile(r"(?i)(password|passwd|secret|api[_-]?key|token|access[_-]?key)\s*[=:]\s*\S+")
+_PEM = re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")
+_IPV4 = re.compile(r"(?<!\d)(?:\d{1,3}\.){3}\d{1,3}(?!\d)")
+# 长 base64/hex 串（疑似密钥/凭证），≥40 连续字符
+_LONGB64 = re.compile(r"(?<![\w/+])[A-Za-z0-9+/]{40,}={0,2}(?![\w/+])")
+_HEXKEY = re.compile(r"(?<![\w])[0-9a-fA-F]{32,}(?![\w])")
+_redaction_stats = {"hits": 0}
 
 
 def desensitize(line: str) -> str:
-    """基础脱敏:邮箱/手机号/密钥赋值 -> 占位符。仅处理明显模式,不保证完备。"""
-    line = _EMAIL.sub("<email>", line)
-    line = _PHONE.sub("<phone>", line)
-    line = _SECRET.sub(lambda m: f"{m.group(1)}=<redacted>", line)
+    """基础脱敏（注释/字符串里的个人与凭证信息）。**只做正则粗筛，不保证完备**——
+    输出末尾会提示命中数 + 让人工复核（见 render）。统计命中数供免责提示。"""
+    n0 = _redaction_stats["hits"]
+
+    def _sub(rx, repl, s):
+        new, k = rx.subn(repl, s)
+        _redaction_stats["hits"] += k
+        return new
+
+    line = _sub(_PEM, "-----BEGIN PRIVATE KEY----- <redacted>", line)
+    line = _sub(_EMAIL, "<email>", line)
+    line = _sub(_PHONE, "<phone>", line)
+    line = _sub(_SECRET, lambda m: f"{m.group(1)}=<redacted>", line)
+    line = _sub(_IPV4, "<ip>", line)
+    line = _sub(_LONGB64, "<redacted-b64>", line)
+    line = _sub(_HEXKEY, "<redacted-hex>", line)
     return line
 
 
@@ -58,18 +76,36 @@ def collect_source_lines(src_dir: str, exts: list[str]) -> list[str]:
     return lines
 
 
+def effective_code_lines(lines: list) -> int:
+    """有效代码行数：排除 `//// FILE:` 文件标记行与纯空行（软著 60 行/页按有效行算更准，
+    避免标记/空行虚增页数误导'够不够 60 页'的判断）。"""
+    n = 0
+    for ln in lines:
+        s = ln.strip()
+        if not s or s.startswith("//// FILE:"):
+            continue
+        n += 1
+    return n
+
+
 def paginate(lines: list[str], per_page: int = LINES_PER_PAGE) -> list[list[str]]:
     return [lines[i:i + per_page] for i in range(0, len(lines), per_page)]
 
 
-def select_pages(pages: list[list[str]]) -> tuple[list[list[str]], str]:
-    """按软著规则挑选提交页。返回(选中页, 说明)。"""
+def select_pages(pages: list[list[str]], lines: list = None) -> tuple[list[list[str]], str]:
+    """按软著规则挑选提交页。返回(选中页, 说明)。
+    说明里同时给"含标记/空行的版面页数"与"有效代码行数"，避免页数被标记行虚增误导。"""
     n = len(pages)
+    eff_note = ""
+    if lines is not None:
+        eff = effective_code_lines(lines)
+        eff_pages = (eff + LINES_PER_PAGE - 1) // LINES_PER_PAGE
+        eff_note = f"（有效代码 {eff} 行≈{eff_pages} 页，已排除 FILE 标记行/空行；版面 {n} 页含这些）"
     if n <= PAGE_RULE_FULL_MAX:
-        return pages, f"全部提交({n} 页 <= {PAGE_RULE_FULL_MAX} 页)"
+        return pages, f"全部提交({n} 页 <= {PAGE_RULE_FULL_MAX} 页){eff_note}"
     head = pages[:HEAD_PAGES]
     tail = pages[-TAIL_PAGES:]
-    return head + tail, f"前 {HEAD_PAGES} 页 + 后 {TAIL_PAGES} 页(总 {n} 页 > {PAGE_RULE_FULL_MAX})"
+    return head + tail, f"前 {HEAD_PAGES} 页 + 后 {TAIL_PAGES} 页(总 {n} 页 > {PAGE_RULE_FULL_MAX}){eff_note}"
 
 
 def render(selected: list[list[str]], all_pages: list[list[str]], name: str,
@@ -90,9 +126,13 @@ def render(selected: list[list[str]], all_pages: list[list[str]], name: str,
 
 
 def prepare(src_dir: str, exts: list[str], name: str, version: str) -> tuple[str, str]:
+    _redaction_stats["hits"] = 0          # 重置脱敏命中计数
     lines = collect_source_lines(src_dir, exts)
     pages = paginate(lines)
-    selected, note = select_pages(pages)
+    selected, note = select_pages(pages, lines)
+    # 脱敏免责：正则粗筛非完备，提示人工复核（避免给用户"已彻底脱敏"的错觉）
+    note += (f"\n[脱敏] 正则命中并替换 {_redaction_stats['hits']} 处(邮箱/手机/密钥/PEM/IPv4/base64/hex)"
+             f"——**仅正则粗筛不保证完备**，提交前请人工复核源码无残留个人信息/密钥/内部地址。")
     return render(selected, pages, name, version), note
 
 
@@ -108,6 +148,20 @@ def _selftest() -> int:
     assert "api_key=<redacted>" in text or "api_key = <redacted>" in text.replace("'ABCD1234'", "<redacted>") or "<redacted>" in text, "密钥脱敏失败"
     assert "测试软件 V1.0" in text and "第 1 页" in text, "页眉失败"
     assert "全部提交" in note, note
+    # IP-6 脱敏强化：PEM/IPv4/base64 也被脱敏 + 免责提示
+    sec = ("-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA" + "A" * 50 + "\n"
+           "host = 192.168.1.100\ntoken = " + "x" * 45 + "\n")
+    import tempfile as _tf
+    with _tf.TemporaryDirectory() as d2:
+        with open(os.path.join(d2, "k.py"), "w", encoding="utf-8") as fh:
+            fh.write(sec)
+        text2, note2x = prepare(d2, [".py"], "K", "V1")
+    assert "<ip>" in text2, "IPv4 未脱敏"
+    assert "PRIVATE KEY----- <redacted>" in text2 or "<redacted-b64>" in text2, "PEM/base64 未脱敏"
+    assert "不保证完备" in note2x and "[脱敏]" in note2x, "缺脱敏免责"
+    # IP-7 有效行口径：FILE 标记行/空行不计入
+    eff = effective_code_lines(["//// FILE: a.py", "", "  ", "x = 1", "y = 2"])
+    assert eff == 2, f"有效行应只数代码行: {eff}"
 
     # 大文件路径:制造 >60 页,验证前30+后30选择
     big = paginate([f"line{i}" for i in range(60 * 50 + 10)])

@@ -185,5 +185,17 @@ P2 已补转投顺序+DOAJ。本站补剩余 + 借鉴：
 
 ---
 
+## 站 15：light-ip-application（科研主线第 15 站，已完成）
+
+P0 已修 patent_search --api-key。本站补剩余 + 借鉴：
+- ✅ IP-3 claims_template 独权1法理修：拆两正确范式(单部分法不写"其特征在于"/两部分法共有特征入前序、区别特征入特征部分)+常见致命错误警示，去错误混合体(代理师必打回)
+- ✅ IP-2 patent_search 加 build_freesearch_urls + --free-urls：生成 CNIPA pss-system/Google Patents(带 before:priority/cpc/country)/Lens/WIPO 免凭证检索链接清单，弥补无 API 用户拿不到专利库结果的空白(借多源检索路由)
+- ✅ IP-6 copyright_source_prep 脱敏强化：补 PEM 私钥/IPv4/长 base64/hex 检测，输出报命中数+明示"仅正则粗筛不保证完备须人工复核"(不给已脱敏错觉)
+- ✅ IP-7 页数有效行口径：effective_code_lines 排除 FILE 标记行/空行，select_pages 另报有效行数避免虚增页数误判
+- ✅ IP-4(收敛 SKILL)：claims 两范式/免凭证链接/脱敏强化写进 SKILL；manual/外观实用新型模板归 SKILL 指引(不新建文件避膨胀)
+- ✅ IP-CI 四 CI 全绿（脚本只改不增）+ 记忆
+
+---
+
 ## 待做站（科研主线顺序）
-ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。 → paper-polishing → figure-planning(已补E1) → figure-drawing → citation → typesetting → venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。
+slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。 → paper-polishing → figure-planning(已补E1) → figure-drawing → citation → typesetting → venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。

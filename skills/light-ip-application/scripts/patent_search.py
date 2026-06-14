@@ -266,6 +266,37 @@ _OFFLINE_SAMPLE = [
 ]
 
 
+def build_freesearch_urls(keywords: str, cpc: str = "", before: str = "",
+                          country: str = "CN") -> list:
+    """生成"人工点开即用"的免凭证检索链接（无 API key 的主力查新路径）。
+    返回 [{engine, url, note}]。这些是公开网页高级检索入口，拼好查询参数，用户点开就能查
+    专利在先技术——弥补 patent_search 主体需 OpenAlex/凭证、无 API 用户拿不到专利库结果的空白。"""
+    kw = keywords.strip()
+    q = urllib.parse.quote(kw)
+    urls = []
+    # Google Patents 高级检索（免登录，支持 before:priority、country、cpc）
+    gp = f"https://patents.google.com/?q={q}"
+    if country:
+        gp += f"&country={country}"
+    if before:
+        gp += f"&before=priority:{before}"   # 仅检索优先日之前的在先技术
+    if cpc:
+        gp += f"&cpc={urllib.parse.quote(cpc)}"
+    urls.append({"engine": "Google Patents", "url": gp,
+                 "note": "免登录网页高级检索；before:priority 卡优先日之前为在先技术；可加 CPC 分类号收敛"})
+    # CNIPA 专利检索及分析系统（需注册免费账号，公开可用）
+    urls.append({"engine": "CNIPA pss-system", "url": "https://pss-system.cponline.cnipa.gov.cn/",
+                 "note": f"国家知识产权局官方检索系统(免费注册)；进高级检索填关键词『{kw}』+IPC/申请日范围；中国专利权威源"})
+    # Lens.org（免费学术专利检索，无需 key 可网页查）
+    urls.append({"engine": "Lens.org", "url": f"https://www.lens.org/lens/search/patent/list?q={q}",
+                 "note": "免费网页专利检索(注册后功能更全)；跨库(USPTO/EPO/WIPO/CNIPA)，适合全球查新"})
+    # WIPO PATENTSCOPE（PCT 国际申请）
+    urls.append({"engine": "WIPO PATENTSCOPE",
+                 "url": f"https://patentscope.wipo.int/search/en/result.jsf?query={q}",
+                 "note": "WIPO 官方，PCT 国际申请检索；查是否有国际同族在先技术"})
+    return urls
+
+
 def _selftest() -> int:
     # 1) URL 构造与 per_page 上限钳制
     u = build_openalex_url("graphene battery", from_year=2015, to_year=2020,
@@ -297,6 +328,12 @@ def _selftest() -> int:
     # 6) Lens 引用边请求体
     lc = build_lens_citation_request("123-456-789", edge="cited_by")
     assert lc["body"]["include"] == ["lens_id", "cited_by"], lc
+    # 7) IP-2 免凭证检索链接清单：4 引擎、Google Patents 带 before:priority/country/cpc
+    fu = build_freesearch_urls("graphene battery", cpc="H01M", before="2020-01-01", country="CN")
+    engines = {e["engine"] for e in fu}
+    assert {"Google Patents", "CNIPA pss-system", "Lens.org", "WIPO PATENTSCOPE"} <= engines, engines
+    gp = next(e for e in fu if e["engine"] == "Google Patents")["url"]
+    assert "before=priority:2020-01-01" in gp and "country=CN" in gp and "cpc=H01M" in gp, gp
     print("[selftest] OK  url=", u)
     print("[selftest] ranked top:", ranked[0]["title"])
     print("[selftest] snowball+merge_dedup+lens-cite: PASS")
@@ -317,6 +354,10 @@ def main() -> int:
                     help="对前 N 条命中(默认3)做一跳引用图扩展(后向+前向),省配额默认关")
     ap.add_argument("--selftest", action="store_true", help="离线自测(不联网)")
     ap.add_argument("--print-adapters", action="store_true", help="打印专利库请求构造示例")
+    ap.add_argument("--free-urls", action="store_true",
+                    help="只生成免凭证检索链接清单(CNIPA/Google Patents/Lens/WIPO，人工点开即用)")
+    ap.add_argument("--cpc", default="", help="CPC 分类号(配合 --free-urls 收敛)")
+    ap.add_argument("--before", default="", help="优先日 YYYY-MM-DD(配合 --free-urls 只查之前在先技术)")
     args = ap.parse_args()
 
     global _API_KEY
@@ -325,6 +366,16 @@ def main() -> int:
 
     if args.selftest:
         return _selftest()
+    if args.free_urls:
+        if not args.query:
+            ap.error("--free-urls 需要 query(关键词)")
+        urls = build_freesearch_urls(args.query, cpc=args.cpc, before=args.before)
+        print("# 免凭证专利检索链接(人工点开即用；无 OpenAlex/API key 也能查在先技术)\n")
+        for e in urls:
+            print(f"## {e['engine']}\n{e['url']}\n  {e['note']}\n")
+        print("> 这些是公开网页高级检索入口；命中文献号/日期/相关段落随交底书留档，"
+              "FTO/无效结论须代理师/律师定。")
+        return 0
     if args.print_adapters:
         print(json.dumps({
             "lens": build_lens_request("neural network"),
