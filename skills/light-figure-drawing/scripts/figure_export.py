@@ -56,6 +56,7 @@ JOURNAL_SPECS = {
         "single_mm": 83.0, "onehalf_mm": 140.0, "double_mm": 190.0,
         "min_dpi_line": 600, "min_dpi_halftone": 300, "min_dpi_combo": 600,
         "min_font_pt": 8.0, "preferred_formats": ("tiff", "eps"),
+        "max_height_px": 2625, "max_file_mb": 10.0,
         "font_family": "sans-serif", "verified": True,
         "note": "实测 journals.plos.org/plosone/s/figures (HTTP200): "
                 "仅收 TIFF/EPS; 宽 789-2250px@300dpi (6.68-19.05cm); "
@@ -80,6 +81,9 @@ JOURNAL_SPECS = {
         "min_dpi_line": 1000, "min_dpi_halftone": 300, "min_dpi_combo": 1000,
         "min_font_pt": 8.0, "preferred_formats": ("tiff", "png", "eps"),
         "font_family": "sans-serif", "verified": False,
+        "column_caveat": "⚠ MDPI 是单列版式：single/full 都=170mm 正文整宽，column 参数在 MDPI 下"
+                         "不区分宽窄（不同于 Nature 等 single≈89mm 双栏刊）。要更窄的图按 170mm 的"
+                         "整数分数(如 ½≈83mm)自行设 custom_width_mm，别指望 column='single' 给窄栏。",
         "note": "MDPI 单列版式正文宽 ≈170mm(图按此宽或其整数分数排); 线稿/组合图建议"
                 "1000dpi, 照片>=300dpi; TIFF/PNG/EPS。数据来源: m11 light-figure-planning "
                 "references.md「出版商图宽硬规格核查表」MDPI 行(含 db01 Animals/Agronomy/"
@@ -133,6 +137,35 @@ def save_publication_figure(fig, basename, formats=("pdf", "png", "svg"),
     if close:
         plt.close(fig)
     return written
+
+
+def _check_font_availability():
+    """检查 mpl 当前首选无衬线字体是否真实可用，回退到 DejaVu 等兜底字体则告警。
+    Linux/CI 常无 Arial/Helvetica，matplotlib 会静默回退 DejaVu Sans——'字体与正文一致'
+    的诉求会悄悄落空。返回 {requested, resolved, fell_back, warning}。"""
+    import matplotlib.font_manager as fm
+    import matplotlib as mpl
+    prefs = list(mpl.rcParams.get("font.sans-serif", []))
+    fam = mpl.rcParams.get("font.family", ["sans-serif"])
+    # 只在 sans-serif 家族时检查首选项
+    if not prefs:
+        return {"requested": [], "resolved": None, "fell_back": False, "warning": None}
+    top = prefs[0]
+    try:
+        resolved_path = fm.findfont(fm.FontProperties(family=prefs), fallback_to_default=True)
+        resolved_name = fm.FontProperties(fname=resolved_path).get_name()
+    except Exception:
+        resolved_name = None
+    # 解析到的字体名是否匹配首选项里任一（大小写/空格宽松）
+    norm = lambda s: (s or "").lower().replace(" ", "")
+    ok = any(norm(p) == norm(resolved_name) for p in prefs)
+    warning = None
+    if not ok:
+        warning = (f"字体落空：rcParams 首选 {prefs[:3]} 不可用，实际渲染回退为 '{resolved_name}'"
+                   f"（常见于 Linux/CI 无 Arial/Helvetica）——'字体与正文一致'可能落空，"
+                   f"装字体或在投稿环境复核；矢量 PDF/SVG 可后期在 Illustrator 替换字体")
+    return {"requested": prefs[:3], "resolved": resolved_name, "fell_back": not ok,
+            "warning": warning}
 
 
 def save_for_journal(fig, basename, journal="nature", column="single",
@@ -189,11 +222,18 @@ def save_for_journal(fig, basename, journal="nature", column="single",
     # 关键: bbox_inches=None 使落盘宽度严格等于 set_size_inches 设定值,
     # 不被 "tight" 按内容裁剪改变, 兑现"精确栏宽投稿"承诺。
     kwargs.setdefault("bbox_inches", None)
+    font_check = _check_font_availability()
+    if font_check["warning"]:
+        print("[WARNING] " + font_check["warning"], file=sys.stderr)
     written = save_publication_figure(fig, basename, formats=formats, dpi=dpi, **kwargs)
     info = {"journal": j, "column": column, "width_mm": width_mm,
             "height_mm": round(inch_to_mm(height_in), 1), "dpi": dpi,
             "formats": list(formats), "min_font_pt": spec["min_font_pt"],
-            "verified": spec["verified"], "note": spec["note"]}
+            "verified": spec["verified"], "note": spec["note"],
+            "font": font_check}
+    if spec.get("column_caveat"):
+        info["column_caveat"] = spec["column_caveat"]
+        print("[NOTE] " + spec["column_caveat"], file=sys.stderr)
     return written, info
 
 
@@ -284,6 +324,11 @@ def check_scaled_fonts(fig, journal=None, column="single",
 
     给 journal 自动取该刊栏宽与 min_font_pt；或显式传 target_width_mm/min_font_pt。
     返回报告：scale(缩放系数)、每处文字缩放后有效字号、低于下限的项。
+
+    ⚠ 适用场景：本函数只对"**先大画布作图、再整体缩到栏宽**"的工作流有意义。若你已用
+    `save_for_journal()` 把画布设成精确栏宽（scale≈1），本函数必然报"无缩放风险"——这是预期的
+    空操作，不是 bug。standard 流程（save_for_journal）下字号下限由该函数导出时直接保证，无需再跑
+    本函数；只有手动大画布出图再缩放时才需要它。
     """
     if journal is not None:
         spec = JOURNAL_SPECS[journal.lower()]
@@ -420,8 +465,62 @@ def _check_measured(path, max_width_mm=None, journal=None, column="single",
     return report
 
 
+def check_export_compliance(path, journal, column="single", verbose=False):
+    """落盘文件的合规校验：消费 JOURNAL_SPECS 里此前录了却没人用的字段——
+    实测 dpi≥min_dpi、文件体积≤max_file_mb、高度≤max_height_px、格式∈preferred_formats。
+    只对能从文件读出的维度判定，读不出的标 skip 不臆断。返回 {ok, problems, checks}。"""
+    import os as _os
+    j = journal.lower()
+    if j not in JOURNAL_SPECS:
+        return {"ok": True, "skipped": f"custom/未知刊 {journal}，无合规规格可校验", "problems": []}
+    spec = JOURNAL_SPECS[j]
+    problems, checks = [], {}
+    ext = _os.path.splitext(path)[1].lstrip(".").lower()
+
+    # 1) 格式是否在 preferred_formats
+    pref = spec.get("preferred_formats", ())
+    checks["format"] = {"ext": ext, "preferred": list(pref)}
+    if pref and ext not in pref:
+        problems.append(f"格式 .{ext} 不在 {j} 首选 {pref}（投稿可能被要求转格式）")
+
+    # 2) 文件体积
+    mb = _os.path.getsize(path) / 1e6 if _os.path.exists(path) else None
+    if mb is not None:
+        checks["file_mb"] = round(mb, 2)
+        cap = spec.get("max_file_mb")
+        if cap and mb > cap:
+            problems.append(f"文件 {mb:.1f}MB 超 {j} 上限 {cap}MB")
+
+    # 3) 位图的 dpi 与高度（PNG/TIFF 可读，矢量跳过）
+    if ext in ("png", "tiff", "tif"):
+        try:
+            from PIL import Image
+            with Image.open(path) as im:
+                w_px, h_px = im.size
+                dpi = im.info.get("dpi", (None, None))[0]
+            checks["pixels"] = {"w": w_px, "h": h_px, "dpi": dpi}
+            min_dpi = spec.get("min_dpi_halftone") or spec.get("min_dpi_line")
+            if dpi and min_dpi and dpi < min_dpi - 1:
+                problems.append(f"实测 dpi={dpi} < {j} 下限 {min_dpi}")
+            max_h = spec.get("max_height_px")
+            if max_h and h_px > max_h:
+                problems.append(f"高度 {h_px}px 超 {j} 上限 {max_h}px")
+        except ImportError:
+            checks["pixels"] = "skip(无 Pillow)"
+        except Exception as e:
+            checks["pixels"] = f"skip({e.__class__.__name__})"
+    else:
+        checks["pixels"] = f"skip(矢量/不可读 dpi: .{ext})"
+
+    report = {"path": path, "journal": j, "ok": len(problems) == 0,
+              "problems": problems, "checks": checks}
+    if verbose:
+        print(f"[check_export_compliance] {'OK' if report['ok'] else 'FAIL'}  {report}")
+    return report
+
+
 def _demo_and_selfcheck():
-    """产 demo 图, 跑三个函数, 断言关键不变量。"""
+    """产 demo 图, 跑函数, 断言关键不变量。"""
     import numpy as np
     here = os.path.dirname(os.path.abspath(__file__))
     style = os.path.join(here, "..", "assets", "publication.mplstyle")
@@ -472,6 +571,30 @@ def _demo_and_selfcheck():
 
     rep_ok = check_figure_size(fig2, journal="nature", column="single", verbose=False)
     assert rep_ok["ok"], rep_ok
+
+    # FD-2 字体落空检查：info 带 font 字段，结构完整（CI 无 Arial 时 fell_back=True 且有 warning）
+    assert "font" in info and "fell_back" in info["font"], info.get("font")
+    if info["font"]["fell_back"]:
+        assert info["font"]["warning"], "回退时应有 warning"
+        print(f"[demo] 字体落空检查: 回退到 '{info['font']['resolved']}' 并告警 PASS")
+    else:
+        print(f"[demo] 字体落空检查: 首选字体 '{info['font']['resolved']}' 可用 PASS")
+
+    # FD-3 导出合规校验：消费 dpi/体积/格式/高度字段
+    png_path = f"{nat_base}.png"
+    if os.path.exists(png_path):
+        comp = check_export_compliance(png_path, "nature", "single")
+        assert "checks" in comp and "format" in comp["checks"], comp
+        print(f"[demo] check_export_compliance(nature png): ok={comp['ok']} "
+              f"problems={comp['problems'][:1]}")
+    # plos 只收 tiff/eps，png 应被判格式不合规（消费 preferred_formats）
+    if os.path.exists(png_path):
+        comp_plos = check_export_compliance(png_path, "plos", "single")
+        assert any("格式" in p for p in comp_plos["problems"]), comp_plos
+        print("[demo] check_export_compliance(plos, png): 正确判格式不合规 PASS")
+    # custom/未知刊跳过合规校验不崩
+    assert check_export_compliance(png_path, "custom").get("skipped") if os.path.exists(png_path) else True
+
     # 故意造一个超宽图, 应 FAIL
     fig3, ax3 = plt.subplots(figsize=(10, 4))
     ax3.plot([0, 1], [0, 1])

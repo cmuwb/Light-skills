@@ -32,22 +32,33 @@ import sys
 
 RAINBOW = re.compile(r"cmap\s*=\s*['\"](jet|rainbow|hsv|gist_rainbow|nipy_spectral)['\"]", re.I)
 TWIN = re.compile(r"\.(twinx|twiny)\s*\(")
-BAR = re.compile(r"\.(bar|barh)\s*\(")
-ERRBAR = re.compile(r"(errorbar|yerr\s*=|xerr\s*=|fill_between)")
-ERRTYPE = re.compile(r"\b(SD|SEM|CI|std|stderr|confidence|置信|标准差|标准误)\b", re.I)
-SETYLIM = re.compile(r"set_ylim\s*\(\s*([-\d.eE]+)")
+# bar：含 matplotlib .bar/.barh 与 seaborn .barplot/.boxplot/.violinplot（原漏 seaborn）
+BAR = re.compile(r"\.(bar|barh|barplot)\s*\(")
+DISTRIB_PLOT = re.compile(r"\.(boxplot|violinplot|stripplot|swarmplot)\s*\(")
+ERRBAR = re.compile(r"(errorbar|yerr\s*=|xerr\s*=|fill_between|capsize\s*=|ci\s*=|errorbar\s*=)")
+# 误差类型声明：SD/SEM/CI/置信 等词，但**排除 .std() 方法调用**（numpy 数据计算 ≠ 误差类型声明）。
+# 只认作为"词"出现的类型名，不认 `.std(` / `np.std(` 这种方法调用。
+ERRTYPE = re.compile(r"(?<![.\w])(SD|SEM|CI|stderr|confidence|置信|标准差|标准误)(?![\w(])|"
+                     r"\bs\.?d\.?\b|95%", re.I)
+STD_CALL = re.compile(r"\.std\s*\(|\bnp\.std\b|\bnumpy\.std\b")
+# set_ylim：支持位置参数 set_ylim(5, ...) 与关键字 set_ylim(bottom=5)（原漏关键字形式）
+SETYLIM = re.compile(r"set_ylim\s*\(\s*(?:bottom\s*=\s*)?([-\d.eE]+)")
 YLIM_TUPLE = re.compile(r"ylim\s*=\s*\(\s*([-\d.eE]+)")
 BREAK_HINT = re.compile(r"(brokenaxes|break|断轴|broken|d=\s*[\d.]|diagonal)", re.I)
 PIE3D = re.compile(r"(Axes3D|projection\s*=\s*['\"]3d['\"]).*(pie|bar)", re.I)
-SMALL_N = re.compile(r"\bn\s*=\s*([1-9])\b")
+# 小样本：literal n= 或注释/文本里 "n<10"、"每组 N 个" 这类提示
+SMALL_N = re.compile(r"\bn\s*=\s*([1-9])\b|每组\s*([1-9])\b|n\s*<\s*10")
 
 
 def lint_text(text: str) -> list:
     findings = []
     lines = text.splitlines()
     has_errbar = bool(ERRBAR.search(text))
-    has_errtype = bool(ERRTYPE.search(text))
+    # 判误差类型声明前，先抹掉 .std()/np.std 方法调用，避免数据计算被误当类型声明（修假阴性）
+    text_no_stdcall = STD_CALL.sub(" ", text)
+    has_errtype = bool(ERRTYPE.search(text_no_stdcall))
     has_break = bool(BREAK_HINT.search(text))
+    has_distrib = bool(DISTRIB_PLOT.search(text))   # 已有箱线/小提琴则不催"用散点展示分布"
 
     for i, line in enumerate(lines, 1):
         def add(cat, msg):
@@ -75,7 +86,7 @@ def lint_text(text: str) -> list:
             findings.append({"line": 0, "category": "BAR_NO_ERR",
                              "issue": "出现 bar/barh 但全图未见 yerr/errorbar：柱状图应带误差棒，否则掩盖不确定性",
                              "context": "(whole file)"})
-        if SMALL_N.search(text):
+        if SMALL_N.search(text) and not has_distrib:
             findings.append({"line": 0, "category": "BAR_PLOT_SMALL",
                              "issue": "bar + 小样本(n<10?)：建议散点/箱线展示原始分布，别用 bar 掩盖分布",
                              "context": "(whole file)"})
@@ -114,6 +125,24 @@ ax.imshow(data, cmap='viridis')
     # 期望:bad 至少抓到截断/双轴/rainbow/bar无误差;good 应基本干净
     want = {"AXIS_TRUNCATE", "TWIN_AXIS", "RAINBOW_CMAP", "BAR_NO_ERR"}
     ok = want.issubset(cats_bad) and len(fg) == 0
+
+    # FD-1 假阴性回归：以下原来漏报，现在应抓到
+    # 1) sns.barplot 无误差棒（原 BAR 正则漏 seaborn）
+    sns_bar = "import seaborn as sns\nsns.barplot(x='m', y='acc', data=df)\n"
+    assert any(f["category"] == "BAR_NO_ERR" for f in lint_text(sns_bar)), "sns.barplot 应被检出 BAR_NO_ERR"
+    # 2) .std() 数据计算不应压掉 ERRBAR_NO_TYPE（原 \bstd\b 误判）
+    std_calc = ("ax.errorbar(x, y, yerr=resid.std(), fmt='o')\n"  # 用 .std() 算但没声明误差类型
+                "ax.set_title('results')\n")                       # 注释/代码均无类型词
+    assert any(f["category"] == "ERRBAR_NO_TYPE" for f in lint_text(std_calc)), \
+        ".std() 不该被当成误差类型声明"
+    # 3) 真声明 SEM 时不报 ERRBAR_NO_TYPE
+    with_sem = "# error bars are SEM, n=200\nax.errorbar(x, y, yerr=sem)\n"
+    assert not any(f["category"] == "ERRBAR_NO_TYPE" for f in lint_text(with_sem)), "声明 SEM 不应报"
+    # 4) set_ylim(bottom=5) 关键字形式（原正则漏）
+    kw_ylim = "ax.set_ylim(bottom=5)\nax.bar([1],[2])\n"
+    assert any(f["category"] == "AXIS_TRUNCATE" for f in lint_text(kw_ylim)), "set_ylim(bottom=) 应被检出"
+    print("[FD-1 假阴性回归] sns.barplot / .std()不压制 / SEM豁免 / set_ylim(bottom=) 全 OK")
+
     print("[selftest]", "OK" if ok else f"FAIL (bad缺{want-cats_bad}, good误报{len(fg)})")
     return 0 if ok else 1
 

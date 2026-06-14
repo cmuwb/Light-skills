@@ -41,6 +41,14 @@ SciencePlots（garrettj403）是流行的 matplotlib 期刊风格包；本 skill
 
 【链接】SciencePlots Gallery https://github.com/garrettj403/SciencePlots/wiki/Gallery ；Using the Styles https://github.com/garrettj403/SciencePlots/wiki/Using-the-Styles ；PyPI https://pypi.org/project/SciencePlots/
 
+### tueplots：venue 字号/尺寸换算更全（可对照补 JOURNAL_SPECS）
+tueplots（pnkraemer，~743★）按**具体会议/期刊**（NeurIPS/ICML/ICLR/JMLR/AISTATS/CVPR 等）精确设 figure size + 字号 + 字体，区分单/双/半栏，且**字号随栏宽联动**（窄栏自动用更小但仍达下限的字号）。本 skill 的 `JOURNAL_SPECS` 目前锁物理宽度+min_font_pt 下限，但不做"字号随栏宽自适应"。
+- **何时直接用 tueplots**：投 ML 顶会（NeurIPS/ICML/ICLR…）且想要其 venue 预设字号/尺寸——`from tueplots import bundles; plt.rcParams.update(bundles.neurips2024())`，比手设省心，条目比 JOURNAL_SPECS 全。
+- **可借鉴补强**：JOURNAL_SPECS 可对照 tueplots 增补更多 ML 会议条目，并考虑给 `save_for_journal` 加"窄栏建议字号"提示（非强制，仅在 column 偏窄时提示正文字号下调到下限附近）。当前仍以 min_font_pt 硬下限为准。
+- 可混用：tueplots 出 venue rcParams、本 skill `figure_export.py` 做栏宽/dpi/格式/字体落空终检。
+
+【链接】tueplots https://github.com/pnkraemer/tueplots
+
 
 
 ## Seaborn
