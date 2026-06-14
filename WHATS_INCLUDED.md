@@ -111,6 +111,7 @@
 | figure-planning | `templates/table_plan_card.md` | 表格专用规划卡：行列结构/表头分组/对齐/有效位数/最优标注/booktabs三线表/跨页横排 |
 | citation 上游 | — | （引用样式无模板文件，见脚本表 verify_refs.py） |
 | venue-matching | `templates/venue_compare_table.md` | 投稿候选刊对比表：冲稳保分档与匹配信号 |
+| review-rebuttal | `templates/response_matrix.md` | 回应矩阵全量台账：每条意见→分类/concession分/回应/改动位置/re-review判定/承诺状态，逐条闭环 |
 | review-rebuttal | `templates/response_letter_template.md` | 审稿意见逐条回复信骨架 |
 | review-rebuttal | `templates/rereview_checklist.md` | 复审自查清单：逐条意见闭环核对 |
 | ip-application | `templates/disclosure_template.md` | 专利交底书骨架：技术问题/方案/有益效果 |

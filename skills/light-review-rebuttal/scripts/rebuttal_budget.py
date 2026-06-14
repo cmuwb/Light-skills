@@ -23,12 +23,21 @@ import argparse  # noqa: E402
 import re  # noqa: E402
 import unicodedata  # noqa: E402
 
-# 常见会议 rebuttal 预算近似（words 上限 / 是否 1 页限）。须以官方当年说明为准。
+# 常见会议 rebuttal 预算近似。这些会多按**字符/页数**限(非词数)，故主用 max_chars；
+# 数值为工程近似(注明依据)，**必须以目标会议当年征稿/OpenReview 框为准**(逐年变)。
 VENUE_LIMITS = {
-    "iclr": {"max_words": 0, "note": "ICLR 常按字符/markdown 框，单条 review 回复 ~5000 字符；按 markdown 框计"},
-    "neurips": {"max_words": 0, "note": "NeurIPS 近年用单页 PDF 或固定字符框；以 OpenReview 当年框为准"},
-    "cvpr": {"max_words": 0, "note": "CVPR rebuttal 限 1 页 PDF（含图表）"},
-    "generic-1page": {"max_words": 650, "note": "1 页 ~650 词工程近似（单栏 11pt）"},
+    # ICLR/NeurIPS 用 OpenReview 评论框，常见单条回复字符上限近 ~5000（Markdown 框计字符）
+    "iclr": {"max_words": 0, "max_chars": 5000,
+             "note": "ICLR OpenReview 单条 review 回复常 ~5000 字符上限（按 Markdown 框计字符，非词数）；以当年为准"},
+    "neurips": {"max_words": 0, "max_chars": 6000,
+                "note": "NeurIPS 近年单条回复字符框 ~6000，或单页 PDF；以 OpenReview 当年框为准"},
+    # CVPR 限 1 页 PDF（含图表），换算成纯文本词数上限近似 ~1000 词（留图表空间）
+    "cvpr": {"max_words": 1000, "max_chars": 0,
+             "note": "CVPR rebuttal 限 1 页 PDF（含图表），~1000 词是留图表空间的纯文本近似；以官方模板为准"},
+    "generic-1page": {"max_words": 650, "max_chars": 0,
+                      "note": "1 页 ~650 词工程近似（单栏 11pt）"},
+    "generic-5000char": {"max_words": 0, "max_chars": 5000,
+                         "note": "OpenReview 式 5000 字符框工程近似"},
 }
 
 # 1 页纯文本词数近似（单栏，去掉图表）。仅用于估页，不作硬判。
@@ -64,35 +73,60 @@ def strip_markup(text):
     return text
 
 
-def assess(text, max_words, strip=True):
+def assess(text, limits, strip=True):
+    """limits: venue 限制 dict（含 max_words / max_chars / note），或直接传 {"max_words": N}。"""
+    if isinstance(limits, int):   # 向后兼容：旧调用传 max_words 整数
+        limits = {"max_words": limits}
+    max_words = limits.get("max_words", 0)
     body = strip_markup(text) if strip else text
     total, latin, cjk = count_words(body)
     pages = total / WORDS_PER_PAGE
     result = {
         "words_total": total, "words_latin": latin, "words_cjk": cjk,
         "chars": len(body), "est_pages": round(pages, 2), "max_words": max_words,
+        "max_chars": limits.get("max_chars", 0),
     }
+    max_chars = limits.get("max_chars", 0)
+    chars = result["chars"]
+    # 优先按 venue 实际口径判定：有 max_chars 用字符、有 max_words 用词数（两者皆设时各判、取更严）
+    verdicts = []
+    if max_chars and max_chars > 0:
+        if chars > max_chars:
+            verdicts.append(("FAIL", f"超字符上限 {chars - max_chars}（{chars}/{max_chars} 字符）"))
+        elif chars > max_chars * 0.9:
+            verdicts.append(("WARN", f"逼近字符上限（{chars}/{max_chars}，余 {max_chars - chars}）"))
+        else:
+            verdicts.append(("PASS", f"在字符预算内（{chars}/{max_chars}）"))
     if max_words and max_words > 0:
         if total > max_words:
-            result["verdict"] = "FAIL"
-            result["msg"] = f"超限 {total - max_words} 词（{total}/{max_words}）"
+            verdicts.append(("FAIL", f"超限 {total - max_words} 词（{total}/{max_words}）"))
         elif total > max_words * 0.9:
-            result["verdict"] = "WARN"
-            result["msg"] = f"逼近上限（{total}/{max_words}，余 {max_words - total} 词）"
+            verdicts.append(("WARN", f"逼近上限（{total}/{max_words}，余 {max_words - total} 词）"))
         else:
-            result["verdict"] = "PASS"
-            result["msg"] = f"在预算内（{total}/{max_words}）"
+            verdicts.append(("PASS", f"在预算内（{total}/{max_words}）"))
+    if verdicts:
+        # 取最严判定（FAIL>WARN>PASS）
+        rank = {"FAIL": 2, "WARN": 1, "PASS": 0}
+        verdicts.sort(key=lambda v: -rank[v[0]])
+        result["verdict"] = verdicts[0][0]
+        result["msg"] = "；".join(m for _, m in verdicts)
     else:
         result["verdict"] = "INFO"
-        result["msg"] = f"未设词数上限；估算 {result['est_pages']} 页（{total} 词，按 {WORDS_PER_PAGE} 词/页）"
+        result["msg"] = (f"该 venue 未设词数/字符上限；估算 {result['est_pages']} 页"
+                         f"（{total} 词 / {chars} 字符）——以目标会议当年征稿框为准")
     return result
 
 
 def _render(r, venue_note=None):
+    cap = ""
+    if r.get("max_chars"):
+        cap = f" / 上限 {r['max_chars']} 字符"
+    elif r.get("max_words"):
+        cap = f" / 上限 {r['max_words']} 词"
     lines = [
         f"[{r['verdict']}] {r['msg']}",
         f"  词数: {r['words_total']}（拉丁 {r['words_latin']} + CJK {r['words_cjk']}）",
-        f"  字符: {r['chars']}    估算页数: {r['est_pages']}",
+        f"  字符: {r['chars']}{cap}    估算页数: {r['est_pages']}",
     ]
     if venue_note:
         lines.append(f"  注: {venue_note}")
@@ -119,7 +153,23 @@ def _selftest():
     # 6) 无上限 -> INFO + 估页
     r6 = assess("word " * 1300, 0)
     assert r6["verdict"] == "INFO" and r6["est_pages"] == 2.0, r6
-    print("[selftest] PASS rebuttal_budget（计词/预算判定/中英混排/markdown去噪/估页）")
+
+    # 7) RR-1 venue 预设填真值后真能判 PASS/FAIL（原来三会 max_words=0 永远 INFO，承诺形同虚设）
+    # ICLR 用 max_chars=5000：短文本 PASS、超长 FAIL
+    short = assess("Thanks for the review. We address each point below. " * 5, VENUE_LIMITS["iclr"])
+    assert short["verdict"] == "PASS", short          # 不再永远 INFO
+    longtext = assess("x" * 6000, VENUE_LIMITS["iclr"])
+    assert longtext["verdict"] == "FAIL", longtext     # 超 5000 字符 → FAIL（承诺真生效）
+    # CVPR 用 max_words=1000：超词 FAIL
+    cvpr_over = assess("word " * 1200, VENUE_LIMITS["cvpr"])
+    assert cvpr_over["verdict"] == "FAIL", cvpr_over
+    # NeurIPS 字符框
+    nips = assess("ok " * 100, VENUE_LIMITS["neurips"])
+    assert nips["verdict"] in ("PASS", "WARN"), nips
+    # 字符与词数双限时取更严
+    both = assess("word " * 700, {"max_words": 650, "max_chars": 99999})
+    assert both["verdict"] == "FAIL", both             # 词数超 → 取更严的 FAIL
+    print("[selftest] PASS rebuttal_budget（计词/预算判定/中英混排/markdown去噪/估页/venue字符限）")
     return 0
 
 
@@ -128,6 +178,7 @@ def main(argv=None):
     ap.add_argument("file", nargs="?", help="rebuttal 文本文件（缺省读 stdin）")
     ap.add_argument("--venue", choices=sorted(VENUE_LIMITS), help="按预设会议取上限")
     ap.add_argument("--max-words", type=int, default=None, help="自定义词数上限（覆盖 --venue）")
+    ap.add_argument("--max-chars", type=int, default=None, help="自定义字符上限（OpenReview 框常用，覆盖 --venue）")
     ap.add_argument("--no-strip", action="store_true", help="不去 markdown 噪声，按原文计")
     ap.add_argument("--selftest", action="store_true", help="离线自检")
     args = ap.parse_args(argv)
@@ -136,12 +187,16 @@ def main(argv=None):
         return _selftest()
 
     note = None
-    max_words = args.max_words
-    if max_words is None and args.venue:
-        max_words = VENUE_LIMITS[args.venue]["max_words"]
-        note = VENUE_LIMITS[args.venue]["note"]
-    if max_words is None:
-        max_words = 0  # 无上限 -> INFO/估页
+    if args.venue:
+        limits = dict(VENUE_LIMITS[args.venue])
+        note = limits.get("note")
+    else:
+        limits = {"max_words": 0, "max_chars": 0}
+    # 自定义上限覆盖 venue 预设
+    if args.max_words is not None:
+        limits["max_words"] = args.max_words
+    if args.max_chars is not None:
+        limits["max_chars"] = args.max_chars
 
     if args.file:
         with open(args.file, encoding="utf-8") as f:
@@ -151,7 +206,7 @@ def main(argv=None):
     if not text.strip():
         ap.error("输入为空（给文件或从 stdin 喂文本）")
 
-    r = assess(text, max_words, strip=not args.no_strip)
+    r = assess(text, limits, strip=not args.no_strip)
     print(_render(r, note))
     return 1 if r["verdict"] == "FAIL" else 0
 

@@ -173,5 +173,17 @@ P2 已补转投顺序+DOAJ。本站补剩余 + 借鉴：
 
 ---
 
+## 站 14：light-review-rebuttal（科研主线第 14 站，已完成）
+
+详档 7 条可优化点（用户拍板"全做 + 借鉴一个"）：
+- ✅ RR-1 rebuttal_budget venue 预设填真值：iclr/neurips 加 max_chars(5000/6000,OpenReview 框)、cvpr max_words=1000(1页近似)，assess 支持字符/词数双口径取更严，"必跑+FAIL拦截"承诺真生效(原三会 0、形同虚设)；加 --max-chars CLI
+- ✅ RR-2 新建 templates/response_matrix.md：全量意见台账(ID/原文/分类/concession分/回应/改动位置/re-review判定/承诺状态)，明确与 rereview_checklist 关系(全量台账 vs 放行门)
+- ✅ RR-3 模式一两段式强化为四步不可跳过(选rubric→paper-blind写预期→visible打分→PRISM自查)，标注 paper-blind 是命门别省
+- ✅ RR-4 显式声明 m10 light-citation 硬依赖(新引用必经 verify_refs+citekey_audit，rebuttal 临时加引用最易幻觉)+response_matrix 模板链接
+- ✅ RR-5 GitHub 借鉴(承诺账本强制阻断)：本技能已具备 COMMITMENT_GAP+rereview 放行门，response_matrix 承诺状态列与之对接，不重复造
+- ✅ RR-CI 四 CI 全绿（scripts 65→66 登记 rebuttal_budget，新增 response_matrix 模板）+ 记忆
+
+---
+
 ## 待做站（科研主线顺序）
-review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。 → paper-polishing → figure-planning(已补E1) → figure-drawing → citation → typesetting → venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。
+ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。 → paper-polishing → figure-planning(已补E1) → figure-drawing → citation → typesetting → venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。
