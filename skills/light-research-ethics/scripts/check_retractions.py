@@ -32,7 +32,31 @@ sys.stderr.reconfigure(encoding="utf-8")
 # 不再硬编码任何邮箱（旧版硬编码了一个私人邮箱，既泄露隐私又违反 polite pool 约定）。
 DEFAULT_MAILTO = os.environ.get("CROSSREF_MAILTO", "").strip()
 _MAILTO = DEFAULT_MAILTO
-FLAG_TYPES = {"retraction", "correction", "expression_of_concern", "withdrawal"}
+
+# 撤稿/更正标记类型：跨技能单一真相源 references/retraction_flag_types.json
+# （light-citation/verify_refs.py 同源消费）。读取失败回退内联默认集，保证离线 selftest 不依赖文件。
+_FLAG_FALLBACK = {"retraction_level": ["retraction", "withdrawal"],
+                  "concern_level": ["correction", "expression_of_concern"]}
+
+
+def _load_flag_types():
+    """从共享 JSON 读 retraction/concern 两级类型；失败则用内联默认（含 stderr 提示）。"""
+    path = os.path.join(os.path.dirname(__file__), "..", "references", "retraction_flag_types.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        ret = set(data["retraction_level"])
+        con = set(data["concern_level"])
+        if not ret or not con:
+            raise ValueError("empty type set")
+        return ret, con
+    except Exception as exc:  # 文件缺失/损坏/字段异常 -> 内联回退，不让脚本崩
+        print(f"[warn] 读取共享 retraction_flag_types.json 失败({exc})，用内联默认集", file=sys.stderr)
+        return set(_FLAG_FALLBACK["retraction_level"]), set(_FLAG_FALLBACK["concern_level"])
+
+
+RETRACTION_TYPES, CONCERN_TYPES = _load_flag_types()
+FLAG_TYPES = RETRACTION_TYPES | CONCERN_TYPES   # 全集：四类标记统一进 flags
 
 
 def _user_agent():

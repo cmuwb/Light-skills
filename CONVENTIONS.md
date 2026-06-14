@@ -53,8 +53,10 @@ m03 与 m04 构成循环：idea 不过关就回到 m03。
 | 研究方案 | m05 research-plan | `PROJECT_PLAN.md` + `experiments/experiment_matrix.md` | a03/m06 |
 | 实验代码 | a03 backend-coding | `run_manifest.md` + 可运行代码/测试/日志 | m06 |
 | 结果分析 | m06 result-analysis | `claim_evidence_table.md` | m07/m09 |
+| 写作/润色 | m07 paper-drafting ⇄ m08 paper-polishing | `draft.md`（分模块草稿，m08 在同稿迭代）+ `claim_passport.md`（claim 台账，诚信门 load-bearing） | m09/m10/m12 |
 | 图表 | m09/m11 figure | `projects/<project_name>/figures/manifest.md` + 图文件 | m07/m12 |
 | 引用 | m10 citation | `refs.bib` + `citation_audit.md` | m12 |
+| 排版 | m12 typesetting | 最终 PDF（`paper.pdf`）+ 可编译源工程 + 格式合规核对表 | m13/m14/提交 |
 | 返修 | m14 review-rebuttal | `response_matrix.md` + response letter | m12/提交 |
 | 软著专利 | m15 ip-application | `ip/disclosure_draft.md` + `ip/claims_draft.md` + `ip/specification_draft.md`（软著则 `ip/copyright_package/`） | a08/提交（代理人审核） |
 | 路演 PPT | m16 slides | `slides/`（源 pptx + 导出）+ `slide_outline.md` | a08/答辩路演现场 |

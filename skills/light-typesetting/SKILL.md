@@ -53,6 +53,8 @@ Word 路线：用 `assets/docx_template.js`(docx-js)以代码生成带样式/TOC
 ## 产出
 最终 PDF（+ Word 版如需）+ 可编译源工程 + 一份"格式合规核对表"。
 
+落盘工件名（CONVENTIONS §6.1，下游 m13/m14/提交 消费）：最终 `paper.pdf` + 可编译源工程 + 格式合规核对表。
+
 ## 本技能资产
 - `scripts/precheck_log.py`：扫 LaTeX `.log` 抓 undefined refs/citations、multiply-defined labels、overfull/underfull hbox、missing figure/file、undefined control sequence、致命 LaTeX/TeX error，按严重度汇总报告(`--json`/`--max`)，致命项退出码 1。**`--strict`** 把 undefined ref/cite/重复 label 提升为致命（交付门拦截）；**先 de-wrap** 把 79 列硬折行拼回再匹配（消除长引用名被折断的漏报）。无参数跑内置样例自测。
 - `scripts/submission_check.py`：投稿前合规/匿名雷区扫描——双盲未匿名 `\author`/`\thanks`/致谢/基金/可识别链接(github/orcid)、PDF 元数据 `/Author` 露名、页数上限、残留 TODO/XXX。`--tex`/`--pdf`/`--double-blind`/`--max-pages`，高危项退出码 1。纯标准库扫静态雷区，不替代 venue 投稿须知核对。

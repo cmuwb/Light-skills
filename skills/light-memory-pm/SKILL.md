@@ -6,6 +6,31 @@ user-invocable: false
 
 # 上下文管理、记忆持久化与科研项目管理
 
+## 记忆系统 SSOT 决策表（先查这里，再动手写）
+两套记忆系统并存——**跨会话 Light 记忆文件**(user/feedback/project/reference + MEMORY.md 索引)与**项目库 db09**——极易把同一类信息写错地方或两头都写造成漂移。落盘前先按下表定位**唯一权威落点**(SSOT)，再决定是否需 MEMORY.md 索引双写。**铁律**：权威落点只有一个；MEMORY.md 只放**索引行**(指针)，绝不放权威正文。
+
+### 表一：每类信息 → 唯一权威落点 + 是否双写
+
+| 信息类别 | 唯一权威落点(SSOT) | 是否需 MEMORY.md 索引 | 反例(别写这) |
+|---|---|---|---|
+| 个人偏好(写作风格/工具/格式习惯) | Light **feedback 记忆**文件 | 是(索引行) | 别塞进 db09 project_card |
+| 项目背景/进展/状态(idea/数据/实验/版本/投稿) | db09 **project_card.md**(14 字段) | 否(项目内事实不进 MEMORY) | 别写进 feedback/MEMORY 正文 |
+| 跨项目过程教训(踩坑/被拒/复现失败/省时避雷) | db09 顶层 **lessons.md** | 否 | 别留在某项目 decision_log 当全局教训 |
+| 方法选型事实(某方法适用条件/优劣/基线) | db03 **方法卡** | 否 | 别进 lessons.md(那是过程教训非方法事实) |
+| 术语/指标/创新点定名 | db09 项目 **terminology.md** | 否 | 别散落各材料正文 |
+| 重大决策时间线 | db09 项目 **decision_log.md** | 否 | 别只记在对话里 |
+| 跨会话项目背景/参考资源(供新对话快速恢复) | Light **project/reference 记忆**文件 | 是(索引行) | 别只写 db09(新对话不会自动扫 db09 全库) |
+
+### 表二：边界裁决(易混三对，照此切)
+
+| 看似都能放 | 归属判据 | 落点 |
+|---|---|---|
+| 偏好 vs 教训 | "我习惯这么做"=偏好；"这么做导致被拒/复现失败"=过程教训 | feedback 记忆 / lessons.md |
+| 教训 vs 方法事实 | "三模块纯串联当创新点会被拒"(对任意 CV/ML 成立)=教训；"OC-SORT 适合无 re-id 跟踪"=方法事实 | lessons.md / db03 |
+| 项目内决策 vs 跨项目教训 | 带研究方向前提(如"白羊外观同质化弃 re-id")=项目内；剥离方向后仍成立=可上 lessons | decision_log.md / lessons.md(去偏科化后) |
+
+> 写 lessons.md 须**去偏科化**(剥离研究方向前提，抽到对任意学科成立的层面)，a02 起草、归档点由用户拍板(详见下「跨项目教训回写」)。校验工具：`scripts/check_project_card.py`(日期/枚举/行格式/衔接链)、`scripts/version_tag_reconcile.py`(version_history↔git tag 对齐)。
+
 ## 持久化（用 Light 记忆系统 + 项目库 db09）
 - 跨会话事实写入记忆文件(user/feedback/project/reference)，并在 MEMORY.md 加索引行。其中 **feedback 记忆槽的「跨项目过程教训」部分结构化落地为 db09 顶层 `lessons.md`**（与 `projects/` 平级，格式见下）；feedback 记忆文件本身仍存个人偏好类反馈。
 - 项目级状态写入 db09 的 project_card：`project_name, goal, current_stage, confirmed_idea, data_status, method_status, experiment_status, paper_status, ppt_status, code_status, risk_list, next_actions, decision_log, version_history`。

@@ -22,15 +22,17 @@ user-invocable: false
 - **变更广播**：定义一旦修改，立即触发对**所有已产出材料**的回扫，避免下游过期。"已产出材料"的权威清单 = orchestrator 维护的 `.light/passport.yaml` 各阶段 `artifacts:` 路径并集（§4 产物台账）；无 passport 的轻项目退回 db09 的 `version_history.md` 列出的产物。回扫即对这份清单逐项跑下方 `consistency_audit.py`，命中即按"现状→问题→建议"修。
 
 ## 审计脚本：consistency_audit.py
-`scripts/consistency_audit.py` 读取上述 db09 三件套，扫描一组材料文本，自动检测并**定位到 `材料:行号`** 的四类不一致，按 ERROR/WARN 分级，每条带"现状→问题→建议"，报告末尾做"条数自检"。
+`scripts/consistency_audit.py` 读取上述 db09 三件套，扫描一组材料文本，自动检测并**定位到 `材料:行号`** 的六类不一致，按 ERROR/WARN/INFO 分级，每条带"现状→问题→建议"，报告末尾做"条数自检"。
 
-四类检测：
-- `SUBSTITUTION` 受控术语/方法名被同义改写或写错(大小写/连字符/近义词)。
+六类检测：
+- `SUBSTITUTION` 受控术语/方法名被同义改写或写错(大小写/连字符/近义词)。`forbidden` 项支持 `{text:.., placeholder: true}` 标记说明性占位（语义需人工判断，审计跳过，不再 literal 误命中）。
 - `METRIC_NAME` 同一指标被换名(如把 F1 写成"准确率")。
-- `METRIC_VALUE` 同一指标(同方法×数据集)跨材料数值不一致，或与 db09 权威值不符；位置感知，一行并列多指标/多方法也能就近配对，不串位。
-- `COVERAGE_GAP` 规范术语/指标只在部分材料出现，应出现处缺席。
+- `METRIC_VALUE` 同一指标(同方法×数据集)跨材料数值不一致，或与 db09 权威值不符；位置感知，一行并列多指标/多方法也能就近配对，不串位；命名实体内嵌数字(YOLOv8 的 8、CrowdScene-2k 的 2)挖空不误读；`%` 指标分数/百分数(0.876↔87.6)自动归一化。
+- `GROSS_MISMATCH` 数值偏差落在"超精度容差但仍同量级"区间(相对偏差 30%~300%)，单列严重错填告警，**不再静默丢弃**(取代旧 `>0.30 continue`)。
+- `CONTRIBUTION_DRIFT` 创新点/贡献提法漂移：以 db09 `创新点N` 行(terminology.md，只读)为标准措辞，跨材料用 token 覆盖+句级相似度检测"同一贡献在 PPT/软著提法偏离"。
+- `COVERAGE_GAP` 规范术语/指标只在部分材料出现，应出现处缺席。`must_cover: true`(贡献级)缺席报 WARN，普通术语降 INFO 降噪。
 
-用法（在 `skills/light-consistency/` 下）：真实审计 `python scripts/consistency_audit.py --db09 assets --materials <文件...> [--json out.json]`；无参跑内置合成材料自测（四类检测全触发）。退出码：发现 ERROR 返回 1（可接 CI），否则 0。端到端实例见 `examples/worked_example.md`。
+用法（在 `skills/light-consistency/` 下）：真实审计 `python scripts/consistency_audit.py --db09 assets --materials <文件...> [--json out.json]`；无参跑内置合成材料自测（六类检测全触发 + X-1/2/4/5 专项断言）。退出码：发现 ERROR 返回 1（可接 CI），否则 0。端到端实例见 `examples/worked_example.md`。
 
 ## 一致性审计流程（inventory → tag → gap → fix）
 借内容审计四步法：① **盘点** 逐份材料抽关键主张（方法名/指标名+数值/创新点措辞/图表风格）成清单；② **打标** 每项标 一致/冲突/缺失，冲突指向具体位置(章节/页/行)；③ **差距** 量化覆盖率（哪些贡献点 PPT 缺席、哪个指标只在论文）；④ **修正** 每条给"现状→问题→统一建议→修正后文本"。**完整性强制**：逐条列全不用省略号，报告末尾自检"清单条数=实际处理条数"。
@@ -55,7 +57,7 @@ user-invocable: false
 ## 文件清单
 - `assets/db09_glossary.yaml` / `db09_method_lock.yaml` / `db09_metric_registry.yaml`：db09 单一事实源 schema 模板。
 - `assets/design_language_extract.template.md`：视觉设计语言抽取模板(采样清单+原子属性抽取表+⚠人工确认核对栏+视觉规范卡)，配套 db05 的 `design_tokens.template.json`(DTCG 视觉 SSOT)。
-- `scripts/consistency_audit.py`：跨材料一致性审计器(四类检测+定位+修正建议+JSON 导出+自测)。
+- `scripts/consistency_audit.py`：跨材料一致性审计器(六类检测+定位+修正建议+JSON 导出+自测)。
 - `examples/worked_example.md`：论文 vs PPT 指标名/数值冲突的端到端实例(定位→统一→修正→回归)。
 - `examples/materials_paper.txt` / `materials_ppt.txt`：配套可运行材料。
 

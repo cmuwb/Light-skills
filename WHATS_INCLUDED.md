@@ -32,6 +32,10 @@
 | file-reading | `scripts/xlsx_read.py` | XLSX 工作簿读取与数据画像：sheet、表头、行列、缺失与样例预览 |
 | frontend-design | `scripts/ai_tell_lint.py` | 机械检测“AI 生成感”前端文案/界面痕迹，提示模板腔、空泛词和常见坏味道 |
 | frontend-design | `scripts/audit_checklist.py` | 前端布局质量可计算检查：对齐、间距、层级、密度、可读性等清单化输出 |
+| frontend-design | `scripts/contrast_lint.py` | WCAG 2.1 对比度门禁：解析 token/CSS 变量 hex 两两组合算相对亮度对比度，按正文4.5:1/大字3:1/UI3:1 判 PASS/FAIL，纯 stdlib |
+| memory-pm | `scripts/check_project_card.py` | db09 项目卡细粒度校验（补 check_databases 未覆盖项）：绝对日期格式、current_stage 枚举、decision_log/version_history 行格式、handoff parent_session 链可达 |
+| memory-pm | `scripts/version_tag_reconcile.py` | version_history 各版本 vN 与 git tag 两段对账，列出"有tag无记录/有记录无tag"，落地 SKILL 反复强调的 tag 对齐纪律 |
+| orchestrator | `scripts/passport.py` | .light/passport.yaml 台账工具：init/append-stage/get-current-stage/validate 四子命令+schema校验+返修轮次计数，把手填 YAML 变工具调用，PyYAML 缺失降级内置解析 |
 | idea-critique | `scripts/calibration.py` | idea 审查 calibration 模式：用已知结局样本估计 FNR/FPR，校准严格度 |
 | idea-critique | `scripts/novelty_audit.py` | 新颖性检索证否四阶段留痕(抽论断→检索证据→撞车对比→判定)+一致性勾稽：抓"声称新但证据有 same 撞车"等自相矛盾，喂回否决项 |
 | idea-critique | `scripts/score_aggregate.py` | idea 八维评分加权聚合、否决项处理与 verdict 映射 |
@@ -60,6 +64,7 @@
 | system-design | `scripts/er_diagram.py` | 表结构定义(YAML/JSON) → Mermaid erDiagram 文本，支持 PK/FK/UK 与关系基数，纯离线 |
 | research-ethics | `scripts/check_retractions.py` | 批量撤稿/更正检查，通过 Crossref 等公开元数据标记 retraction risk |
 | research-ethics | `scripts/text_overlap.py` | 离线自查重，定位与给定语料最长逐字重合片段，辅助学术规范审查 |
+| research-ethics | `scripts/stat_consistency.py` | 统计自洽快查：GRIM/granularity 检验（均值粒度不可能）+ p值-自由度一致性（t/df、F/df1/df2），纯 stdlib 抓 p-hacking/造假信号 |
 | result-analysis | `scripts/analyze_results.py` | 一条命令分析结果表：指标汇总、分组比较、排序与异常模式初筛 |
 | result-analysis | `scripts/explain_shap.py` | 生成 SHAP 可解释性三图（beeswarm / bar / waterfall），无 shap 库时降级 |
 | result-analysis | `scripts/leakage_overfit_check.py` | train/val/test gap 与数据泄漏风险筛查，提示过拟合和异常高分模式 |
@@ -95,6 +100,7 @@
 | 位置 | 文件 | 作用 |
 |------|------|------|
 | data-engineering | `templates/annotation_guide.md` | 标注规范骨架：标签定义/边界判定/IAA 复核流程 |
+| file-reading | `templates/understanding-note.md` | 五面理解结构化模板（元信息/结构逻辑/关键内容/格式要求/视觉风格/可复用）+文件→下游技能动作映射，读完产出标准笔记 |
 | idea-generation | `templates/idea_card.md` | idea 卡：问题/创新点/可行性/风险/对照工作 |
 | idea-critique | `templates/verdict_template.md` | idea 严审裁决书：创新度/可行性/风险逐维评级 |
 | idea-critique | `templates/Revision_Roadmap.md` | 严审后修订路线图：按问题优先级排改进项 |

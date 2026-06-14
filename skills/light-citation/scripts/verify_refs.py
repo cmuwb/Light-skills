@@ -82,8 +82,27 @@ CN_RE = re.compile(r"[一-鿿]")
 
 # 撤稿/更正判定类型，与 light-research-ethics/check_retractions.py FLAG_TYPES 同源（单一口径）。
 # update-to[].type 命中 retraction/withdrawal -> 撤稿(high)；correction/EoC -> 仅 warning。
-RETRACTION_TYPES = {"retraction", "withdrawal"}
-CONCERN_TYPES = {"correction", "expression_of_concern"}
+# 类型集单一真相源：skills/light-research-ethics/references/retraction_flag_types.json；
+# 跨技能路径在某些 CI 工作目录可能解析失败 -> 静默回退内联默认，保证离线 selftest 不依赖该文件。
+_RET_FALLBACK = {"retraction", "withdrawal"}
+_CON_FALLBACK = {"correction", "expression_of_concern"}
+
+
+def _load_flag_types():
+    path = os.path.join(os.path.dirname(__file__), "..", "..",
+                        "light-research-ethics", "references", "retraction_flag_types.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        ret, con = set(data["retraction_level"]), set(data["concern_level"])
+        if ret and con:
+            return ret, con
+    except Exception:
+        pass
+    return set(_RET_FALLBACK), set(_CON_FALLBACK)
+
+
+RETRACTION_TYPES, CONCERN_TYPES = _load_flag_types()
 RETRACTED_TITLE_RE = re.compile(r"^\s*retracted\b", re.I)
 
 

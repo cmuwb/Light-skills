@@ -6,6 +6,14 @@ user-invocable: false
 
 # 有审美的前端设计
 
+> **代号词表**（本技能频繁引用的编号，首次见此）：
+> - **db05** = 设计系统库（`databases/db05-frontend-styles/`，前端/可视化设计规范 + 范式卡 + `design_tokens.template.json` 视觉真相源）。
+> - **db09** = 项目状态库（`databases/db09-projects/`，跨会话项目记忆：项目卡 / 术语表 / 决策日志 / `palette.json` 取色源）。
+> - **a04** = system-design（系统设计 / 数据库 / 接口 / ER 图，前端数据接口对接它）。
+> - **a07** = consistency（一致性常驻技能，统一项目 palette、PPT / 论文图 / 前端同源视觉）。
+> - **m11** = figure-drawing（论文图绘制，与前端共享 palette）。
+> - **m16** = slides（答辩 / 路演 PPT，与前端协调视觉风格）。
+
 ## 先定设计方向（写码前必答四问，来自 frontend-design skill）
 1. **Purpose**：解决什么问题、谁在用、什么场景(答辩/大屏/后台)。
 2. **Tone**：从基调谱系选一个并押注到底——科技/学术/农业智慧化/医疗/极简/玻璃拟态/卡片/大屏/管理系统/移动端，或 editorial/brutalist/luxury/organic。先 web 搜索核实涉及的具名产品/品牌(10 秒搜索胜过 1-2 小时返工)。
@@ -43,9 +51,10 @@ user-invocable: false
 - **image-to-code 三段法(taste-skill)**：拿不准视觉方向时，先 Generate(出参考板/hero 图)→ Analyze(拆版式/字体/间距/动效线索)→ Implement(照参考帧出码)，比直接凭空写更稳。
 
 ## 机械门禁（脚本即真相，规则全文见脚本 selftest）
-两个 linter 把"好看"落成可数判定，交付前必过：
-- **可数 checklist** `python scripts/audit_checklist.py`（给页面元素加 `data-*` 标注后跑）：R1 eyebrow ≤ceil(sections/3)、R2 连续图文 split ≤2、R3 ≥8 段需 ≥4 种 layout family、R4 hero 副文 ≤20 词/≤4 行、R5 nav 单行 ≤80px、R6 bento N 内容=N 格。自带 GOOD/BAD 自测。
-- **反 AI-tell 黑名单** `python scripts/ai_tell_lint.py`：T1 scroll cue、T2 装饰性段落编号 eyebrow、T3 版本/Made-with 填充页脚、T4 正文 em-dash（LLM tell）——命中即改。自带 DIRTY/CLEAN 自测。
+三个 linter 把"好看"落成可数判定，交付前必过；都支持 `python <脚本> <文件>`（或 `-` 读 stdin）真实输入与 `--selftest` 自测两种模式：
+- **可数 checklist** `python scripts/audit_checklist.py <file.html>`（给页面元素加 `data-*` 标注后跑）：R1 eyebrow ≤ceil(sections/3)、R2 连续图文 split ≤2、R3 ≥8 段需 ≥4 种 layout family、R4 hero 副文 ≤20 词/≤4 行、R5 nav 单行 ≤80px、R6 bento N 内容=N 格、R7 nav/hero/bento 关键元素出现却未标注 `data-*` 即 FAIL（防 R4/R5/R6 在没看见的数据上空过）。自带 GOOD/BAD/UNANNOTATED 自测。
+- **反 AI-tell 黑名单** `python scripts/ai_tell_lint.py <file>`：T1 scroll cue、T2 装饰性段落编号 eyebrow、T3 版本/Made-with 填充页脚（裸 vX.Y.Z 仅在页脚上下文才算，changelog 列版本不误杀）、T4 英文正文 em-dash（仅扫 HTML 文本节点、排除 CSS/JS/注释/字符串，且与中文相邻的合法破折号不报）——命中即改。自带 DIRTY/CLEAN/CLEAN_TRICKY 自测。
+- **对比度门禁** `python scripts/contrast_lint.py <tokens.json|styles.css>`：解析 token/CSS 变量 hex，按 WCAG 相对亮度算两两对比度，按 [references/visual-a11y-rules.md](references/visual-a11y-rules.md) 阈值（正文 4.5:1 / 大字 3:1 / UI 3:1）判 PASS/FAIL。纯 stdlib，JSON 支持 DTCG `$value` 树与显式 `pairs` 指定角色。自带自测。
 
 ## 字体与禁用清单（全表见 references/fonts-and-colors.md）
 - Sans display 默认池：Geist / General Sans / Satoshi / Clash Display / Cabinet Grotesk；正文配对组合见 references。
@@ -66,7 +75,7 @@ user-invocable: false
 ## 自评 rubric（交付前必过）
 - **Awwwards 维度**：Design 40% / Usability 30% / Creativity 20% / Content 10%，给自己打分，低于 6.5 重做(Awwwards 中 6.5+ 才得 Honorable Mention，开发奖需 >7)。
 - **可执行 checklist**：不用 emoji 当图标；所有可点元素 cursor-pointer；hover 态平滑过渡 150-300ms；浅色文字对比 ≥4.5:1；键盘焦点态可见；尊重 prefers-reduced-motion；响应式断点 375/768/1024/1440px 全测；制品在真实浏览器干净加载。
-- **机械门禁（必须全过）**：`python scripts/audit_checklist.py` 6/6 + `python scripts/ai_tell_lint.py` CLEAN。
+- **机械门禁（必须全过）**：`python scripts/audit_checklist.py <file.html>` 7/7 + `python scripts/ai_tell_lint.py <file>` CLEAN + `python scripts/contrast_lint.py <tokens.json>` 全 PASS。
 
 ## 场景适配
 - **答辩/演示**：重展示力、首屏冲击、核心数据突出。

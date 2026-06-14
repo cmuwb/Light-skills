@@ -11,6 +11,7 @@
 #   confusable: 易混名——命中即报 NAME 冲突(语义不同却被当同一指标用)
 #   unit      : 单位(% / ms / 无)；用于数值解析与对比
 #   decimals  : 约定小数位(报告里数值精度统一)
+#   must_cover: 贡献级标记(X-4)。true=核心指标，缺席某材料报 WARN；缺省=降 INFO
 #   higher_is_better: true/false(辅助判断"提升/下降"措辞)
 #   records   : 权威数值表(method × dataset → value)，作为 VALUE 比对基准
 
@@ -23,6 +24,7 @@ metrics:
     confusable: ["准确率", "Accuracy", "精确率", "召回率"]   # 这些不是 F1
     unit: "%"
     decimals: 1
+    must_cover: true            # 主指标，论文/PPT/软著缺席即报 WARN
     higher_is_better: true
     records:
       - {method: "DCA-Net",  dataset: "CrowdScene-2k", value: 87.6}

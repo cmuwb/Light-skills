@@ -9,6 +9,16 @@ user-invocable: false
 ## 工作方式（常驻）
 在所有科研任务中后台运行，发现风险即提示或拦截。涉及高风险(造假/代写/权属/隐私)时，明确告知不能那样做，并给合规替代方案。
 
+## 强制触发契约（这些节点必须产出一次完整 ethics_review_template.md）
+常驻后台审查是"随时提示"；但以下任务节点是**硬闸门**，须在该节点完成前强制产出一次完整填好的 `assets/ethics_review_template.md`（不是口头提一句），缺它即视为该节点未完成、应拦截放行：
+1. **投稿前**（论文/会议投稿、camera-ready 前）：跑撤稿核查(决策树 C + check_retractions.py)、相似度自查(text_overlap.py)、统计自洽快查(stat_consistency.py)、署名/AI 披露按目标 venue 取值，登记模板。
+2. **软著提交前**：核软件真实存在、材料不虚构、权属与职务发明认定(联动 m15)，登记模板。
+3. **数据发布前**（公开数据集/代码/补充材料）：核 PII 去标识、版权/许可、第三方数据再分发授权、是否需伦理批准声明，登记模板。
+4. **动物或涉人实验设计时**（实验方案定稿前）：走决策树 B(涉人三级审查)或 D(涉动物 IACUC/3R)，确认伦理批号来源与法域(英美 vs 中国 cn_compliance.md)，登记模板。
+
+> 触发即产出，不等用户问。模板里"是否需第三方审核"列必须明确勾出伦理委员会/代理人/法律对应项。
+
+
 ## 风险审查清单
 1. **学术不端**：抄袭、自我抄袭、重复发表、伪造/篡改数据、不当署名。对照 ORI/42 CFR Part 93 的 FFP 口径——Fabrication(编造)、Falsification(篡改/选择性遗漏)、Plagiarism(挪用未署源)；认定不端须"显著偏离惯例+故意/明知/轻率+优势证据"，明确把诚实错误与学术分歧排除在外，不扣帽子。
 2. **数据造假**：编造实验结果、挑选性报告、p-hacking、隐瞒不利结果。
@@ -38,9 +48,11 @@ user-invocable: false
 ## 可操作资产（直接套用）
 - **审查报告模板** `assets/ethics_review_template.md`：风险表(阻断/警示/提示 三级 | 类别 | 为什么是风险 | 合规做法 | 是否需第三方) + ICMJE/CRediT 署名与贡献声明 + AI 披露 + 结论。做合规审查直接填这张表。
 - **红旗自查清单** `assets/risk_checklist.md`：11 类风险逐条 checkbox，每条带红旗信号与默认起评级，命中即到模板登记定级。
-- **高利害决策树** `references/decision_trees.md`：A 疑似不端→FFP 三要件→COPE flowchart；B IRB Exempt/Expedited/Full Board + 46.111 八标准；C 引用前撤稿核查(Crossref，端点已实测 HTTP 200)；D 涉动物研究→实验性干预 vs 常规观测→IACUC 批号/3R(GB/T 35892-2018)。
+- **高利害决策树** `references/decision_trees.md`：A 疑似不端→FFP 三要件→COPE flowchart；B IRB Exempt/Expedited/Full Board + 46.111 八标准；C 引用前撤稿核查(Crossref，端点已实测 HTTP 200)；D 涉动物研究→实验性干预 vs 常规观测→IACUC 批号/3R(GB/T 35892-2018)。A/B 各带"适用法域=中国"分支，转 `references/cn_compliance.md`。
+- **中国本土合规模块** `references/cn_compliance.md`：《涉及人的生命科学和医学研究伦理审查办法》三级审查(一般/简易/免除)、《科研失信行为调查处理规则》失信情形清单、国自然/教育部不端认定与处理口径，附中外口径对照表。⚠ 法规条文具时效性且本环境无法访问 gov 官网核对，全篇标 ⚠ 待核、不写死条款编号，对外引用前须回查现行原文。
 - **批量撤稿核查脚本** `scripts/check_retractions.py`：把决策树 C 落地为可跑工具——传一组 DOI(或 `--file`)逐条查 Crossref `update-to[]`，标出 🛑撤稿/⚠️更正或关注/✅未见信号，产 markdown 或 `--json` 报告，`--selftest` 离线自测。已实测两个真 DOI HTTP 200。诚实限制:Crossref 未必暴露所有撤稿,高利害文献再交叉 Retraction Watch。**被 m10 消费**：light-citation `light-citation/scripts/verify_refs.py` 已内联同源判定逻辑（相同 FLAG_TYPES，Crossref `update-to[]` + 标题 RETRACTED 前缀），引用核验时随每条 DOI 自动查撤稿、命中报 high；本脚本供批量预筛或需更正/关注三态全表时直接调用。两处口径必须一致，改判定常量须同步。
 - **离线自查重脚本** `scripts/text_overlap.py`：把"连续 >40 词逐字相同"红旗落地为可跑工具(纯 stdlib 无依赖)——传目标文 + 一组对比文件/glob(自己旧论文/课程报告语料),归一化后用 `difflib.SequenceMatcher` 找最长逐字连续重合片段(词数+原文+两份文件行定位)与整体重合比例(词重合率/Jaccard),超 `--min-run`(默认 40)阈值标 🛑;`--exclude-refs` 丢弃参考文献段避免书目误报,`--json`/`--selftest`。诚实限制:只比对所给语料,不含 Turnitin 期刊/网页/学生库,仅用于自我抄袭与重复文本筛查,不得对外宣称"抄袭率/相似度%"。
+- **统计自洽快查脚本** `scripts/stat_consistency.py`：把"统计量与自由度不自洽""均值粒度不可能"两类高频造假信号落地为可跑工具(纯 stdlib)——GRIM 检验(给定整数样本量 n 与报告均值，验证该均值在对应小数位上是否可由某整数总和/n 得到，不可能即 🛑)、granularity 粒度检验(均值/比例的小数位是否与样本量允许的最小步长矛盾)、p值-自由度一致性快查(t/df 或 F/df 与报告 p 是否量级自洽，明显矛盾即标记)。`--json`/`--selftest` 离线自测。诚实限制:GRIM/粒度只对整数项目(如李克特量表计数)有效，连续测量不适用；p 值快查只查量级级别的明显矛盾，非精确复算，结果是"需人工复核的信号"非定罪。
 
 ## 合规审查产出
 风险清单(分级:阻断/警示/提示) + 每项说明(为什么是风险 + 合规做法) + 是否需第三方(伦理委员会/代理人/法律)审核的标注。套用 `assets/ethics_review_template.md` 产出。

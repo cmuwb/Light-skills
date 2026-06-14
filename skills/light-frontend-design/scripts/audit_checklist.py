@@ -11,10 +11,18 @@ upgrade brief's countable checklist:
   R4 hero subtext             <= 20 words AND <= 4 lines
   R5 nav height               single line, <= 80px
   R6 bento grid               N content items == N cells (no empty/overflow)
+  R7 annotation coverage      nav/hero/bento elements present must carry their
+                              data-* markers (else R4/R5/R6 silently pass unseen)
 
 Input: an HTML string/file annotated with light data-attributes so the check is
 unambiguous (the skill's templates emit these). Pure stdlib (html.parser); no
-deps. Runs a synthetic self-test under __main__.
+deps.
+
+Usage:
+  python audit_checklist.py <file.html>   # audit a real file, exit 1 on FAIL
+  python audit_checklist.py -             # read HTML from stdin
+  python audit_checklist.py --selftest    # synthetic GOOD/BAD/UNANNOTATED tests
+  python audit_checklist.py               # (no args) == --selftest
 """
 from __future__ import annotations
 import math
@@ -40,6 +48,7 @@ class Doc:
     nav_single_line: bool = True
     bento_cells: int = 0
     bento_items: int = 0
+    coverage_gaps: list[str] = field(default_factory=list)
 
 
 class _Parser(HTMLParser):
@@ -49,22 +58,39 @@ class _Parser(HTMLParser):
         self._order = 0
         self._capture_hero = False
         self._hero_buf: list[str] = []
+        # coverage bookkeeping: did annotations actually land on the key elements?
+        self._saw_nav_tag = False
+        self._saw_nav_role = False
+        self._saw_hero_section = False
+        self._saw_hero_subtext = False
+        self._saw_bento_section = False
+        self._saw_bento_role = False
 
     def handle_starttag(self, tag: str, attrs_list):
         attrs = dict(attrs_list)
         role = attrs.get("data-role", "")
+        if tag == "nav":
+            self._saw_nav_tag = True
         if tag == "section":
             self._order += 1
+            layout = attrs.get("data-layout", "")
             s = Section(
-                layout_family=attrs.get("data-layout", ""),
-                is_image_text_split=attrs.get("data-layout", "") == "split",
+                layout_family=layout,
+                is_image_text_split=layout == "split",
                 order=self._order,
             )
             self.doc.sections.append(s)
+            if layout == "hero":
+                self._saw_hero_section = True
+            if layout == "bento":
+                self._saw_bento_section = True
+        if role == "nav":
+            self._saw_nav_role = True
         if role == "eyebrow" and self.doc.sections:
             self.doc.sections[-1].has_eyebrow = True
         if role == "hero-subtext":
             self._capture_hero = True
+            self._saw_hero_subtext = True
         if role == "nav":
             h = attrs.get("data-height-px")
             if h:
@@ -73,6 +99,7 @@ class _Parser(HTMLParser):
         if role == "bento":
             self.doc.bento_items = int(attrs.get("data-items", "0"))
             self.doc.bento_cells = int(attrs.get("data-cells", "0"))
+            self._saw_bento_role = True
 
     def handle_endtag(self, tag: str):
         if self._capture_hero and tag in ("p", "div", "span", "h1", "h2"):
@@ -85,6 +112,23 @@ class _Parser(HTMLParser):
     def close(self):
         super().close()
         self.doc.hero_subtext = " ".join(self._hero_buf).strip()
+        # Document-level coverage: if a key element type appears at all, at least
+        # one instance must carry its data-* marker. Otherwise the page-quality
+        # rules (R4/R5/R6) silently pass on data they never actually saw. A hero
+        # CTA section without subtext is legitimate, so we only require >=1
+        # annotated hero, not every hero.
+        if self._saw_nav_tag and not self._saw_nav_role:
+            self.doc.coverage_gaps.append(
+                '<nav> element present but no data-role="nav" annotation'
+            )
+        if self._saw_hero_section and not self._saw_hero_subtext:
+            self.doc.coverage_gaps.append(
+                'hero section(s) present but no data-role="hero-subtext" annotation'
+            )
+        if self._saw_bento_section and not self._saw_bento_role:
+            self.doc.coverage_gaps.append(
+                'bento section(s) present but no data-role="bento" annotation'
+            )
         return self.doc
 
 
@@ -143,6 +187,13 @@ def audit(html: str) -> list[Result]:
     ok6 = d.bento_cells == d.bento_items
     out.append(Result("R6 bento items==cells", ok6,
                       f"items={d.bento_items}, cells={d.bento_cells}"))
+
+    # R7 annotation coverage: nav/hero/bento key elements must carry their data-*
+    # markers, otherwise the audit silently passes a page it never actually saw.
+    gaps = d.coverage_gaps
+    out.append(Result("R7 key data-* annotation coverage", not gaps,
+                      "all key elements annotated" if not gaps
+                      else f"{len(gaps)} gap(s): " + "; ".join(gaps)))
     return out
 
 
@@ -183,6 +234,13 @@ _BAD = """
 <section data-layout="bento" data-role="bento" data-items="5" data-cells="6"></section>
 """
 
+# nav/hero/bento elements present but NOT annotated → R7 must catch the gap.
+_UNANNOTATED = """
+<nav>logo</nav>
+<section data-layout="hero"><h1>Title</h1><p>subtext but no data-role</p></section>
+<section data-layout="bento"><div>a</div><div>b</div></section>
+"""
+
 def _selftest() -> None:
     print("=== GOOD doc (expect mostly PASS) ===")
     g = audit(_GOOD)
@@ -197,10 +255,30 @@ def _selftest() -> None:
     for needle in ("R1", "R2", "R4", "R5", "R6"):
         assert any(needle in f for f in failed), f"{needle} should FAIL on BAD doc"
 
+    print("\n=== UNANNOTATED doc (expect R7 FAIL) ===")
+    u = audit(_UNANNOTATED)
+    print(render(u))
+    u_failed = {r.rule for r in u if not r.passed}
+    assert any("R7" in f for f in u_failed), "R7 should FAIL when key data-* missing"
+
     print("\nself-test OK")
 
 
+def _run_file(path: str) -> int:
+    """Audit a real annotated HTML file (or '-' for stdin). Exit 1 on any FAIL."""
+    if path == "-":
+        html = sys.stdin.read()
+    else:
+        with open(path, "r", encoding="utf-8", errors="ignore") as fh:
+            html = fh.read()
+    results = audit(html)
+    print(render(results))
+    return 0 if all(r.passed for r in results) else 1
+
+
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] != "--selftest":
-        raise SystemExit("usage: python audit_checklist.py [--selftest]")
-    _selftest()
+    args = sys.argv[1:]
+    if not args or args[0] == "--selftest":
+        _selftest()
+    else:
+        raise SystemExit(_run_file(args[0]))
