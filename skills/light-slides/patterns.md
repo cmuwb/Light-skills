@@ -26,8 +26,21 @@ BLANK = prs.slide_layouts[6]        # 空白版式，全部自由摆放
 通用工具函数（被多个版式复用）：
 
 ```python
+from pptx.oxml.ns import qn   # 写 <a:ea> 东亚字体
+
+def _set_run_fonts(run, latin="Calibri", cjk="Microsoft YaHei"):
+    """同时设拉丁与**东亚(CJK)字体**。run.font.name 只写 <a:latin>，中文会回退 Office
+    默认字体(中文优先技能常见 bug)——补写 <a:ea>/<a:cs>，中英混排各用各的字体。"""
+    run.font.name = latin
+    rPr = run._r.get_or_add_rPr()
+    for tag in ("a:ea", "a:cs"):
+        el = rPr.find(qn(tag))
+        if el is None:
+            el = rPr.makeelement(qn(tag), {}); rPr.append(el)
+        el.set("typeface", cjk)
+
 def add_text(slide, x, y, w, h, text, size, color, *, bold=False,
-             font="Calibri", align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.TOP):
+             font="Calibri", cjk_font="Microsoft YaHei", align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.TOP):
     tb = slide.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
     tf = tb.text_frame; tf.word_wrap = True; tf.vertical_anchor = anchor
     for m in ("margin_left","margin_right","margin_top","margin_bottom"):
@@ -38,7 +51,8 @@ def add_text(slide, x, y, w, h, text, size, color, *, bold=False,
         p.alignment = align; p.level = lvl
         r = p.add_run(); r.text = ("• " if lvl else "") + line
         r.font.size = Pt(size if lvl==0 else max(14,size-2))
-        r.font.bold = bold and lvl==0; r.font.name = font
+        r.font.bold = bold and lvl==0
+        _set_run_fonts(r, latin=font, cjk=cjk_font)   # 拉丁+CJK 都设，中文不回退默认
         r.font.color.rgb = C(color)
     return tb
 
@@ -168,6 +182,46 @@ from pptx.oxml.ns import qn
 plot = gf.chart.plots[0]; plot.vary_by_categories = True   # 按类别变色（单序列时）
 # 或逐点：series.points[i].format.fill.solid(); ...fore_color.rgb = C(P_accent)
 ```
+
+**原生图表必须套主题色**（不套则沿用 Office 默认蓝橙灰，破坏全 deck 审美统一）：
+
+```python
+def style_chart(chart, series_colors, *, font="Calibri", font_pt=12, text_color="404040"):
+    """给原生 chart 各 series 上主题色 + 统一字体/字号。series_colors 取自 theme palette
+    或 db09 项目 palette（与 m11 出图同色板），让 PPT 原生图表与论文图/主题色一致。"""
+    for i, ser in enumerate(chart.series):
+        ser.format.fill.solid()
+        ser.format.fill.fore_color.rgb = C(series_colors[i % len(series_colors)])
+    # 统一坐标轴/图例字号字体
+    for axis in (chart.category_axis, chart.value_axis):
+        try:
+            axis.tick_labels.font.size = Pt(font_pt); axis.tick_labels.font.name = font
+            axis.tick_labels.font.color.rgb = C(text_color)
+        except Exception:
+            pass
+    if chart.has_legend:
+        chart.legend.font.size = Pt(font_pt); chart.legend.font.name = font
+
+# 用法：紧跟 add_chart 后调用，series_colors 用主题强调色族（Okabe-Ito 色盲安全）
+style_chart(gf.chart, [P_primary, P_accent, "888888"], font=F_body)
+```
+
+**导入 m11 程序化出图成品（结果页常复用论文图，而非在 PPT 里重画）**：
+
+```python
+def add_figure_with_caption(slide, img_path, x, y, w, *, caption="", cap_size=14,
+                            color="404040", font="Calibri", cjk_font="Microsoft YaHei"):
+    """插入 m11 出的 PNG/矢量图 + 下方 caption。图按宽 w 等比缩放，caption 居中。
+    论文数据图走 m11 真数据程序化绘制后在此导入，**不在 PPT 里用生成式重画数据图**。"""
+    pic = slide.shapes.add_picture(img_path, Inches(x), Inches(y), width=Inches(w))
+    h_in = pic.height / 914400.0      # EMU→inch，拿真实缩放后高度
+    if caption:
+        add_text(slide, x, y + h_in + 0.08, w, 0.5, caption, cap_size, color,
+                 font=font, cjk_font=cjk_font, align=PP_ALIGN.CENTER)
+    return pic
+```
+
+> 数据图来源唯一真相是 m11（真数据程序化出图）；PPT 里只**导入**成品 + 配 caption，绝不在 slides 里用 AI/生成式重画数据图（守 m11 诚实底线）。
 
 ---
 

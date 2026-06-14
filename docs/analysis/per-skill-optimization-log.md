@@ -197,5 +197,17 @@ P0 已修 patent_search --api-key。本站补剩余 + 借鉴：
 
 ---
 
+## 站 16：light-slides（科研主线第 16 站，已完成）
+
+E2 已补 pptx_eval。本站补剩余 + 借鉴：
+- ✅ SL-1 CJK 字体 helper：patterns.md + build_deck.py 的 add_text 加 _set_run_fonts(用 qn 写 <a:ea>/<a:cs> 东亚字体)，中文不再回退默认黑体(中文优先技能正确性 bug)
+- ✅ SL-2 style_chart 主题色 helper：patterns.md 加 style_chart(series 套主题色/Okabe-Ito+统一轴字号)，原生图表不再沿用 Office 默认蓝橙灰破坏统一
+- ✅ SL-3 demo 一致+add_picture：build_deck 补 conclusions_slide 并以它收尾(对齐"Conclusions 收尾不写 ThankYou")，6 页序;patterns 加 add_figure_with_caption 导入 m11 成品图+caption(数据图不在 PPT 重画)
+- ✅ SL-4 pacing.py 新脚本：读 notes 时长标记估总时长、对照 --limit 给超时/分配失衡，无标记按字数×语速兜底(答辩/路演刚需)
+- ✅ SL-5 GitHub 借鉴(paper2slides)：SKILL line41 两路线说明已有(论文→结构化抽取→版式)，不重复
+- ✅ SL-CI 四 CI 全绿（scripts 66→67）+ 记忆
+
+---
+
 ## 待做站（科研主线顺序）
-slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。 → paper-polishing → figure-planning(已补E1) → figure-drawing → citation → typesetting → venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。
+competition（科研主线最后一站）；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。 → paper-polishing → figure-planning(已补E1) → figure-drawing → citation → typesetting → venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。

@@ -51,11 +51,12 @@ description: 制作精美 PPT。当用户需要为论文、项目、竞赛、答
 
 ## 本 skill 自带可运行资产（直接用，别重造）
 - `assets/themes.py`：db06 十大主题的 `COLORS/FONTS` 常量块（学术/科技/农业/医学/商务/极简/浅色高级/深色高对比/数据可视化/竞赛路演），统一 8 字段色板(bg/surface/primary/secondary/accent/text/muted/line)+字体配对。`from themes import get_theme; t=get_theme("academic")`。dataviz 额外带 Okabe-Ito 色盲友好序列。`python themes.py` 自测打印全表。
-- `patterns.md`：python-pptx 可直接跑的版式片段——封面/目录/过渡/内容/结果(左图右解读)/对比(高亮列表格)/时间线/结论/References，含 `fill_bg`(无原生页背景的全幅矩形法)、`add_text`(margin=0)、`rect` 等共用工具函数。
-- `examples/build_deck.py`：端到端生成 5 页学术 pptx(封面+内容+结果+对比+References)，每页配 speaker notes，自带幽灵 deck 测试。`python build_deck.py --theme tech -o tech_demo.pptx`，无需外部数据即可跑。
+- `patterns.md`：python-pptx 可直接跑的版式片段——封面/目录/过渡/内容/结果(左图右解读)/对比(高亮列表格)/时间线/结论/References，含 `fill_bg`(无原生页背景的全幅矩形法)、`add_text`(margin=0)、`rect` 等共用工具函数。**`add_text` 走 `_set_run_fonts` 同设拉丁+东亚字体(中文不回退默认黑体)**、`style_chart` 给原生图表套主题色(不沿用 Office 默认蓝橙灰)、`add_figure_with_caption` 导入 m11 成品图+caption(数据图不在 PPT 重画)。
+- `examples/build_deck.py`：端到端生成 6 页学术 pptx(封面+内容+结果+对比+**结论收尾**+References，对齐"Conclusions 收尾不写 Thank You"规则)，每页配 speaker notes，`add_text` 同设拉丁+CJK 字体，自带幽灵 deck 测试。`python build_deck.py --theme tech -o tech_demo.pptx`，无需外部数据即可跑。
 - `scripts/thumbnail.py`：pptx→缩略图网格做视觉 QA。优先 LibreOffice 像素渲染(需 soffice + PyMuPDF/pdftoppm)；无 soffice 时自动回退纯 python(读 python-pptx 几何用 PIL 画版式示意图)，足以抓重叠/溢出/空页/对齐/版式重复。`python scripts/thumbnail.py deck.pptx --cols 4`。
 - `scripts/pptx_eval.py`：**PPT 可量化评测**(借 PPTAgent/PPTEval 思路)。把视觉 QA 从肉眼查升级为可打分、可回归——内容密度/设计一致/连贯性三维扣分制(对照本节硬尺度：每页≤7 要点、字号区间、配色数、禁纯文字页/同版式)，逐页给分+扣分理由。`python scripts/pptx_eval.py deck.pptx`。**只算结构性指标，配色品味/叙事质量/图是否真数据仍须人工 + thumbnail 肉眼复核**。与 thumbnail 互补：thumbnail 给人看、pptx_eval 给分。
 - `scripts/to_pdf.py`：pptx→pdf 的 soffice 无头封装。本环境未装 LibreOffice，脚本会明确报 unavailable 并给安装指引+备选(不静默假成功)。`python scripts/to_pdf.py deck.pptx`，`--check` 只探测引擎。
+- `scripts/pacing.py`：**答辩/路演时长估算**。读每页 speaker notes 的时长标记(`40s`/`1.5min`/`[90s]`)累加估总时长，对照 `--limit` 给 OK/超时 + 标出时长偏重的页(分配失衡)；无标记页按字数×语速兜底。`python scripts/pacing.py deck.pptx --limit 12`。时长是估算，务必真人计时彩排——脚本只抓明显超时/失衡。
 
 ## QA（当 bug 猎，别当确认）
 出稿后默认有问题。① 内容 QA：`python -m markitdown out.pptx` 查缺漏/错字/顺序，并 `grep -iE "xxxx|lorem|ipsum"` 抓残留占位符。② 视觉 QA：优先 `python scripts/thumbnail.py out.pptx` 出缩略图网格逐页扫(无 soffice 也能出版式示意)；有 LibreOffice 时 `python scripts/to_pdf.py out.pptx` 转 PDF 再 `pdftoppm -jpeg -r 150 out.pdf slide` 出高保真图，逐图找重叠/文字溢出/低对比/对齐错位/边距不足/装饰线压两行标题；有子代理就交给它(新鲜眼睛)。③ 改完只重渲受影响页，循环到整轮无新问题才收。

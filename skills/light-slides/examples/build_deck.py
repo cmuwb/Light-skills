@@ -68,9 +68,23 @@ def add_band(slide, prs, hexcolor, top_in, h_in):
     return band
 
 
+def _set_run_fonts(run, latin="Calibri", cjk="Microsoft YaHei"):
+    """设拉丁 <a:latin> + 东亚 <a:ea>/<a:cs> 字体。只设 run.font.name 时中文回退默认黑体
+    （中文优先技能 bug）——补 ea/cs 让中文用上主题中文字体，中英混排各用各的。"""
+    from pptx.oxml.ns import qn
+    run.font.name = latin
+    rPr = run._r.get_or_add_rPr()
+    for tag in ("a:ea", "a:cs"):
+        el = rPr.find(qn(tag))
+        if el is None:
+            el = rPr.makeelement(qn(tag), {}); rPr.append(el)
+        el.set("typeface", cjk)
+
+
 def add_text(slide, x, y, w, h, text, size, color, *, bold=False,
-             font="Calibri", align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.TOP):
-    """加文本框（margin=0 便于与形状对齐）。text 可为 str 或 [(line, lvl)]。"""
+             font="Calibri", cjk_font="Microsoft YaHei", align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.TOP):
+    """加文本框（margin=0 便于与形状对齐）。text 可为 str 或 [(line, lvl)]。
+    拉丁+CJK 字体都设，中文不回退默认黑体。"""
     tb = slide.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
     tf = tb.text_frame
     tf.word_wrap = True
@@ -87,7 +101,7 @@ def add_text(slide, x, y, w, h, text, size, color, *, bold=False,
         r.text = ("• " if lvl > 0 else "") + line
         r.font.size = Pt(size if lvl == 0 else max(14, size - 2))
         r.font.bold = bold and lvl == 0
-        r.font.name = font
+        _set_run_fonts(r, latin=font, cjk=cjk_font)
         r.font.color.rgb = C(color)
     return tb
 
@@ -249,13 +263,35 @@ def references_slide(prs, t):
     set_notes(s, "15s：引用页一般不展开念，留作存档与提问时回查。"
                  "占位文献仅为演示，真实交付须逐条核实 DOI（CONVENTIONS §4）。")
     return s
+def conclusions_slide(prs, t):
+    """Conclusions 页：学术 deck 的正确收尾（不写 'Thank You/Q&A' 占整页——
+    最后一页应是带走的结论。对齐 SKILL「Conclusions 收尾」规则）。"""
+    c, f = t["COLORS"], t["FONTS"]
+    s = blank_slide(prs)
+    fill_bg(s, prs, c["bg"])
+    add_band(s, prs, c["surface"], 0, 1.25)
+    add_text(s, 0.7, 0.32, 12, 0.8, "Conclusions",
+             26, c["primary"], bold=True, font=f["en"])
+    add_accent_bar(s, 0.72, 1.05, c["accent"])
+    points = [
+        ("我们提出 X，在 3 数据集上较最强 baseline 提升 4.2%（p<0.01）", 0),
+        ("消融证实各模块均有正贡献，增益不来自参数量", 0),
+        ("局限：稀有类样本不足时提前量增益下降；未来补主动采集", 0),
+        ("Takeaway: 对比学习 + 领域先验是发情早期识别的有效路径", 0),
+    ]
+    add_text(s, 0.9, 1.9, 11.6, 4.2, points, 20, c["text"],
+             font=f["en"], cjk_font=f.get("cjk", "Microsoft YaHei"))
+    set_notes(s, "40s：用结论页收尾而非 Thank You。每条对应一个贡献/局限，"
+                 "最后一句给评委能带走的 takeaway。")
+    return s
 def build(theme_name="academic", out="academic_demo.pptx"):
     t = get_theme(theme_name)
     prs = Presentation()
     prs.slide_width = Inches(13.333)   # 16:9 宽屏
     prs.slide_height = Inches(7.5)
+    # 学术顺序：封面→内容→结果→对比→结论(收尾带走点)→引用(存档回查)
     builders = [cover_slide, content_slide, results_slide,
-                compare_slide, references_slide]
+                compare_slide, conclusions_slide, references_slide]
     slides = [b(prs, t) for b in builders]
     prs.save(out)
     return prs, out, t

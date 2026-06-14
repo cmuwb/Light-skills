@@ -66,6 +66,7 @@
 | result-analysis | `scripts/significance_test.py` | 显著性检验工具：p 值、效应量、置信区间、BH-FDR 多重校正 |
 | review-rebuttal | `scripts/fetch_openreview.py` | 抓取 OpenReview 公开评审语料，校准模拟审稿与 rebuttal 话术 |
 | review-rebuttal | `scripts/rebuttal_budget.py` | 会议 rebuttal 字数/页数预算检查，纯 stdlib 离线，中英混排分别计词、超限返回码 1 |
+| slides | `scripts/pacing.py` | 答辩/路演时长估算：读 PPTX notes 时长标记累加估总时长、对照限时给 OK/超时+分配失衡页，无标记按字数×语速兜底 |
 | slides | `scripts/pptx_eval.py` | PPT 可量化质量评测：内容密度/设计一致/连贯性三维扣分制，对照 SKILL 硬尺度逐页给分+扣分理由，把视觉 QA 从肉眼查升级为可回归指标 |
 | slides | `scripts/thumbnail.py` | 把 PPTX/PDF 渲染成缩略图网格，快速做整套 deck 视觉 QA |
 | slides | `scripts/to_pdf.py` | PPTX 转 PDF，优先 LibreOffice `soffice` 无头转换，用于后续视觉审查 |
