@@ -16,6 +16,7 @@ Run:  python significance_test.py
 """
 import os
 import sys
+import math
 import numpy as np
 
 # ---- reuse verified primitives from code_assets if reachable -----------------
@@ -139,6 +140,53 @@ def compare_two(a, b, conf=0.95, hedges=True):
     }
 
 
+def _auc_and_structural(scores, pos, neg):
+    """DeLong 用的 AUC + structural components (V10, V01)。pos/neg 为正/负类得分数组。"""
+    m, n = len(pos), len(neg)
+    # midrank-free O(mn) 经典实现（小数据足够；大数据可换 fastDeLong）
+    # V10[i] = (1/n) * sum_j [pos_i > neg_j] + 0.5*[==]; V01[j] 对称
+    v10 = np.array([(np.sum(p > neg) + 0.5 * np.sum(p == neg)) / n for p in pos])
+    v01 = np.array([(np.sum(pos > q) + 0.5 * np.sum(pos == q)) / m for q in neg])
+    auc = v10.mean()
+    return auc, v10, v01
+
+
+def delong_two_auroc(y_true, score_a, score_b):
+    """DeLong 检验：比较同一测试集上两个模型 AUROC 的差异是否显著（相关样本，扣除协方差）。
+
+    医疗/分类评估常用：两条 ROC 用同一批样本算，AUC 差的方差须含协方差，普通独立检验会错。
+    返回 {auc_a, auc_b, diff, z, p}（双侧）。纯 numpy，无 scipy 依赖（正态近似 p）。
+    """
+    y = np.asarray(y_true).astype(int)
+    sa = np.asarray(score_a, float)
+    sb = np.asarray(score_b, float)
+    pos_mask = y == 1
+    if pos_mask.sum() == 0 or (~pos_mask).sum() == 0:
+        raise ValueError("DeLong 需正负类各至少 1 个样本")
+    auc_a, v10a, v01a = _auc_and_structural(sa, sa[pos_mask], sa[~pos_mask])
+    auc_b, v10b, v01b = _auc_and_structural(sb, sb[pos_mask], sb[~pos_mask])
+    m, n = int(pos_mask.sum()), int((~pos_mask).sum())
+    # 协方差矩阵（2x2）：S = S10/m + S01/n
+    def _cov(x10, y10, x01, y01):
+        s10 = np.cov(np.vstack([x10, y10]))[0, 1] if m > 1 else 0.0
+        s01 = np.cov(np.vstack([x01, y01]))[0, 1] if n > 1 else 0.0
+        return s10 / m + s01 / n
+    var_a = _cov(v10a, v10a, v01a, v01a)
+    var_b = _cov(v10b, v10b, v01b, v01b)
+    cov_ab = _cov(v10a, v10b, v01a, v01b)
+    var_diff = var_a + var_b - 2 * cov_ab
+    diff = auc_a - auc_b
+    if var_diff <= 0:
+        z = 0.0 if diff == 0 else float("inf") * (1 if diff > 0 else -1)
+        p = 1.0 if diff == 0 else 0.0
+    else:
+        z = diff / math.sqrt(var_diff)
+        p = 2 * (1 - 0.5 * (1 + math.erf(abs(z) / math.sqrt(2))))
+    return {"auc_a": float(auc_a), "auc_b": float(auc_b), "diff": float(diff),
+            "z": float(z), "p": float(p), "n_pos": m, "n_neg": n,
+            "note": "DeLong 相关 AUROC 比较：同测试集两模型，方差已扣协方差；正态近似 p。"}
+
+
 def _selftest() -> int:
     from scipy import stats
     print(f"[primitives source: {_SRC}]")
@@ -192,6 +240,30 @@ def _selftest() -> int:
         ok &= np.allclose(q, q2) and np.array_equal(rej, r2)
     except ImportError:
         print("BH-FDR     statsmodels absent")
+
+    # DeLong 两 AUROC 比较：构造 A 明显优于 B 的相关得分
+    rng2 = np.random.default_rng(11)
+    n = 200
+    y = np.array([0] * (n // 2) + [1] * (n // 2))
+    # A: 正类得分明显更高（强分类器）；B: 弱（接近随机）
+    sa = np.where(y == 1, rng2.normal(0.75, 0.15, n), rng2.normal(0.35, 0.15, n))
+    sb = np.where(y == 1, rng2.normal(0.55, 0.25, n), rng2.normal(0.45, 0.25, n))
+    dl = delong_two_auroc(y, sa, sb)
+    # A 的 AUC 应明显高于 B，且差异显著
+    auc_ok = dl["auc_a"] > dl["auc_b"] and dl["auc_a"] > 0.85 and dl["p"] < 0.05
+    # 对比 sklearn 的 roc_auc_score（若可用）核对 AUC 数值
+    try:
+        from sklearn.metrics import roc_auc_score
+        auc_ok &= abs(dl["auc_a"] - roc_auc_score(y, sa)) < 1e-9
+        auc_ok &= abs(dl["auc_b"] - roc_auc_score(y, sb)) < 1e-9
+    except ImportError:
+        print("DeLong     sklearn absent (跳过 AUC 数值对齐，仅验显著性)")
+    # 同一得分自比：diff=0、p=1（完全相关，方差差为 0）
+    dl_same = delong_two_auroc(y, sa, sa)
+    same_ok = abs(dl_same["diff"]) < 1e-12 and dl_same["p"] == 1.0
+    ok &= auc_ok and same_ok
+    print(f"DeLong     auc_a={dl['auc_a']:.3f} auc_b={dl['auc_b']:.3f} "
+          f"p={dl['p']:.4g} | self-compare p={dl_same['p']} | {'OK' if auc_ok and same_ok else 'FAIL'}")
 
     print("ALL PASS" if ok else "FAIL")
     return 0 if ok else 1

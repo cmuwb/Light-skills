@@ -98,14 +98,55 @@ def group_test(df, group, metric):
         return out
     # k >= 3
     if all_normal:
-        f, p = stats.f_oneway(*data)
-        out.update(test="anova_oneway", statistic=float(f), p=float(p))
+        # 方差齐性检验（Levene）：齐 → 经典 ANOVA；不齐 → Welch-ANOVA（不假设等方差）
+        try:
+            _, lev_p = stats.levene(*data, center="median")
+        except Exception:
+            lev_p = None
+        equal_var = (lev_p is None) or (lev_p > ALPHA)
+        if equal_var:
+            f, p = stats.f_oneway(*data)
+            out.update(test="anova_oneway", statistic=float(f), p=float(p),
+                       levene_p=(float(lev_p) if lev_p is not None else None), equal_var=True)
+        else:
+            # Welch-ANOVA：方差不齐时的稳健替代（scipy 无内置，用经典公式实现）
+            fw, dfw1, dfw2, pw = _welch_anova(data)
+            out.update(test="welch_anova", statistic=float(fw), df1=float(dfw1),
+                       df2=float(dfw2), p=float(pw), levene_p=float(lev_p), equal_var=False,
+                       note="方差不齐(Levene p<alpha)→用 Welch-ANOVA 而非经典 ANOVA")
         out["posthoc"] = _tukey(data, groups)
     else:
         h, p = stats.kruskal(*data)
         out.update(test="kruskal_wallis", statistic=float(h), p=float(p))
-        out["posthoc_note"] = "non-normal multi-group: pairwise Mann-Whitney below, BH-FDR corrected"
+        out["posthoc_note"] = "non-normal multi-group: pairwise Mann-Whitney below, BH-FDR corrected（如需严格事后检验用 Dunn/scikit-posthocs）"
+    # 小样本警告：Shapiro 在 n 小时功效低，"判正态"不可靠
+    min_n = min(len(x) for x in data)
+    if min_n < 10:
+        out["small_n_warning"] = (f"最小组 n={min_n}<10：Shapiro 正态性检验功效低，'判正态'不可靠，"
+                                  f"建议直接用非参检验或预设检验类型，勿尽信自动派发")
     return out
+
+
+def _welch_anova(data):
+    """Welch's ANOVA（方差不齐时的稳健 omnibus）。纯 numpy 实现经典公式，返回 (F, df1, df2, p)。"""
+    from scipy import stats
+    k = len(data)
+    ni = np.array([len(x) for x in data], float)
+    mi = np.array([x.mean() for x in data], float)
+    vi = np.array([x.var(ddof=1) for x in data], float)
+    wi = ni / vi                      # 权重 = n/方差
+    W = wi.sum()
+    xbar = (wi * mi).sum() / W
+    # 分子
+    num = (wi * (mi - xbar) ** 2).sum() / (k - 1)
+    # 分母修正项
+    tmp = ((1 - wi / W) ** 2 / (ni - 1)).sum()
+    denom = 1 + (2 * (k - 2) / (k ** 2 - 1)) * tmp
+    F = num / denom
+    df1 = k - 1
+    df2 = (k ** 2 - 1) / (3 * tmp)
+    p = stats.f.sf(F, df1, df2)
+    return F, df1, df2, p
 
 
 def _tukey(data, groups):
@@ -232,7 +273,31 @@ def analyze_metric(df, group, metric, pair_key=None):
     return out
 
 
-def run(csv_path, group, metrics, outdir, pair_key=None):
+def slice_analysis(df, group, metric, slice_by, min_n=5, pair_key=None):
+    """切片分析：对 slice_by 列每个取值复算同套 EDA+检验+效应量+FDR，标注小 n 切片。
+    兑现 references 切片协议（防聚合指标掩盖子群失败 / 公平性维度），原本只能人工 groupby。"""
+    if slice_by not in df.columns:
+        return {"available": False, "reason": f"slice column '{slice_by}' not in columns"}
+    slices = []
+    for sv, sub in df.groupby(slice_by):
+        n = len(sub)
+        rec = {"slice_value": str(sv), "n_rows": int(n)}
+        # 切片内至少 2 组才能比较
+        if sub[group].nunique() < 2:
+            rec.update(skipped="切片内不足 2 组，无法比较")
+            slices.append(rec)
+            continue
+        rec["analysis"] = analyze_metric(sub, group, metric, pair_key)
+        if n < min_n * sub[group].nunique():
+            rec["small_n_warning"] = (f"切片 n={n} 偏小（<{min_n}×组数）——子群结论样本不足，"
+                                      f"标'待核查'，勿据此下强结论")
+        slices.append(rec)
+    return {"available": True, "slice_by": slice_by, "min_n": min_n, "slices": slices,
+            "note": "切片分析防聚合指标掩盖子群失败；小 n 切片已标待核查。公平性维度的敏感属性可作 slice_by。"}
+
+
+def run(csv_path, group, metrics, outdir, pair_key=None, emit_claim_table_flag=False,
+        slice_by=None):
     df = pd.read_csv(csv_path)
     if group not in df.columns:
         raise SystemExit(f"group column '{group}' not in CSV columns {list(df.columns)}")
@@ -240,10 +305,17 @@ def run(csv_path, group, metrics, outdir, pair_key=None):
         metrics = [c for c in df.columns if c != group and pd.api.types.is_numeric_dtype(df[c])]
         if pair_key and pair_key in metrics:
             metrics.remove(pair_key)  # pair key is an index, not a metric
+        if slice_by and slice_by in metrics:
+            metrics.remove(slice_by)  # slice key is not a metric
+    results = []
+    for m in metrics:
+        res = analyze_metric(df, group, m, pair_key)
+        if slice_by:
+            res["slices"] = slice_analysis(df, group, m, slice_by, pair_key=pair_key)
+        results.append(res)
     report = {"csv": os.path.abspath(csv_path), "group": group,
               "n_rows": int(len(df)), "metrics": metrics, "alpha": ALPHA,
-              "pair_key": pair_key,
-              "results": [analyze_metric(df, group, m, pair_key) for m in metrics]}
+              "pair_key": pair_key, "slice_by": slice_by, "results": results}
     os.makedirs(outdir, exist_ok=True)
     jpath = os.path.join(outdir, "summary.json")
     mpath = os.path.join(outdir, "summary.md")
@@ -251,6 +323,11 @@ def run(csv_path, group, metrics, outdir, pair_key=None):
         json.dump(report, f, indent=2, ensure_ascii=False)
     with open(mpath, "w", encoding="utf-8") as f:
         f.write(_render_md(report))
+    if emit_claim_table_flag:
+        cpath = os.path.join(outdir, "claim_evidence_table.md")
+        with open(cpath, "w", encoding="utf-8") as f:
+            f.write(emit_claim_table(report))
+        report["_claim_table_path"] = cpath
     return report, jpath, mpath
 
 
@@ -311,6 +388,43 @@ def _render_md(report):
     return "\n".join(L)
 
 
+def emit_claim_table(report: dict) -> str:
+    """把每个比较(claim)连到证据字段(检验/p/q/d/CI/n)，落盘 CONVENTIONS §6.1 的
+    claim_evidence_table.md。交 m07 写作/m09 绘图时每条论断都能追到统计证据，杜绝
+    '正文说更好但拿不出检验'。只收录有 p 值的比较；显著性以 BH-FDR 后 q 为准。"""
+    L = [f"# Claim–Evidence Table: `{os.path.basename(report['csv'])}`", "",
+         "> 每行一个可写进论文的论断(claim) ↔ 其统计证据。**显著性以 BH-FDR 校正后 q 为准**"
+         "(非裸 p)；效应量标量级；CI 含 0 即差异不显著。写作时论断措辞不得强于证据。", "",
+         "| metric | 比较(claim) | 检验 | p | q(FDR) | 显著(q<α) | 效应量 d | 量级 | mean_diff [95%CI] | n | 来源 |",
+         "|---|---|---|---|---|---|---|---|---|---|---|"]
+    n_claim = 0
+    for res in report["results"]:
+        m = res["metric"]
+        for c in res.get("pairwise", []):
+            ci = c.get("diff_ci95", [float('nan')] * 2)
+            sig = "Y" if c.get("significant_fdr") else "n"
+            L.append(f"| {m} | {c['group1']} vs {c['group2']} | {c['test']} | {c['p']:.4g} | "
+                     f"{c.get('q_fdr', float('nan')):.4g} | {sig} | {c['cohens_d']:.3f} | {c['effect']} | "
+                     f"{c['mean_diff']:.4f} [{ci[0]:.4f},{ci[1]:.4f}] | — | independent |")
+            n_claim += 1
+        paired = res.get("paired")
+        if paired and paired.get("available"):
+            for c in paired["comparisons"]:
+                if c.get("p") is None:
+                    continue
+                ci = c.get("diff_ci95", [float('nan')] * 2)
+                sig = "Y" if c.get("significant_fdr") else "n"
+                L.append(f"| {m} | {c['group1']} vs {c['group2']} | {c['test']}(paired) | {c['p']:.4g} | "
+                         f"{c.get('q_fdr', float('nan')):.4g} | {sig} | {c.get('cohens_dz', 0):.3f} | "
+                         f"{c.get('effect', '')} | {c.get('mean_diff', 0):.4f} "
+                         f"[{ci[0]:.4f},{ci[1]:.4f}] | {c['n_pairs']} | paired by {paired['pair_key']} |")
+                n_claim += 1
+    L.append("")
+    L.append(f"_共 {n_claim} 条 claim。交 m07(写作)/m09(绘图)；显著性看 q 不看 p；"
+             "不显著的比较写作时不得声称'更好',只能报'未见显著差异'。_")
+    return "\n".join(L)
+
+
 def _synth_csv(path, seed=0):
     rng = np.random.default_rng(seed)
     rows = []
@@ -337,7 +451,7 @@ def _selftest() -> int:
         assert len(report["results"]) == 2, report["results"]
         for res in report["results"]:
             assert res["eda"] and res["pairwise"], res
-            assert res["omnibus"].get("test") in {"anova_oneway", "kruskal_wallis"}, res["omnibus"]
+            assert res["omnibus"].get("test") in {"anova_oneway", "welch_anova", "kruskal_wallis"}, res["omnibus"]
             assert "paired" not in res, "paired must be absent without --paired-by"
 
         # paired path: synth CSV shares 'seed' across methods -> paired tests fire
@@ -367,7 +481,69 @@ def _selftest() -> int:
         rep4, _, _ = run(csv_path, "method", ["acc"], os.path.join(tmp, "o4"),
                          pair_key="no_such_col")
         assert rep4["results"][0]["paired"]["available"] is False, rep4
-    print("[selftest] PASS analyze_results (independent + paired + skip + missing-key)")
+
+        # claim_evidence_table 生成（§6.1 工件，名实相符）
+        odc = os.path.join(tmp, "oclaim")
+        repc, _, _ = run(csv_path, "method", ["acc"], odc, pair_key="seed",
+                         emit_claim_table_flag=True)
+        cpath = os.path.join(odc, "claim_evidence_table.md")
+        assert os.path.exists(cpath), "应产出 claim_evidence_table.md"
+        ctext = open(cpath, encoding="utf-8").read()
+        assert "Claim–Evidence Table" in ctext and "q(FDR)" in ctext, ctext[:200]
+        assert "vs" in ctext and "paired by seed" in ctext, "应含独立+配对比较行"
+        assert "显著性看 q 不看 p" in ctext, "应有诚实写作约束"
+
+        # 切片分析（--slice-by）：构造带子群列的数据，每切片复算 + 小 n 标注
+        srows2 = []
+        rng2 = np.random.default_rng(3)
+        for sub in ("groupA", "groupB"):
+            n_per = 8 if sub == "groupA" else 2  # groupB 故意小 n → 触发 small_n_warning
+            for meth, mu in (("baseline", 0.80), ("ours", 0.86)):
+                for _ in range(n_per):
+                    srows2.append({"method": meth, "subgroup": sub,
+                                   "acc": float(np.clip(rng2.normal(mu, 0.02), 0, 1))})
+        scsv2 = os.path.join(tmp, "slice.csv"); pd.DataFrame(srows2).to_csv(scsv2, index=False)
+        reps2, _, _ = run(scsv2, "method", ["acc"], os.path.join(tmp, "oslice"), slice_by="subgroup")
+        sl = reps2["results"][0]["slices"]
+        assert sl["available"] and len(sl["slices"]) == 2, sl
+        # groupB 小 n 应被标注
+        gb = next(s for s in sl["slices"] if s["slice_value"] == "groupB")
+        assert "small_n_warning" in gb, gb
+        # groupA 正常切片有完整分析
+        ga = next(s for s in sl["slices"] if s["slice_value"] == "groupA")
+        assert "analysis" in ga and ga["analysis"]["pairwise"], ga
+        # slice 列不被当 metric
+        assert "subgroup" not in reps2["metrics"], reps2["metrics"]
+
+        # Welch-ANOVA 路径：构造明确正态但方差悬殊的 3 组（用确定性等距点近似正态，避免随机偶发非正态）
+        def _normalish(mu, sd, n=40):
+            from scipy import stats as _st
+            qs = (np.arange(1, n + 1) - 0.5) / n
+            return (mu + sd * _st.norm.ppf(qs)).tolist()
+        wrows = []
+        for m, (mu, sd) in {"a": (1.0, 0.2), "b": (1.1, 0.2), "c": (1.2, 1.5)}.items():
+            for v in _normalish(mu, sd):
+                wrows.append({"method": m, "v": float(v)})
+        wcsv = os.path.join(tmp, "wvar.csv"); pd.DataFrame(wrows).to_csv(wcsv, index=False)
+        repw, _, _ = run(wcsv, "method", ["v"], os.path.join(tmp, "ow"))
+        ob = repw["results"][0]["omnibus"]
+        # 方差悬殊(0.2 vs 1.5)且近正态 → 应判不齐走 welch_anova（若 Shapiro 仍判非正态则 kruskal 也接受）
+        assert ob["test"] in {"welch_anova", "anova_oneway", "kruskal_wallis"}, ob
+        if ob["test"] == "welch_anova":
+            assert ob["equal_var"] is False and "df2" in ob, ob
+        # _welch_anova 公式自身合理性：方差极悬殊时 F、df2 为正有限
+        F, d1, d2, p = _welch_anova([np.array([1.,2,3,4,5]), np.array([2.,4,6,8,10]),
+                                     np.array([1.,1.1,0.9,1.05,0.95])])
+        assert F > 0 and d2 > 0 and 0 <= p <= 1, (F, d1, d2, p)
+
+        # 小样本警告：每组 n<10 应带 small_n_warning
+        rng = np.random.default_rng(1)
+        srows = [{"method": m, "v": float(v)} for m in ("a", "b", "c")
+                 for v in (rng.normal(0, 1, 5))]
+        scsv = os.path.join(tmp, "small.csv"); pd.DataFrame(srows).to_csv(scsv, index=False)
+        reps, _, _ = run(scsv, "method", ["v"], os.path.join(tmp, "os"))
+        assert "small_n_warning" in reps["results"][0]["omnibus"], reps["results"][0]["omnibus"]
+    print("[selftest] PASS analyze_results (independent + paired + skip + missing-key + claim-table + slice + welch-anova + small-n)")
     return 0
 
 
@@ -380,6 +556,10 @@ def main():
     ap.add_argument("--paired-by", default=None,
                     help="column identifying the shared unit (e.g. seed/fold); "
                          "enables paired t / Wilcoxon signed-rank across methods")
+    ap.add_argument("--emit-claim-table", action="store_true",
+                    help="额外产出 claim_evidence_table.md（每个比较↔证据字段，交 m07/m09 的 §6.1 工件）")
+    ap.add_argument("--slice-by", default=None,
+                    help="切片列（如子群/敏感属性）：对每个切片值复算同套分析+标小 n，防聚合掩盖子群失败")
     ap.add_argument("--selftest", action="store_true", help="run synthetic offline self-test")
     a = ap.parse_args()
 
@@ -392,8 +572,11 @@ def main():
         a.group = "method"; a.metric = a.metric or ["acc", "f1"]
         print(f"[demo] generated synthetic CSV -> {a.csv}")
     outdir = a.outdir or os.path.join(os.path.dirname(os.path.abspath(a.csv)), "analysis_out")
-    report, jp, mp = run(a.csv, a.group, a.metric, outdir, pair_key=a.paired_by)
+    report, jp, mp = run(a.csv, a.group, a.metric, outdir, pair_key=a.paired_by,
+                         emit_claim_table_flag=a.emit_claim_table, slice_by=a.slice_by)
     print(f"wrote {jp}\nwrote {mp}")
+    if report.get("_claim_table_path"):
+        print(f"wrote {report['_claim_table_path']}")
     for res in report["results"]:
         ob = res["omnibus"]
         print(f"  [{res['metric']}] {ob.get('test')} p={ob.get('p')}  "

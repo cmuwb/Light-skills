@@ -169,17 +169,36 @@ def _selftest() -> int:
 
 
 def main():
+    global GAP_OVERFIT, GAP_SHIFT, LEAK_CORR, NEAR_CONST
     ap = argparse.ArgumentParser(description="Train/val/test gap + leakage screen")
     ap.add_argument("--train"); ap.add_argument("--test"); ap.add_argument("--target", default="y")
     ap.add_argument("--train-score", type=float, default=None)
     ap.add_argument("--val-score", type=float, default=None)
     ap.add_argument("--test-score", type=float, default=None)
     ap.add_argument("--out", default=None)
+    ap.add_argument("--gap-overfit", type=float, default=None,
+                    help=f"train-val gap 过拟合阈值（默认 {GAP_OVERFIT}，启发式、强依赖任务，按需覆盖）")
+    ap.add_argument("--gap-shift", type=float, default=None,
+                    help=f"val-test gap 漂移阈值（默认 {GAP_SHIFT}）")
+    ap.add_argument("--leak-corr", type=float, default=None,
+                    help=f"特征-标签 |corr| 泄漏阈值（默认 {LEAK_CORR}）")
+    ap.add_argument("--near-const", type=float, default=None,
+                    help=f"近常量列单值占比阈值（默认 {NEAR_CONST}）")
     ap.add_argument("--selftest", action="store_true", help="run synthetic leakage self-test")
     a = ap.parse_args()
 
     if a.selftest:
         raise SystemExit(_selftest())
+
+    # 阈值 CLI 覆盖（默认值仅为启发式、强依赖任务；覆盖后报告里如实标用的是哪套阈值）
+    if a.gap_overfit is not None:
+        GAP_OVERFIT = a.gap_overfit
+    if a.gap_shift is not None:
+        GAP_SHIFT = a.gap_shift
+    if a.leak_corr is not None:
+        LEAK_CORR = a.leak_corr
+    if a.near_const is not None:
+        NEAR_CONST = a.near_const
 
     if not a.train:
         print("[demo] no --train given: synthetic data with a planted leak + dup rows + dead col")
