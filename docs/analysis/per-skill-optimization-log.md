@@ -161,5 +161,17 @@ P0/P1 已修邮箱硬编码(B2-B4)+verify_refs sim 阈值(M1)。本站补剩余 
 
 ---
 
+## 站 13：light-venue-matching（科研主线第 13 站，已完成）
+
+P2 已补转投顺序+DOAJ。本站补剩余 + 借鉴：
+- ✅ VM-1 自引信号口径修：明确 outgoing 非 incoming，25%/40% 仅作参考提示非掠夺判据（综述/窄领域刊 outgoing 天然偏高），加 self_ref_direction+threshold_note，掠夺判定须看 incoming+领域+预警名单
+- ✅ VM-2 五信号编号统一：summary 加 rubric_coverage 显式列脚本可程序化覆盖维度 vs 仍须人工维度（接收率/创新匹配/incoming自引/口碑），破"跑完脚本=完成评估"误解
+- ✅ VM-3 最低可评估信号门槛：summary.signals_ok<2 时 min_signal_gate 给"数据不足暂不下定性结论"，防数据稀疏退化主观硬凑
+- ✅ VM-4 db01 冷启动指南：SKILL step1 加"db01 为空时用 OpenAlex Sources API 现拉候选+建最小种子临时卡(字段对齐 venues.csv)"分支，消除新用户卡第一步
+- ✅ VM-5 GitHub 借鉴(journal_targeter)：转投顺序加方向匹配度量化(suitability 思路，topics 重叠+关键词词重叠给 0-1 分+列命中/缺失主题词，可解释)
+- ✅ VM-CI 四 CI 全绿（脚本只改不增）+ 记忆
+
+---
+
 ## 待做站（科研主线顺序）
-venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。 → paper-polishing → figure-planning(已补E1) → figure-drawing → citation → typesetting → venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。
+review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。 → paper-polishing → figure-planning(已补E1) → figure-drawing → citation → typesetting → venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。

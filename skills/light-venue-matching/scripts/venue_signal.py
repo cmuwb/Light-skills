@@ -237,10 +237,20 @@ def signal_self_citation(source: dict, fetch) -> dict:
                 "select": "id", "per_page": RESOLVE_CHUNK})
             self_hits += (fetch(url) or {}).get("meta", {}).get("count", 0)
         rate = self_hits / len(ref_ids)
-        flag = "偏高(>25%，留意自引操纵)" if rate > 0.25 else "常规区间"
+        # ⚠ 口径修正：25% 是"入向期刊自引率"(incoming，掠夺刊预警线，如 Web of Science 抑制名单口径)的
+        # 经验线；本脚本算的是"外向自引"(outgoing，本刊论文引本刊比例)，两者口径不同——outgoing 偏高
+        # 不必然=掠夺/操纵(综述刊、窄领域刊天然偏高)。故这里**只作参考提示、不作判据**，且阈值标来源。
+        if rate > 0.40:
+            flag = "outgoing 自引明显偏高(>40%)——仅供参考，需结合 incoming 自引率(本脚本不算)与领域特性人工核，勿据此单独判掠夺"
+        elif rate > 0.25:
+            flag = "outgoing 自引偏高(>25%，该线本是 incoming 预警经验线，套到 outgoing 仅作弱提示)"
+        else:
+            flag = "outgoing 自引常规区间"
         return {"status": "ok", "self_ref_rate": round(rate, 3),
-                "sample_works": len(works), "refs_resolved": len(ref_ids),
-                "self_refs": self_hits, "flag": flag,
+                "self_ref_direction": "outgoing(本刊引本刊)", "sample_works": len(works),
+                "refs_resolved": len(ref_ids), "self_refs": self_hits, "flag": flag,
+                "threshold_note": "25%/40% 为参考线非判据；官方入向(incoming)期刊自引率本脚本不算，"
+                                  "掠夺判定须看 incoming + 领域 + 预警名单(联动 a10)，不可仅凭 outgoing",
                 "method": "外向自引粗估(本刊论文引用本刊比例)，非官方入向自引率；受样本/年份影响"}
     except Exception as e:  # noqa: BLE001 — 优雅降级
         return {"status": "unavailable", "reason": f"查询失败: {e.__class__.__name__}"}
@@ -388,8 +398,22 @@ def assemble(issn: str, author_name: str, card: dict | None, fetch) -> dict:
     if issn and source is None:
         report["venue"]["fetch_error"] = locals().get("src_err", "未取到 source")
     avail = sum(1 for s in report["signals"].values() if s.get("status") == "ok")
-    report["summary"] = {"signals_ok": avail, "signals_total": 5,
-                         "caveat": "OpenAlex 接入口径见 m01 真相源节；期刊数据投前重核(CONVENTIONS §1)"}
+    # VM-3 最低可评估信号门槛：可核查信号 <2 时，总评只能给"数据不足"，不许硬凑定性结论
+    if avail < 2:
+        assess_gate = ("⚠ 数据不足：可核查信号仅 %d 项(<2)——总评只能给『数据不足，暂不下定性结论』，"
+                       "勿据稀疏信号硬判 venue 适配/掠夺。补 --issn/--author 或换有 OpenAlex 覆盖的刊再评。" % avail)
+    else:
+        assess_gate = "可核查信号 ≥2，可进入 rubric 综合评估(但脚本信号只覆盖部分维度，见 rubric_coverage)"
+    report["summary"] = {
+        "signals_ok": avail, "signals_total": 5,
+        "min_signal_gate": assess_gate,
+        # VM-2 脚本信号 ↔ rubric 维度映射：防"跑完脚本=完成评估"的误解
+        "rubric_coverage": {
+            "脚本可程序化覆盖": ["体量趋势", "外向自引(参考)", "审稿周期(读卡)", "作者方向匹配", "APC/分区(读卡)", "DOAJ 白名单"],
+            "仍须人工(脚本不覆盖)": ["真实接收率/命中概率", "创新性与刊调性匹配", "incoming 期刊自引率", "同行评审质量口碑", "审稿人构成"],
+            "note": "本脚本只产『信号』非『结论』；跑完脚本≠完成 venue 评估，接收率/创新匹配/口碑须人工补",
+        },
+        "caveat": "OpenAlex 接入口径见 m01 真相源节；期刊数据投前重核(CONVENTIONS §1)"}
     return report
 
 
@@ -475,6 +499,18 @@ def _selftest() -> int:
     assert sig["4_author_match"]["match_level"] in ("高", "中"), sig["4_author_match"]
     assert sig["5_apc_quartile"]["status"] == "ok", sig["5_apc_quartile"]
     assert rep["summary"]["signals_ok"] == 5, rep["summary"]
+    # VM-2 信号编号映射 + VM-3 最低信号门槛：5 信号全 ok → 门禁放行 + rubric_coverage 列人工项
+    assert "rubric_coverage" in rep["summary"] and "仍须人工(脚本不覆盖)" in rep["summary"]["rubric_coverage"], rep["summary"]
+    assert "≥2" in rep["summary"]["min_signal_gate"], rep["summary"]["min_signal_gate"]
+    # VM-3 反例：信号 <2 时门禁给"数据不足"。空 card + 网络全失败 → 卡信号与网络信号都缺
+    rep_sparse = assemble("0000-0000", "", {}, lambda u: (_ for _ in ()).throw(Exception("net")))
+    assert rep_sparse["summary"]["signals_ok"] < 2, rep_sparse["summary"]
+    assert "数据不足" in rep_sparse["summary"]["min_signal_gate"], rep_sparse["summary"]["min_signal_gate"]
+    # VM-1 自引口径：flag/方向标 outgoing、阈值标参考非判据
+    sc = sig["2_self_citation"]
+    if sc.get("status") == "ok":
+        assert sc.get("self_ref_direction", "").startswith("outgoing"), sc
+        assert "threshold_note" in sc, sc
 
     # DOAJ 白名单核查（mock 命中 1 条带 seal）
     wl = rep["whitelist"]["doaj"]
