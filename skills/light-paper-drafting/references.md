@@ -119,7 +119,7 @@
 - **paper write-up 流程**：先有实验结果与图，再按模板逐节填充，最后整体评审。
 - **7 类失败模式**（其 Limitations 节，已被 ARS 提炼为诚信门清单，见条目 2 的 M1–M7）：实现 bug、幻觉结果、走捷径、bug 当洞察、方法造假、frame-lock、引用幻觉。写草稿时把这 7 条当"红线自查表"。
 
-【链接】https://arxiv.org/abs/2408.06292 ; Nature: https://www.nature.com/articles/s41586-026-10265-5 ; 代码 https://github.com/SakanaAI/AI-Scientist
+【链接】https://arxiv.org/abs/2408.06292 ; 代码 https://github.com/SakanaAI/AI-Scientist （Nature DOI s41586-026-10265-5 为**待核条目**，引用前须核验真实出处与卷页，勿当既成事实）
 
 【已知坑/局限】全自动有上述失败模式，本技能采人在环路；模拟评审与真实审稿仍有差距。
 
@@ -138,7 +138,7 @@
 - **文献综述质量**是胜负手：人评中文献综述质量胜率领先基线 50%–68%，整体稿件 14%–38%。提示草稿阶段要重投入综述合成。
 - ARS v3.3 从它借鉴：Semantic Scholar API 验证、anti-leakage 协议、VLM 图表验证、score trajectory tracking。
 
-【链接】https://huggingface.co/papers/2604.05018 ; arxiv https://arxiv.org/abs/2604.05018
+【链接】（arXiv 2604.05018 / PaperOrchestra 为**待核条目**：编号与出处未经核验，引用前须 curl 实测记 HTTP 码确认存在，核不到不得当既成事实写入）
 
 【已知坑/局限】基准与评测仍偏 AI 会议论文；自动生成图的正确性需 VLM 复核。
 
@@ -174,7 +174,7 @@
 8. Ethics / Limitations（伦理与局限诚实度）
 每维给分并指出具体可改处，对应本技能"模拟审稿"自检。
 
-【链接】CNPE 论文 https://arxiv.org/abs/2603.17588 ; 各 scholar-evaluation 技能聚合 https://lobehub.com/skills/oimiragieo-agent-studio-scholar-evaluation
+【链接】各 scholar-evaluation 技能聚合 https://lobehub.com/skills/oimiragieo-agent-studio-scholar-evaluation （CNPE arXiv 2603.17588 / "ACL 2026 Findings" 为**待核条目**，编号与会议出处未核验，勿当既成事实引用）
 
 【已知坑/局限】绝对打分跨 venue 漂移大（CNPE 指出），用作相对自检比绝对分更可靠；维度命名各实现略有差异。
 

@@ -23,6 +23,22 @@
 
 ---
 
+## 1b. CS/ML 报告件（本技能范例与主要受众，别只借医学规范）
+
+CS/ML 投稿很少触发 CONSORT/STROBE 等医学规范，但顶会/顶刊有自己的报告件，落笔前认领：
+
+| 研究类型/场景 | 报告件 | 要点 | 归口/出处 |
+|---|---|---|---|
+| ML 论文通用（NeurIPS/ICLR/ICML 等） | **Reproducibility Checklist / Paper Checklist** | 模型/数据/算力/超参/随机性/限制/社会影响逐条勾选，多数顶会投稿强制 | NeurIPS/ICLR 官方（当年版） |
+| 发布数据集 | **Datasheets for Datasets** | 动机/构成/采集/预处理/用途/分发/维护/伦理（对齐 m02 data_card + croissant_export） | Gebru et al. 2021 |
+| 发布模型 | **Model Cards** | 预期用途/训练数据/评估/局限/偏差/伦理考量 | Mitchell et al. 2019 |
+| 预测模型（含 ML） | **TRIPOD+AI** | 开发/验证、校准、外部验证 | tripod-statement.org |
+| 涉人体数据/众包标注 | venue 的 **Ethics / Broader Impact** 声明 + IRB | 知情同意、隐私、潜在滥用（联动 a10） | venue 当年要求 |
+
+> 落地：①投 NeurIPS/ICLR 先填该会**当年** reproducibility/paper checklist，逐条映射到正文+附录；②发数据集随论文附 Datasheet（可由 m02 data_card + croissant 机读卡生成）；③发模型附 Model Card；④这些进 mandatory_inclusions 的声明位。**别因 guideline_map 偏医学就给 CS/ML 论文硬套 CONSORT**。
+
+---
+
 ## 2. 任务速判（题述触发词 → 认领哪份）
 
 - "我们随机分组对比 A/B 干预" → **CONSORT**（+ 注册号、CONSORT 流程图）。

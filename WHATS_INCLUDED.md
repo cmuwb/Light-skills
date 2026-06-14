@@ -98,6 +98,7 @@
 | research-plan | `templates/experiment_matrix.md` | 实验矩阵：实验ID × 假设 × 数据集 × baseline × 指标 × 种子，含派生数据规格 |
 | research-plan | `templates/reproducibility-checklist.md` | 可复现性勾选清单（环境/目录/配置/版本/流水线） |
 | research-plan | `templates/reproduction-log.md` | 复现已有论文的逐次日志表：改了什么/得到的数/与目标差/下一步假设 + 失败三分归因 |
+| paper-drafting | `templates/claim_passport.md` | claim 台账：每个论断挂类型/来源指针/核查状态(已验证/待核/GAP)/HTTP码，诚信门抽样全查的 load-bearing 工件 |
 | paper-drafting | `templates/01_imrad.md` | IMRaD 实证论文章节骨架 |
 | paper-drafting | `templates/02_review_survey.md` | 综述/survey 论文章节骨架 |
 | paper-drafting | `templates/03_theory.md` | 理论/方法型论文章节骨架 |
