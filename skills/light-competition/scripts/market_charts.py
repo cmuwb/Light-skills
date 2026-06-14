@@ -77,6 +77,33 @@ TSS_COLOR = {"TAM": OKABE_ITO["sky_blue"],
              "SOM": OKABE_ITO["bluish_green"]}
 
 
+def _wrap_cjk(text, width):
+    """按显示宽度软换行（CJK 记 2、其余记 1），返回多行字符串。不截断、不丢字。"""
+    text = str(text)
+    lines, cur, w = [], "", 0
+    for ch in text:
+        cw = 2 if ord(ch) > 0x2E7F else 1   # CJK/全角近似按双宽
+        if ch == "\n" or (w + cw > width and cur):
+            lines.append(cur)
+            cur, w = ("" if ch == "\n" else ch), (0 if ch == "\n" else cw)
+        else:
+            cur += ch
+            w += cw
+    if cur:
+        lines.append(cur)
+    return "\n".join(lines)
+
+
+def _wrap_truncate(text, width, max_lines):
+    """软换行后限制最多 max_lines 行，超出截断并在末行加省略号，防止长文案溢出画布。"""
+    wrapped = _wrap_cjk(text, width).split("\n")
+    if len(wrapped) <= max_lines:
+        return "\n".join(wrapped)
+    kept = wrapped[:max_lines]
+    kept[-1] = kept[-1].rstrip() + "…"
+    return "\n".join(kept)
+
+
 SAMPLE = {
     "title": "基层眼底病智能筛查",
     "currency": "亿元",
@@ -163,8 +190,9 @@ def draw_tam_sam_som(data, out_path):
                             edgecolor="black", linewidth=1.0, alpha=0.85,
                             zorder=layers.index((k, val, note)) + 1))
     # 各层标注：金额 + 占上层份额
+    radii = [rmax * (val / tam_val) ** 0.5 for _, val, _ in layers]
     for idx, (k, val, note) in enumerate(layers):
-        r = rmax * (val / tam_val) ** 0.5
+        r = radii[idx]
         share = "" if idx == 0 else \
             f"  ({val / layers[idx - 1][1] * 100:.1f}% of {layers[idx-1][0]})"
         y = -1 + 2 * r - r * 0.32
@@ -172,7 +200,11 @@ def draw_tam_sam_som(data, out_path):
                 va="center", fontsize=10, fontweight="bold",
                 color="white" if idx >= 1 else "#222", zorder=10)
         if note:
-            ax.annotate(note, xy=(r * 0.7, -1 + r), xytext=(1.15, -1 + 2 * r - idx * 0.5),
+            # 动态布局：note 的 y 锚到该层圆心高度（-1+r），按层半径分散；
+            # 文本软换行 + 最多 3 行截断，固定落在圆右侧标注栏（x=1.15），不再用硬编码 idx*0.5。
+            note_y = -1 + radii[idx]
+            ax.annotate(_wrap_truncate(note, width=16, max_lines=3),
+                        xy=(radii[idx] * 0.85, note_y), xytext=(1.15, note_y),
                         fontsize=7.5, color="#333", va="center",
                         arrowprops=dict(arrowstyle="-", color="#999", lw=0.6))
     ax.set_xlim(-1.2, 2.6)
@@ -248,12 +280,13 @@ def draw_five_forces(data, out_path):
                 fontweight="bold")
         rat = f.get("rationale", "")
         if rat:
-            ax.text(level_len[lv] + 0.55, i, rat, ha="left", va="center",
-                    fontsize=7.5, color="#333")
+            # 长 rationale 软换行 + 最多 2 行截断，避免越界溢出右边界
+            ax.text(level_len[lv] + 0.55, i, _wrap_truncate(rat, width=14, max_lines=2),
+                    ha="left", va="center", fontsize=7.5, color="#333")
     ax.set_yticks([])
     ax.set_xticks([1, 2, 3])
     ax.set_xticklabels(["低 L", "中 M", "高 H"], fontsize=8)
-    ax.set_xlim(0, 4.6)
+    ax.set_xlim(0, 5.2)
     ax.set_xlabel("威胁/议价强度分级", fontsize=9)
     ax.set_title(data.get("title", "竞争环境") + " — 波特五力分级",
                  fontsize=12, fontweight="bold")
@@ -287,13 +320,18 @@ def draw_risk_heatmap(data, out_path):
         ii, pi = lv_idx[r["impact"]], lv_idx[r["prob"]]
         bucket.setdefault((pi, ii), []).append(r)
     for (pi, ii), rs in bucket.items():
+        m = len(rs)
+        # 同格多风险：行距随密度自适配压缩，字号随之缩小，名称+缓解各自截断，避免堆出格子/溢出
+        fs = 7.8 if m <= 2 else (6.6 if m <= 4 else 5.6)
+        span = 0.8                       # 单格内可用纵向跨度
         for j, r in enumerate(rs):
-            yo = 0.7 - j * (0.5 / max(len(rs), 1))
-            label = r["name"]
+            yo = (span / 2) - (j + 0.5) * (span / m)
+            name = _wrap_truncate(r["name"], width=8, max_lines=2)
+            label = name
             if r.get("mitigation"):
-                label += f"\n缓解:{r['mitigation']}"
-            ax.text(ii + 0.5, pi + yo, label, ha="center", va="center",
-                    fontsize=7.8, fontweight="bold", color="#111",
+                label += "\n缓解:" + _wrap_truncate(r["mitigation"], width=8, max_lines=1)
+            ax.text(ii + 0.5, pi + 0.5 + yo, label, ha="center", va="center",
+                    fontsize=fs, fontweight="bold", color="#111",
                     bbox=dict(boxstyle="round,pad=0.2", fc="white", alpha=0.8,
                               ec="none"))
     ax.set_xticks([0.5, 1.5, 2.5])
@@ -340,6 +378,27 @@ def _selftest() -> int:
         assert "TAM" in str(exc), exc
     else:
         raise AssertionError("invalid TAM/SAM/SOM hierarchy should fail")
+
+    # --- C-5 文本布局工具单测 ---
+    assert _wrap_cjk("县域基层医疗机构可服务市场", 8).count("\n") >= 2  # 13 CJK→宽16应多行
+    assert _wrap_cjk("abcdefghij", 4) == "abcd\nefgh\nij"
+    long_note = "这是一个非常长的市场说明文字用于测试软换行与截断是否会溢出画布边界"
+    tr = _wrap_truncate(long_note, width=16, max_lines=3)
+    assert tr.count("\n") == 2 and tr.endswith("…"), tr        # 超 3 行被截断加省略号
+
+    # --- C-5 极端数据回归：6 力（>4 层）+ 超长 rationale/note + 同格 4 风险，应正常出图不抛错 ---
+    stress = json.loads(json.dumps(SAMPLE, ensure_ascii=False))
+    stress["tam_sam_som"]["SOM"]["note"] = long_note            # 长 note
+    stress["five_forces"].append(
+        {"force": "互补品", "level": "M",
+         "rationale": "互补生态尚未成熟需要长期培育且依赖第三方平台开放程度"})  # 第 6 力 + 长 rationale
+    stress["risks"] = [{"name": f"风险{i}号有较长名称", "prob": "H", "impact": "H",
+                        "mitigation": "采取若干较长的缓解措施"} for i in range(4)]  # 同格 4 风险堆叠
+    _validate(stress)
+    with tempfile.TemporaryDirectory(prefix="light_market_stress_") as tmp:
+        for kind, (field, fn, suffix) in KINDS.items():
+            out = fn(stress, os.path.join(tmp, f"{kind}.png"))
+            assert os.path.exists(out) and os.path.getsize(out) > 0, out
     print("[selftest] PASS market_charts")
     return 0
 

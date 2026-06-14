@@ -1,7 +1,9 @@
 # light-competition 参考工具研究笔记
 
 逐工具核查笔记。每条尽量给真实链接、可复用方法。查不到可靠信息的明确标注"未能核实"。
-调研日期：2026-06-06。
+
+> **last_checked: 2026-06**（时效字段单一维护点；与 [`references/competition_rules_cn.md`](references/competition_rules_cn.md) 顶部同步）。各赛事组别/重点领域/评分细则逐年改且本环境网络受限无法实时核实——动笔前以当届官方《评审规则》压缩包为准，按 competition_rules_cn.md 的 rules_checklist 勾选确认。
+> 调研日期：2026-06-06。
 
 ---
 

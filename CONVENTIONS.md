@@ -56,8 +56,12 @@ m03 与 m04 构成循环：idea 不过关就回到 m03。
 | 图表 | m09/m11 figure | `projects/<project_name>/figures/manifest.md` + 图文件 | m07/m12 |
 | 引用 | m10 citation | `refs.bib` + `citation_audit.md` | m12 |
 | 返修 | m14 review-rebuttal | `response_matrix.md` + response letter | m12/提交 |
+| 软著专利 | m15 ip-application | `ip/disclosure_draft.md` + `ip/claims_draft.md` + `ip/specification_draft.md`（软著则 `ip/copyright_package/`） | a08/提交（代理人审核） |
+| 路演 PPT | m16 slides | `slides/`（源 pptx + 导出）+ `slide_outline.md` | a08/答辩路演现场 |
+| 竞赛申报 | m17 competition | `competition/application_draft.md` ∣ `business_plan.md` ∣ `pitch_deck_outline.md` ∣ `defense_qa.md` ∣ `budget_table.md` + `material_checklist.md`（按材料模块取用） | a07/a08/m16/提交 |
 
 > 改动工件名只改本表，再同步对应技能「产出」节与 orchestrator §2 契约表（该表声明本表为真相源）。
+> m15/m16/m17 为按需并行技能（见 §6 流水线图），不在主线串行链上：仅当用户做对应任务时产出，文件名同样以本表为准（2026-06-14 补登记）。
 
 ## 7. 输出纪律
 

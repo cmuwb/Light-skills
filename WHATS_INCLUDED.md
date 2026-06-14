@@ -14,6 +14,7 @@
 | citation | `scripts/verify_refs.py` | 批量 DOI 真实性、元数据一致性与开放获取状态核验，产 JSON 报告 |
 | competition | `scripts/market_charts.py` | 市场分析 JSON 渲染为 TAM/SAM/SOM、竞品定位矩阵、五力分级、风险热图 |
 | competition | `scripts/roadmap_gen.py` | 里程碑 JSON 渲染技术路线图 / 甘特图，支撑申报书与路演路线页 |
+| competition | `scripts/scorecard.py` | 评委视角自审评分卡：逐维度自评 JSON 按赛事维度加权求总分 + 薄弱项 + 对照 anti_patterns 红旗，权重为经验相对参考非官方分值 |
 | consistency | `scripts/consistency_audit.py` | 读取 db09 术语/方法/指标事实源，跨论文/PPT/文档检测术语、指标名、指标值与覆盖缺口 |
 | data-engineering | `scripts/check_access_level.py` | 数据访问分级守门：阻断 raw 数据流向 paper/figure/public-repo 等公开产物 |
 | data-engineering | `scripts/croissant_export.py` | 数据卡字段 → Croissant JSON-LD（MLCommons 机器可读标准），便于发布 HF/Kaggle/OpenML 被自动索引（最小骨架，标注须官方库校验） |
@@ -119,6 +120,10 @@
 | ip-application | `templates/claims_template.md` | 权利要求书骨架：独权/从权层级 |
 | ip-application | `templates/specification_template.md` | 专利说明书骨架：背景/内容/实施例/附图说明 |
 | ip-application | `templates/copyright_checklist.md` | 软著申报材料勾选清单 |
+| competition | `templates/application_draft.md` | 申报书可填模板：核心页八段 + 十二段骨架（大创/挑战杯大挑/科研训练），对齐 db08 case_skeletons §4 |
+| competition | `templates/business_plan.md` | 商业计划书可填模板：Lean Canvas 九格 + 十一段骨架（创新大赛/小挑），TAM/SAM/SOM 喂 market_charts |
+| competition | `templates/defense_qa.md` | 答辩 QA 预演模板：六类高频追问 + 软肋诚实预案 + 备份附录清单 + 时间分配自检 |
+| competition | `templates/abstract.md` | 项目摘要模板：数模摘要"模型名+关键结论数字"占位 + 申报/路演摘要，承接核心页 |
 | typesetting | `templates/ieee_bare_conf.tex` | IEEE 会议双栏 LaTeX 骨架（Tectonic 实编译验证） |
 | typesetting | `templates/acm_sigconf.tex` | ACM sigconf LaTeX 骨架 |
 | typesetting | `templates/springer_llncs.tex` | Springer LLNCS LaTeX 骨架 |

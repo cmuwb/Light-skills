@@ -67,6 +67,8 @@ description: 制作精美 PPT。当用户需要为论文、项目、竞赛、答
 ## 产出
 完整 PPT(源文件 + 导出) + 叙事大纲 + 每页 speaker notes + 风格说明(登记 db06/db09)。
 
+落盘工件名（CONVENTIONS §6.1，下游 orchestrator/a08 按名调度）：`slides/`（源 pptx + 导出）+ `slide_outline.md`。
+
 ## 合规
 商用模板只学版式不直接复制(CONVENTIONS §5)；最终原创化。内容与论文/项目一致(a07)。Canva/Gamma/Slidesgo 等闭源/模板源借工作流与版式灵感，授权条款须先确认；Anthropic/academic-pptx 等专有 skill 只学方法不照搬脚本。
 

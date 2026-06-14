@@ -10,16 +10,19 @@
   python roadmap_gen.py                       # 无参 -> 跑内置合成自测，出两张图
   python roadmap_gen.py plan.json             # 用自己的里程碑 JSON
   python roadmap_gen.py plan.json --kind gantt --out g.png
+  python roadmap_gen.py plan.json --out figures/        # --out 为目录则两图都落该目录
+  python roadmap_gen.py plan.json --granularity week     # 周粒度（数模等短周期），start 用 YYYY-MM-DD、时长用 weeks
   python roadmap_gen.py --emit-sample sample.json   # 导出一份样例 JSON 模板
 
 JSON 结构（见 --emit-sample）：
 {
   "title": "项目名",
-  "start": "2026-09",            # 全局起始 (YYYY-MM)，用于甘特图按月定位
+  "start": "2026-09",            # 全局起始；month 粒度用 YYYY-MM，week 粒度用 YYYY-MM-DD
   "milestones": [
     {"phase":"调研与立项","start":"2026-09","months":2,
      "deliverable":"需求报告+数据集清单","gate":"go/no-go:数据可得性",
      "owner":"全员"},
+    # week 粒度：{"phase":"建模","start":"2026-09-01","weeks":1.5,...}（缺 weeks 则按 months×4.345 兜底）
     ...
   ]
 }
@@ -62,18 +65,49 @@ def _month_index(ym, origin):
     return (a.year - o.year) * 12 + (a.month - o.month)
 
 
-def _validate(plan):
+def _parse_date(s):
+    """宽松解析 'YYYY-MM-DD' 或 'YYYY-MM'（按当月 1 号）。"""
+    for fmt in ("%Y-%m-%d", "%Y-%m"):
+        try:
+            return datetime.strptime(s, fmt)
+        except ValueError:
+            continue
+    raise ValueError(f"无法解析日期 '{s}'（应为 YYYY-MM 或 YYYY-MM-DD）")
+
+
+def _unit_index(value, origin, gran):
+    """阶段起点相对 origin 的偏移，单位由 gran 决定（month / week）。"""
+    if gran == "week":
+        delta = _parse_date(value) - _parse_date(origin)
+        return delta.days / 7.0
+    return _month_index(value, origin)
+
+
+def _duration_units(m, gran):
+    """阶段时长，按粒度取字段：week 优先 'weeks'（无则 months×4.345 兜底）；month 取 'months'。"""
+    if gran == "week":
+        if "weeks" in m:
+            return float(m["weeks"])
+        return float(m["months"]) * 4.345   # 月→周近似，便于沿用旧 JSON
+    return float(m["months"])
+
+
+def _validate(plan, gran="month"):
     if not isinstance(plan, dict):
         raise ValueError("顶层必须是 JSON 对象")
     ms = plan.get("milestones")
     if not ms or not isinstance(ms, list):
         raise ValueError("缺少非空的 'milestones' 列表")
     for i, m in enumerate(ms):
-        for k in ("phase", "start", "months"):
+        for k in ("phase", "start"):
             if k not in m:
                 raise ValueError(f"milestones[{i}] 缺少字段 '{k}'")
-        if not isinstance(m["months"], (int, float)) or m["months"] <= 0:
-            raise ValueError(f"milestones[{i}].months 必须为正数")
+        # 时长字段：month 粒度需 'months'；week 粒度需 'weeks' 或 'months'（后者按 4.345 周/月换算）
+        if "months" not in m and "weeks" not in m:
+            raise ValueError(f"milestones[{i}] 缺少时长字段 'months'（week 粒度可用 'weeks'）")
+        dur = _duration_units(m, gran)
+        if not isinstance(dur, (int, float)) or dur <= 0:
+            raise ValueError(f"milestones[{i}] 时长必须为正数")
     return plan
 
 
@@ -103,20 +137,20 @@ SAMPLE = {
 }
 
 
-def draw_gantt(plan, out_path):
-    """阶段甘特图：横向条 + 交付物 + go/no-go 菱形节点。"""
+def draw_gantt(plan, out_path, gran="month"):
+    """阶段甘特图：横向条 + 交付物 + go/no-go 菱形节点。gran 控制时间粒度（month/week）。"""
     ms = plan["milestones"]
     origin = plan.get("start", ms[0]["start"])
     n = len(ms)
     fig, ax = plt.subplots(figsize=(11, 0.85 * n + 1.6))
 
-    total_months = max(_month_index(m["start"], origin) + m["months"] for m in ms)
+    total = max(_unit_index(m["start"], origin, gran) + _duration_units(m, gran) for m in ms)
     cmap = plt.colormaps.get_cmap("viridis")
 
     for i, m in enumerate(reversed(ms)):
         row = i
-        x0 = _month_index(m["start"], origin)
-        w = m["months"]
+        x0 = _unit_index(m["start"], origin, gran)
+        w = _duration_units(m, gran)
         color = cmap((n - 1 - i) / max(n - 1, 1))
         ax.barh(row, w, left=x0, height=0.5, color=color, alpha=0.85,
                 edgecolor="black", linewidth=0.6, zorder=2)
@@ -135,10 +169,16 @@ def draw_gantt(plan, out_path):
 
     ax.set_yticks(range(n))
     ax.set_yticklabels([""] * n)
-    ax.set_xticks(range(0, total_months + 1))
-    ax.set_xticklabels([f"M{k}" for k in range(0, total_months + 1)], fontsize=8)
-    ax.set_xlabel(f"项目月份（起点 {origin}）", fontsize=9)
-    ax.set_xlim(-0.3, total_months + 4.5)
+    unit_label = {"month": "M", "week": "W"}[gran]
+    n_ticks = int(total) + 1
+    # 周粒度阶段多时，刻度过密则按步长稀释，避免标签重叠
+    step = 1 if n_ticks <= 16 else (n_ticks // 16 + 1)
+    ticks = list(range(0, n_ticks + 1, step))
+    ax.set_xticks(ticks)
+    ax.set_xticklabels([f"{unit_label}{k}" for k in ticks], fontsize=8)
+    unit_cn = {"month": "月份", "week": "周次"}[gran]
+    ax.set_xlabel(f"项目{unit_cn}（起点 {origin}）", fontsize=9)
+    ax.set_xlim(-0.3, total + 4.5)
     ax.set_title(plan.get("title", "项目进度甘特图") + " — 进度甘特图",
                  fontsize=12, fontweight="bold")
     ax.grid(axis="x", linestyle=":", alpha=0.4, zorder=0)
@@ -212,18 +252,37 @@ def _selftest() -> int:
     _setup_cjk_font()
     _validate(SAMPLE)
     assert _month_index("2026-11", "2026-09") == 2
+    # 周粒度索引与时长换算
+    assert _unit_index("2026-09-15", "2026-09-01", "week") == 2.0   # 14 天 = 2 周
+    assert abs(_duration_units({"months": 2}, "week") - 2 * 4.345) < 1e-6  # 月→周兜底
+    assert _duration_units({"weeks": 6, "months": 2}, "week") == 6.0       # weeks 优先
+    assert _duration_units({"months": 2}, "month") == 2.0
     with tempfile.TemporaryDirectory(prefix="light_roadmap_gen_") as tmp:
         gantt = draw_gantt(SAMPLE, os.path.join(tmp, "gantt.png"))
         roadmap = draw_roadmap(SAMPLE, os.path.join(tmp, "roadmap.png"))
-        for out in (gantt, roadmap):
+        # 周粒度甘特图（用 YYYY-MM-DD start + weeks），短周期竞赛场景
+        wk_plan = {"title": "数模 99 小时", "start": "2026-09-01", "milestones": [
+            {"phase": "建模", "start": "2026-09-01", "weeks": 1.5, "gate": "go/no-go: 模型选定"},
+            {"phase": "求解", "start": "2026-09-12", "weeks": 2},
+            {"phase": "写作", "start": "2026-09-26", "weeks": 1.5, "deliverable": "论文+摘要"}]}
+        _validate(wk_plan, "week")
+        gantt_w = draw_gantt(wk_plan, os.path.join(tmp, "gantt_w.png"), "week")
+        for out in (gantt, roadmap, gantt_w):
             assert os.path.exists(out) and os.path.getsize(out) > 0, out
     bad = {"milestones": [{"phase": "bad", "start": "2026-09", "months": 0}]}
     try:
         _validate(bad)
     except ValueError as exc:
-        assert "months" in str(exc), exc
+        assert "时长" in str(exc) or "months" in str(exc), exc
     else:
         raise AssertionError("non-positive months should fail")
+    # 缺时长字段应报错
+    try:
+        _validate({"milestones": [{"phase": "x", "start": "2026-09"}]})
+    except ValueError as exc:
+        assert "时长" in str(exc), exc
+    else:
+        raise AssertionError("missing duration should fail")
     print("[selftest] PASS roadmap_gen")
     return 0
 
@@ -233,7 +292,9 @@ def main():
     p.add_argument("plan", nargs="?", help="里程碑 JSON 路径；省略则跑合成自测")
     p.add_argument("--kind", choices=["gantt", "roadmap", "both"],
                    default="both", help="画哪种图（默认 both）")
-    p.add_argument("--out", help="输出文件名（单图时用）")
+    p.add_argument("--out", help="输出路径：以 / 结尾或为已存在目录时落该目录用默认名；否则当单图文件名用")
+    p.add_argument("--granularity", choices=["month", "week"], default="month",
+                   help="甘特图时间粒度：month（默认，start=YYYY-MM/duration=months）或 week（start=YYYY-MM-DD/duration=weeks，适合数模等短周期）")
     p.add_argument("--emit-sample", metavar="PATH",
                    help="导出样例 JSON 模板到指定路径后退出")
     p.add_argument("--selftest", action="store_true", help="run offline synthetic self-test")
@@ -262,22 +323,30 @@ def main():
         demo_mode = True
         print("[自测] 未提供 JSON，使用内置合成里程碑")
 
-    _validate(plan)
+    _validate(plan, args.granularity)
 
+    # --out 目录语义：以 / 结尾或为已存在目录 → 落该目录用默认名（both 也支持）；否则当单图文件名。
+    out_dir = None
+    if args.out and (args.out.endswith(("/", os.sep)) or os.path.isdir(args.out)):
+        out_dir = args.out
+        os.makedirs(out_dir, exist_ok=True)
     # 无 JSON 的 demo 路径：默认落临时目录，不污染技能根/当前目录（除非用户显式 --out）。
     demo_dir = tempfile.mkdtemp(prefix="light_roadmap_gen_demo_") if (demo_mode and not args.out) else None
 
     def _resolve(default_name):
+        if out_dir:
+            return os.path.join(out_dir, default_name)
         if demo_dir:
             return os.path.join(demo_dir, default_name)
         return default_name
 
+    single_file = args.out if (args.out and not out_dir) else None
     outputs = []
     if args.kind in ("gantt", "both"):
-        out = args.out if (args.out and args.kind == "gantt") else _resolve(f"{tag}_gantt.png")
-        outputs.append(draw_gantt(plan, out))
+        out = single_file if (single_file and args.kind == "gantt") else _resolve(f"{tag}_gantt.png")
+        outputs.append(draw_gantt(plan, out, args.granularity))
     if args.kind in ("roadmap", "both"):
-        out = args.out if (args.out and args.kind == "roadmap") else _resolve(f"{tag}_roadmap.png")
+        out = single_file if (single_file and args.kind == "roadmap") else _resolve(f"{tag}_roadmap.png")
         outputs.append(draw_roadmap(plan, out))
 
     for o in outputs:

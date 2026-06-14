@@ -209,5 +209,20 @@ E2 已补 pptx_eval。本站补剩余 + 借鉴：
 
 ---
 
-## 待做站（科研主线顺序）
-competition（科研主线最后一站）；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。 → paper-polishing → figure-planning(已补E1) → figure-drawing → citation → typesetting → venue-matching(已补P2) → review-rebuttal → ip-application → slides(已补E2) → competition；常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需。
+## 站 17：light-competition（科研主线第 17 站，已完成 ✅ 科研主线收官）
+
+详档 7 条可优化点（用户拍板"全做 7 条 + 借鉴 1 个"，且契约表 m15/m16/m17 一起补齐）。核查订正两处详档判断：① C2 引用的 `code_assets/stats_tests.py` **真实存在**（是 m06 资产，非死引用），仅措辞补全为带 `.py` + 标明归属；② §6.1 契约表缺 m17 属实，但 m15/m16 同样缺席（非"唯一缺席"），故三行一并补。
+- ✅ C-1 CONVENTIONS §6.1 补 m15/m16/m17 三行 canonical 工件名（competition 用 `competition/application_draft.md∣business_plan.md∣pitch_deck_outline.md∣defense_qa.md∣budget_table.md`+`material_checklist.md`）+ orchestrator pipelines.md 镜像表同步三行 + 三技能「产出」节双向声明落盘名
+- ✅ C-2 补 templates/ 四套可填模板：application_draft.md（核心页八段+十二段，对齐 case_skeletons §4）、business_plan.md（Lean Canvas 九格+十一段，对齐 §1）、defense_qa.md（六类追问+软肋诚实预案+备份附录）、abstract.md（数模摘要"模型名+结论数字"占位）；全部打通 aims_zh_guide 核心页
+- ✅ C-3 examples/worked_example.md：基层眼底筛查端到端走查（关键参数表→核心页八段→申报书三子目标→roadmap JSON→market JSON→预算→反模式自查），SOM=6.4亿/周期20月/灵敏度≥90% 在六材料间一致，正面示范 a07 跨材料防自相矛盾
+- ✅ C-4 SKILL「先定位赛事」瘦身为一句话定位+下沉指针，六赛事硬规则细节移到新建 references/competition_rules_cn.md；评审模拟段重复 MCM 细节也下沉
+- ✅ C-5 roadmap_gen 加 `--granularity week|month`（周粒度支持 YYYY-MM-DD start + weeks 字段，数模短周期适用）+ `--out` 目录语义（both 也能落目录、不污染仓库）；market_charts note/rationale 改 `_wrap_truncate` 软换行截断（CJK 双宽）+ 风险同格多点行距/字号自适配；两脚本 selftest 加周粒度+长文案+6力+同格4风险回归
+- ✅ C-6 当届规则确认闸门：SKILL 首步明确"落盘 material_checklist.md 后再动笔"，competition_rules_cn.md 顶部置 rules_checklist 可勾选模板 + 统一 last_checked，references.md 顶部同步 last_checked 单一维护点
+- ✅ C-7 指针漂移：SKILL 产出节 material_cards→改指 material_extended_cards（标 cards 为索引壳）；anti_patterns C2 引用补全为 `code_assets/stats_tests.py` 并标明 m06 归属与具体能力（welch_t/BH-FDR/Wilson/bootstrap）
+- ✅ C-8 GitHub 借鉴（tjboudreaux 评审框架固化为可机检评分卡）：新建 scripts/scorecard.py，逐维度自评 JSON 按四赛事 rubric 加权求总分+薄弱项+对照 anti_patterns 红旗+放行判定；严守诚实边界（权重为经验相对参考、非官方分值，可 weights_override 覆盖，继承 score_aggregate 的依据声明范式）
+- ✅ C-CI 四 CI 全绿（scripts 66→67、templates 43→47）+ 三脚本 selftest 离线全过 + WHATS_INCLUDED 登记 scorecard 与 4 模板；仓库无图残留
+
+---
+
+## 待做站
+科研主线 17 站全部完成 ✅。剩余常驻技能 file-reading/memory-pm/orchestrator/backend-coding/system-design/frontend-design/project-structure/consistency/self-review/tool-selection/research-ethics 按需优化。

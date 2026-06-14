@@ -65,3 +65,6 @@
 | m10 引用 | 草稿 citekey、候选文献 | `refs.bib` + `citation_audit.md`（真实性 + locator） | m12 |
 | m12 排版 | 稿件、图、bib、模板 | 编译日志 + final PDF/DOCX | m13/m14/提交 |
 | m14 返修 | 审稿意见、稿件、实验/图表 | `response_matrix.md` + response letter + 改稿 | m12/提交 |
+| m15 软著专利 | 技术内容（m05/a03/m07） | `ip/disclosure_draft.md` + `ip/claims_draft.md` + `ip/specification_draft.md`（软著 `ip/copyright_package/`） | a08/提交 |
+| m16 路演 PPT | 论文/项目内容、图表（m11） | `slides/`（源+导出）+ `slide_outline.md` | a08/现场 |
+| m17 竞赛申报 | 技术内容、市场数据、图表 | `competition/`（申报书/BP/路演纲/答辩QA/预算表按需）+ `material_checklist.md` | a07/a08/m16/提交 |
