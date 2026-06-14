@@ -22,12 +22,47 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.parse
 import urllib.request
 from typing import Any
 
 _MAILTO = (os.environ.get("CROSSREF_MAILTO") or os.environ.get("OPENALEX_MAILTO") or "").strip()
 TIMEOUT = 30
+# 限速/临时故障指数退避重试（零依赖、零费用）：doi.org/Crossref/arXiv 高峰偶限速。
+_RETRY_CODES = {429, 502, 503, 504}
+_MAX_RETRIES = 2
+_BACKOFF_BASE = 0.5
+_sleep = time.sleep
+
+
+def _retry_after(e, attempt: int) -> float:
+    ra = e.headers.get("Retry-After") if getattr(e, "headers", None) else None
+    if ra:
+        try:
+            return min(float(ra), 8.0)
+        except ValueError:
+            pass
+    return min(_BACKOFF_BASE * (2 ** attempt), 8.0)
+
+
+def _urlopen_retry(req) -> tuple[int, bytes | None]:
+    """统一打开请求，对 429/5xx 指数退避重试。返回 (http_code, raw_bytes_or_None)。
+    HTTPError(非重试码) 返回 (code, None)；网络异常返回 (0, None)。"""
+    last_code = 0
+    for attempt in range(_MAX_RETRIES + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+                return resp.getcode(), resp.read()
+        except urllib.error.HTTPError as e:  # noqa
+            last_code = e.code
+            if e.code in _RETRY_CODES and attempt < _MAX_RETRIES:
+                _sleep(_retry_after(e, attempt))
+                continue
+            return e.code, None
+        except Exception:  # noqa: network down / timeout
+            return 0, None
+    return last_code, None
 
 # 标题比对告警阈值：声称标题 vs DOI 实际标题的 difflib 相似度低于此 → 标"标题相似度低"(疑似张冠李戴)。
 # 经验默认值、可调：0.6 是保守线（归一化后明显不同才报），调高更敏感、调低更宽松。非数据反推。
@@ -54,32 +89,31 @@ def _title_sim(a: str, b: str) -> float:
 
 
 def fetch_doi_csl(doi: str) -> tuple[int, dict | None]:
-    """DOI 内容协商取 CSL-JSON。先打 doi.org，失败回退 Crossref /works/{doi}。"""
+    """DOI 内容协商取 CSL-JSON。先打 doi.org，失败回退 Crossref /works/{doi}。
+    429/5xx 由 _urlopen_retry 指数退避重试；404（DOI 不存在）不重试直接返回。"""
     doi = _norm_doi(doi)
     headers = {"User-Agent": _user_agent(), "Accept": "application/vnd.citationstyles.csl+json"}
     url = "https://doi.org/" + urllib.parse.quote(doi, safe="/().;:")
-    req = urllib.request.Request(url, headers=headers)
-    try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-            return resp.getcode(), json.loads(resp.read().decode("utf-8", "replace"))
-    except urllib.error.HTTPError as e:  # noqa
-        if e.code == 404:
-            return 404, None
-    except Exception:
-        pass
+    code, raw = _urlopen_retry(urllib.request.Request(url, headers=headers))
+    if code == 404:
+        return 404, None
+    if code == 200 and raw is not None:
+        try:
+            return 200, json.loads(raw.decode("utf-8", "replace"))
+        except Exception:  # noqa: JSON 解析失败则回退 Crossref
+            pass
     # 回退 Crossref
     cr = "https://api.crossref.org/works/" + urllib.parse.quote(doi, safe="/().;:")
     if _MAILTO:
         cr += "?mailto=" + urllib.parse.quote(_MAILTO, safe="")
     req2 = urllib.request.Request(cr, headers={"User-Agent": _user_agent(), "Accept": "application/json"})
-    try:
-        with urllib.request.urlopen(req2, timeout=TIMEOUT) as resp:
-            data = json.loads(resp.read().decode("utf-8", "replace"))
-            return resp.getcode(), data.get("message")
-    except urllib.error.HTTPError as e:  # noqa
-        return e.code, None
-    except Exception:
-        return 0, None
+    code2, raw2 = _urlopen_retry(req2)
+    if code2 == 200 and raw2 is not None:
+        try:
+            return code2, json.loads(raw2.decode("utf-8", "replace")).get("message")
+        except Exception:  # noqa
+            return code2, None
+    return code2, None
 
 
 _ARXIV_RE = re.compile(r"(\d{4}\.\d{4,5})(v\d+)?$|^([a-z\-]+(\.[A-Z]{2})?/\d{7})")
@@ -103,14 +137,10 @@ def verify_arxiv(arxiv_id: str) -> tuple[int, dict | None]:
     url = "http://export.arxiv.org/api/query?" + urllib.parse.urlencode(
         {"id_list": aid, "max_results": "1"})
     req = urllib.request.Request(url, headers={"User-Agent": _user_agent()})
-    try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-            raw = resp.read().decode("utf-8", "replace")
-            code = resp.getcode()
-    except urllib.error.HTTPError as e:  # noqa
-        return e.code, None
-    except Exception:
-        return 0, None
+    code, raw_bytes = _urlopen_retry(req)
+    if code != 200 or raw_bytes is None:
+        return code, None
+    raw = raw_bytes.decode("utf-8", "replace")
     # Atom 里有 <entry> 且 title 不是 "Error" 即命中（不引 XML 库，正则取 title）
     if "<entry>" not in raw:
         return code, None

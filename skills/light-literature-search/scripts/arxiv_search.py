@@ -28,6 +28,7 @@ import argparse
 import json
 import re
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -43,18 +44,41 @@ ARXIV = "http://export.arxiv.org/api/query"
 BIORXIV = "https://api.biorxiv.org/details"
 UA = "Light-literature-search/1.0"
 ATOM = "{http://www.w3.org/2005/Atom}"
+# 限速/临时故障指数退避重试（零依赖、零费用）：arXiv 限速严、bioRxiv 偶 5xx。
+_RETRY_CODES = {429, 502, 503, 504}
+_MAX_RETRIES = 2
+_BACKOFF_BASE = 0.5
+_sleep = time.sleep
+
+
+def _retry_after(e, attempt: int) -> float:
+    ra = e.headers.get("Retry-After") if getattr(e, "headers", None) else None
+    if ra:
+        try:
+            return min(float(ra), 8.0)
+        except ValueError:
+            pass
+    return min(_BACKOFF_BASE * (2 ** attempt), 8.0)
 
 
 def _get(url: str) -> tuple[int, str]:
-    """返回 (http_code, raw_text)。网络/超时异常吞掉返回 (0, "")。"""
+    """返回 (http_code, raw_text)。网络/超时异常吞掉返回 (0, "")。
+    对 429/5xx 按指数退避自动重试（尊重 Retry-After，零依赖）。"""
     req = urllib.request.Request(url, headers={"User-Agent": UA})
-    try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-            return resp.getcode(), resp.read().decode("utf-8", "replace")
-    except urllib.error.HTTPError as e:  # noqa
-        return e.code, ""
-    except Exception:  # noqa: network down / timeout
-        return 0, ""
+    last_code = 0
+    for attempt in range(_MAX_RETRIES + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+                return resp.getcode(), resp.read().decode("utf-8", "replace")
+        except urllib.error.HTTPError as e:  # noqa
+            last_code = e.code
+            if e.code in _RETRY_CODES and attempt < _MAX_RETRIES:
+                _sleep(_retry_after(e, attempt))
+                continue
+            return e.code, ""
+        except Exception:  # noqa: network down / timeout
+            return 0, ""
+    return last_code, ""
 
 
 def _norm_doi(doi: str | None) -> str:
@@ -131,25 +155,49 @@ def search_arxiv(query: str, max_results: int = 10) -> tuple[int, list[dict]]:
 
 # ----------------------------- bioRxiv / medRxiv (JSON) -----------------------------
 def search_biorxiv(keyword: str, server: str = "biorxiv",
-                   days: int = 30, max_scan: int = 100) -> tuple[int, list[dict]]:
-    """bioRxiv/medRxiv：拉最近一段时间窗的预印本，本地按关键词过滤标题/摘要。
+                   days: int = 30, max_scan: int = 100,
+                   end_date: str = "", start_date: str = "") -> tuple[int, list[dict]]:
+    """bioRxiv/medRxiv：拉一段日期区间内的预印本，本地按关键词过滤标题/摘要。
 
-    注：bioRxiv API 无关键词检索端点，只能按日期窗/cursor 拉取，故本地过滤并标注。
-    interval 用 最近 N 天（YYYY-MM-DD/YYYY-MM-DD 由调用方外部算好或用相对天数端点）。
-    这里用 details/{server}/{days}d 形式不被支持，改用 0 cursor 拉最新一页演示口径。
+    实测端点（2026-06，HTTP 200）：/details/{server}/{from}/{to}/{cursor}
+      - 每页 30 条，messages[0].total 给区间总数，cursor 按 30 递增翻页。
+    注：bioRxiv API **无服务端关键词检索**，只能按日期区间拉取后本地过滤标题/摘要，
+    故命中数取决于 days 窗口大小（窗口越大召回越全但请求越多）；如实标注非服务端检索。
+
+    days：日期窗口天数（默认 30）。end_date/start_date 可显式覆盖（YYYY-MM-DD），
+    不传则用"无 Date.now() 依赖"的相对窗口——由调用方传 end_date，否则回退最新一页。
+    max_scan：本地最多扫描多少条（跨多页累计）后停止，控请求量。
     """
     kw = keyword.lower().strip()
-    # bioRxiv 支持 /details/{server}/{N}（N 为相对最近条数游标）或日期区间；
-    # 为稳健用日期区间需调用方传入，这里用最新游标页拉一页（cursor=0）。
-    url = f"{BIORXIV}/{server}/0"
-    code, raw = _get(url)
+    # 日期区间：优先显式 start/end；否则按 end_date 往前推 days 天；
+    # 都没有则回退单页 cursor=0（拉最新一页，与旧行为兼容、不强依赖系统时钟）。
+    interval = ""
+    if start_date and end_date:
+        interval = f"{start_date}/{end_date}"
+    elif end_date:
+        try:
+            import datetime as _dt
+            e = _dt.date.fromisoformat(end_date)
+            s = e - _dt.timedelta(days=max(1, days))
+            interval = f"{s.isoformat()}/{e.isoformat()}"
+        except ValueError:
+            interval = ""
     out: list[dict] = []
-    if code == 200 and raw:
+    last_code = 0
+    cursor = 0
+    while len(out) < max_scan:
+        url = f"{BIORXIV}/{server}/{interval}/{cursor}" if interval else f"{BIORXIV}/{server}/{cursor}"
+        last_code, raw = _get(url)
+        if last_code != 200 or not raw:
+            break
         try:
             data = json.loads(raw)
         except json.JSONDecodeError:
-            return code, out
-        for r in data.get("collection", [])[:max_scan]:
+            break
+        coll = data.get("collection", [])
+        if not coll:
+            break
+        for r in coll:
             title = r.get("title") or ""
             abs = r.get("abstract") or ""
             if kw and kw not in title.lower() and kw not in abs.lower():
@@ -164,12 +212,20 @@ def search_biorxiv(keyword: str, server: str = "biorxiv",
                 r.get("doi") or "", "", abs,
                 (f"https://www.biorxiv.org/content/{r.get('doi')}" if r.get("doi") else ""),
                 is_preprint=True, published_doi=pub))
-    return code, out
+        # 无日期区间（单页模式）只拉一页；有区间则按 30 翻页直到扫满或翻完
+        if not interval:
+            break
+        total = int((data.get("messages") or [{}])[0].get("total", 0) or 0)
+        cursor += len(coll)
+        if cursor >= total:
+            break
+    return last_code, out
 
 
 # ----------------------------- run / 输出 -----------------------------
 def run(query: str, source: str = "arxiv", max_results: int = 10,
-        days: int = 30, offline_sample: bool = False) -> dict:
+        days: int = 30, offline_sample: bool = False,
+        end_date: str = "", start_date: str = "") -> dict:
     offline = False
     records: list[dict] = []
     http: dict = {}
@@ -180,7 +236,8 @@ def run(query: str, source: str = "arxiv", max_results: int = 10,
             records += recs
         if source in ("biorxiv", "medrxiv", "both"):
             srv = "medrxiv" if source == "medrxiv" else "biorxiv"
-            c, recs = search_biorxiv(query, srv, days, max_results * 10)
+            c, recs = search_biorxiv(query, srv, days, max_results * 10,
+                                     end_date=end_date, start_date=start_date)
             http[srv] = c
             records += recs
         if not records and all(v == 0 for v in http.values()):
@@ -264,6 +321,30 @@ def _selftest() -> int:
     assert brecs[0]["doi"] == "10.1/bio.1", brecs[0]
     assert brecs[0]["published_doi"] == "10.2/pub.1", brecs[0]  # 已转正式发表
 
+    # 2b) bioRxiv 日期区间 + cursor 翻页：mock 两页（total=2），验证翻页到 total 即停、跨页累计过滤
+    page0 = json.dumps({"messages": [{"total": "2"}], "collection": [
+        {"title": "Goat page0", "abstract": "goat here", "date": "2026-06-01",
+         "authors": "A", "doi": "10.1/p0", "published": "NA"}]})
+    page1 = json.dumps({"messages": [{"total": "2"}], "collection": [
+        {"title": "Goat page1", "abstract": "more goat", "date": "2026-06-02",
+         "authors": "B", "doi": "10.1/p1", "published": "NA"}]})
+    seq = {"calls": 0}
+
+    def fake_get_paged(url):
+        # interval 模式 URL 形如 .../biorxiv/<from>/<to>/<cursor>，按 cursor 末段返回不同页
+        cur = url.rstrip("/").rsplit("/", 1)[-1]
+        seq["calls"] += 1
+        return 200, (page0 if cur == "0" else page1)
+    try:
+        _get = fake_get_paged
+        code2, paged = search_biorxiv("goat", "biorxiv", days=7, max_scan=100,
+                                      end_date="2026-06-08")
+    finally:
+        _get = orig_get
+    assert code2 == 200 and len(paged) == 2, paged          # 两页都命中关键词
+    assert {r["doi"] for r in paged} == {"10.1/p0", "10.1/p1"}, paged
+    assert seq["calls"] == 2, seq                            # 翻到 total=2 即停，不无限翻
+
     # 3) arXiv 解析失败容错
     assert parse_arxiv_atom("<not valid xml") == []
 
@@ -282,7 +363,11 @@ def main() -> None:
     ap.add_argument("--source", default="arxiv",
                     choices=["arxiv", "biorxiv", "medrxiv", "both"])
     ap.add_argument("--max-results", type=int, default=10)
-    ap.add_argument("--days", type=int, default=30, help="bioRxiv 时间窗（天）")
+    ap.add_argument("--days", type=int, default=30, help="bioRxiv 时间窗（天）；配合 --end-date 生效")
+    ap.add_argument("--end-date", default="",
+                    help="bioRxiv 日期区间终点 YYYY-MM-DD（往前推 --days 天为起点）；不传则拉最新一页")
+    ap.add_argument("--start-date", default="",
+                    help="bioRxiv 日期区间起点 YYYY-MM-DD（与 --end-date 同传则用显式区间）")
     ap.add_argument("--offline", action="store_true", help="强制用合成样本")
     ap.add_argument("--selftest", action="store_true", help="run offline synthetic self-test")
     ap.add_argument("--json-out", default="")
@@ -293,7 +378,8 @@ def main() -> None:
         sys.exit(_selftest())
 
     result = run(args.query, args.source, args.max_results, args.days,
-                 offline_sample=args.offline)
+                 offline_sample=args.offline,
+                 end_date=args.end_date, start_date=args.start_date)
     md = to_markdown(result["records"], args.query)
     if args.json_out:
         with open(args.json_out, "w", encoding="utf-8") as f:

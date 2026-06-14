@@ -31,6 +31,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.parse
 import urllib.request
 from typing import Any
@@ -59,6 +60,21 @@ _API_KEY = os.environ.get("OPENALEX_API_KEY", "").strip()
 _S2_API_KEY = os.environ.get("S2_API_KEY", "").strip()
 TIMEOUT = 30
 PLACEHOLDER_MORE = None
+# 限速/临时故障指数退避重试（零依赖、零费用）：免 key 走共享池高峰常 429。
+_RETRY_CODES = {429, 502, 503, 504}
+_MAX_RETRIES = 2
+_BACKOFF_BASE = 0.5
+_sleep = time.sleep
+
+
+def _retry_after(e, attempt: int) -> float:
+    ra = e.headers.get("Retry-After") if getattr(e, "headers", None) else None
+    if ra:
+        try:
+            return min(float(ra), 8.0)
+        except ValueError:
+            pass
+    return min(_BACKOFF_BASE * (2 ** attempt), 8.0)
 
 
 def _user_agent() -> str:
@@ -88,20 +104,28 @@ def _oa_dict(params: dict) -> dict:
 
 
 def _get_json(url: str, headers: dict | None = None) -> tuple[int, Any]:
-    """返回 (http_code, parsed_json_or_None)。任何异常吞掉返回 (0, None)。"""
+    """返回 (http_code, parsed_json_or_None)。任何异常吞掉返回 (0, None)。
+    对 429/5xx 按指数退避自动重试（尊重 Retry-After，零依赖）。"""
     h = {"User-Agent": _user_agent(), "Accept": "application/json"}
     if headers:
         h.update(headers)
     req = urllib.request.Request(url, headers=h)
-    try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-            code = resp.getcode()
-            data = json.loads(resp.read().decode("utf-8", "replace"))
-            return code, data
-    except urllib.error.HTTPError as e:  # noqa
-        return e.code, None
-    except Exception:  # noqa: network down / timeout / json error
-        return 0, None
+    last_code = 0
+    for attempt in range(_MAX_RETRIES + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+                code = resp.getcode()
+                data = json.loads(resp.read().decode("utf-8", "replace"))
+                return code, data
+        except urllib.error.HTTPError as e:  # noqa
+            last_code = e.code
+            if e.code in _RETRY_CODES and attempt < _MAX_RETRIES:
+                _sleep(_retry_after(e, attempt))
+                continue
+            return e.code, None
+        except Exception:  # noqa: network down / timeout / json error
+            return 0, None
+    return last_code, None
 
 
 def _oa_id(workid: str) -> str:
@@ -292,7 +316,7 @@ def dedup_neighbors(records: list[dict]) -> list[dict]:
 # ----------------------------- 编排 -----------------------------
 def snowball(seed: str, hops: int = 1, provider: str = "openalex",
              limit: int = 50, offline_sample: bool = False,
-             expand_top: int = 3) -> dict:
+             expand_top: int = 3, two_hop_direction: str = "backward") -> dict:
     offline = False
     all_recs: list[dict] = []
     seed_title = seed
@@ -315,17 +339,29 @@ def snowball(seed: str, hops: int = 1, provider: str = "openalex",
                 print("[HTTP] OpenAlex backward=%s forward=%s" % (bc, fc),
                       file=sys.stderr)
                 all_recs = refs + cites
-                # 两跳：对一跳邻居中被引最高的若干篇再做一次后向参考。
-                if hops >= 2 and refs:
+                # 两跳：对一跳邻居中被引最高的若干篇再扩展。
+                # 方向可控（默认 backward 保持原行为、不增请求量）：
+                #   backward=追根溯源（被引最高邻居的参考文献，找共同奠基工作）
+                #   forward=追踪最新（被引最高邻居的后续被引，找前沿，请求量更大）
+                #   both=两个方向都扩（最全但请求量最大）
+                if hops >= 2 and (refs or cites):
                     one = dedup_neighbors(refs + cites)[:max(1, expand_top)]
                     for nb in one:
-                        if nb.get("oa_id"):
-                            c2, w2 = oa_resolve_seed(nb["oa_id"])
-                            if w2:
-                                _, r2 = oa_backward(w2, max_refs=limit)
-                                for x in r2:
-                                    x["edge"] = "reference"
-                                all_recs += r2
+                        if not nb.get("oa_id"):
+                            continue
+                        c2, w2 = oa_resolve_seed(nb["oa_id"])
+                        if not w2:
+                            continue
+                        if two_hop_direction in ("backward", "both"):
+                            _, r2 = oa_backward(w2, max_refs=limit)
+                            for x in r2:
+                                x["edge"] = "reference"
+                            all_recs += r2
+                        if two_hop_direction in ("forward", "both"):
+                            _, f2 = oa_forward(w2, limit=limit)
+                            for x in f2:
+                                x["edge"] = "citation"
+                            all_recs += f2
             else:
                 offline = True
     if offline_sample or offline:
@@ -335,7 +371,8 @@ def snowball(seed: str, hops: int = 1, provider: str = "openalex",
         print("[OFFLINE] 网络不可达，使用内置合成样本验证管线。", file=sys.stderr)
     merged = dedup_neighbors(all_recs)
     return {"seed": seed, "seed_title": seed_title, "provider": provider,
-            "hops": hops, "offline": offline, "raw_count": len(all_recs),
+            "hops": hops, "two_hop_direction": two_hop_direction if hops >= 2 else None,
+            "offline": offline, "raw_count": len(all_recs),
             "merged_count": len(merged), "neighbors": merged}
 
 
@@ -397,7 +434,41 @@ def _selftest() -> int:
     assert result["raw_count"] >= 1 and result["merged_count"] >= 1, result
     md = to_markdown(result)
     assert "10.1016/j.compag.2021.100001" in md and result.get("merged_count", 0) >= 1, md
-    print("[selftest] PASS snowball")
+
+    # 两跳方向可控：mock 一跳/解析/扩展，验证 backward 只扩后向、both 两向都扩
+    global oa_resolve_seed, oa_backward, oa_forward
+    o_res, o_bwd, o_fwd = oa_resolve_seed, oa_backward, oa_forward
+    log = {"bwd": 0, "fwd": 0}
+    seed_w = {"id": "https://openalex.org/W1", "title": "seed", "referenced_works": ["W9"]}
+    nb_rec = {"edge": "reference", "source_api": "OpenAlex", "title": "hop1",
+              "doi": "10.1/hop1", "cited_by": 50, "cited_by_src": "OpenAlex",
+              "is_influential": None, "oa_id": "W2", "url": "openalex:W2"}
+
+    def fake_res(seed):
+        return 200, (seed_w if str(seed).upper().startswith("10") or "W1" in str(seed)
+                     else {"id": "https://openalex.org/W2", "title": "hop1node"})
+
+    def fake_bwd(w, max_refs=50):
+        log["bwd"] += 1
+        return 200, [dict(nb_rec)]
+
+    def fake_fwd(w, limit=50):
+        log["fwd"] += 1
+        return 200, [dict(nb_rec, edge="citation", doi="10.1/fwd", oa_id="W3")]
+    try:
+        oa_resolve_seed, oa_backward, oa_forward = fake_res, fake_bwd, fake_fwd
+        # backward（默认）：一跳各 1 次 + 两跳只 backward
+        log["bwd"] = log["fwd"] = 0
+        snowball("10.1/seed", hops=2, expand_top=1, two_hop_direction="backward")
+        assert log["fwd"] == 1 and log["bwd"] >= 2, log  # forward 仅一跳那次；backward 一跳+两跳
+        # both：两跳两个方向都扩 → forward 被多调用
+        log["bwd"] = log["fwd"] = 0
+        snowball("10.1/seed", hops=2, expand_top=1, two_hop_direction="both")
+        assert log["fwd"] >= 2 and log["bwd"] >= 2, log  # 一跳+两跳各方向都有
+    finally:
+        oa_resolve_seed, oa_backward, oa_forward = o_res, o_bwd, o_fwd
+
+    print("[selftest] PASS snowball (含两跳方向 backward/forward/both)")
     return 0
 
 
@@ -408,6 +479,9 @@ def main() -> None:
     ap.add_argument("--hops", type=int, default=1, choices=[1, 2])
     ap.add_argument("--expand-top", type=int, default=3,
                     help="两跳时对一跳邻居中被引最高的前 N 篇再扩展（默认 3，可配）")
+    ap.add_argument("--two-hop-direction", default="backward",
+                    choices=["backward", "forward", "both"],
+                    help="两跳方向：backward追根溯源(默认)/forward追前沿(请求更多)/both全扩")
     ap.add_argument("--provider", default="openalex",
                     choices=["openalex", "s2"])
     ap.add_argument("--limit", type=int, default=50)
@@ -436,7 +510,8 @@ def main() -> None:
 
     result = snowball(args.seed, hops=args.hops, provider=args.provider,
                       limit=args.limit, offline_sample=args.offline,
-                      expand_top=args.expand_top)
+                      expand_top=args.expand_top,
+                      two_hop_direction=args.two_hop_direction)
     md = to_markdown(result)
 
     if args.json_out:

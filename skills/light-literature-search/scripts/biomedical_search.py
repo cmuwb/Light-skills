@@ -47,6 +47,21 @@ _API_KEY = os.environ.get("NCBI_API_KEY", "").strip()
 TIMEOUT = 30
 EPMC = "https://www.ebi.ac.uk/europepmc/webservices/rest"
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
+# 限速/临时故障指数退避重试（零依赖、零费用）：PubMed 无 key 限 3 req/s 易 429。
+_RETRY_CODES = {429, 502, 503, 504}
+_MAX_RETRIES = 2
+_BACKOFF_BASE = 0.5
+_sleep = time.sleep
+
+
+def _retry_after(e, attempt: int) -> float:
+    ra = e.headers.get("Retry-After") if getattr(e, "headers", None) else None
+    if ra:
+        try:
+            return min(float(ra), 8.0)
+        except ValueError:
+            pass
+    return min(_BACKOFF_BASE * (2 ** attempt), 8.0)
 
 
 def _user_agent() -> str:
@@ -56,15 +71,23 @@ def _user_agent() -> str:
 
 
 def _get(url: str, accept: str = "application/json") -> tuple[int, str]:
-    """返回 (http_code, raw_text)。网络/超时异常吞掉返回 (0, "")。"""
+    """返回 (http_code, raw_text)。网络/超时异常吞掉返回 (0, "")。
+    对 429/5xx 按指数退避自动重试（尊重 Retry-After，零依赖）。"""
     req = urllib.request.Request(url, headers={"User-Agent": _user_agent(), "Accept": accept})
-    try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-            return resp.getcode(), resp.read().decode("utf-8", "replace")
-    except urllib.error.HTTPError as e:  # noqa
-        return e.code, ""
-    except Exception:  # noqa: network down / timeout
-        return 0, ""
+    last_code = 0
+    for attempt in range(_MAX_RETRIES + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+                return resp.getcode(), resp.read().decode("utf-8", "replace")
+        except urllib.error.HTTPError as e:  # noqa
+            last_code = e.code
+            if e.code in _RETRY_CODES and attempt < _MAX_RETRIES:
+                _sleep(_retry_after(e, attempt))
+                continue
+            return e.code, ""
+        except Exception:  # noqa: network down / timeout
+            return 0, ""
+    return last_code, ""
 
 
 def _norm_doi(doi: str | None) -> str:
