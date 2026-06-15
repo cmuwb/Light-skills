@@ -102,6 +102,7 @@
 | slides | `scripts/to_pdf.py` | PPTX 转 PDF，优先 LibreOffice `soffice` 无头转换，用于后续视觉审查 |
 | tool-selection | `scripts/detect_stack.py` | 读取项目清单文件识别技术栈，给出工具/技能选型建议，并做冲突/异味与版本时效检测，输出 tooling_plan 与 light.findings.v1 |
 | tool-selection | `scripts/run_routing_eval.py` | 工具路由回归 eval：按 evals/tool_choice_eval.json 断言 task→tool 映射，防 RULES/ALIASES/SMELLS 漂移 |
+| typesetting | `scripts/compile_driver.py` | LaTeX 真实编译驱动器：从 .tex 自动探测引擎(fontspec/xeCJK/ctex→xelatex、luacode→lualatex、否则 pdflatex)+调 latexmk/tectonic 真编译多轮收敛+把 cryptic 报错翻译成大白话+auto-fix 建议(microtype/htbp)，无工具诚实降级 tool_missing 不假装成功 |
 | typesetting | `scripts/precheck_log.py` | 扫描 LaTeX `.log`，汇总编译错误、警告、undefined citation/reference 等问题 |
 | typesetting | `scripts/submission_check.py` | 投稿前合规/匿名雷区扫描：双盲身份泄漏(\author/致谢/可识别链接)、PDF 元数据 /Author、页数上限、残留 TODO，拦 desk-reject |
 | venue-matching | `scripts/venue_signal.py` | 投稿 venue 五信号对照：发文量趋势/自引率粗查/审稿周期/作者匹配度/APC 分区，OpenAlex + db01 卡，失败优雅降级 |

@@ -5,6 +5,8 @@ description: 根据目标期刊/会议/学校/比赛要求做 LaTeX 或 Word 排
 
 # LaTeX / Word 排版与导出
 
+> **增量边界（诚实，别把裸模型自带的 LaTeX 常识当本技能贡献）**：amsmath/booktabs/cleveref 加载顺序、biblatex vs bibtex、IEEEtran 起手式、latexmk 选项、tlmgr 装包、Word 用样式不手动格式、Pandoc --citeproc——都是**强 Opus 自带的标准知识，近零增量**，占了 SKILL 正文一大半。本技能真正超出裸模型的是**可调用工具 + 带 provenance 的资产**：①`compile_driver.py` 真编译驱动（引擎自动探测+多轮+报错翻译，此前编译只是口头描述）②`precheck_log.py` 的 de-wrap（把 79 列折断的长引用名拼回，裸模型扫 log 必踩）+ `--strict` 把警告变可阻断交付门③`submission_check.py` 把 desk-reject 合规检查前置自动化④五份预编译验证过（Tectonic 退出 0 留痕）的可编译骨架。**诚实落后项**（未做）：acmsigsoft 的渲染版式级审查（只数总页不看布局，压缩 PDF 还数不准）、CheckMyTex 的持久化 whitelist 棘轮（precheck 每轮重报良性盒子）、latexdiff 修订工件、官方 docx 的真 OOXML 编辑（Word 路线仅生成 + 口头描述）。
+
 ## 开工前
 确认目标 venue 的官方模板与要求(db01: template_url, reference_style, 单双栏, 页数限制)。`reference_style` → LaTeX 文档类/bst 的映射查 **db01 references.md §2**（与 m10 引用同源，不各读各的）；`template_url` 是易腐链接，取用前校验 200，失链回 venue 官网 author kit。优先官方模板，不自造。取模板优先级：venue 官网 author kit > Overleaf 官方模板页(`overleaf.com/gallery/tagged/…` 或 "Open as Template") > CTAN 包。注意会议模板有年度版本(如 NDSS `bare_conf_LAST-X2026.tex`)，务必用当届指定版本，旧版会被 desk-reject。从官方骨架文件改(IEEE `bare_conf.tex`、ACM `sample-*.tex`)，不从空文件起。
 
@@ -20,7 +22,8 @@ description: 根据目标期刊/会议/学校/比赛要求做 LaTeX 或 Word 排
 参考文献两套体系不可混：传统 bibtex + venue `.bst`，或现代 biblatex + biber。国标用 `gbt7714` 包(`\bibliographystyle{gbt7714-numerical}` 顺序编码 / `gbt7714-author-year`)，条目必须带 `langid` 区分中英文，否则"等/et al."与文献类型标识`[C]/[J]`会错。
 
 ## 编译与环境
-- 用 `latexmk` 自动收敛多轮编译：`latexmk -pdf file.tex`(pdflatex)；中文/特殊字体用 `-xelatex` 或 `-lualatex`；minted/TikZ 外部化加 `-shell-escape`；CI 用 `-interaction=nonstopmode`；`-pvc` 持续预览；清理 `-c`(留 PDF)/`-C`(全删)。可用 `latexmkrc` 设 `$pdf_mode`(1=pdflatex/4=lualatex/5=xelatex)。
+- **真编译驱动（别再手敲 latexmk——本技能现有可调用编译器）**：`python scripts/compile_driver.py --compile file.tex --outdir build`：从 .tex 内容**自动探测引擎**（fontspec/xeCJK/ctex/polyglossia→xelatex、luacode/\directlua→lualatex、否则 pdflatex），调 latexmk（多轮收敛 + bibtex/biber 自动）或回退 tectonic（自带宏包更自包含），**把 cryptic 报错翻译成大白话 + auto-fix 建议**（Undefined control sequence→拼写错/缺包、Missing $→数学符号放进 $...$、缺 .sty→tlmgr install、多处 overfull→加 microtype、float [h]→[htbp]）。退出码非 0=编译失败。**无 latexmk/tectonic 时诚实返回 tool_missing，绝不假装编译成功。** 只想看引擎选择：`--detect file.tex`。
+- 底层 `latexmk` 手动用法（驱动器即封装它）：`latexmk -pdf file.tex`(pdflatex)；中文/特殊字体用 `-pdfxe`(xelatex) 或 `-pdflua`；minted/TikZ 外部化加 `-shell-escape`；CI 用 `-interaction=nonstopmode`；`-pvc` 持续预览；清理 `-c`(留 PDF)/`-C`(全删)。可用 `latexmkrc` 设 `$pdf_mode`(1=pdflatex/4=lualatex/5=xelatex)。
 - 缺包：TeX Live 用 `tlmgr install <pkg>`(先 `tlmgr update --self`)，查归属 `tlmgr search --global --file <name.sty>`；轻量环境用 TinyTeX，`tinytex::latexmk()` 编译时自动探测安装缺失包。
 - 逐条排查 error/warning：缺包、未定义引用(跑够轮数/bibtex)、overfull/underfull hbox、图片找不到；字体与数学字体保持一致。
 - **投稿出包前净化(借 arxiv-latex-cleaner)**：交 arXiv/会议前清掉源码里的隐私与体积包袱——注释里的真名/草稿/内部链接(`%` 注释 arXiv 会随源公开)、未引用的图片与 `.bib` 条目、`\todo`、超大原图。可用 `arxiv-latex-cleaner <dir>` 一键(去注释+压图+删冗余)，或手动核对后再打包。配合 `submission_check.py` 先扫合规雷区，双保险。
@@ -40,7 +43,7 @@ description: 根据目标期刊/会议/学校/比赛要求做 LaTeX 或 Word 排
    - 五份骨架结构完整、可直接编译（见各文件头注释的编译命令）。**编译验证（2026-06-12，Tectonic）**：五份全部 `tectonic <f>.tex` 退出 0 产出 PDF（IEEE/ACM/Springer/Elsevier 走 pdflatex 路径，ctex_chinese 走 XeLaTeX 路径自动装中文字体）；留痕 `_verification_log/R7-tex-compile.md`。
 2. **灌内容**：填 title/author/abstract/keywords、章节正文(来自 m07/m08)、公式(`amsmath`)、三线表(`booktabs`)、算法(`algorithm2e`/`algpseudocode`)。图(来自 m11)用 `\includegraphics` 替换骨架里的 `\rule{}` 占位框；宽图用 `figure*` 跨双栏放页顶。
 3. **挂引用**：引用(来自 m10)写进 `refs.bib`，正文 `\cite{key}`，启用骨架里注释的 `\bibliographystyle{IEEEtran}`+`\bibliography{refs}`(替换演示用 `thebibliography`)。交叉引用用 `\label`+`\cref`。
-4. **编译收敛**：`latexmk -pdf -interaction=nonstopmode file.tex`(中文用 `-xelatex`)。latexmk 自动跑够轮数 + bibtex/biber 直到引用/目录收敛。缺包：TeX Live `tlmgr install`、MiKTeX `miktex packages install <pkg>` 并 `initexmf --update-fndb`。
+4. **编译收敛**：`python scripts/compile_driver.py --compile file.tex --outdir build`——自动选引擎 + 调 latexmk 多轮收敛 + 报错翻译大白话。（等价手动：`latexmk -pdf -interaction=nonstopmode file.tex`，中文用 `-pdfxe`。）缺包：MiKTeX 会提示自动装，或 `miktex packages install <pkg>` / TeX Live `tlmgr install`。
 5. **precheck**：`python scripts/precheck_log.py file.log`(加 `--json` 出结构化；**交付门用 `--strict`** 把 undefined ref/cite/重复 label 提升为致命阻断)。脚本先把 79 列硬折行 de-wrap 拼回再匹配，消除长引用名漏报。退出码非 0 = 有致命错误。按输出类别查 `references/latex_errors.md` 的「症状→根因→修法」表逐条修。
 6. **投稿合规/匿名扫描**：`python scripts/submission_check.py --tex paper.tex --pdf paper.pdf --double-blind --max-pages 8` —— 扫 desk-reject 雷区：双盲未匿名 `\author`/致谢/基金/可识别链接、PDF 元数据 `/Author` 露名、超页数、残留 TODO。高危项投稿前必清（这些不是内容问题但照样被编辑一眼拒）。
 7. **复核出 PDF**：过下面检查清单，确认页数/版式/匿名合规后交付 PDF + 可编译源工程 + 合规核对表。
@@ -56,6 +59,7 @@ Word 路线：用 `assets/docx_template.js`(docx-js)以代码生成带样式/TOC
 落盘工件名（CONVENTIONS §6.1，下游 m13/m14/提交 消费）：最终 `paper.pdf` + 可编译源工程 + 格式合规核对表。
 
 ## 本技能资产
+- `scripts/compile_driver.py`：**LaTeX 真实编译驱动器**（补"编译能力此前只是口头描述"）。引擎自动探测 + latexmk/tectonic 真编译多轮收敛 + cryptic 报错翻译大白话 + auto-fix 建议；无工具诚实降级 tool_missing 不假装成功。`--compile file.tex --outdir build` / `--detect file.tex`。复用 precheck_log 扫 undefined ref/cite。
 - `scripts/precheck_log.py`：扫 LaTeX `.log` 抓 undefined refs/citations、multiply-defined labels、overfull/underfull hbox、missing figure/file、undefined control sequence、致命 LaTeX/TeX error，按严重度汇总报告(`--json`/`--max`)，致命项退出码 1。**`--strict`** 把 undefined ref/cite/重复 label 提升为致命（交付门拦截）；**先 de-wrap** 把 79 列硬折行拼回再匹配（消除长引用名被折断的漏报）。无参数跑内置样例自测。
 - `scripts/submission_check.py`：投稿前合规/匿名雷区扫描——双盲未匿名 `\author`/`\thanks`/致谢/基金/可识别链接(github/orcid)、PDF 元数据 `/Author` 露名、页数上限、残留 TODO/XXX。`--tex`/`--pdf`/`--double-blind`/`--max-pages`，高危项退出码 1。纯标准库扫静态雷区，不替代 venue 投稿须知核对。
 - `templates/`：五份最小可编译骨架——`ieee_bare_conf.tex`/`acm_sigconf.tex`/`springer_llncs.tex`/`elsevier_elsarticle.tex`/`ctex_chinese.tex`，文件头注明编译命令与 venue 注意事项。
