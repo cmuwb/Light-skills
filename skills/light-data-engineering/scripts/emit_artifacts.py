@@ -40,28 +40,41 @@ STD_ARTIFACTS = {
     "data_card": "data_card.md",
     "feasibility": "data_feasibility.md",
 }
+# 条件工件（仅在做了对应检查时才有，不计入 --check 的"缺失"硬判定）：
+#   leak_findings: split_leakage.py 的机读产物，供 a07 一致性回扫 / a04 数据声明复核。
+OPTIONAL_ARTIFACTS = {
+    "leak_findings": "leak_findings.json",
+    "leak_audit": "leak_audit.md",
+}
+# normalize_name 查标准名时合并查（必需 + 条件）
+ALL_ARTIFACTS = {**STD_ARTIFACTS, **OPTIONAL_ARTIFACTS}
 # 各工件下游消费（与 §6.1 一致；feasibility 是本次补的 m03/m04）
 DOWNSTREAM = {
     "quality_report.md": "m05/a03/m06",
     "data_card.md": "m05/a03/m06",
     "data_feasibility.md": "m03/m04",
+    "leak_findings.json": "a07/a04",
+    "leak_audit.md": "a03/m05",
 }
 
 
 def check_dir(d: str) -> dict:
-    """检查目录里标准工件齐备情况。返回 {present, missing}。"""
+    """检查目录里标准工件齐备情况。返回 {present, missing, optional}。
+    optional = 条件工件中实际存在的（如 split_leakage 跑过才有），仅提示不计入 missing。"""
     present, missing = [], []
     for std in STD_ARTIFACTS.values():
         if os.path.isfile(os.path.join(d, std)):
             present.append(std)
         else:
             missing.append(std)
-    return {"present": present, "missing": missing}
+    optional = [o for o in OPTIONAL_ARTIFACTS.values()
+                if os.path.isfile(os.path.join(d, o))]
+    return {"present": present, "missing": missing, "optional": optional}
 
 
 def normalize_name(given: str, kind: str) -> tuple[str, bool]:
     """给定路径的 basename 是否匹配该 kind 的标准名。返回 (标准名, 是否已合规)。"""
-    std = STD_ARTIFACTS[kind]
+    std = ALL_ARTIFACTS[kind]
     base = os.path.basename(given)
     return std, (base == std)
 
@@ -92,16 +105,20 @@ def _selftest() -> int:
     # feasibility 下游是 m03/m04（补单向挂载的关键）
     assert DOWNSTREAM["data_feasibility.md"] == "m03/m04", DOWNSTREAM
     assert DOWNSTREAM["data_card.md"] == "m05/a03/m06"
+    # 条件工件 leak_findings：normalize 认标准名，下游 a07/a04（供回扫）
+    std, ok = normalize_name("x/leak_findings.json", "leak_findings")
+    assert std == "leak_findings.json" and ok, (std, ok)
+    assert DOWNSTREAM["leak_findings.json"] == "a07/a04", DOWNSTREAM
+    # 条件工件不计入 missing：check_dir 对不存在目录，missing 仍只含三必需件
+    res = check_dir("/nonexistent_dir_xyz_123")
+    assert set(res["missing"]) == set(STD_ARTIFACTS.values()), res
+    assert res["present"] == [] and res["optional"] == [], res
     # build_passport_cmd：含 append-stage、skill m02、artifacts、下游
     cmd = build_passport_cmd(".light/passport.yaml", 2,
                              ["quality_report.md", "data_feasibility.md"], "")
     s = " ".join(cmd)
     assert "append-stage" in s and "m02" in s and "passport.py" in s, s
     assert "m03/m04" in s and "m05/a03/m06" in s, "下游消费未写入 output: " + s
-    # check_dir：对一个一定不存在的目录，三标准工件全 missing
-    res = check_dir("/nonexistent_dir_xyz_123")
-    assert set(res["missing"]) == set(STD_ARTIFACTS.values()), res
-    assert res["present"] == [], res
     print("[selftest] PASS emit_artifacts offline")
     return 0
 
@@ -116,6 +133,7 @@ def main() -> int:
     ap.add_argument("--quality-report")
     ap.add_argument("--data-card")
     ap.add_argument("--feasibility")
+    ap.add_argument("--leak-findings", help="split_leakage.py 的 findings.json（条件工件，供 a07 回扫）")
     ap.add_argument("--gate-notes")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args()
@@ -130,6 +148,8 @@ def main() -> int:
             print(f"  [✓] {a}  → 下游 {DOWNSTREAM.get(a, '?')}")
         for a in res["missing"]:
             print(f"  [缺] {a}  → 下游 {DOWNSTREAM.get(a, '?')}（未生成）")
+        for a in res["optional"]:
+            print(f"  [+] {a}  → 下游 {DOWNSTREAM.get(a, '?')}（条件工件，已生成）")
         if res["missing"]:
             print("\n提示：data_card.md 由模板填，quality_report.md 由 data_doctor.py --out 生成，"
                   "data_feasibility.md 由 data_feasibility.py --out 生成。")
@@ -139,7 +159,8 @@ def main() -> int:
         arts = []
         for given, kind in ((args.quality_report, "quality_report"),
                             (args.data_card, "data_card"),
-                            (args.feasibility, "feasibility")):
+                            (args.feasibility, "feasibility"),
+                            (args.leak_findings, "leak_findings")):
             if not given:
                 continue
             std, ok = normalize_name(given, kind)
@@ -147,7 +168,7 @@ def main() -> int:
                 print(f"[warn] {given} 非标准名，应为 {std}（§6.1）", file=sys.stderr)
             arts.append(std)
         if not arts:
-            ap.error("--register 需至少一个 --quality-report/--data-card/--feasibility")
+            ap.error("--register 需至少一个 --quality-report/--data-card/--feasibility/--leak-findings")
         cmd = build_passport_cmd(args.passport, args.stage, arts, args.gate_notes)
         print("# 在仓库根执行以下命令把 m02 产物登记进 passport：")
         print(" ".join(f'"{c}"' if " " in c else c for c in cmd))

@@ -65,6 +65,7 @@ m03 与 m04 构成循环：idea 不过关就回到 m03。
 > 改动工件名只改本表，再同步对应技能「产出」节与 orchestrator §2 契约表（该表声明本表为真相源）。
 > m15/m16/m17 为按需并行技能（见 §6 流水线图），不在主线串行链上：仅当用户做对应任务时产出，文件名同样以本表为准（2026-06-14 补登记）。
 > `evidence_strength.json`（2026-06-15 新增）：金矿1 的跨技能"措辞不强于证据"数据源，由 m06 `analyze_results.py --emit-evidence` 产出，消费方用 `_shared/evidence_contract.lint_wording` 机械卡措辞（m07 `draft_lint --evidence` 已落地，退出码可接 CI）。
+> `leak_findings.json`（2026-06-15 新增，**条件工件**）：m02 `split_leakage.py` 在做了 train/test 泄漏审计时产出，挂 `_shared/findings_schema` 的 `light.findings.v1`（HIGH→verdict=fail）。非主线必产件，仅在审计时生成；经 `emit_artifacts.py --register --leak-findings` 登记进 passport，供 a07 一致性回扫与 a04 数据声明复核。
 
 ## 7. 输出纪律
 

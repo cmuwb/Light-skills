@@ -26,6 +26,7 @@
 | data-engineering | `scripts/quality_gate.py` | 按 YAML 规则校验 CSV，输出 PASS/FAIL 数据质量门报告，退出码可接 CI |
 | data-engineering | `scripts/safe_split.py` | 构建防泄漏 split + Pipeline/ColumnTransformer，支持 clf/reg/timeseries/group 任务 |
 | data-engineering | `scripts/sample_size_check.py` | 数据规模充足性经验预警：分类每类最小样本/回归样本特征比(EPV)/检测每类实例数，把"四问"之规模变可计算（标注非 power analysis） |
+| data-engineering | `scripts/split_leakage.py` | train/test 行级·实体级·近重复 泄漏审计（LEAK-02/SPLIT-02）：精确重复+实体重叠 HIGH、分箱近重复 MED、目标编码穿越检测，出 leak_audit.md + findings.json，HIGH 退出码 1 |
 | figure-drawing | `scripts/color_palettes.py` | 投稿级配色工具：Okabe-Ito、连续/离散色图、灰度与色盲模拟预览 |
 | figure-drawing | `scripts/figure_export.py` | 按目标期刊栏宽精确导出矢量+位图，校验物理尺寸与缩放后字号 |
 | figure-drawing | `scripts/figure_integrity_lint.py` | 图表诚实性静态扫描：y 轴截断、双 y 轴、bar 无误差棒、jet/rainbow、3D 扭曲等 |
@@ -47,6 +48,8 @@
 | idea-generation | `scripts/card_gate.py` | 立项卡交接门禁：校验 (m04复核) 字段非空、最近邻≥3带留痕、新颖性归档三档、撞车自评选档，残卡拒绝交 m04 |
 | idea-generation | `scripts/candidate_dedup.py` | 候选 idea 去重/伪多样性检测：文本相似度(零依赖)或 SPECTER2 余弦(可选)，批内 mean+1σ 自动标疑似变体对，把含糊阈值算法化 |
 | idea-generation | `scripts/rank_ideas.py` | 候选 idea 排序(m03 triage)：影响×工作量性价比确定性排序+先做/缓做/砍建议，收敛三套评分为唯一裁定 |
+| idea-generation | `scripts/provocation_gen.py` | 反 frame-lock 强制发散器 + 7 角度覆盖门禁：结构化激发算子×核心实体机械生成发散提问，某角度 0 候选即判 frame-lock 拦在收敛前（退出码 1） |
+| idea-generation | `scripts/swiss_rank.py` | 配对比较排序（灭"自报绝对分"病）：瑞士轮+ELO 两两裁判，每次比较喂双方最近邻文献 grounding，elo 注入 rank_ideas 成 lane 内主排序键 |
 | ip-application | `scripts/copyright_source_prep.py` | 软件著作权源代码材料整理：过滤/抽样/编号，避免提交敏感或无关代码 |
 | ip-application | `scripts/patent_search.py` | 在先技术检索辅助，支持引用图一跳扩展 `--snowball` |
 | literature-search | `scripts/arxiv_search.py` | 预印本检索（arXiv Atom + 可选 bioRxiv/medRxiv），标注 preprint 与是否已转正式发表 |
@@ -70,6 +73,9 @@
 | research-ethics | `scripts/check_retractions.py` | 批量撤稿/更正检查，通过 Crossref 等公开元数据标记 retraction risk |
 | research-ethics | `scripts/text_overlap.py` | 离线自查重，定位与给定语料最长逐字重合片段，辅助学术规范审查 |
 | research-ethics | `scripts/stat_consistency.py` | 统计自洽快查：GRIM/granularity 检验（均值粒度不可能）+ p值-自由度一致性（t/df、F/df1/df2），纯 stdlib 抓 p-hacking/造假信号 |
+| research-ethics | `scripts/extract_stats.py` | statcheck 式全文统计抽取：正则扫整篇 results 段抽 t/F/r/χ²/Z 报告式结果逐条重算，产"报告 p vs 重算 p"全表 GROSS 标红，漏抽显式声明 |
+| research-ethics | `scripts/tortured_phrase_scan.py` | 论文工厂/机翻洗稿筛查：词典子串扫草稿与待引文献标题/摘要的"扭曲短语"指纹，命中报红旗（需人工复核非定罪），--refs 供 m10 引用核验连带预警 |
+| research-ethics | `scripts/claim_evidence_bind.py` | 结论夸大门：消费 m06 evidence_strength.json，扫草稿强主张词措辞强于证据等级即标红+降级建议，挂 _shared/evidence_contract+gate_runner 产 light.findings.v1 |
 | result-analysis | `scripts/analyze_results.py` | 一条命令分析结果表：指标汇总、分组比较、排序与异常模式初筛 |
 | result-analysis | `scripts/explain_shap.py` | 生成 SHAP 可解释性三图（beeswarm / bar / waterfall），无 shap 库时降级 |
 | result-analysis | `scripts/leakage_overfit_check.py` | train/val/test gap 与数据泄漏风险筛查，提示过拟合和异常高分模式 |
@@ -77,8 +83,10 @@
 | result-analysis | `scripts/significance_test.py` | 显著性检验工具：p 值、效应量、置信区间、BH-FDR 多重校正 |
 | review-rebuttal | `scripts/fetch_openreview.py` | 抓取 OpenReview 公开评审语料，校准模拟审稿与 rebuttal 话术 |
 | review-rebuttal | `scripts/rebuttal_budget.py` | 会议 rebuttal 字数/页数预算检查，纯 stdlib 离线，中英混排分别计词、超限返回码 1 |
+| self-review | `scripts/review_lint.py` | 可执行的证据闸门（外部验证器）：扫无证据强主张/未验证完成声明/定量缺锚点，产出 light.findings.v1，exit≠0 阻断 |
 | slides | `scripts/pacing.py` | 答辩/路演时长估算：读 PPTX notes 时长标记累加估总时长、对照限时给 OK/超时+分配失衡页，无标记按字数×语速兜底 |
 | slides | `scripts/pptx_eval.py` | PPT 可量化质量评测：内容密度/设计一致/连贯性三维扣分制，对照 SKILL 硬尺度逐页给分+扣分理由，把视觉 QA 从肉眼查升级为可回归指标 |
+| slides | `scripts/geom_qa.py` | 确定性几何 QA（挂 _shared/visual_qa）：读每页 shape 几何真算两两重叠/溢出画布/超安全边距/对齐偏差，零重叠零溢出=hard_pass，退出码 0/1 |
 | slides | `scripts/thumbnail.py` | 把 PPTX/PDF 渲染成缩略图网格，快速做整套 deck 视觉 QA |
 | slides | `scripts/to_pdf.py` | PPTX 转 PDF，优先 LibreOffice `soffice` 无头转换，用于后续视觉审查 |
 | tool-selection | `scripts/detect_stack.py` | 读取项目清单文件识别技术栈，给出工具/技能选型建议，并做冲突/异味与版本时效检测，输出 tooling_plan 与 light.findings.v1 |
