@@ -176,6 +176,110 @@ def make_tree(root: Path) -> None:
 
 
 
+# ---------------------------------------------------------------- 审计模式
+# 应被 .gitignore 挡住、不该进 Git 的可重算/大体积产物目录 (DAG 铁律: 能重算的不入库)
+_NON_TRACK_DIRS = ["data/raw", "data/interim", "data/processed", "data/external",
+                   "models", "results", "logs"]
+# 命名违规: 空格 / 中文 / 其它非 ASCII (DAG 铁律: 命名规范)
+_BAD_NAME = __import__("re").compile(r"[\s一-鿿]|[^\x00-\x7f]")
+# 期望存在的根工件
+_EXPECT_FILES = ["README.md", "CHANGELOG.md"]
+_EXPECT_DIRS_ROOT = ["data", "src"]
+
+
+def _git_tracked(root: Path):
+    """返回 git 已跟踪文件的相对路径集合; 无 git 或不在仓库内返回 None (无法判定)。"""
+    if not shutil.which("git"):
+        return None
+    try:
+        out = subprocess.run(["git", "ls-files"], cwd=root, check=True,
+                             capture_output=True, text=True, encoding="utf-8")
+    except (subprocess.CalledProcessError, OSError):
+        return None
+    return set(out.stdout.replace("\\", "/").split("\n")) - {""}
+
+
+def audit(root: Path) -> dict:
+    """扫描已有项目, 报结构合规。返回 {verified, violations} —— 把 SKILL 的三条
+    DAG 铁律(raw 不可变/能重算的不入库/命名规范)从口头方法论变成可执行校验。
+
+    violations 每条: {rule, severity, loc, detail, fix}。
+    severity: critical(产物入库/raw 被跟踪) / important(缺关键工件) / minor(命名)。
+    """
+    violations, verified = [], []
+    tracked = _git_tracked(root)  # None=无法判定(无 git)
+
+    # ① 可重算/大体积产物是否被 Git 跟踪 (能重算的不入库)
+    if tracked is None:
+        verified.append("git 不可用或非仓库: 跳过'产物入库'检查(无法判定, 未静默通过)")
+    else:
+        for d in _NON_TRACK_DIRS:
+            bad = sorted(f for f in tracked
+                         if (f == d or f.startswith(d + "/")) and not f.endswith("/.gitkeep"))
+            if bad:
+                sev = "critical" if d == "data/raw" else "important"
+                rule = "raw_immutable_tracked" if d == "data/raw" else "derived_artifact_tracked"
+                violations.append({
+                    "rule": rule, "severity": sev, "loc": d,
+                    "detail": f"{d}/ 下有 {len(bad)} 个文件被 Git 跟踪(应可重算/不入库): {bad[:3]}",
+                    "fix": f"git rm -r --cached {d} && 在 .gitignore 补 `{d}/`(保留 .gitkeep)"})
+            else:
+                verified.append(f"{d}/ 未被 Git 跟踪 ✓(符合'能重算的不入库')")
+
+    # ② 命名违规: 目录/文件含空格或中文 (只扫项目自有树, 跳过 .git/.venv/node_modules 等)
+    skip = {".git", ".venv", "venv", "node_modules", "__pycache__", ".dvc", ".light"}
+    name_bad = []
+    for p in root.rglob("*"):
+        if any(part in skip for part in p.relative_to(root).parts):
+            continue
+        if _BAD_NAME.search(p.name):
+            name_bad.append(str(p.relative_to(root)).replace("\\", "/"))
+    if name_bad:
+        violations.append({
+            "rule": "bad_naming", "severity": "minor", "loc": ", ".join(name_bad[:5]),
+            "detail": f"{len(name_bad)} 个路径含空格/中文/非 ASCII(违反命名规范)",
+            "fix": "重命名为小写+连字符/下划线, 不用空格与中文"})
+    else:
+        verified.append("命名规范 ✓(无空格/中文/非 ASCII 路径)")
+
+    # ③ 关键工件缺失
+    for f in _EXPECT_FILES:
+        if not (root / f).exists():
+            violations.append({"rule": "missing_artifact", "severity": "important",
+                               "loc": f, "detail": f"缺 {f}",
+                               "fix": f"补 {f}(可用 scaffold.py 模板)"})
+        else:
+            verified.append(f"{f} 存在 ✓")
+    for d in _EXPECT_DIRS_ROOT:
+        if not (root / d).is_dir():
+            violations.append({"rule": "missing_dir", "severity": "important",
+                               "loc": d + "/", "detail": f"缺标准目录 {d}/",
+                               "fix": f"mkdir {d}(参照 PROJECT_STRUCTURE.md)"})
+    # .light/passport 联动 (SKILL 宣称'跨阶段真相源')
+    if not (root / ".light").is_dir():
+        violations.append({"rule": "missing_light_ledger", "severity": "minor",
+                           "loc": ".light/", "detail": "缺 .light/ 编排台账目录",
+                           "fix": "mkdir .light(放 passport.yaml / handoff 衔接卡)"})
+    else:
+        verified.append(".light/ 编排台账存在 ✓")
+
+    return {"root": str(root), "verified": verified, "violations": violations,
+            "n_violations": len(violations),
+            "n_critical": sum(1 for v in violations if v["severity"] == "critical")}
+
+
+def _print_audit(rep: dict) -> None:
+    print(f"== 结构审计: {rep['root']} ==")
+    print(f"通过 {len(rep['verified'])} 项 / 违规 {rep['n_violations']} 项"
+          f"(critical {rep['n_critical']})")
+    for v in rep["verified"]:
+        print(f"  ✓ {v}")
+    for v in rep["violations"]:
+        print(f"  ✖ [{v['severity']}] {v['rule']} @ {v['loc']}")
+        print(f"      {v['detail']}")
+        print(f"      修复: {v['fix']}")
+
+
 def _selftest() -> int:
     import tempfile
     try:
@@ -218,8 +322,24 @@ def _selftest() -> int:
         assert "def main" in stub.read_text(encoding="utf-8"), "dataset.py 桩缺 main()"
         dvc_yaml = (target3 / "dvc.yaml").read_text(encoding="utf-8")
         assert "demo_dvc.dataset" in dvc_yaml, "dvc.yaml cmd 未指向桩模块"
-    print("[selftest] PASS scaffold (uv 默认 + poetry 备选 + dvc 三路径)")
-    return 0
+        # 路径四: audit() 在脏项目上抓违规 (无 git 时跳过入库检查, 仍查命名/缺件)
+        dirty = Path(tmp) / "dirty-proj"
+        (dirty / "src").mkdir(parents=True)
+        (dirty / "data" / "raw").mkdir(parents=True)
+        (dirty / "我的 实验").mkdir()  # 命名违规: 空格 + 中文
+        rep = audit(dirty)
+        rules = {v["rule"] for v in rep["violations"]}
+        assert "bad_naming" in rules, "未抓出命名违规"
+        assert "missing_artifact" in rules, "未抓出缺 README/CHANGELOG"
+        assert "missing_light_ledger" in rules, "未抓出缺 .light"
+        assert rep["n_violations"] >= 3, rep["n_violations"]
+        # 干净项目(scaffold 刚建的)审计应近乎全过 (无 git 时入库检查跳过)
+        clean_rep = audit(target)
+        assert not any(v["rule"] == "bad_naming" for v in clean_rep["violations"]), \
+            "scaffold 自建项目不应有命名违规"
+        assert any("命名规范" in v for v in clean_rep["verified"]), "干净项目应记命名通过"
+        print("[selftest] PASS scaffold (uv 默认 + poetry 备选 + dvc + audit 四路径)")
+        return 0
 
 
 def main(argv=None) -> int:
@@ -232,11 +352,26 @@ def main(argv=None) -> int:
     backend.add_argument("--uv", action="store_true", help="pyproject.toml 用 uv 后端 (默认)")
     backend.add_argument("--poetry", action="store_true", help="pyproject.toml 改用 Poetry 后端 (备选)")
     ap.add_argument("--force", action="store_true", help="目标非空时仍继续")
+    ap.add_argument("--check", metavar="DIR", help="审计已有项目结构合规(不建树), 报违规+修复建议")
+    ap.add_argument("--json", action="store_true", help="配合 --check: 输出 JSON")
     ap.add_argument("--selftest", action="store_true", help="run offline scaffold self-test")
     args = ap.parse_args(argv)
 
     if args.selftest:
         return _selftest()
+    if args.check:
+        croot = Path(args.check).resolve()
+        if not croot.is_dir():
+            print(f"错误: 待审计目录不存在: {croot}", file=sys.stderr)
+            return 2
+        rep = audit(croot)
+        if args.json:
+            import json as _json
+            print(_json.dumps(rep, ensure_ascii=False, indent=2))
+        else:
+            _print_audit(rep)
+        # critical 违规 -> exit 1 (可被 CI / pre-commit 阻断); 仅 minor/important 不阻断
+        return 1 if rep["n_critical"] else 0
     if not args.target:
         ap.error("需要提供目标目录（或使用 --selftest）")
 
