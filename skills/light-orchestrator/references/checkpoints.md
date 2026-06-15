@@ -19,7 +19,7 @@
 阶段产出后，**先跑机器闸门**，出一份 PASS/FAIL 报告，用户确认后才推进。这是 self-review / consistency / research-ethics 等常驻闸门在 pipeline 里的显式落点。
 
 流程：
-1. 跑该阶段对应的闸门检查（见下表）。
+1. 跑该阶段对应的闸门检查（见下表）。**落地工具 `scripts/run_checkpoint.py`**：收齐各技能产出的机读 `light.findings.v1`（`--findings leak_findings.json review_lint.json ...`）和/或实跑闸门命令（`--gate "label=cmd"`），经 `_shared/gate_runner` 聚合，任一 critical fail → 退出码 1 阻断，并把 `gate.result + 证据指针(sha@ts)` 写回 passport（`--write`）。不再靠"口头说跑了闸门"。
 2. 出报告：每项 通过✓ / 不通过✖ / 警告! + 严重级。
 3. **不达标处理**：
    - Critical 项 → **阻断**，必须修。同一阶段最多 **2 轮整体返修**（一轮 = 把该阶段所有 Critical 项一起修一遍再复检，不是每个 claim 单独计 2 轮）。

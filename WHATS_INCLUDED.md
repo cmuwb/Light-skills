@@ -40,7 +40,8 @@
 | frontend-design | `scripts/contrast_lint.py` | WCAG 2.1 对比度门禁：解析 token/CSS 变量 hex 两两组合算相对亮度对比度，按正文4.5:1/大字3:1/UI3:1 判 PASS/FAIL，纯 stdlib |
 | memory-pm | `scripts/check_project_card.py` | db09 项目卡细粒度校验（补 check_databases 未覆盖项）：绝对日期格式、current_stage 枚举、decision_log/version_history 行格式、handoff parent_session 链可达 |
 | memory-pm | `scripts/version_tag_reconcile.py` | version_history 各版本 vN 与 git tag 两段对账，列出"有tag无记录/有记录无tag"，落地 SKILL 反复强调的 tag 对齐纪律 |
-| orchestrator | `scripts/passport.py` | .light/passport.yaml 台账工具：init/append-stage/get-current-stage/validate 四子命令+schema校验+返修轮次计数，把手填 YAML 变工具调用，PyYAML 缺失降级内置解析 |
+| orchestrator | `scripts/passport.py` | .light/passport.yaml 台账工具：init/append-stage/get-current-stage/validate(拓扑序+并行DAG)/fingerprint/stale-check 六子命令+schema校验+返修轮次跨会话防刷新，PyYAML 缺失降级内置解析 |
+| orchestrator | `scripts/run_checkpoint.py` | 确认点闸门聚合器：收齐各技能 light.findings.v1 + 实跑闸门命令经 _shared/gate_runner 聚合，写回 passport 的 gate.result+证据指针(sha@ts)，critical fail 退出码 1 阻断，默认 dry-run --write 才落盘 |
 | idea-critique | `scripts/calibration.py` | idea 审查 calibration 模式：用已知结局样本估计 FNR/FPR，校准严格度 |
 | idea-critique | `scripts/novelty_audit.py` | 新颖性检索证否四阶段留痕(抽论断→检索证据→撞车对比→判定)+一致性勾稽：抓"声称新但证据有 same 撞车"等自相矛盾，喂回否决项 |
 | idea-critique | `scripts/score_aggregate.py` | idea 八维评分加权聚合、否决项处理与 verdict 映射 |

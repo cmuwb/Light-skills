@@ -65,6 +65,8 @@ user-invocable: false
 - **决策点 🧑**：需要用户选分支才能继续。如 m04 idea 不过关（打回 m03 还是放行？）、投哪个 venue、用哪种输出格式。**不替用户决定。**
 - **确认点 ✓**：机器先验证（跑 a08 self-review / a07 consistency / a10 research-ethics 闸门），出报告 → 用户确认 → 推进。**诚信门不达标默认阻断**，不静默跳过；同一阶段最多 2 轮整体返修（细则见 `references/checkpoints.md`），仍不达标的转为“已知局限”如实记录，而非假装修好。
 
+> **确认点不是口头跑闸门——用 `scripts/run_checkpoint.py` 聚合落台账**：各技能闸门已产出机读 `light.findings.v1`（m02 `leak_findings.json`、a09 `review_lint --json`、a10 `claim_evidence_bind --json`、m07 `draft_lint`、m06 `evidence_strength.json` 等），`run_checkpoint.py` 收齐它们（`--findings`）和/或实跑闸门命令（`--gate label=cmd`，退出码定 pass/fail），经 `_shared/gate_runner` 聚合成一份裁定，**任一 critical fail → 退出码 1 阻断推进**，并把 `gate.result + 证据指针（来源集 sha@时间戳）` 写回 passport 对应阶段（默认 dry-run 预览，`--write` 才落盘——对台账动手须显式授权）。这把"确认点=可执行闸门"从指令变成代码，证据指针让 a07/审计能核"这条 verdict 确来自该次输出"。阶段→闸门映射见 `references/checkpoints.md §各阶段闸门对照`。
+
 确认点的证据必须是新鲜的：当前轮命令输出、文件 diff、CI run、脚本 selftest、人工确认记录之一；不能只写“已检查”。**m13 投稿决策点**:venue 计量(IF/分区/h_index/被引)须为当轮新鲜证据(venue_signal.py 实时输出),**db09 decision_log/project_card 内的 venue 快照不算新鲜证据**,投稿决策前必须重核、冲突信在线。
 
 **阶段切换默认触发会话衔接（T3）**：每过一个检查点、进入新阶段前，按 §5 主动留衔接卡 + 打印启动提示词，不等上下文耗尽。
@@ -109,3 +111,8 @@ user-invocable: false
 - [ ] 是否在决策点停下让用户选，而不是替用户决定？
 - [ ] 是否在确认点给出真实验证证据，而不是口头说通过？
 - [ ] 是否更新 `.light/passport.yaml`，并在暂停/阶段切换/上下文将尽时按 §5 留下衔接卡 + 启动提示词，保证下次能续接？
+
+## 随技能脚本（纯 python + 合成自测，无网络依赖）
+
+- `scripts/passport.py`：产物台账 `.light/passport.yaml` 读写与校验。`init`/`append-stage`/`get-current-stage`/`validate`（拓扑序校验，支持 `depends_on` 并行 DAG）/`fingerprint`/`stale-check`（按 `inputs_fingerprint` 判 fresh/stale，给最小重验范围）。内置 X-2 返修配额跨会话防刷新（`revision_rounds`）。无 PyYAML 时降级内置解析器。自测：`python scripts/passport.py --selftest`。
+- `scripts/run_checkpoint.py`：**确认点闸门聚合器**——把各技能已产出的 `light.findings.v1`（`--findings`）与实跑闸门命令（`--gate label=cmd`）经 `_shared/gate_runner` 聚合成一份裁定，写回 passport 对应阶段的 `gate.result + 证据指针（sha@ts）`。critical fail → 退出码 1 阻断推进。默认 dry-run，`--write` 才落盘（对台账动手须显式授权）。把 SKILL 反复说的"确认点=机器闸门"从指令落成代码。自测：`python scripts/run_checkpoint.py --selftest`。
