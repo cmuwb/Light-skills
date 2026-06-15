@@ -18,8 +18,19 @@
 退出码：0 通过；1 发现需返工项；2 用法错误。
 """
 import json
+import os
 import re
 import sys
+
+# 挂接共享地基契约1(证据强度):消费 m06 产出的 evidence_strength.json，
+# 机械校验"正文措辞不强于统计证据"(金矿1消费端，灭审查病1的措辞夸大)。
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "..", "..", "_shared"))
+try:
+    from evidence_contract import lint_wording, load as _ev_load  # noqa: E402
+    _HAS_EVIDENCE = True
+except Exception:
+    _HAS_EVIDENCE = False
 
 GAP_PAT = re.compile(r"\[(?:MATERIAL GAP|RESULT GAP)\b[^\]]*\]|(?<![\w/])TODO\b")
 DOI_PAT = re.compile(r"10\.\d{4,9}/[-._;()/:A-Za-z0-9]+")
@@ -71,7 +82,46 @@ def _section_titles(text):
     return titles
 
 
-def lint(text, final=False, want_claims=False):
+def check_evidence(text, evidence_path):
+    """消费 m06 的 evidence_strength.json，校验正文措辞不强于证据(金矿1消费端)。
+
+    对每条 claim：用其证据 grade 的允许措辞档，扫正文是否出现超档断言动词。
+    超档 → FAIL 级 finding(定位+建议降级)。还检查：正文出现的数值 claim 措辞
+    是否有对应证据支撑(grade=none 却用强断言尤其危险)。
+    返回 (findings, n_violations)。
+    """
+    findings = []
+    if not _HAS_EVIDENCE:
+        findings.append(("WARN", "evidence_contract 契约不可用(_shared 未就位)，跳过措辞校验"))
+        return findings, 0
+    if not os.path.exists(evidence_path):
+        findings.append(("WARN", f"未找到 evidence_strength.json: {evidence_path}"
+                         "（先在 m06 跑 analyze_results.py --emit-evidence）"))
+        return findings, 0
+    ev = _ev_load(evidence_path)
+    if ev.get("schema") != "light.evidence_strength.v1":
+        findings.append(("WARN", f"证据文件 schema 非预期: {ev.get('schema')}"))
+        return findings, 0
+    claims = ev.get("claims", [])
+    findings.append(("INFO", f"证据校验：载入 {len(claims)} 条 claim 的证据档"
+                     f"（来源 {ev.get('source','?')}）"))
+    total_viol = 0
+    for cl in claims:
+        viols = lint_wording(text, cl)
+        hard = [v for v in viols if v.get("matched")]
+        if hard:
+            total_viol += len(hard)
+            grade = cl.get("evidence_grade")
+            findings.append(("FAIL", f"措辞强于证据[{grade}] · claim '{cl.get('claim_id')}': "
+                             f"{len(hard)} 处超档"))
+            for v in hard[:5]:
+                findings.append(("  ", f"{v['loc']}: '{v['matched']}' → {v['suggestion']}"))
+    if total_viol == 0 and claims:
+        findings.append(("INFO", "✓ 正文措辞未超过任何 claim 的证据档"))
+    return findings, total_viol
+
+
+def lint(text, final=False, want_claims=False, evidence_path=None):
     findings = []
     code_stripped = _strip_code_fences(text)   # 行级、保留行号
     lines = code_stripped
@@ -122,12 +172,19 @@ def lint(text, final=False, want_claims=False):
             for c in claims[:20]:
                 findings.append(("  ", f"claim? {c}"))
 
+    # 6. 证据强度措辞门（--evidence，金矿1消费端）
+    n_evidence_viol = 0
+    if evidence_path is not None:
+        ev_findings, n_evidence_viol = check_evidence(text, evidence_path)
+        findings.extend(ev_findings)
+
     failed = any(sev == "FAIL" for sev, _ in findings)
     result = {
         "findings": findings, "failed": failed,
         "n_gaps": len(gaps), "missing_sections": missing,
         "n_doi": len(dois), "n_arxiv": len(arxivs),
         "candidate_claims": claims,
+        "n_evidence_violations": n_evidence_viol,
     }
     return findings, failed, result
 
@@ -201,6 +258,30 @@ LLM used for language editing; authors verified all content.
     assert rc["candidate_claims"], "应抽出含数字提升的候选事实句"
     assert any("4.2%" in c for c in rc["candidate_claims"]), rc["candidate_claims"]
 
+    # 新增断言5：证据强度措辞门（--evidence，金矿1消费端）
+    if _HAS_EVIDENCE:
+        import tempfile
+        from evidence_contract import build_evidence_json, save as _save
+        # 构造一条 weak 证据的 claim
+        ev = build_evidence_json([{
+            "claim_id": "acc:ours_vs_base", "text": "ours vs base",
+            "q_fdr": 0.03, "effect_size": 0.2, "ci95": [0.05, 0.4], "n": 200}])
+        with tempfile.TemporaryDirectory() as td:
+            ep = os.path.join(td, "evidence_strength.json")
+            _save(ev, ep)
+            # 超档措辞 → FAIL
+            over = "We demonstrate that ours significantly outperforms the baseline."
+            fo, failo, ro = lint(over, evidence_path=ep)
+            assert failo and ro["n_evidence_violations"] > 0, "弱证据下强断言应 FAIL"
+            assert any("措辞强于证据" in m for _, m in fo), fo
+            # 合规措辞 → 不因证据门 FAIL
+            ok = "Our results may suggest a modest gain over the baseline."
+            fok, failok, rok = lint(ok, evidence_path=ep)
+            assert rok["n_evidence_violations"] == 0, f"合规弱措辞不应违规: {fok}"
+        print("[selftest] 证据强度措辞门：弱证据下 demonstrate/significantly 被拦，hedge 措辞放行")
+    else:
+        print("[selftest] WARN: evidence_contract 不可用，跳过 --evidence 测试")
+
     print("\nALL SELFTEST ASSERTIONS PASSED")
 
 
@@ -214,15 +295,28 @@ def main(argv):
     final = "--final" in argv
     as_json = "--json" in argv
     want_claims = "--claims" in argv
-    path = [a for a in argv[1:] if not a.startswith("--")][0]
+    # --evidence <path>：消费 m06 的 evidence_strength.json 做措辞门
+    evidence_path = None
+    if "--evidence" in argv:
+        ei = argv.index("--evidence")
+        if ei + 1 < len(argv) and not argv[ei + 1].startswith("--"):
+            evidence_path = argv[ei + 1]
+        else:
+            print("[用法] --evidence 需跟 evidence_strength.json 路径")
+            return 2
+    pos = [a for i, a in enumerate(argv[1:], 1)
+           if not a.startswith("--") and not (evidence_path and a == evidence_path)]
+    path = pos[0]
     with open(path, encoding="utf-8") as fh:
         text = fh.read()
-    findings, failed, result = lint(text, final=final, want_claims=want_claims)
+    findings, failed, result = lint(text, final=final, want_claims=want_claims,
+                                    evidence_path=evidence_path)
     if as_json:
         print(json.dumps({"failed": result["failed"], "n_gaps": result["n_gaps"],
                           "missing_sections": result["missing_sections"],
                           "n_doi": result["n_doi"], "n_arxiv": result["n_arxiv"],
                           "n_candidate_claims": len(result["candidate_claims"]),
+                          "n_evidence_violations": result.get("n_evidence_violations", 0),
                           "findings": [{"sev": s.strip(), "msg": m} for s, m in findings]},
                          ensure_ascii=False, indent=2))
     else:

@@ -32,7 +32,18 @@ from significance_test import (  # noqa: E402
     welch_t, cohens_d, interpret_d, mean_diff_ci, benjamini_hochberg, bootstrap_ci,
 )
 
+# 挂接共享地基契约2(证据强度):q/效应量/CI → 措辞档机械映射，
+# 产出 evidence_strength.json 供 m07/m08/m10/a07/a10 卡措辞（金矿1产出端）。
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "..", "..", "_shared"))
+try:
+    from evidence_contract import build_evidence_json, save as _ev_save  # noqa: E402
+    _HAS_EVIDENCE = True
+except Exception:  # 契约不可用时降级（不静默假成功，emit 时显式标注）
+    _HAS_EVIDENCE = False
+
 ALPHA = 0.05
+
 
 
 def _normal(x, alpha=0.05):
@@ -297,7 +308,7 @@ def slice_analysis(df, group, metric, slice_by, min_n=5, pair_key=None):
 
 
 def run(csv_path, group, metrics, outdir, pair_key=None, emit_claim_table_flag=False,
-        slice_by=None):
+        slice_by=None, emit_evidence_flag=False):
     df = pd.read_csv(csv_path)
     if group not in df.columns:
         raise SystemExit(f"group column '{group}' not in CSV columns {list(df.columns)}")
@@ -328,6 +339,14 @@ def run(csv_path, group, metrics, outdir, pair_key=None, emit_claim_table_flag=F
         with open(cpath, "w", encoding="utf-8") as f:
             f.write(emit_claim_table(report))
         report["_claim_table_path"] = cpath
+    if emit_evidence_flag:
+        if not _HAS_EVIDENCE:
+            report["_evidence_strength_error"] = (
+                "evidence_contract 契约不可用(_shared 未就位)，未产出 evidence_strength.json")
+        else:
+            epath = os.path.join(outdir, "evidence_strength.json")
+            _ev_save(emit_evidence_strength(report), epath)
+            report["_evidence_strength_path"] = epath
     return report, jpath, mpath
 
 
@@ -423,6 +442,45 @@ def emit_claim_table(report: dict) -> str:
     L.append(f"_共 {n_claim} 条 claim。交 m07(写作)/m09(绘图)；显著性看 q 不看 p；"
              "不显著的比较写作时不得声称'更好',只能报'未见显著差异'。_")
     return "\n".join(L)
+
+
+def emit_evidence_strength(report: dict) -> dict:
+    """把每个比较转成 light.evidence_strength.v1（金矿1产出端，挂接 _shared/evidence_contract）。
+
+    每条 claim 经 grade_evidence(q,效应量,CI,n) 定档，附 allowed/forbidden 措辞，
+    供 m07 draft_lint --evidence、m08 润色、m10 引用、a07/a10 机械卡"措辞不强于证据"。
+    显著性一律以 BH-FDR 后 q 为准（非裸 p）。
+    """
+    claims = []
+    for res in report["results"]:
+        m = res["metric"]
+        for c in res.get("pairwise", []):
+            claims.append({
+                "claim_id": f"{m}:{c['group1']}_vs_{c['group2']}",
+                "text": f"{m}: {c['group1']} vs {c['group2']}",
+                "q_fdr": c.get("q_fdr", c.get("p")),
+                "effect_size": c.get("cohens_d"),
+                "effect_kind": "cohens_d",
+                "ci95": c.get("diff_ci95"),
+                "n": report.get("n_rows"),
+            })
+        paired = res.get("paired")
+        if paired and paired.get("available"):
+            for c in paired["comparisons"]:
+                if c.get("p") is None:
+                    continue
+                claims.append({
+                    "claim_id": f"{m}:{c['group1']}_vs_{c['group2']}:paired",
+                    "text": f"{m}: {c['group1']} vs {c['group2']} (paired)",
+                    "q_fdr": c.get("q_fdr", c.get("p")),
+                    "effect_size": c.get("cohens_dz"),
+                    "effect_kind": "cohens_dz",
+                    "ci95": c.get("diff_ci95"),
+                    "n": c.get("n_pairs"),
+                })
+    ev = build_evidence_json(claims)
+    ev["source"] = "m06:analyze_results"
+    return ev
 
 
 def _synth_csv(path, seed=0):
@@ -543,7 +601,25 @@ def _selftest() -> int:
         scsv = os.path.join(tmp, "small.csv"); pd.DataFrame(srows).to_csv(scsv, index=False)
         reps, _, _ = run(scsv, "method", ["v"], os.path.join(tmp, "os"))
         assert "small_n_warning" in reps["results"][0]["omnibus"], reps["results"][0]["omnibus"]
-    print("[selftest] PASS analyze_results (independent + paired + skip + missing-key + claim-table + slice + welch-anova + small-n)")
+
+        # evidence_strength.json 生成（金矿1产出端，挂接 _shared/evidence_contract）
+        if _HAS_EVIDENCE:
+            ode = os.path.join(tmp, "oevid")
+            repe, _, _ = run(csv_path, "method", ["acc"], ode, pair_key="seed",
+                             emit_evidence_flag=True)
+            epath = os.path.join(ode, "evidence_strength.json")
+            assert os.path.exists(epath), "应产出 evidence_strength.json"
+            ev = json.load(open(epath, encoding="utf-8"))
+            assert ev["schema"] == "light.evidence_strength.v1", ev["schema"]
+            assert ev["claims"], "应有 claims"
+            for cl in ev["claims"]:
+                assert cl["evidence_grade"] in {"strong", "moderate", "weak", "none"}, cl
+                assert "allowed_verbs" in cl and "hedge_required" in cl, cl
+            print(f"[selftest] evidence_strength: {len(ev['claims'])} claims, "
+                  f"grades={sorted(set(c['evidence_grade'] for c in ev['claims']))}")
+        else:
+            print("[selftest] WARN: evidence_contract 契约不可用，跳过 evidence_strength 测试")
+    print("[selftest] PASS analyze_results (independent + paired + skip + missing-key + claim-table + slice + welch-anova + small-n + evidence)")
     return 0
 
 
@@ -558,6 +634,9 @@ def main():
                          "enables paired t / Wilcoxon signed-rank across methods")
     ap.add_argument("--emit-claim-table", action="store_true",
                     help="额外产出 claim_evidence_table.md（每个比较↔证据字段，交 m07/m09 的 §6.1 工件）")
+    ap.add_argument("--emit-evidence", action="store_true",
+                    help="额外产出 evidence_strength.json（挂接 _shared 证据强度契约，"
+                         "q/效应量/CI→措辞档，交 m07 draft_lint --evidence/m08/m10/a07/a10）")
     ap.add_argument("--slice-by", default=None,
                     help="切片列（如子群/敏感属性）：对每个切片值复算同套分析+标小 n，防聚合掩盖子群失败")
     ap.add_argument("--selftest", action="store_true", help="run synthetic offline self-test")
@@ -573,10 +652,15 @@ def main():
         print(f"[demo] generated synthetic CSV -> {a.csv}")
     outdir = a.outdir or os.path.join(os.path.dirname(os.path.abspath(a.csv)), "analysis_out")
     report, jp, mp = run(a.csv, a.group, a.metric, outdir, pair_key=a.paired_by,
-                         emit_claim_table_flag=a.emit_claim_table, slice_by=a.slice_by)
+                         emit_claim_table_flag=a.emit_claim_table, slice_by=a.slice_by,
+                         emit_evidence_flag=a.emit_evidence)
     print(f"wrote {jp}\nwrote {mp}")
     if report.get("_claim_table_path"):
         print(f"wrote {report['_claim_table_path']}")
+    if report.get("_evidence_strength_path"):
+        print(f"wrote {report['_evidence_strength_path']}")
+    if report.get("_evidence_strength_error"):
+        print(f"[warn] {report['_evidence_strength_error']}")
     for res in report["results"]:
         ob = res["omnibus"]
         print(f"  [{res['metric']}] {ob.get('test')} p={ob.get('p')}  "

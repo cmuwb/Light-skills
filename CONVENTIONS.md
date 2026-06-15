@@ -52,7 +52,7 @@ m03 与 m04 构成循环：idea 不过关就回到 m03。
 | idea 审查 | m04 idea-critique | `critique_verdict.md` | m05 |
 | 研究方案 | m05 research-plan | `PROJECT_PLAN.md` + `experiments/experiment_matrix.md` | a03/m06 |
 | 实验代码 | a03 backend-coding | `run_manifest.md` + 可运行代码/测试/日志 | m06 |
-| 结果分析 | m06 result-analysis | `claim_evidence_table.md` | m07/m09 |
+| 结果分析 | m06 result-analysis | `claim_evidence_table.md` + `evidence_strength.json`（机读证据强度契约，挂接 `_shared/evidence_contract`） | m07/m08/m09/m10/a07/a10 |
 | 写作/润色 | m07 paper-drafting ⇄ m08 paper-polishing | `draft.md`（分模块草稿，m08 在同稿迭代）+ `claim_passport.md`（claim 台账，诚信门 load-bearing） | m09/m10/m12 |
 | 图表 | m09/m11 figure | `projects/<project_name>/figures/manifest.md` + 图文件 | m07/m12 |
 | 引用 | m10 citation | `refs.bib` + `citation_audit.md` | m12 |
@@ -64,6 +64,7 @@ m03 与 m04 构成循环：idea 不过关就回到 m03。
 
 > 改动工件名只改本表，再同步对应技能「产出」节与 orchestrator §2 契约表（该表声明本表为真相源）。
 > m15/m16/m17 为按需并行技能（见 §6 流水线图），不在主线串行链上：仅当用户做对应任务时产出，文件名同样以本表为准（2026-06-14 补登记）。
+> `evidence_strength.json`（2026-06-15 新增）：金矿1 的跨技能"措辞不强于证据"数据源，由 m06 `analyze_results.py --emit-evidence` 产出，消费方用 `_shared/evidence_contract.lint_wording` 机械卡措辞（m07 `draft_lint --evidence` 已落地，退出码可接 CI）。
 
 ## 7. 输出纪律
 
