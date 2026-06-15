@@ -53,7 +53,7 @@ user-invocable: false
 ## 机械门禁（脚本即真相，规则全文见脚本 selftest）
 三个 linter 把"好看"落成可数判定，交付前必过；都支持 `python <脚本> <文件>`（或 `-` 读 stdin）真实输入与 `--selftest` 自测两种模式：
 - **可数 checklist** `python scripts/audit_checklist.py <file.html>`（给页面元素加 `data-*` 标注后跑）：R1 eyebrow ≤ceil(sections/3)、R2 连续图文 split ≤2、R3 ≥8 段需 ≥4 种 layout family、R4 hero 副文 ≤20 词/≤4 行、R5 nav 单行 ≤80px、R6 bento N 内容=N 格、R7 nav/hero/bento 关键元素出现却未标注 `data-*` 即 FAIL（防 R4/R5/R6 在没看见的数据上空过）。自带 GOOD/BAD/UNANNOTATED 自测。
-- **反 AI-tell 黑名单** `python scripts/ai_tell_lint.py <file>`：T1 scroll cue、T2 装饰性段落编号 eyebrow、T3 版本/Made-with 填充页脚（裸 vX.Y.Z 仅在页脚上下文才算，changelog 列版本不误杀）、T4 英文正文 em-dash（仅扫 HTML 文本节点、排除 CSS/JS/注释/字符串，且与中文相邻的合法破折号不报）——命中即改。自带 DIRTY/CLEAN/CLEAN_TRICKY 自测。
+- **反 AI-tell 黑名单** `python scripts/ai_tell_lint.py <file>`：**文本/排版痕迹** T1 scroll cue、T2 装饰性段落编号 eyebrow、T3 版本/Made-with 填充页脚（裸 vX.Y.Z 仅在页脚上下文才算，changelog 列版本不误杀）、T4 英文正文 em-dash（仅扫 HTML 文本节点、排除 CSS/JS/注释/字符串，且与中文相邻的合法破折号不报）；**视觉 slop 痕迹（头号卖点"反 AI-slop 禁令"的真实现）** T5 紫粉渐变（linear/radial-gradient 同时含紫+粉色相，单色渐变不误报）、T6 emoji 当 UI 图标（emoji 字符类排除 CJK，SVG 图标不误报）、T7 gradient-orb/模糊光斑装饰、T8 玻璃拟态/拟物冒充产品图——命中即改。自带 DIRTY/CLEAN/CLEAN_TRICKY + 视觉 slop/视觉 clean 自测。
 - **对比度门禁** `python scripts/contrast_lint.py <tokens.json|styles.css>`：解析 token/CSS 变量 hex，按 WCAG 相对亮度算两两对比度，按 [references/visual-a11y-rules.md](references/visual-a11y-rules.md) 阈值（正文 4.5:1 / 大字 3:1 / UI 3:1）判 PASS/FAIL。纯 stdlib，JSON 支持 DTCG `$value` 树与显式 `pairs` 指定角色。自带自测。
 
 ## 字体与禁用清单（全表见 references/fonts-and-colors.md）

@@ -57,6 +57,50 @@ _VERSION = re.compile(r"v\d+\.\d+\.\d+", re.I)
 _FOOTER_HINT = re.compile(r"(<footer\b|data-role=[\"']?(footer|page-?footer)|页\s*脚)", re.I)
 _EMDASH = "—"  # em-dash character
 
+# ── 视觉 AI-slop 痕迹 T5-T8（头号卖点"反 AI-slop 禁令"的真实现，此前缺失）──
+# T5 紫粉渐变（AI 生成站点最泛滥的视觉俗套）：linear/radial-gradient 同时含紫(#8b5cf6/
+#    purple/violet/#a855f7 等)与粉(#ec4899/pink/#f472b6 等)色相。
+_T5_GRADIENT = re.compile(
+    r"(linear|radial|conic)-gradient\([^)]*\)", re.I)
+_T5_PURPLE = re.compile(
+    r"(#(8b5cf6|a855f7|9333ea|7c3aed|6d28d9|c084fc)|\bpurple\b|\bviolet\b|\bindigo\b|"
+    r"rgba?\(\s*(1[0-4]\d|1[0-7]\d)\s*,\s*\d{1,2}\s*,\s*(2[0-4]\d|25[0-5])\b)", re.I)
+_T5_PINK = re.compile(
+    r"(#(ec4899|f472b6|db2777|f9a8d4|e879f9|d946ef)|\bpink\b|\bfuchsia\b|\bmagenta\b)", re.I)
+# T6 emoji 当图标：HTML 元素内容/aria 里把 emoji 当 UI 图标（✨🚀💡🔥⚡🎯 等高频"AI味"emoji）
+# emoji 字符类须排除 CJK(U+4E00-9FFF)：用 pictographs/dingbats/arrows 区段，不含汉字。
+_EMOJI_CHARS = (r"[\U0001F000-\U0001FAFF\U00002600-\U000027BF"
+                r"\U00002B00-\U00002BFF\U00002190-\U000021FF\U0000FE0F\U00002B50]")
+_T6_EMOJI_ICON = re.compile(
+    r"(class=[\"'][^\"']*\b(icon|feature|card|badge)\b[^\"']*[\"'][^>]*>\s*"
+    + _EMOJI_CHARS + r")|("
+    + _EMOJI_CHARS + r"\s*</(span|div|i|li|h[1-6])>)")
+# T7 gradient-orb / 模糊光斑装饰（blur + 绝对定位的圆形渐变球，纯装饰噪声）
+_T7_ORB = re.compile(
+    r"(class=[\"'][^\"']*\b(orb|blob|glow|gradient-(orb|ball|blur)|aurora)\b)|"
+    r"(border-radius:\s*50%[^;}]*;[^}]*filter:\s*blur)", re.I)
+# T8 CSS 剪影/光泽冒充产品图（box-shadow 多层 + 伪 3D，或 backdrop-filter 玻璃拟态堆砌）
+_T8_FAUX = re.compile(
+    r"(backdrop-filter:\s*blur[^;}]*;[^}]*background:\s*rgba\(\s*255\s*,\s*255\s*,\s*255)|"
+    r"(class=[\"'][^\"']*\b(glassmorphism|glass-card|neumorphism|faux-3d)\b)", re.I)
+
+
+def _visual_slop_findings(line: str, line_no: int):
+    """T5-T8 视觉 slop 检测（单行）。返回 Finding 列表。"""
+    out = []
+    for grad in _T5_GRADIENT.finditer(line):
+        seg = grad.group(0)
+        if _T5_PURPLE.search(seg) and _T5_PINK.search(seg):
+            out.append(Finding("T5 紫粉渐变(AI-slop视觉俗套)", line_no, seg[:80]))
+    if _T6_EMOJI_ICON.search(line):
+        out.append(Finding("T6 emoji当UI图标", line_no, line.strip()[:80]))
+    if _T7_ORB.search(line):
+        out.append(Finding("T7 gradient-orb/模糊光斑装饰", line_no, line.strip()[:80]))
+    if _T8_FAUX.search(line):
+        out.append(Finding("T8 玻璃/拟物冒充产品图", line_no, line.strip()[:80]))
+    return out
+
+
 # Unicode ranges that count as CJK (Chinese 破折号 context is legitimate prose).
 _CJK = re.compile(
     r"[　-〿㐀-䶿一-鿿豈-﫿＀-￯]"
@@ -122,6 +166,8 @@ def lint(text: str) -> list[Finding]:
             findings.append(
                 Finding("T3 version/made-with footer", i, line.strip()[:80])
             )
+        # T5-T8 视觉 AI-slop 痕迹（头号卖点的真实现）
+        findings.extend(_visual_slop_findings(line, i))
 
     # Parser-based rule: T4 em-dash in English prose text nodes only.
     scanner = _ProseScanner()
@@ -195,6 +241,32 @@ def _selftest() -> None:
         "CLEAN_TRICKY must stay clean: CJK 破折号, comment/string em-dash, and "
         "changelog semver are all legitimate, not AI-tells"
     )
+
+    # ── 视觉 AI-slop T5-T8（头号卖点真实现）──
+    print("\n=== VISUAL SLOP (expect T5-T8) ===")
+    slop = """
+<div style="background: linear-gradient(135deg, #8b5cf6, #ec4899);">x</div>
+<span class="feature-icon">🚀</span>
+<div class="gradient-orb"></div>
+<div class="glass-card" style="backdrop-filter: blur(12px); background: rgba(255,255,255,0.1)">x</div>
+"""
+    sv = lint(slop)
+    print(render(sv))
+    svr = {f.rule[:2] for f in sv}
+    for needle in ("T5", "T6", "T7", "T8"):
+        assert needle in svr, f"{needle} 视觉 slop 应被标记: got {svr}"
+
+    # 视觉 slop 假阳防护：单色渐变/正经图标类/合理阴影不应误报
+    print("\n=== VISUAL CLEAN (no false positives) ===")
+    vclean = """
+<div style="background: linear-gradient(90deg, #1e293b, #334155);">monochrome</div>
+<svg class="icon"><use href="#arrow"/></svg>
+<div class="card" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1)">subtle</div>
+<div style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">purple-only</div>
+"""
+    vc = lint(vclean)
+    print(render(vc))
+    assert not vc, f"单色渐变/SVG图标/克制阴影不应误报: {[(f.rule,f.snippet) for f in vc]}"
 
     print("\nself-test OK")
 
