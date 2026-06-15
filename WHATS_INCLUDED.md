@@ -18,7 +18,11 @@
 | consistency | `scripts/consistency_audit.py` | 读取 db09 术语/方法/指标事实源，跨论文/PPT/文档检测术语、指标名、指标值与覆盖缺口 |
 | data-engineering | `scripts/check_access_level.py` | 数据访问分级守门：阻断 raw 数据流向 paper/figure/public-repo 等公开产物 |
 | data-engineering | `scripts/croissant_export.py` | 数据卡字段 → Croissant JSON-LD（MLCommons 机器可读标准），便于发布 HF/Kaggle/OpenML 被自动索引（最小骨架，标注须官方库校验） |
-| data-engineering | `scripts/data_doctor.py` | CSV → Markdown 数据体检报告：形状、类型、缺失、重复、异常值、强相关、泄漏提示 |
+| data-engineering | `scripts/data_doctor.py` | CSV → Markdown 数据体检报告：形状、类型、缺失、重复、异常值、强相关、泄漏提示、inf/混合类型/类不均衡/偏态/稀有类 |
+| data-engineering | `scripts/data_feasibility.py` | 数据先行四问 → data_feasibility.md（交 m03/m04）：四问各 ok/warn/insufficient + 依据，insufficient 退出码 1 当"不进 m03"闸门 |
+| data-engineering | `scripts/derive_eval_set.py` | m05 派生数据回边的可执行实现：据规格生成加噪/缺失/跨域/扫参评测集 + 对齐 db04 的 dataset_card 字段（只动特征不碰标签、固定种子） |
+| data-engineering | `scripts/drift_check.py` | 两数据集分布漂移检验：数值列 KS+PSI、类别列卡方+PSI，纯 numpy(p 渐近近似)，以 PSI 效应量为主 |
+| data-engineering | `scripts/emit_artifacts.py` | m02 标准工件落位守门：核 quality_report/data_card/data_feasibility 落 §6.1 标准名，打印 passport 登记命令 |
 | data-engineering | `scripts/quality_gate.py` | 按 YAML 规则校验 CSV，输出 PASS/FAIL 数据质量门报告，退出码可接 CI |
 | data-engineering | `scripts/safe_split.py` | 构建防泄漏 split + Pipeline/ColumnTransformer，支持 clf/reg/timeseries/group 任务 |
 | data-engineering | `scripts/sample_size_check.py` | 数据规模充足性经验预警：分类每类最小样本/回归样本特征比(EPV)/检测每类实例数，把"四问"之规模变可计算（标注非 power analysis） |

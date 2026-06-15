@@ -36,6 +36,12 @@ from dataclasses import dataclass
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 SKILLS_DIR = ROOT / "skills"
 
+# Windows 控制台默认 GBK，打印 ✓/✗ 等会 UnicodeEncodeError；与各技能脚本同口径重配 UTF-8。
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 DOCUMENT_IMPORTS = {
     "docx",
     "fitz",
