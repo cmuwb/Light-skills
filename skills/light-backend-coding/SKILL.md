@@ -39,6 +39,11 @@ user-invocable: false
 - **改进架构**：用"删除测试"诊断浅模块 vs 深模块，把浅模块改造成"小接口藏大实现"。
 - **拆子任务/收尾分支**：隔离上下文、规格审查先于质量审查；合并→重跑测试→移 worktree→删分支，丢弃工作需显式确认。
 
+## 交付前安全+反模式扫描门（强制，把人工 checklist 变可运行门）
+CODE_REVIEW_CHECKLIST 把"硬编码密钥/数据泄漏/SQL 注入"列为 Critical，但口头清单零强制力。**交付前必跑** `python scripts/review_gate.py <改动的 .py 或目录>`：AST+正则扫七类形态硬错——硬编码密钥/`eval`-`exec`/`shell=True`-`os.system`/SQL 字符串拼接/**数据泄漏（StandardScaler.fit/fit_transform 早于 train_test_split，科研特化、通用 linter 不带）**/裸 except/浮点 `==` 断言。Critical 命中→退出码 1，出 `light.findings.v1` 接 a08/orchestrator 闸门，可挂 `.pre-commit-config.yaml` 作 local hook。⚠ AST+正则启发式，抓形态硬错、会漏/误报，**不替代人工 code review 与 a10 语义判断**（如经校验的动态 eval、有意的字符串 SQL 须人工豁免）。
+
+> **增量边界（诚实，别把裸模型自带的工程常识当本技能贡献）**："逻辑清晰/可读/可维护""参数化查询/输入校验/不硬编码密钥""TDD 红绿重构""uv/ruff/pytest 命令"——都是**裸 Opus 默认就会的工程常识，近零增量**，占了 SKILL 大量篇幅。本技能真正超出裸模型的是**可复制的硬资产 + 可运行门**：①`review_gate.py` 把安全/反模式清单编译成强制门（尤其科研特化的数据泄漏/浮点断言检测）②`reproducibility.py` 全覆盖 set_global_seed（stdlib/numpy/torch/cudnn/PYTHONHASHSEED，常被漏）③references.md 的版本实测锁定真相源④科研特化调试根因热点（数据泄漏/device-dtype/GBK 编码/DataLoader 种子）。**诚实落后项**（未做）：Aider repo-map/CodeGraph 仓库语义索引（实测降 token 35-71%，本技能"写码前读现有代码"仍靠盲读）、机器可校验复现契约（run_manifest 仍手写无校验）、testing-anti-patterns 自动检测；且名为 backend-coding 却几乎不含 API/服务层代码，那部分靠裸模型兜底。
+
 ## 安全提示
 创建网络暴露的接口/服务时，若无鉴权必须主动指出安全影响(security_awareness)，不静默上线无认证服务。
 

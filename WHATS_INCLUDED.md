@@ -8,6 +8,7 @@
 
 | 技能 | 脚本 | 作用 |
 |------|------|------|
+| backend-coding | `scripts/review_gate.py` | 交付前安全+反模式静态扫描门(AST+正则,把人工 checklist 编译成强制门):硬编码密钥/eval-exec/shell=True-os.system/SQL 拼接/数据泄漏(标准化早于 train_test_split)/裸except/浮点== 七查,Critical 退出码1,出 light.findings.v1 接 a08 |
 | citation | `scripts/citekey_audit.py` | \cite 键↔.bib 键双向对账：缺失键(编译??)/冗余键/重复定义/authorYearWord 命名校验，支持 LaTeX 与 pandoc 语法 |
 | citation | `scripts/doi_to_any.py` | DOI 转 BibTeX / CSL-JSON / GB/T 7714，中文条目自动注入 `langid` |
 | citation | `scripts/verify_citation_edge.py` | 核验“A 是否引用 B”，返回 confirmed / not_in_open_index / unknown 三态(OpenCitations / Semantic Scholar) |
