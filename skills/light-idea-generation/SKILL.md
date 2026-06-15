@@ -40,6 +40,7 @@ Level 2 立项时，每个候选先填一张**立项卡**（模板 [templates/id
 - **候选去重**：`python scripts/candidate_dedup.py --in candidates.json`——两两算相似度（默认零依赖文本相似度，可传 `--emb` 用 SPECTER2 余弦升级），按批内 **mean+1σ 自动标"疑似变体对"**，把含糊的"显著高于其余"变成可执行判定，合并换皮候选。候选 JSON 字段格式见 [examples/candidates.example.json](examples/candidates.example.json)（每条带 id/title/claim/angle/impact/effort/novelty/feasibility，一份样例同时喂 dedup/rank/provocation 三脚本，接上"立项卡 md → 候选 json"的手工整理断点）。
 - **排序选 Top-N**：`python scripts/rank_ideas.py --in candidates.json --top-k 6`——**分层组合裁定**：先把候选分到 moonshot(冲刺/高风险高回报)/solid(稳妥)/safe(保底) 三道，每道各自合理排序（moonshot 按影响→新颖，**不**用性价比；solid 才用影响/工作量性价比；safe 按可行+省力），再 round-robin 三层交替组合 shortlist。**关键：突破口（高影响必然高工作量）不被性价比压杀**——若用单一性价比榜，moonshot 会系统性输给保底项，与下面"分层产出"自相矛盾。
 - **排序键分工（唯一裁定，消除"信哪个分"的困惑）**：① 三维快评(1–10) 做**入场 triage**（粗筛掉明显弱的，决定哪些值得填卡）；② `rank_ideas.py` 的**分层组合裁定**做收敛漏斗主排序键（决定送 m04 的分层结构与顺序）；③ 五维(1–5) 做**交 m04 前终检**（每维分低的回炉）。最终送审结构与顺序以 ② 为唯一裁定——它本身已是分层的，故"按潜力分层产出"与"唯一排序键"不再冲突。
+- **配对比较升级（灭"自报绝对分"病）**：`python scripts/swiss_rank.py candidates.json --out ranked_elo.json`——不再让人/模型填 impact/novelty **绝对分**做主键（Si et al. 2024 实测 LLM 自评分与人类一致性仅 53%），改用**瑞士轮 + ELO 两两配对裁判**：每次比较都喂入双方最近邻文献做 grounding（撞车/差异），累积 ELO。`set_judge()` 注入底座模型配对裁判；无裁判时按候选 `prior` 离线兜底（selftest 验 ELO 收敛+传递性）。**产出的 `elo` 字段注入 `rank_ideas.py` 成为各 lane 内主排序键**（压过自报分，绝对分降级为 tiebreak）——对标 SciMuse/co-scientist/MAGenIdeas 一致采用的 pairwise 优于 absolute-rating 结论。
 
 ## 新颖性核验（别靠记忆，去查）
 提"创新点/相对哪些工作"前，实际检索对标工作，避免"自以为新"和引用幻觉。**检索统一调 m01(light-literature-search) 已验证脚本，不手拼 API URL**（手拼 URL 易踩限流/分页/编码坑，且与 m01 真相源割裂）：

@@ -48,12 +48,16 @@ def _lane(imp: float, eff: float, nov: float, fea: float) -> str:
 
 
 def _lane_sort_key(lane: str):
-    """每道各自合理的排序键（返回 lambda）。"""
+    """每道各自合理的排序键（返回 lambda）。
+
+    若候选带 `elo`(来自 swiss_rank.py 配对比较，灭病4自报分)，ELO 作为**道内主排序键**——
+    配对比较已被 SciMuse/co-scientist 等验证远优于绝对自评分；绝对分降级为同 ELO 下的次级 tiebreak。
+    """
     if lane == "moonshot":  # 回报与新颖优先，同等下工作量小的先
-        return lambda r: (-r["impact"], -r["novelty"], r["effort"], str(r["id"]))
+        return lambda r: (-r.get("elo", 0), -r["impact"], -r["novelty"], r["effort"], str(r["id"]))
     if lane == "safe":      # 稳出优先：可行高、工作量小
-        return lambda r: (-r["feasibility"], r["effort"], -r["impact"], str(r["id"]))
-    return lambda r: (-r["value_ratio"], -r["impact"], r["effort"], str(r["id"]))  # solid 性价比合理
+        return lambda r: (-r.get("elo", 0), -r["feasibility"], r["effort"], -r["impact"], str(r["id"]))
+    return lambda r: (-r.get("elo", 0), -r["value_ratio"], -r["impact"], r["effort"], str(r["id"]))  # solid
 
 
 def rank(items: list, top_k: int = 0) -> dict:
@@ -69,6 +73,7 @@ def rank(items: list, top_k: int = 0) -> dict:
             "impact": imp, "effort": eff, "novelty": nov, "feasibility": fea,
             "value_ratio": ratio, "potential": round(imp + nov, 1),
             "lane": _lane(imp, eff, nov, fea),
+            "elo": round(float(it["elo"]), 1) if isinstance(it.get("elo"), (int, float)) else 0,
         })
     # 分道 + 道内排序
     lanes = {ln: sorted([r for r in rows if r["lane"] == ln], key=_lane_sort_key(ln))
@@ -150,6 +155,17 @@ def _selftest() -> int:
     # 渲染含三道与组合
     md = render(res)
     assert "冲刺" in md and "round-robin" in md and "潜力" in md, md
+
+    # ELO 主排序键（消费 swiss_rank 配对比较，灭病4）：同 lane 内 ELO 高者在前，
+    # 即便其绝对自评分更低——验证配对比较结果压过自报分。
+    elo_items = [
+        {"id": "A", "title": "低自评但配对胜出", "impact": 3, "effort": 3, "novelty": 3, "feasibility": 3, "elo": 1700},
+        {"id": "B", "title": "高自评但配对落败", "impact": 3, "effort": 2, "novelty": 3, "feasibility": 3, "elo": 1300},
+    ]
+    elo_res = rank(elo_items)
+    solid_order = [r["id"] for r in elo_res["lanes"]["solid"]]
+    assert solid_order == ["A", "B"], f"ELO 应压过绝对分(value_ratio): {solid_order}"
+    print("[selftest] ELO 主排序键生效：配对比较(elo)压过自报绝对分")
     print("[selftest] PASS rank_ideas offline")
     return 0
 

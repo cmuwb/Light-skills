@@ -40,6 +40,16 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+# 挂接共享地基契约2(语义相似度):标题匹配从字符级 Jaccard 升级为词序敏感的
+# 语义相似(治审查病3——"Attention Is All You Need" vs 倒装被旧 Jaccard 误判 1.0)。
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "..", "..", "_shared"))
+try:
+    from semantic_sim import similarity as _sem_sim  # noqa: E402
+    _HAS_SEM = True
+except Exception:
+    _HAS_SEM = False
+
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
@@ -123,11 +133,48 @@ def _norm(s: str) -> str:
 
 
 def _title_match(a: str, b: str) -> float:
-    """粗略标题一致度：归一化后字符级 Jaccard（够用，不引外部依赖）。"""
-    sa, sb = set(_norm(a)), set(_norm(b))
+    """标题一致度。优先用共享语义相似度契约(词序敏感，正确处理倒装/改写)；
+    契约不可用时降级为词级 token Jaccard(注意：非字符级——字符级会把倒装误判为 1.0)。"""
+    if _HAS_SEM:
+        return _sem_sim(a or "", b or "", mode="offline")
+    # 降级：词级 token Jaccard（仍比字符级强，但无词序惩罚）
+    sa, sb = set(_norm(a).split()), set(_norm(b).split())
     if not sa or not sb:
         return 0.0
     return len(sa & sb) / len(sa | sb)
+
+
+def author_set_diff(claimed_authors, real_authors) -> dict:
+    """作者集合 diff：检出增/删/换序/音译。比旧版"仅查首作者子串"强得多。
+
+    claimed_authors / real_authors: 姓氏(family)字符串列表。
+    返回 {added, removed, reordered, jaccard, verdict}。
+    """
+    def _fam(s):
+        return re.sub(r"[^a-z一-鿿]", "", (s or "").lower())
+    cl = [_fam(x) for x in (claimed_authors or []) if _fam(x)]
+    rl = [_fam(x) for x in (real_authors or []) if _fam(x)]
+    cs, rs = set(cl), set(rl)
+    added = sorted(cs - rs)       # claimed 多出来的(真实里没有)→ 幻觉作者
+    removed = sorted(rs - cs)     # 真实有但 claimed 漏的
+    common = cs & rs
+    # 换序：共同作者在两列表里的相对顺序不一致
+    reordered = False
+    if len(common) >= 2:
+        co_c = [a for a in cl if a in common]
+        co_r = [a for a in rl if a in common]
+        reordered = co_c != co_r
+    jac = len(common) / len(cs | rs) if (cs | rs) else 1.0
+    if added:
+        verdict = "author_addition"   # 最危险：凭空多出作者(嵌合特征)
+    elif removed:
+        verdict = "author_deletion"
+    elif reordered:
+        verdict = "reordered"
+    else:
+        verdict = "match"
+    return {"added": added, "removed": removed, "reordered": reordered,
+            "jaccard": round(jac, 3), "verdict": verdict}
 
 
 def verify_one(doi: str, self_authors=None, claimed=None):
@@ -166,9 +213,26 @@ def verify_one(doi: str, self_authors=None, claimed=None):
         # 嵌合引用检测（Chimeric Citation，借 PHY041）：DOI 真实、标题也对得上，但声称的首作者
         # 不在真实作者列表里 —— 典型 AI 幻觉"真标题配错作者"。仅在提供 claimed.first_author 时查。
         claimed_fa = (claimed.get("first_author") or "").strip().lower()
+        real_fams = [(a.get("family", "") or "").strip().lower() for a in auth]
+        real_fams = [f for f in real_fams if f]
+        # 升级：若提供完整 claimed.authors 列表，做作者集合 diff（增/删/换序/音译），强于仅查首作者
+        claimed_authors = claimed.get("authors")
+        if claimed_authors and real_fams:
+            adiff = author_set_diff(claimed_authors, real_fams)
+            rec["author_set_diff"] = adiff
+            claimed_title = (claimed.get("title") or "").strip().lower()
+            tmatch = (not claimed_title) or (cr_title and
+                     _title_match(claimed_title, cr_title.lower()) >= TITLE_SIM_WARN)
+            if tmatch and adiff["verdict"] == "author_addition":
+                rec["is_chimeric"] = True
+                rec["errors"].append({"severity": "high",
+                    "msg": f"疑似嵌合引用（Chimeric）：标题真实但作者集合含幻觉新增 {adiff['added']}"
+                           f"（真实作者 {[a.get('family') for a in auth][:4]}）——核对原文作者"})
+            elif tmatch and adiff["verdict"] in ("author_deletion", "reordered"):
+                rec["errors"].append({"severity": "medium",
+                    "msg": f"作者列表与真实不一致（{adiff['verdict']}）：增{adiff['added']} 删{adiff['removed']} "
+                           f"换序{adiff['reordered']}——核对作者顺序/完整性"})
         if claimed_fa:
-            real_fams = [(a.get("family", "") or "").strip().lower() for a in auth]
-            real_fams = [f for f in real_fams if f]
             # 声称首作者姓未出现在任何真实作者姓里 → 疑似嵌合（姓做子串双向匹配，容缩写/音译差异）
             hit = any(claimed_fa == f or claimed_fa in f or f in claimed_fa for f in real_fams)
             claimed_title = (claimed.get("title") or "").strip().lower()
@@ -453,6 +517,33 @@ def _selftest():
         _get_json = orig_get_json
     assert r_chi["is_chimeric"] and any("嵌合" in e["msg"] for e in r_chi["errors"]), r_chi
     assert not r_okc["is_chimeric"], r_okc
+
+    # --- CT-5b 标题匹配治倒装误判（审查病3核心反例）---
+    # 旧字符级 Jaccard 把倒装判 1.0；语义契约应判高相似但 <1.0，整句改写应明显更低
+    inv = _title_match("Attention Is All You Need", "All You Need Is Attention")
+    same = _title_match("Attention Is All You Need", "Attention Is All You Need")
+    assert same >= 0.99, ("完全相同应≈1.0", same)
+    assert inv < 0.99, ("倒装不应被误判为完全相同(旧Jaccard=1.0的bug)", inv)
+    if _HAS_SEM:
+        assert inv >= 0.6, ("倒装仍应判较高相似", inv)
+
+    # --- CT-5c 作者集合 diff：增/删/换序检出（强于仅查首作者）---
+    ad_add = author_set_diff(["Vaswani", "Smith"], ["Vaswani", "Shazeer"])
+    assert ad_add["verdict"] == "author_addition" and "smith" in ad_add["added"], ad_add
+    ad_match = author_set_diff(["Vaswani", "Shazeer"], ["Vaswani", "Shazeer"])
+    assert ad_match["verdict"] == "match", ad_match
+    ad_reorder = author_set_diff(["Shazeer", "Vaswani"], ["Vaswani", "Shazeer"])
+    assert ad_reorder["verdict"] == "reordered", ad_reorder
+    # 完整作者列表喂 verify_one → 幻觉新增作者触发嵌合
+    try:
+        _get_json = fake_get_chimeric
+        r_aset = verify_one("10.0000/real.doi", claimed={
+            "title": "Attention Is All You Need",
+            "authors": ["Vaswani", "Shazeer", "Hinton"]})  # Hinton 是幻觉
+    finally:
+        _get_json = orig_get_json
+    assert r_aset.get("author_set_diff", {}).get("verdict") == "author_addition", r_aset
+    assert r_aset["is_chimeric"], r_aset
 
     # --- CT-2 撤稿覆盖度：summary 显式区分"已用信号"与"未覆盖经典撤稿" ---
     assert "retraction_coverage" in s and "retraction_signals_used" in s, s
