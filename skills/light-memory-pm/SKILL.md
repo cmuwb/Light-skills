@@ -6,6 +6,8 @@ user-invocable: false
 
 # 上下文管理、记忆持久化与科研项目管理
 
+> **增量边界（诚实，别把带记忆方案都有的常识当本技能贡献）**：11 阶段科研流水线、"该记什么/不记什么"、会话开始先读 next_actions、相对日期转绝对日期、两层记忆模型（借 LangGraph/mem0）——这些是**任意带记忆文件的方案都有的常识/转述，近零增量**。本技能真正超出裸模型的是**可机器验证的纪律**：①`check_bfact_freshness.py` B-fact 裸数值+快照超期扫描（把口头"硬性"变真硬性）②`check_project_card.py` 的 HANDOFF_CHAIN 衔接链图结构完整性校验（parent_session 可达/无悬挂/无环）③`version_tag_reconcile.py` version_history↔git tag 双向失配检测④SSOT 决策表+边界裁决表的细粒度归属。**诚实落后项**（未做）：mem0 的状态演化保留（project_card *_status 覆盖式更新会丢 A→B 转移轨迹）、语义检索复用历史教训（现靠 Grep 字面匹配，同义不同词会漏召回）、跨技能产物机器化中枢登记台账。
+
 ## 记忆系统 SSOT 决策表（先查这里，再动手写）
 两套记忆系统并存——**跨会话 Light 记忆文件**(user/feedback/project/reference + MEMORY.md 索引)与**项目库 db09**——极易把同一类信息写错地方或两头都写造成漂移。落盘前先按下表定位**唯一权威落点**(SSOT)，再决定是否需 MEMORY.md 索引双写。**铁律**：权威落点只有一个；MEMORY.md 只放**索引行**(指针)，绝不放权威正文。
 
@@ -78,6 +80,7 @@ databases/db09-projects/projects/<project_name>/
 **触发→写入对照**：idea 定稿→改 `confirmed_idea` + 追加 decision_log；实验跑完→改 `experiment_status` + `next_actions`；论文/PPT/代码出新版→改对应 `*_status` + 追加 version_history（并打 git tag）；方案变更/取舍→追加 decision_log；新术语/指标/创新点定名→补 terminology.md。
 
 **B-fact 引用三件套（硬性，禁裸写数值）**：写 decision_log/data_status 引用 **venue 计量(h_index/被引/分区) / 数据集许可/DOI / 外部数值** 时,不当 db09 自带权威,必带三件套——**快照值(可带 ≈) + `[snapshot YYYY-MM-DD, src=dbNN:文件#定位, 用前重核, 冲突信在线]`**(venue 回指 db01:venues.csv、数据集回指 db04 卡、色值回指 db05 DTCG;palette.json 是样板)。**读卡恢复状态时**:带 last_checked 的快照若超期(计量 >90 天/许可 >365 天)给"需重核"提示,不直接当当前值汇报,投稿/用前以在线(venue_signal.py)或官方源重核。
+> **这条"硬性"现已有脚本兜底（此前纯散文、零执行=名不副实）**：`python scripts/check_bfact_freshness.py --project-dir <db09 项目目录> --today <currentDate>` 扫 decision_log/project_card 的可变计量事实——无 `[snapshot]` 标记的数值报 `BARE_NUMBER`（major），带标记但超期的报 `STALE`（计量>90 天/许可>365 天），并产出可直接喂 m01/venue_signal 的**重核清单**。读卡恢复/投稿前跑一遍，把"心算超期"变成机检。⚠ 正则启发式会漏/误报，阈值经验默认可调；**本脚本只读不改 db09**（九库维持现状）。
 
 **跨项目教训回写（节制，避免噪声）**：仅当某决策产生了**可跨项目复用的过程教训**——踩坑、被审稿/导师否掉、复现失败、某流程显著省时/避雷——才在追加 decision_log 的**同时**回写一条 lesson 到 db09 顶层 `lessons.md`（格式：`- [YYYY-MM-DD] 阶段/场景 — 做法 — 结果(有效|失败) — 适用条件 — 来源项目slug`）。日常项目内决策**不强制**回写。边界：方法选型事实归 db03 方法卡，个人偏好归 feedback 记忆，二者不进 lessons.md。**去偏科化（回写时）**：lesson 须剥离研究方向前提、抽到对任意学科成立的层面(如"三模块纯串联当创新点会被拒,须有方法层 delta"对任何 CV/ML 成立=可上;"白羊外观同质化弃 re-id"带方向前提=留 decision_log 不上 lessons);a02 起草、归档确认点由用户拍板。
 

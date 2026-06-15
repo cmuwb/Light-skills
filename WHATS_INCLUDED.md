@@ -41,6 +41,7 @@
 | frontend-design | `scripts/ai_tell_lint.py` | 机械检测“AI 生成感”前端文案/界面痕迹，提示模板腔、空泛词和常见坏味道 |
 | frontend-design | `scripts/audit_checklist.py` | 前端布局质量可计算检查：对齐、间距、层级、密度、可读性等清单化输出 |
 | frontend-design | `scripts/contrast_lint.py` | WCAG 2.1 对比度门禁：解析 token/CSS 变量 hex 两两组合算相对亮度对比度，按正文4.5:1/大字3:1/UI3:1 判 PASS/FAIL，纯 stdlib |
+| memory-pm | `scripts/check_bfact_freshness.py` | B-fact 裸数值+快照超期扫描(把口头"硬性"变真硬性,只读不改 db09)：扫项目卡/决策日志的可变计量事实(h_index/被引/影响因子/分区/许可…),无 [snapshot] 标记报 BARE_NUMBER、带标记超期(计量>90天/许可>365天)报 STALE,产可喂 m01 重核清单 |
 | memory-pm | `scripts/check_project_card.py` | db09 项目卡细粒度校验（补 check_databases 未覆盖项）：绝对日期格式、current_stage 枚举、decision_log/version_history 行格式、handoff parent_session 链可达 |
 | memory-pm | `scripts/version_tag_reconcile.py` | version_history 各版本 vN 与 git tag 两段对账，列出"有tag无记录/有记录无tag"，落地 SKILL 反复强调的 tag 对齐纪律 |
 | orchestrator | `scripts/passport.py` | .light/passport.yaml 台账工具：init/append-stage/get-current-stage/validate(拓扑序+并行DAG)/fingerprint/stale-check 六子命令+schema校验+返修轮次跨会话防刷新，PyYAML 缺失降级内置解析 |
