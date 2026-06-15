@@ -40,6 +40,7 @@ Level 2 立项时，每个候选先填一张**立项卡**（模板 [templates/id
 提"创新点/相对哪些工作"前，实际检索对标工作，避免"自以为新"和引用幻觉。**检索统一调 m01(light-literature-search) 已验证脚本，不手拼 API URL**（手拼 URL 易踩限流/分页/编码坑，且与 m01 真相源割裂）：
 - `python light-literature-search/scripts/search_normalize.py`：多源检索并规范化，首轮即带后向引用边（OpenAlex / Crossref）——用核心机制关键词初筛对标工作。
 - `python light-literature-search/scripts/snowball.py`：对最像的一两篇做前向被引 + 后向参考"滚雪球"，把最近邻工作捞全。
+- `python light-literature-search/scripts/cross_domain_search.py`：**为 method-transfer 型 idea（见上"发散策略"第 2 条）专用**——应用轴×方法轴正交检索，方法轴强时效抓别领域最新 SOTA，输出"迁移提示"列出可嫁接到本课题的前沿方法。用于**正向发现**"哪些别领域方法能搬过来"（区别于上面两脚本的"反向核验已有撞车"）；可迁移性仍须研究者据方法假设在本数据/任务是否成立判断，不被脚本提示直接采信。
 - OpenAlex 是否需 key、限流、计费、退避的**唯一口径**见 m01 references「OpenAlex 接入真相源」节；本技能不复写数字。Semantic Scholar / arXiv 作交叉验证源，端点与坑见本技能 [references.md](references.md)。
 
 检索结论决定"创新点"措辞：若已有高度相似工作，回到发散重选角度，别硬说新。
