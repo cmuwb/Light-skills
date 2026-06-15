@@ -29,12 +29,17 @@ Level 2 立项时，每个候选先填一张**立项卡**（模板 [templates/id
 
 不够发散时，补用 7 个结构化激发技法（源自 Scientific Brainstorming）：跨域类比、假设反转（"反过来会怎样/资源无限会怎样"）、尺度切换（分子↔种群、毫秒↔千年）、约束增删、跨学科融合、技术外推（新技术来了能做什么）。method-transfer/combination 角度可仿 ResearchAgent：先抽取本项目领域核心实体，再找与之高共现的邻域概念作为迁移/重组来源；MAGenIdeas 证明这种跨域知识重组 + 迭代检索能把唯一新颖 idea 数提到约 3.4 倍。
 
+### 破壁：反 frame-lock 强制发散（把"补技法"从口头变可机检）
+**突破口的最大杀手是在一条思路上死磕（frame-lock）**。两步把发散面强制撑开：
+- **强制激发**：`python scripts/provocation_gen.py --seed "实体1,实体2,实体3"`——抽取本项目 2~4 个核心实体，用结构化激发算子（空白直击/技术外推/尺度切换/假设反转/失效驱动/约束增删 + 实体两两**跨域强配**）机械生成发散提问单，**覆盖全部 7 角度**。逐条带项目背景作答，每条至少逼出 1 个候选。提问是脚手架不是 idea 本身——洞察靠你 + 文献 + 底座模型，本脚本只保证你没在单一思路上死锁。
+- **覆盖门禁**：候选汇成带 `angle` 标签的 `candidates.json` 后，`python scripts/provocation_gen.py --coverage candidates.json` 机检：总量 <15 或**某角度 0 候选**即判 frame-lock 风险、拦在收敛前（退出码 1），逼你回去补缺失角度，别拿单一思路凑数往下走。某角度占比 >60% 也告警偏科。
+
 ### 收敛：发散后过滤排序
 **数量漏斗**：先发散到 **≥15 条**原始候选（少于此说明发散不够，回上面补技法），再经下列收敛到 **3–6 条**送 m04——漏斗入口宽、出口窄才能拉开差距。
 - 先用 db03 方法成熟度过滤掉"已过时/已被做烂"的方向——但 maturity 的"过时/被替代"判断要读其括号内的域限定(如"被3DGS替代"只在 CV 时间线成立),并按你的研究方向经 `domain_scope=` 过滤,别把某领域的时间线判断误用到别的方向。
-- **候选去重**：`python scripts/candidate_dedup.py --in candidates.json`——两两算相似度（默认零依赖文本相似度，可传 `--emb` 用 SPECTER2 余弦升级），按批内 **mean+1σ 自动标"疑似变体对"**，把含糊的"显著高于其余"变成可执行判定，合并换皮候选。
-- **排序选 Top-N**：`python scripts/rank_ideas.py --in candidates.json --top-k 5`——按"影响×工作量性价比"确定性排序 + 给"先做/缓做/砍"建议（替代原"两两 PK / 瑞士轮"的口头描述）。
-- **三套评分的唯一分工**（消除困惑，别再纠结信哪个）：① 三维快评(1–10) 做**入场 triage**（粗筛掉明显弱的）；② `rank_ideas.py` 的影响×工作量做**收敛漏斗主排序键**（决定送 m04 顺序）；③ 五维(1–5) 做**交 m04 前终检**（每维分低的回炉）。最终送审顺序以 ② 为唯一裁定。
+- **候选去重**：`python scripts/candidate_dedup.py --in candidates.json`——两两算相似度（默认零依赖文本相似度，可传 `--emb` 用 SPECTER2 余弦升级），按批内 **mean+1σ 自动标"疑似变体对"**，把含糊的"显著高于其余"变成可执行判定，合并换皮候选。候选 JSON 字段格式见 [examples/candidates.example.json](examples/candidates.example.json)（每条带 id/title/claim/angle/impact/effort/novelty/feasibility，一份样例同时喂 dedup/rank/provocation 三脚本，接上"立项卡 md → 候选 json"的手工整理断点）。
+- **排序选 Top-N**：`python scripts/rank_ideas.py --in candidates.json --top-k 6`——**分层组合裁定**：先把候选分到 moonshot(冲刺/高风险高回报)/solid(稳妥)/safe(保底) 三道，每道各自合理排序（moonshot 按影响→新颖，**不**用性价比；solid 才用影响/工作量性价比；safe 按可行+省力），再 round-robin 三层交替组合 shortlist。**关键：突破口（高影响必然高工作量）不被性价比压杀**——若用单一性价比榜，moonshot 会系统性输给保底项，与下面"分层产出"自相矛盾。
+- **排序键分工（唯一裁定，消除"信哪个分"的困惑）**：① 三维快评(1–10) 做**入场 triage**（粗筛掉明显弱的，决定哪些值得填卡）；② `rank_ideas.py` 的**分层组合裁定**做收敛漏斗主排序键（决定送 m04 的分层结构与顺序）；③ 五维(1–5) 做**交 m04 前终检**（每维分低的回炉）。最终送审结构与顺序以 ② 为唯一裁定——它本身已是分层的，故"按潜力分层产出"与"唯一排序键"不再冲突。
 
 ## 新颖性核验（别靠记忆，去查）
 提"创新点/相对哪些工作"前，实际检索对标工作，避免"自以为新"和引用幻觉。**检索统一调 m01(light-literature-search) 已验证脚本，不手拼 API URL**（手拼 URL 易踩限流/分页/编码坑，且与 m01 真相源割裂）：
@@ -73,10 +78,10 @@ Level 2 立项时，每个候选先填一张**立项卡**（模板 [templates/id
 - **三维快评**（1–10）：Interestingness、Feasibility、Novelty（打分谨慎贴近现实）。
 - **7 失败模式反向自检**（源自 The AI Scientist 的 Nature 版局限，ARS 整理）：实现 bug、幻觉结果、走捷径、把 bug 当洞见、方法论造假、frame-lock（死锁单一框架）、引用幻觉。重点防 frame-lock（别在一条思路上死磕）与引用幻觉（别编对标工作）。
 - 可选多视角互怼（Consciousness Council）：让"对标派 / 可行性派 / 新颖性派 / 工程派"各自挑刺再综合。
-- **交接门禁（可机检，必过）**：`python scripts/card_gate.py --in idea_candidates.md` 校验每张卡的硬条件——(m04复核) 字段非空、最近邻 ≥3 篇带检索留痕、新颖性归档三档、撞车自评选档、无模糊词支撑复核字段。**残卡（空字段/最近邻<3/未归档）会被拦下，进不了 m04**，把"自报不被采信"做成可机检而非靠自觉。门禁只校验结构完整性，不判 idea 优劣（那是 m04 的事）。填写参照黄金样例 [examples/idea_candidates.example.md](examples/idea_candidates.example.md)（2 张分层卡，含撞车四问留痕/最像3篇/量化 delta 的合格写法）。
+- **交接门禁（可机检，必过）**：`python scripts/card_gate.py --in idea_candidates.md` 校验每张卡的硬条件——(m04复核) 字段非空**且非敷衍占位**、最近邻 ≥3 篇带检索留痕、新颖性归档三档、撞车自评选档、无模糊词支撑复核字段。**残卡（空字段/最近邻<3/未归档）会被拦下；填"无/更好/有数据"等敷衍占位冒充内容、或最近邻列填"无"假装查过，也一并拦下**（审查实测过这个洞），把"自报不被采信"做成可机检而非靠自觉。门禁只校验结构完整性，不判 idea 优劣（那是 m04 的事）。填写参照黄金样例 [examples/idea_candidates.example.md](examples/idea_candidates.example.md)（2 张分层卡，含撞车四问留痕/最像3篇/量化 delta 的合格写法）。
 
 ## 产出
-3–6 个分层 idea（高风险高回报 / 稳妥 / 保底），按潜力排序，附对比表。每个标注成熟度与差异化强度，并带上自检的五维/三维分。**标准工件：`idea_candidates.md`**（交 m04 的交接工件，命名见 CONVENTIONS §6.1）。
+3–6 个分层 idea（moonshot 冲刺/高风险高回报 · solid 稳妥 · safe 保底），由 `rank_ideas.py` 分层组合裁定给出送审结构（非单一性价比榜，突破口不被压杀），附对比表。每个标注所在道、潜力分(影响+新颖)、成熟度与差异化强度，并带上自检的五维/三维分。**标准工件：`idea_candidates.md`**（交 m04 的交接工件，命名见 CONVENTIONS §6.1）。
 
 ## 强制衔接
 所有 idea **必须**送 m04 idea-critique 严审。被毙的 idea 带着 m04 给的方向回到本技能再生成，形成循环。通过的 idea 才进 m05。写入项目库 db09 的 decision_log。
