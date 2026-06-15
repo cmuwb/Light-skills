@@ -81,7 +81,8 @@
 | slides | `scripts/pptx_eval.py` | PPT 可量化质量评测：内容密度/设计一致/连贯性三维扣分制，对照 SKILL 硬尺度逐页给分+扣分理由，把视觉 QA 从肉眼查升级为可回归指标 |
 | slides | `scripts/thumbnail.py` | 把 PPTX/PDF 渲染成缩略图网格，快速做整套 deck 视觉 QA |
 | slides | `scripts/to_pdf.py` | PPTX 转 PDF，优先 LibreOffice `soffice` 无头转换，用于后续视觉审查 |
-| tool-selection | `scripts/detect_stack.py` | 读取项目清单文件识别技术栈，给出工具/技能选型建议 |
+| tool-selection | `scripts/detect_stack.py` | 读取项目清单文件识别技术栈，给出工具/技能选型建议，并做冲突/异味与版本时效检测，输出 tooling_plan 与 light.findings.v1 |
+| tool-selection | `scripts/run_routing_eval.py` | 工具路由回归 eval：按 evals/tool_choice_eval.json 断言 task→tool 映射，防 RULES/ALIASES/SMELLS 漂移 |
 | typesetting | `scripts/precheck_log.py` | 扫描 LaTeX `.log`，汇总编译错误、警告、undefined citation/reference 等问题 |
 | typesetting | `scripts/submission_check.py` | 投稿前合规/匿名雷区扫描：双盲身份泄漏(\author/致谢/可识别链接)、PDF 元数据 /Author、页数上限、残留 TODO，拦 desk-reject |
 | venue-matching | `scripts/venue_signal.py` | 投稿 venue 五信号对照：发文量趋势/自引率粗查/审稿周期/作者匹配度/APC 分区，OpenAlex + db01 卡，失败优雅降级 |
