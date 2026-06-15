@@ -36,6 +36,33 @@ if hasattr(sys.stdout, "reconfigure"):
 COLLISION_LEVELS = ("same", "extension", "unrelated")
 # same=核心实质等价(同现象/方法/结论) extension=前作做过但有实质扩展 unrelated=无关/阴性
 NOVELTY_TIERS = ("novel", "incremental", "overlap", "evidence-missing")
+STANCE_VALUES = ("supporting", "contrasting")
+# 引用立场(借 GraphMind)：supporting=同向(idea 与命中目标一致→削弱新颖)；
+#                        contrasting=idea 据此命中差异化(支撑新颖)。
+
+
+def _derive_collision_level(c: dict) -> tuple:
+    """借 GraphMind 的 background/target 分解 + 引用立场，把撞车等级从 agent 整体直觉
+    变成可追溯推导。返回 (derived_level, basis_str)。
+
+    判定（仅当填了 target_equivalent 才走分解，否则回退 declared level）：
+      - target 层实质等价 + supporting 立场 → same（真撞车：解决的新问题相同且同向）
+      - target 层实质等价 + contrasting    → extension（目标相关但 idea 据此差异化）
+      - target 层不等价                    → unrelated（仅共享 background，不算撞车——
+                                              GraphMind 关键点：避免共享背景的论文被误判撞车）
+    """
+    te = c.get("target_equivalent")
+    stance = (c.get("stance") or "").strip().lower()
+    declared_level = c.get("level")
+    if te is True:
+        if stance == "supporting":
+            return "same", "target层等价+supporting立场"
+        if stance == "contrasting":
+            return "extension", "target等价但idea据此差异化(contrasting)"
+        return "same", "target层等价(立场未标,保守判 same)"
+    if te is False:
+        return "unrelated", "target层不等价(仅共享background,非撞车)"
+    return declared_level, "declared(未做target/background分解)"
 
 
 def _audit_claim(claim: dict) -> dict:
@@ -51,9 +78,20 @@ def _audit_claim(claim: dict) -> dict:
     ok_hits = [e for e in evidence if e.get("http") == 200]
     has_evidence = len(ok_hits) > 0
 
-    levels = [c.get("level") for c in collisions]
+    # 逐撞车推导等级（GraphMind target/background 分解优先于 declared）
+    derived_cols = []
+    for c in collisions:
+        dl, basis = _derive_collision_level(c)
+        decomposed = c.get("target_equivalent") is not None
+        derived_cols.append({"ref": c.get("ref", "?"), "declared_level": c.get("level"),
+                             "derived_level": dl, "basis": basis, "decomposed": decomposed,
+                             "stance": (c.get("stance") or None)})
+
+    levels = [d["derived_level"] for d in derived_cols]        # 用推导等级而非 declared
     has_same = "same" in levels
     has_ext = "extension" in levels
+    # target 层等价 + supporting 触发的 same（比"declared==same"更难被 agent 糊弄）
+    target_same = any(d["derived_level"] == "same" and d["decomposed"] for d in derived_cols)
 
     # 勾稽1：声称 novel 但有 same 命中 → 过度宣称
     if declared == "novel" and has_same:
@@ -62,8 +100,9 @@ def _audit_claim(claim: dict) -> dict:
                              f"创新性应 <45 触发 block"})
     # 勾稽2：有 same 撞车 → 必须 block（idea-critique 规则）
     if has_same:
+        src = "target层等价(分解推导)" if target_same else "declared"
         flags.append({"code": "COLLISION-SAME-BLOCK", "severity": "high",
-                      "msg": f"论断{cid}存在 same 撞车 → 触发创新性<45 block、判不通过（rubric 否决项）"})
+                      "msg": f"论断{cid}存在 same 撞车[{src}] → 触发创新性<45 block、判不通过（rubric 否决项）"})
     # 勾稽3：无检索证据却给了非 evidence-missing 档 → 档位不成立
     if not has_evidence and declared in ("novel", "incremental"):
         flags.append({"code": "EVIDENCE-MISSING", "severity": "high",
@@ -73,10 +112,24 @@ def _audit_claim(claim: dict) -> dict:
         flags.append({"code": "SINGLE-SOURCE", "severity": "warn",
                       "msg": f"论断{cid}仅 {libs or '0'} 单库检索 < 2 库——可能高估新颖性，补检索交叉验证"})
     # 勾稽5：extension 但未记 delta → 增量没说清
+    for d in derived_cols:
+        if d["derived_level"] == "extension":
+            orig = next((c for c in collisions if c.get("ref", "?") == d["ref"]), {})
+            if not (orig.get("delta") or "").strip():
+                flags.append({"code": "DELTA-MISSING", "severity": "warn",
+                              "msg": f"论断{cid}对 {d['ref']} 判 extension 却未写量化 delta——增量贡献须说清"})
+    # 勾稽6：declared==same 但没做 target/background 分解 → 撞车判定不可追溯（鼓励分解）
     for c in collisions:
-        if c.get("level") == "extension" and not (c.get("delta") or "").strip():
-            flags.append({"code": "DELTA-MISSING", "severity": "warn",
-                          "msg": f"论断{cid}对 {c.get('ref','?')} 判 extension 却未写量化 delta——增量贡献须说清"})
+        if c.get("level") == "same" and c.get("target_equivalent") is None:
+            flags.append({"code": "DECOMP-MISSING", "severity": "warn",
+                          "msg": f"论断{cid}对 {c.get('ref','?')} 判 same 却未做 target/background 分解——"
+                                 f"撞车判定靠手感不可追溯，补 target_equivalent+stance 字段（借 GraphMind）"})
+    # 勾稽7：判定为 unrelated 但其实 target 等价（分解打架 declared）→ 漏判撞车
+    for d in derived_cols:
+        if d["declared_level"] == "unrelated" and d["derived_level"] == "same":
+            flags.append({"code": "COLLISION-UNDERCLAIM", "severity": "high",
+                          "msg": f"论断{cid}对 {d['ref']} 自报 unrelated 但 target 层等价+supporting——"
+                                 f"漏判撞车，应升 same 并触发 block"})
 
     # 推导 novelty 档（按证据，覆盖 declared 若矛盾）
     if not has_evidence:
@@ -90,7 +143,8 @@ def _audit_claim(claim: dict) -> dict:
 
     return {"id": cid, "declared": declared or None, "derived_novelty": derived,
             "libs": sorted(libs), "n_ok_hits": len(ok_hits),
-            "has_same": has_same, "flags": flags}
+            "has_same": has_same, "target_same": target_same,
+            "collisions": derived_cols, "flags": flags}
 
 
 def audit(data: dict) -> dict:
@@ -105,6 +159,9 @@ def audit(data: dict) -> dict:
     has_overclaim = any(f["code"] == "NOVELTY-OVERCLAIM" for f in all_flags)
     has_block = any(f["code"] == "COLLISION-SAME-BLOCK" for f in all_flags)
     has_evmiss = any(f["code"] == "EVIDENCE-MISSING" for f in all_flags)
+    # 由 target/background 分解推导出的 same（比 declared==same 更硬，更难被 agent 糊弄）
+    has_target_same = any(r.get("target_same") for r in rows)
+    has_underclaim = any(f["code"] == "COLLISION-UNDERCLAIM" for f in all_flags)
 
     # 整体 novelty：任一 same→overlap；否则任一 evidence-missing→evidence-missing；
     # 否则任一 incremental→incremental；全 novel→novel
@@ -127,6 +184,9 @@ def audit(data: dict) -> dict:
             "trigger_novelty_overclaim": has_overclaim,
             "trigger_originality_block": has_block,   # same 撞车→创新性<45 block
             "trigger_evidence_missing_cap": has_evmiss,
+            # target 层等价+supporting 推导的 same（GraphMind 式，比 declared==same 更难糊弄）
+            "trigger_target_collision": has_target_same,
+            "trigger_collision_underclaim": has_underclaim,  # 自报 unrelated 但 target 等价=漏判
         },
         "flags": all_flags,
         "note": ("只勾稽'结论是否与自己的检索证据自洽'，不替你判 idea 真新不新（须真检索+人判）。"
@@ -149,7 +209,9 @@ def to_markdown(rep: dict) -> str:
     hooks = rep["verdict_hooks"]
     lines.append(f"\n**喂回 Step6 否决项**：overclaim={hooks['trigger_novelty_overclaim']} "
                  f"originality-block={hooks['trigger_originality_block']} "
-                 f"evidence-missing={hooks['trigger_evidence_missing_cap']}")
+                 f"evidence-missing={hooks['trigger_evidence_missing_cap']} "
+                 f"target-collision={hooks['trigger_target_collision']} "
+                 f"underclaim={hooks['trigger_collision_underclaim']}")
     if rep["flags"]:
         lines.append("\n**全部 flags：**")
         lines += [f"- [{f['severity']}] {f['code']}: {f['msg']}" for f in rep["flags"]]
@@ -200,9 +262,49 @@ def _selftest() -> int:
     rc = audit(clean)
     assert rc["overall_novelty"] == "novel" and rc["high_flag_count"] == 0, rc
 
+    # === GraphMind 式 target/background 分解 + 引用立场 ===
+    # 论断D：命中做了分解，target 层等价 + supporting → 推导 same（即便 declared 没说）
+    dec = {"claims": [{"id": "D", "declared_novelty": "incremental",
+           "evidence": [{"source": "openalex", "http": 200}, {"source": "s2", "http": 200}],
+           "collisions": [{"ref": "Zhao2024", "target_equivalent": True,
+                           "stance": "supporting"}]}]}
+    rd = audit(dec)
+    hooks_d = rd["verdict_hooks"]
+    assert hooks_d["trigger_target_collision"], hooks_d   # 分解推导出的 same
+    assert hooks_d["trigger_originality_block"], hooks_d   # same → block
+    d_claim = rd["claims"][0]
+    assert d_claim["collisions"][0]["derived_level"] == "same", d_claim["collisions"]
+    assert d_claim["collisions"][0]["decomposed"] is True
+
+    # 论断E：仅共享 background（target 不等价）→ 推导 unrelated，不误判撞车（GraphMind 关键点）
+    bg = {"claims": [{"id": "E", "declared_novelty": "novel",
+          "evidence": [{"source": "openalex", "http": 200}, {"source": "arxiv", "http": 200}],
+          "collisions": [{"ref": "Lee2021", "target_equivalent": False, "stance": "contrasting"}]}]}
+    re_ = audit(bg)
+    assert re_["overall_novelty"] == "novel", re_["overall_novelty"]   # 共享背景不拉低新颖
+    assert re_["claims"][0]["collisions"][0]["derived_level"] == "unrelated"
+    assert not re_["verdict_hooks"]["trigger_originality_block"], re_["verdict_hooks"]
+
+    # 论断F：自报 unrelated 但 target 等价+supporting → COLLISION-UNDERCLAIM 漏判
+    under = {"claims": [{"id": "F", "declared_novelty": "novel",
+             "evidence": [{"source": "openalex", "http": 200}, {"source": "s2", "http": 200}],
+             "collisions": [{"ref": "Wu2023", "level": "unrelated",
+                             "target_equivalent": True, "stance": "supporting"}]}]}
+    rf = audit(under)
+    codes_f = {f["code"] for f in rf["flags"]}
+    assert "COLLISION-UNDERCLAIM" in codes_f, codes_f
+    assert rf["verdict_hooks"]["trigger_collision_underclaim"], rf["verdict_hooks"]
+
+    # 论断G：declared same 但没做分解 → DECOMP-MISSING warn（鼓励可追溯）
+    nodecomp = {"claims": [{"id": "G", "declared_novelty": "overlap",
+                "evidence": [{"source": "openalex", "http": 200}, {"source": "s2", "http": 200}],
+                "collisions": [{"ref": "Old2020", "level": "same"}]}]}
+    rg = audit(nodecomp)
+    assert "DECOMP-MISSING" in {f["code"] for f in rg["flags"]}, rg["flags"]
+
     # 空 claims 不崩
     assert audit({"claims": []}).get("n_claims") == 0
-    print("[selftest] PASS novelty_audit offline")
+    print("[selftest] PASS novelty_audit offline (含 GraphMind target/background 分解)")
     return 0
 
 

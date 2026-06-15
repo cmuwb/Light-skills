@@ -43,8 +43,10 @@
 | orchestrator | `scripts/passport.py` | .light/passport.yaml 台账工具：init/append-stage/get-current-stage/validate(拓扑序+并行DAG)/fingerprint/stale-check 六子命令+schema校验+返修轮次跨会话防刷新，PyYAML 缺失降级内置解析 |
 | orchestrator | `scripts/run_checkpoint.py` | 确认点闸门聚合器：收齐各技能 light.findings.v1 + 实跑闸门命令经 _shared/gate_runner 聚合，写回 passport 的 gate.result+证据指针(sha@ts)，critical fail 退出码 1 阻断，默认 dry-run --write 才落盘 |
 | idea-critique | `scripts/calibration.py` | idea 审查 calibration 模式：用已知结局样本估计 FNR/FPR，校准严格度 |
-| idea-critique | `scripts/novelty_audit.py` | 新颖性检索证否四阶段留痕(抽论断→检索证据→撞车对比→判定)+一致性勾稽：抓"声称新但证据有 same 撞车"等自相矛盾，喂回否决项 |
-| idea-critique | `scripts/score_aggregate.py` | idea 八维评分加权聚合、否决项处理与 verdict 映射 |
+| idea-critique | `scripts/critique_self_audit.py` | PRISM 式评审自审(constructiveness 缺口/surface trap/过度背书三轴，挂 _shared/findings_schema)+判决语料下沉 critique_corpus.json(top3 拒稿理由+审稿语料反哺 m07/m14/m13) |
+| idea-critique | `scripts/novelty_audit.py` | 新颖性检索证否四阶段留痕+一致性勾稽+target/background 分解与引用立场分类(借 GraphMind 让撞车判定可追溯)：抓"声称新但证据有 same 撞车"等矛盾，喂回否决项 |
+| idea-critique | `scripts/novelty_density.py` | 嵌入密度新颖性先验(借 RND 相对邻域密度)：对 m01 最近邻论文集嵌入算 idea 域无关新颖分 0-100(KNN 密度百分位)，作 LLM 自评外的交叉校验传 decide(novelty_prior=) 抓过度背书 |
+| idea-critique | `scripts/score_aggregate.py` | idea 八维评分加权聚合、确定性否决闸门、verdict 映射、嵌入密度新颖先验交叉校验 |
 | idea-critique | `scripts/sycophancy_guard.py` | 反谄媚协议的可计算检查，约束 idea 评审不要迎合式放行 |
 | idea-generation | `scripts/card_gate.py` | 立项卡交接门禁：校验 (m04复核) 字段非空、最近邻≥3带留痕、新颖性归档三档、撞车自评选档，残卡拒绝交 m04 |
 | idea-generation | `scripts/candidate_dedup.py` | 候选 idea 去重/伪多样性检测：文本相似度(零依赖)或 SPECTER2 余弦(可选)，批内 mean+1σ 自动标疑似变体对，把含糊阈值算法化 |

@@ -235,6 +235,19 @@
 
 ---
 
+## 14. RND / GraphMind / PRISM（升级新增机制的方法来源，2026-06-15 补）
+
+【是什么】2025 升级三个查新/评审机制借鉴的研究，分别落成 `novelty_density.py` / `novelty_audit.py` 的 target 分解 / `critique_self_audit.py`：
+- **RND（相对邻域密度，Relative Neighborhood Density）**：域无关新颖性算法，用 M3-Embedding + 二级 KNN 密度百分位给 0-100 新颖分（跨域 AUROC 报 0.782）。**可复用方法**：对 idea 算 k-NN 平均距离，再对每个邻居算其自身密度构成参考分布，取 idea 密度的百分位=域无关新颖分。`novelty_density.py` 即按此实现（句向量按 m01 口径，离线降级用 _shared/semantic_sim）。
+- **GraphMind（域感知新颖性评估）**：论文图谱 + 引用立场分类（supporting/contrasting）+ background/target 分解，报 0.75 F1。**可复用方法**：把摘要拆 background（用什么领域/数据）与 target（解决什么新问题），只在 target 层撞车才判降新颖——避免共享背景的论文被误判撞车。`novelty_audit.py` 的 `target_equivalent`+`stance` 字段即此。
+- **PRISM（多维 LLM 审稿人基准）**：量化了 LLM 审稿的具体病症——novelty 过度背书（SEA 实测 79% vs 人类 59%）、constructiveness 缺口（只挑刺不给方案）、surface trap（TreeReview 实测 24% 精力浪费在格式）、CycleReviewer 幻觉 18.5%。`critique_self_audit.py` 的三轴自审对应这些 failure-mode。
+
+【链接】审查 brief 给出的来源：RND/GraphMind 综合检索系统综述 `https://arxiv.org/html/2503.01508v1`（⚠ 该 arxiv 链接归属为 RND 论文，GraphMind 见 novelty 检索系统综述，**两者具体归属与 0.782/0.75 数值待联网二次核实**，离线不下断言）；PRISM `https://huggingface.co/papers/2605.26730`；交互式新颖性评估 `https://arxiv.org/abs/2510.15706`。Interactive Novelty Assessment 见 arxiv 2510.15706。
+
+【已知坑/诚实】① 上述 AUROC 0.782 / F1 0.75 / 79% 等数值源自审查 brief 的检索，**未在本环境联网复核原文**，引用时标"待核查"；本技能借鉴的是**方法思路**（密度百分位 / target 分解 / 三轴自审），不依赖这些具体数值成立。② 密度新颖分依赖 m01 检索覆盖，漏掉最像那篇会高估（GIGO）。③ 真·多模型异质并行评审（poldrack pipeline 第 13 条）本技能**未实现**——单模型扮多视角仍是伪多样性塌缩风险，机检清单只是缓解，诚实标注为能力边界而非已做。
+
+---
+
 ## 关于其余命名项的核实说明
 
 - "critique skill / audit skill"：未找到单一权威同名 skill；可对照的实物是 obra/superpowers 的 `brainstorming`（idea→design，一次一问、强制产出可评审的 design）与 qdhenry/Claude-Command-Suite 的 `security-audit`/`architecture-review` 等命令（结构化审计模板）。链接：https://github.com/obra/superpowers 、https://github.com/qdhenry/Claude-Command-Suite 。其"逐项 checklist + 给证据 + 给修复方向"的范式可借鉴，但"critique/audit"作为确切技能名**未能核实为单一来源**。

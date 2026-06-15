@@ -51,6 +51,10 @@ DEFAULT_THRESHOLDS = {
     # 否决项 gate 线
     "gate_fatal": 45,       # 创新性<此 或 核心两项<此 → 压顶不通过（顶会一个 fatal flaw 即拒的经验线）
     "pass_core_floor": 60,  # "通过"额外要求：核心四维均≥此（防某核心维勉强及格仍被高均值放行）
+    # 嵌入密度新颖性先验交叉校验（借 RND，由 scripts/novelty_density.py 算出 0-100 传入）
+    "originality_endorse_line": 75,  # LLM 创新性≥此 = 嘴上高背书；与下行的低密度先验冲突即报红旗
+    "novelty_prior_floor": 30,       # 密度新颖分≤此 = idea 扎在密集语义簇里（域无关百分位）
+    "novelty_conflict_cap": 50,      # 冲突时把创新性维度封顶到此（降到"增量"档，非自动拒）
 }
 
 
@@ -87,20 +91,40 @@ def to_overall(weighted: float) -> int:
 
 
 def decide(scores: dict, unresolved_critical: bool = False,
-           thresholds: dict | None = None, interestingness: float | None = None) -> Verdict:
+           thresholds: dict | None = None, interestingness: float | None = None,
+           novelty_prior: float | None = None) -> Verdict:
     """否决项与 decision mapping 取更严者。
 
     thresholds: 可选，覆盖 DEFAULT_THRESHOLDS 的任意子集（便于 calibration 反推后注入，
     或按场景调松/调严）。未传的键回退默认值。
     interestingness: 可选 0-100（借 SciMuse 式有趣度/价值预判）。仅在 idea 被否决项压到"不通过"
     但 Weighted 接近通过线时，输出"边界复核建议"提示人工二次确认是否误杀——不改 gate、不自动放行。
+    novelty_prior: 可选 0-100（借 RND 嵌入密度，由 scripts/novelty_density.py 对 m01 最近邻论文集算出）。
+    作 LLM 自评之外的独立交叉校验：当 LLM 创新性≥originality_endorse_line(默认75) 但密度新颖分
+    ≤novelty_prior_floor(默认30，idea 扎在密集语义簇)，触发 NOVELTY-PRIOR-CONFLICT 红旗、把创新性
+    维度封顶到 novelty_conflict_cap(默认50) 再参与聚合——专抓 PRISM 实测的"LLM 过度背书"病。
+    诚实：这是先验交叉校验非真值，密度依赖 m01 检索覆盖；封顶到 50(增量档)而非自动拒，留人工/二次检索复核。
     """
     t = dict(DEFAULT_THRESHOLDS)
     if thresholds:
         t.update(thresholds)
+    reasons = []
+
+    # --- 嵌入密度新颖性先验交叉校验（在打分前生效，封顶创新性后再聚合）---
+    novelty_conflict = False
+    if novelty_prior is not None and scores.get("originality") is not None:
+        if (scores["originality"] >= t["originality_endorse_line"]
+                and novelty_prior <= t["novelty_prior_floor"]):
+            novelty_conflict = True
+            capped = min(scores["originality"], t["novelty_conflict_cap"])
+            reasons.append(
+                f"NOVELTY-PRIOR-CONFLICT:LLM创新性={scores['originality']}≥{t['originality_endorse_line']} "
+                f"但嵌入密度新颖分={novelty_prior}≤{t['novelty_prior_floor']}(扎在密集语义簇)"
+                f"->创新性封顶{capped},需联网二次检索证否后才能解封(喂回Step6否决项)")
+            scores = {**scores, "originality": capped}
+
     w = weighted_score(scores)
     ov = to_overall(w)
-    reasons = []
 
     # --- 否决项 (gate) ---
     gate_cap = None  # 可达到的最宽判决
@@ -216,7 +240,7 @@ def rank_batch(candidates: list, top_k: int | None = None,
     for c in candidates:
         cid = c.get("id", "?")
         v = decide(c["scores"], unresolved_critical=c.get("unresolved_critical", False),
-                   thresholds=thresholds)
+                   thresholds=thresholds, novelty_prior=c.get("novelty_prior"))
         rows.append({"id": cid, "weighted": v.weighted, "overall": v.overall,
                      "decision": v.decision, "reasons": v.reasons})
     # 稳定排序：先档位降序，再 Weighted 降序，再 id 升序（确定性，便于复现/测试）
@@ -337,6 +361,32 @@ def _selftest():
     # 不传 interestingness 时行为不变（向后兼容）
     vJ3 = decide(border)
     assert vJ3.decision == "不通过" and not vJ3.border_review, vJ3
+
+    # 案例K: 嵌入密度新颖性先验交叉校验——LLM 高创新性但密度新颖分低 → 封顶 + 红旗 + 降档
+    # strong idea(originality=88) 本应"通过"；传 novelty_prior=20(扎在密集簇) → 创新性封顶 50
+    vK = decide(strong, novelty_prior=20)
+    print(f"[K] strong+低密度先验(20): Weighted={vK.weighted} -> {vK.decision}")
+    assert any("NOVELTY-PRIOR-CONFLICT" in r for r in vK.reasons), vK.reasons
+    assert vK.decision != "通过", vK.decision   # 创新性封顶后不再放行
+    # 密度新颖分高时不干预（先验与 LLM 一致）
+    vK2 = decide(strong, novelty_prior=85)
+    assert vK2.decision == "通过" and not any("NOVELTY-PRIOR-CONFLICT" in r for r in vK2.reasons), vK2
+    # 不传 novelty_prior 行为不变（向后兼容）
+    vK3 = decide(strong)
+    assert vK3.decision == "通过", vK3
+    # LLM 本就低创新性(<endorse_line)时不触发冲突（先验没和高背书打架，不重复封顶）
+    lowori = dict(strong, originality=60)
+    vK4 = decide(lowori, novelty_prior=20)
+    assert not any("NOVELTY-PRIOR-CONFLICT" in r for r in vK4.reasons), vK4.reasons
+    print("[K] novelty-prior 交叉校验(封顶/一致/向后兼容/不误触发) ... OK")
+
+    # 案例L: rank_batch 支持每卡 novelty_prior——带低密度先验的高分卡被封顶不放行
+    batchL = [{"id": "ovr", "scores": strong, "novelty_prior": 15},
+              {"id": "ok", "scores": strong, "novelty_prior": 90}]
+    rbL = rank_batch(batchL)
+    pass_ids_L = {r["id"] for r in rbL["passlist"]}
+    assert "ok" in pass_ids_L and "ovr" not in pass_ids_L, rbL["passlist"]
+    print(f"[L] rank_batch novelty_prior 过滤过度背书卡 -> passlist={sorted(pass_ids_L)}")
 
     print("\nALL SELFTESTS PASSED")
 
