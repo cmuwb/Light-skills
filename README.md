@@ -134,7 +134,7 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Client claude   # 只装 C
 
 脚本幂等、可重跑,把技能链接进 Claude Code 的 `~/.claude/skills/` 与 Codex 的 `~/.agents/skills/`,并把 `databases/`、`code_assets/` 与 `CONVENTIONS.md`/`ROUTER.md`/`ROUTER_EXAMPLES.md`/`MODE_REGISTRY.md` 作为同级共享资源一并链接过去(技能内"见 CONVENTIONS §5"等引用装后仍可达)。
 
-> **Claude Code 无需路由片段**:它按 `~/.claude/skills/<skill>/SKILL.md` 的 frontmatter(`name`/`description`)自动发现并触发技能,不像 Codex 需要把 `AGENTS.snippet.md` 追加进 `~/.codex/AGENTS.md`。所以本仓库只为 Codex 端提供 snippet,Claude Code 端装完即用。
+> **Claude Code 装完即用，常驻纪律可再加双保险**：技能按 `~/.claude/skills/<skill>/SKILL.md` 的 frontmatter(`name`/`description`)自动发现并触发，单技能装完即用。但 a07-a10 等**常驻**技能要求"每任务/每次输出前都生效"——纯 description 是概率匹配兜不住。要让常驻真正每会话强制生效，按 [.claude/INSTALL.md](.claude/INSTALL.md) 加两件原生组件（不需 MCP、不花钱）：把 `CLAUDE.snippet.md` 追加进 `~/.claude/CLAUDE.md`（每会话必载），并注册 `hooks/session_start_resident.py` 为 SessionStart hook（harness 层确定性注入，compaction/resume 后也注入）。Codex 端对应的是把 `AGENTS.snippet.md` 追加进 `~/.codex/AGENTS.md`（见 [.codex/INSTALL.md](.codex/INSTALL.md)）。
 
 **3. 重启客户端,开说:**
 

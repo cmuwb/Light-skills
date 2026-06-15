@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.claude/Light-skills/hooks/session_start_resident.py\""
+          }
+        ]
+      }
+    ]
+  }
+}
