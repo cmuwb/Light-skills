@@ -71,7 +71,8 @@
 | literature-search | `scripts/tracker.py` | 文献定期追踪 SQLite 持久化：检索结果 upsert 去重、记 first/last_seen 与 new/seen/read 状态、被引快照随轮次更新、增量列新增、多格式导出 |
 | literature-search | `scripts/verify_citations.py` | DOI 引用核验与幻觉引用标记，辅助文献真实性检查 |
 | paper-drafting | `scripts/draft_lint.py` | 论文草稿诚信门机检：claim 无源、结果/引用 GAP、夸大词与占位符风险 |
-| paper-polishing | `scripts/mechanical_check.py` | 离线学术文稿机械检查：弱词、夸大、被动堆叠、占位符、句式坏味道 |
+| paper-polishing | `scripts/contribution_consistency.py` | 贡献跨章节一致性核验(把"贡献三处一致"招牌 claim 工具化,挂 _shared/semantic_sim)：抽 abstract/intro/conclusion 贡献句跨章节匹配,查数字漂移/强度漂移/覆盖漂移,出 light.findings.v1 |
+| paper-polishing | `scripts/mechanical_check.py` | 离线学术文稿机械检查：弱词、夸大、被动堆叠、占位符、句式坏味道；--evidence-map 绑 m06 证据强度做措辞↔证据双向校准(强证据豁免降级/过度 hedge 提示 under-claim) |
 | paper-polishing | `scripts/polish.py` | LanguageTool 云端/本地降级的语法风格检查，输出结构化发现与 HTTP 元数据 |
 | paper-polishing | `scripts/style_fingerprint.py` | 从用户过往文稿提取文风指纹，润色时校准作者声音而非通用模板 |
 | project-structure | `scripts/scaffold.py` | 一条命令生成规范科研项目骨架，含 data/src/docs/experiments/figures/paper 等目录 |

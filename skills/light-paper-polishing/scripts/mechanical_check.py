@@ -24,7 +24,18 @@ import sys
 sys.stdout.reconfigure(encoding="utf-8")
 import argparse
 import json
+import os
 import re
+
+# 挂接地基契约2(语义相似度)：把 m06 证据强度卡里的 strong-档 claim 语义定位到草稿句子，
+# 使 claim_strength 检查"措辞强度匹配证据强度"——强证据的强词不再误报降级，强证据被过度
+# hedge 反而提示 under-claim（治"确定结果写得心虚"）。无 semantic_sim 时降级到子串匹配。
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "_shared"))
+try:
+    from semantic_sim import similarity as _sem_sim  # noqa: E402
+    _HAS_SEM = True
+except Exception:
+    _HAS_SEM = False
 
 # 被动语态告警阈值：单段被动句占比超过此值 → 提示改写。经验默认值、可调（CLI --passive-threshold）。
 # 0.4 = 一段里多数仍应是主动句的宽松线（学术写作允许方法段适度被动，故不设太低）；
@@ -238,14 +249,56 @@ def check_hedge_stack(text, out):
                 "Keep at most one hedge; commit to the finding.")
 
 
-def check_claim_strength(text, out):
-    """Hedging 校准阶梯：强主张词给出建议的降级替换（见 argument_review.md §2）。"""
+def locate_strong_spans(text, evidence_strength):
+    """用 semantic_sim 把 evidence_strength.json 里 evidence_grade=strong 的 claim 定位到草稿
+    句子 span（char 偏移）。返回 [(start,end), ...]。绑定 m06 证据强度，供 claim_strength 双向校准。"""
+    spans = []
+    if not evidence_strength:
+        return spans
+    sents = [(m.group().strip(), m.start(), m.end())
+             for m in re.finditer(r"[^.!?。！？\n]+[.!?。！？]?", text) if m.group().strip()]
+    for cl in (evidence_strength.get("claims") or []):
+        if (cl.get("evidence_grade") or "").lower() != "strong":
+            continue
+        ctext = cl.get("text", "")
+        best, bs = None, 0.0
+        for s, st, en in sents:
+            sim = _sem_sim(ctext, s) if _HAS_SEM else (1.0 if ctext and ctext in s else 0.0)
+            if sim > bs:
+                bs, best = sim, (st, en)
+        if best and bs >= 0.5:
+            spans.append(best)
+    return spans
+
+
+def _in_spans(off, spans):
+    return any(a <= off < b for a, b in spans)
+
+
+def check_claim_strength(text, out, strong_spans=None):
+    """Hedging 校准阶梯：强主张词给降级替换建议（见 argument_review.md §2）。
+
+    strong_spans：m06 判为强证据的 claim 在草稿中的 span。命中其中的强主张词**豁免降级**
+    （强证据配强词是对的，不该催降级）；同时若强证据 span 内堆叠 hedge → 反向提示 under-claim
+    （确定结果写得心虚）。这把上下文无关词表升级为"措辞强度↔证据强度"双向校准。"""
+    spans = strong_spans or []
     for word, repl in CLAIM_DOWNGRADE.items():
         pat = re.compile(r"\b" + re.escape(word) + r"\b", re.IGNORECASE)
         for m in pat.finditer(text):
+            if _in_spans(m.start(), spans):
+                continue  # 强证据豁免：强词有证据支撑，不催降级
             add(out, text, m.start(), m.end(), "claim_strength",
                 f"Strong claim '{m.group(0)}' — match assertion strength to evidence.",
                 f"If evidence is not conclusive, downgrade: {repl}")
+    # under-claim：强证据 span 内出现 hedge → 提示上调措辞（治"确定结果写得心虚"）
+    if spans:
+        hedge_pat = re.compile(r"\b(" + "|".join(HEDGES) + r")\b", re.IGNORECASE)
+        for a, b in spans:
+            hm = hedge_pat.search(text, a, b)
+            if hm:
+                add(out, text, hm.start(), hm.end(), "under_claim",
+                    f"Hedge '{hm.group(0)}' on a strong-evidence claim — under-claiming.",
+                    "证据强（m06 判 strong）却 hedge，可上调措辞（如 may improve→improves），别把确定结果写心虚。")
 
 
 def scan_substr(text, out, words, cat, issue_tmpl, sug):
@@ -260,10 +313,11 @@ def scan_substr(text, out, words, cat, issue_tmpl, sug):
             start = i + len(w)
 
 
-def run(text, passive_threshold=PASSIVE_RATIO_WARN, latex=False):
+def run(text, passive_threshold=PASSIVE_RATIO_WARN, latex=False, evidence_strength=None):
     if latex:
         text = strip_latex(text)   # 行号保持，offset 仍对原文有效
     out = []
+    strong_spans = locate_strong_spans(text, evidence_strength)
     scan_phrases(text, out, OVERCLAIM, "overclaim",
                  "Overclaim/unsupported intensifier '{w}'.",
                  "Replace with measurable evidence or delete.", exempt=_overclaim_exempt)
@@ -276,7 +330,7 @@ def run(text, passive_threshold=PASSIVE_RATIO_WARN, latex=False):
     scan_substr(text, out, AI_TONE_ZH, "ai_tone",
                 "中文 AI 腔/套话「{w}」。", "删或直接改写，审稿人视作模板腔。")
     check_hedge_stack(text, out)
-    check_claim_strength(text, out)
+    check_claim_strength(text, out, strong_spans=strong_spans)
     check_passive(text, out, threshold=passive_threshold)
     check_punctuation(text, out)
     out.sort(key=lambda f: (f["line"], f["col"]))
@@ -331,7 +385,31 @@ def _selftest() -> int:
     assert "overclaim" in zh_cats, f"中文夸大词应报 overclaim: {r_zh['findings']}"
     assert "ai_tone" in zh_cats, f"中文 AI 腔(综上所述)应报: {r_zh['findings']}"
 
-    print(f"[selftest] PASS mechanical_check findings={meta['n_findings']} (+latex/豁免/缩写/中文)")
+    # 证据强度绑定(挂 _shared/semantic_sim + m06 evidence_strength.json)：
+    claim_txt = "Our method conclusively proves a clear improvement on accuracy."
+    es_strong = {"claims": [{"text": "method conclusively proves clear improvement on accuracy",
+                             "evidence_grade": "strong"}]}
+    # 无证据卡：proves/conclusively 触发 claim_strength 降级建议
+    base = run(claim_txt)
+    assert any(f["category"] == "claim_strength" for f in base["findings"]), base["findings"]
+    # 强证据卡：同一强词被豁免，不再催降级（强证据配强词是对的）
+    bound = run(claim_txt, evidence_strength=es_strong)
+    assert not any(f["category"] == "claim_strength" for f in bound["findings"]), \
+        f"强证据应豁免强词降级: {bound['findings']}"
+    # under-claim：强证据却 hedge → 提示上调
+    hedged = "Our method may improve accuracy on all datasets."
+    es_h = {"claims": [{"text": "method may improve accuracy on all datasets", "evidence_grade": "strong"}]}
+    uc = run(hedged, evidence_strength=es_h)
+    assert any(f["category"] == "under_claim" for f in uc["findings"]), \
+        f"强证据 + hedge 应提示 under_claim: {uc['findings']}"
+    # 弱证据卡：不豁免（强词仍催降级）
+    es_weak = {"claims": [{"text": "method conclusively proves clear improvement on accuracy",
+                           "evidence_grade": "weak"}]}
+    weak = run(claim_txt, evidence_strength=es_weak)
+    assert any(f["category"] == "claim_strength" for f in weak["findings"]), "弱证据不应豁免"
+
+    print(f"[selftest] PASS mechanical_check findings={meta['n_findings']} "
+          f"(+latex/豁免/缩写/中文/证据强度双向校准)")
     return 0
 
 
@@ -345,6 +423,8 @@ def main():
                     help=f"段被动句占比告警阈值(默认 {PASSIVE_RATIO_WARN}，经验值可调，见脚本注释)")
     ap.add_argument("--latex", action="store_true",
                     help="输入是 .tex：先 strip_latex 去命令/数学/注释/环境再检查，避免误报")
+    ap.add_argument("--evidence-map", help="m06 evidence_strength.json：strong 档 claim 豁免降级"
+                                           "+过度 hedge 提示 under-claim（措辞强度↔证据强度双向校准）")
     ap.add_argument("--selftest", action="store_true", help="run offline synthetic self-test")
     args = ap.parse_args()
 
@@ -367,7 +447,12 @@ def main():
 
     # 自动识别 .tex 后缀
     latex = args.latex or bool(args.file and args.file.endswith(".tex"))
-    result = run(text, passive_threshold=args.passive_threshold, latex=latex)
+    evidence_strength = None
+    if args.evidence_map:
+        with open(args.evidence_map, encoding="utf-8") as f:
+            evidence_strength = json.load(f)
+    result = run(text, passive_threshold=args.passive_threshold, latex=latex,
+                 evidence_strength=evidence_strength)
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return
