@@ -31,8 +31,29 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
 VAGUE_WORDS = ["应该", "大概", "可能差不多", "should ", "probably ", "maybe "]
+# 敷衍填充：非空但无实质信息的占位式作答（审查实测：最近邻填"无"、差异填"更好"、
+# 数据填"有数据" 能骗过纯非空校验）。这类词单独成行/成段即视为敷衍，拦下。
+_PERFUNCTORY = {"无", "没有", "没", "n/a", "na", "none", "-", "暂无", "待定", "tbd",
+                "更好", "更强", "更优", "有数据", "有", "够用", "足够", "可以", "能",
+                "差不多", "类似", "见上", "同上", "略"}
+# 最近邻文献/留痕列里的敷衍占位（填了"无/没有"冒充已检索）
+_NBR_PERFUNCTORY = {"无", "没有", "没", "n/a", "na", "none", "-", "—", "待定", "tbd", "略", "见上"}
 # 模板占位/空白判定：{{...}}、纯空、纯破折号
 _PLACEHOLDER = re.compile(r"^\s*(\{\{.*\}\}|[-—_\s]*|例\s.*|\.\.\.)?\s*$")
+
+
+def _is_perfunctory(v: str) -> bool:
+    """非空但实质为敷衍占位：整段去标点后命中敷衍词集，或过短（<5 字且无数字/英文实词）。"""
+    core = re.sub(r"`\(m04[^`]*\)`|\(m04[^)]*\)", "", v)  # 去复核标记
+    core = re.sub(r"[\s。，、；：.,;:!！?？*>\-—_]+", "", core).lower().strip()
+    if not core:
+        return False  # 空交给 _is_empty 判，这里只管"非空但敷衍"
+    if core in _PERFUNCTORY:
+        return True
+    # 极短且不含任何数字或长英文词（数字/术语通常代表实质内容）
+    if len(core) < 5 and not re.search(r"\d|[a-z]{4,}", core):
+        return True
+    return False
 
 
 def _section(card: str, header_kw: str) -> str:
@@ -69,14 +90,16 @@ def gate_card(card: str) -> dict:
     mid = re.search(r"立项卡\s*[·\.]\s*(\S+)", card)
     idea_id = mid.group(1) if mid else "?"
 
-    # 1) 必填表字段非空
+    # 1) 必填表字段非空 + 非敷衍
     for kw, name in [("标题", "标题"), ("一句话机制", "一句话机制"),
                      ("新颖性主张", "新颖性主张")]:
         v = _table_field(card, kw)
         if _is_empty(v):
             errors.append(f"字段「{name}」为空或仍是模板占位")
+        elif _is_perfunctory(v):
+            errors.append(f"字段「{name}」是敷衍占位（如'无/更好/有'），无实质内容——m04 无法复核")
 
-    # 2) 必填小节非空
+    # 2) 必填小节非空 + 非敷衍
     for kw, name in [("与最近邻的差异", "与最近邻的差异"), ("数据可行性", "数据可行性")]:
         sec = _section(card, kw)
         # 去掉小节里的说明引文(> 开头)与表头，看是否有实质内容
@@ -88,23 +111,40 @@ def gate_card(card: str) -> dict:
                   if l.strip().startswith("-") and not _is_empty(l.split("：", 1)[-1] if "：" in l else l)]
         if not body.strip() and not filled:
             errors.append(f"小节「{name}」无实质内容（仍是模板）")
+        else:
+            # 非敷衍校验：把小节正文(去 bullet 前缀/字段名)的实质串拿来判
+            substantive = []
+            for l in (body.splitlines() + filled):
+                seg = l.split("：", 1)[-1] if "：" in l else l.lstrip("-* ")
+                if seg.strip():
+                    substantive.append(seg.strip())
+            joined = " ".join(substantive)
+            if substantive and all(_is_perfunctory(s) for s in substantive):
+                errors.append(f"小节「{name}」全是敷衍占位（如'更好/有数据'）——m04 数据支撑维度会封顶记红旗")
 
     # 3) 新颖性主张归档三档
     nov = _table_field(card, "新颖性主张")
     if not _is_empty(nov) and not re.search(r"[①②③123]|新现象|增量|复现|新方法|新理论", nov):
         errors.append("新颖性主张未归档到三档之一（①新/②增量/③复现）")
 
-    # 4) 最近邻 ≥3 篇带留痕：数三行表格里有内容的
+    # 4) 最近邻 ≥3 篇带留痕：数三行表格里有内容的（文献/留痕列填"无"等敷衍不算数）
     nbr_sec = _section(card, "最近邻")
     rows = [l for l in nbr_sec.splitlines() if re.match(r"^\s*\|\s*\d", l)]
-    filled_rows = 0
+    filled_rows, perfunctory_rows = 0, 0
     for r in rows:
         cells = [c.strip() for c in r.strip().strip("|").split("|")]
-        # cells: [#, 文献, 检索留痕, 是否等价]；文献列与留痕列都要有内容
+        # cells: [#, 文献, 检索留痕, 是否等价]；文献列与留痕列都要有内容且非敷衍
         if len(cells) >= 3 and cells[1] and cells[2] and not _PLACEHOLDER.match(cells[1]):
-            filled_rows += 1
+            lit_bad = cells[1].lower() in _NBR_PERFUNCTORY
+            trace_bad = cells[2].lower() in _NBR_PERFUNCTORY
+            if lit_bad or trace_bad:
+                perfunctory_rows += 1  # 填了"无/没有"冒充已检索
+            else:
+                filled_rows += 1
     if filled_rows < 3:
-        errors.append(f"最近邻工作仅 {filled_rows} 篇有内容+留痕（核心撞车要求 ≥3，一票否决项）")
+        extra = (f"（其中 {perfunctory_rows} 行用'无/没有'等敷衍冒充检索，不计数——"
+                 "撞车检查最忌填'无'假装查过）" if perfunctory_rows else "")
+        errors.append(f"最近邻工作仅 {filled_rows} 篇有内容+留痕（核心撞车要求 ≥3，一票否决项）{extra}")
 
     # 5) 撞车自评选档
     if "撞车自评" in card:
@@ -172,6 +212,26 @@ _BAD = """# 立项卡 · I-02
 - 数据集：
 """
 
+# 敷衍但非空：审查实测能骗过纯非空校验的卡——最近邻填"无"、差异填"更好"、数据填"有数据"
+_PERFUNCTORY_CARD = """# 立项卡 · I-03
+| **标题** | 深度学习做某任务 |
+| **一句话机制** | 用神经网络从数据学习特征做分类 |
+| **新颖性主张** `(m04 复核)` | ①新方法 |
+
+## 最近邻工作（≥3 篇，带检索留痕）
+| # | 文献 | 检索留痕 | 是否等价 |
+|---|---|---|---|
+| 1 | 无 | 无 | 无 |
+| 2 | 无 | 无 | 无 |
+| 3 | 无 | 无 | 无 |
+
+## 与最近邻的差异 `(m04 复核)`
+更好。
+
+## 数据可行性 `(m04 复核 · 数据支撑维度)`
+- 数据集：有数据。
+"""
+
 
 def _selftest() -> int:
     print("### card_gate 离线自测", file=sys.stderr)
@@ -192,6 +252,16 @@ def _selftest() -> int:
     # 多卡分割
     multi = gate_text(_GOOD + "\n" + _BAD)
     assert len(multi) == 2 and multi[0]["passed"] and not multi[1]["passed"], multi
+
+    # 敷衍但非空卡：必须被拦（审查实测过去能骗过纯非空校验）
+    perf = gate_card(_PERFUNCTORY_CARD)
+    assert not perf["passed"], f"敷衍卡应被拦: {perf}"
+    perf_errs = " ".join(perf["errors"])
+    assert "最近邻" in perf_errs and "敷衍冒充" in perf_errs, perf["errors"]  # 填"无"冒充检索被识破
+    assert any("与最近邻的差异" in e for e in perf["errors"]), perf["errors"]  # "更好"敷衍
+    assert any("数据可行性" in e for e in perf["errors"]), perf["errors"]      # "有数据"敷衍
+    # 合格卡仍不被敷衍校验误伤
+    assert gate_card(_GOOD)["passed"], "加敷衍校验后合格卡被误伤"
     print("[selftest] PASS card_gate offline")
     return 0
 

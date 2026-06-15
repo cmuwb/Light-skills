@@ -96,9 +96,67 @@ def diagnose(df, target=None, corr_thresh=0.9, card_thresh=0.5, outlier_cap=20):
         if ratio >= 0.98:
             f["id_like"].append((c, str(df[c].dtype), round(ratio, 3)))
 
+    # 无穷值（inf/-inf）：CSV 里常来自除零/log(0)，会让缩放/统计直接爆，单列计数
+    f["inf_cols"] = []
+    num_cols = df.select_dtypes(include=[np.number]).columns
+    for c in num_cols:
+        n_inf = int(np.isinf(df[c].to_numpy(dtype="float64", na_value=np.nan)).sum())
+        if n_inf > 0:
+            f["inf_cols"].append((c, n_inf))
+
+    # 混合类型 object 列：同列里既有数字又有字符串（常是脏数据/编码不一），抽样判断
+    f["mixed_type"] = []
+    for c in df.select_dtypes(include=["object"]).columns:
+        s = df[c].dropna()
+        if len(s) == 0:
+            continue
+        sample = s.head(1000)
+        kinds = set()
+        for v in sample:
+            kinds.add("num" if isinstance(v, (int, float, np.integer, np.floating))
+                      else "str")
+            if len(kinds) > 1:
+                break
+        if len(kinds) > 1:
+            f["mixed_type"].append(c)
+
+    # 偏态：|skew|>1 的数值列（强偏，提示对数/分位变换或稳健统计）
+    f["skewed"] = []
+    for c in num_cols:
+        s = df[c].dropna()
+        if len(s) < 8 or s.nunique() < 3:
+            continue
+        sk = float(s.skew())
+        if pd.notna(sk) and abs(sk) > 1.0:
+            f["skewed"].append((c, round(sk, 3)))
+    f["skewed"].sort(key=lambda x: -abs(x[1]))
+
+    # 类不均衡：低基数列（疑似标签/分类）最大类占比 >=0.9，或不平衡比 >=10:1
+    f["imbalance"] = []
+    for c in df.columns:
+        s = df[c].dropna()
+        nun = s.nunique()
+        if nun < 2 or nun > 20 or len(s) < 10:
+            continue
+        vc = s.value_counts(normalize=True)
+        top = float(vc.iloc[0])
+        ratio = float(vc.iloc[0] / vc.iloc[-1]) if vc.iloc[-1] > 0 else float("inf")
+        if top >= 0.9 or ratio >= 10:
+            f["imbalance"].append((c, round(top, 3), round(ratio, 1), nun))
+
+    # 稀有类别：object/category 列里占比 <1% 的取值数（过多稀有类影响编码与泛化）
+    f["rare_cat"] = []
+    for c in df.select_dtypes(include=["object", "category", "string"]).columns:
+        s = df[c].dropna()
+        if len(s) < 50:
+            continue
+        vc = s.value_counts(normalize=True)
+        n_rare = int((vc < 0.01).sum())
+        if n_rare > 0:
+            f["rare_cat"].append((c, n_rare, vc.shape[0]))
+
     # numeric outliers via IQR
     f["outliers"] = []
-    num_cols = df.select_dtypes(include=[np.number]).columns
     for c in num_cols:
         s = df[c].dropna()
         if len(s) < 4:
@@ -202,6 +260,15 @@ def render(df, f, target=None):
     if f["leakage_hint"]:
         issues.append(("HIGH", "possible target leakage（单特征近乎决定目标）: "
                        f"{', '.join(c for c, _ in f['leakage_hint'])}"))
+    if f.get("inf_cols"):
+        issues.append(("HIGH", f"{len(f['inf_cols'])} 列含 inf/-inf（会让缩放与统计爆）: "
+                       f"{', '.join(c for c, _ in f['inf_cols'])}"))
+    if f.get("mixed_type"):
+        issues.append(("MED", f"{len(f['mixed_type'])} 个混合类型 object 列（数字与字符串混存）: "
+                       f"{', '.join(f['mixed_type'])}"))
+    if f.get("imbalance"):
+        issues.append(("MED", f"{len(f['imbalance'])} 个低基数列严重不均衡（最大类≥90%或≥10:1）: "
+                       f"{', '.join(c for c, *_ in f['imbalance'])}"))
     if f.get("id_like"):
         issues.append(("MED", f"{len(f['id_like'])} 个 ID-like 列（近乎逐行唯一，无泛化价值/疑似泄漏）: "
                        f"{', '.join(c for c, *_ in f['id_like'])}"))
@@ -209,6 +276,11 @@ def render(df, f, target=None):
         issues.append(("MED", f"{len(f['high_corr'])} highly-correlated numeric pair(s)"))
     if f["high_card"]:
         issues.append(("LOW", f"{len(f['high_card'])} high-cardinality categorical col(s)"))
+    if f.get("skewed"):
+        issues.append(("LOW", f"{len(f['skewed'])} 个强偏态数值列（|skew|>1，考虑变换）: "
+                       f"{', '.join(c for c, _ in f['skewed'])}"))
+    if f.get("rare_cat"):
+        issues.append(("LOW", f"{len(f['rare_cat'])} 个类别列含稀有类（占比<1%）"))
 
     L.append("## Issue Summary")
     if issues:
@@ -265,6 +337,38 @@ def render(df, f, target=None):
                  "务必核查该特征是否在预测时点真实可得，否则剔除。")
         L.append("")
 
+    if f.get("inf_cols"):
+        L.append("## 无穷值（inf/-inf）")
+        L.append(_md_table(["column", "n_inf"], [[f"`{c}`", n] for c, n in f["inf_cols"]]))
+        L.append("> inf 多来自除零/log(0)，缩放与统计会爆；建议替 NaN 后按缺失处理或剔除。")
+        L.append("")
+
+    if f.get("mixed_type"):
+        L.append("## 混合类型列（数字与字符串混存）")
+        L.append("- " + ", ".join(f"`{c}`" for c in f["mixed_type"]))
+        L.append("> 同列混类型常是脏数据/编码不一，建议先统一类型再入模型。")
+        L.append("")
+
+    if f.get("imbalance"):
+        L.append("## 类不均衡（低基数列）")
+        L.append(_md_table(["column", "top_ratio", "imbalance_ratio", "n_classes"],
+                           [[f"`{c}`", t, r, k] for c, t, r, k in f["imbalance"]]))
+        L.append("> 若为标签列：考虑分层划分、重采样(只训练折)、类权重；评测看 PR/F1 而非 acc。")
+        L.append("")
+
+    if f.get("skewed"):
+        L.append("## 强偏态数值列（|skew|>1）")
+        L.append(_md_table(["column", "skew"], [[f"`{c}`", s] for c, s in f["skewed"]]))
+        L.append("> 强偏态影响线性模型与基于均值的统计，考虑 log/分位变换或稳健方法。")
+        L.append("")
+
+    if f.get("rare_cat"):
+        L.append("## 稀有类别（占比<1%）")
+        L.append(_md_table(["column", "n_rare", "n_total_cat"],
+                           [[f"`{c}`", n, t] for c, n, t in f["rare_cat"]]))
+        L.append("> 过多稀有类影响 one-hot 维度与泛化，考虑合并入 'other' 桶。")
+        L.append("")
+
     L.append("## Verdict (fill in after review)")
     L.append("- [ ] Usable as-is  - [ ] Needs cleaning  - [ ] Insufficient  - [ ] Needs more collection")
     L.append("")
@@ -293,6 +397,16 @@ def make_synth(seed=0):
     df["leak_cat"] = df["label"].map({0: "neg", 1: "pos"})
     df.loc[rng.choice(n, 60, replace=False), "income"] = np.nan  # missing
     df.loc[rng.choice(n, 5, replace=False), "income"] = 5e6      # extreme outliers
+    # 新检测器的触发数据：
+    df["ratio"] = df["score"] / df["age"]                        # 偶发 inf（age 可能为0附近极小？用显式）
+    df.loc[rng.choice(n, 3, replace=False), "ratio"] = np.inf    # 显式 inf
+    df["mixed"] = df["city"].astype(object)
+    df.loc[rng.choice(n, 20, replace=False), "mixed"] = 999      # object 列混入数字 → 混合类型
+    df["imb"] = 0
+    df.loc[rng.choice(n, 10, replace=False), "imb"] = 1          # 10/500 → 严重不均衡
+    df["skewed_col"] = rng.exponential(1.0, n)                   # 指数分布 → 强右偏
+    rare = rng.choice(["common"] * 95 + ["r1", "r2", "r3", "r4", "r5"], n)
+    df["rare_c"] = rare                                          # 含 <1% 稀有类
     df = pd.concat([df, df.iloc[:10]], ignore_index=True)        # duplicates
     return df
 
@@ -328,6 +442,12 @@ def main():
         leak_cols = {c for c, _ in fc["leakage_hint"]}
         assert "leak_num" in leak_cols, f"分类目标-数值特征泄漏检测失败: {leak_cols}"
         assert "leak_cat" in leak_cols, f"分类目标-类别特征泄漏检测失败: {leak_cols}"
+        # 新增检测器断言
+        assert any(c == "ratio" for c, _ in f["inf_cols"]), "inf 检测失败"
+        assert "mixed" in f["mixed_type"], "混合类型检测失败"
+        assert any(c == "imb" for c, *_ in f["imbalance"]), "类不均衡检测失败"
+        assert any(c == "skewed_col" for c, _ in f["skewed"]), "偏态检测失败"
+        assert any(c == "rare_c" for c, *_ in f["rare_cat"]), "稀有类检测失败"
         print(md)
         print("\n[selftest] PASS — all detectors fired on synthetic data.",
               file=sys.stderr)

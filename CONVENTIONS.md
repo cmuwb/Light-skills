@@ -47,7 +47,7 @@ m03 与 m04 构成循环：idea 不过关就回到 m03。
 | 阶段 | 产出技能 | 标准工件（落盘名） | 下游消费 |
 |---|---|---|---|
 | 调研 | m01 literature-search | `docs/literature_review.md` | m03/m04/m07/m10 |
-| 数据工程 | m02 data-engineering | `data_card.md` + `quality_report.md` | m05/a03/m06 |
+| 数据工程 | m02 data-engineering | `data_card.md` + `quality_report.md` + `data_feasibility.md` | m03/m04(四问结论) · m05/a03/m06(数据卡/体检) |
 | idea 生成 | m03 idea-generation | `idea_candidates.md` | m04 |
 | idea 审查 | m04 idea-critique | `critique_verdict.md` | m05 |
 | 研究方案 | m05 research-plan | `PROJECT_PLAN.md` + `experiments/experiment_matrix.md` | a03/m06 |

@@ -100,6 +100,31 @@ python scripts/safe_split.py --csv ts.csv --target estrus --task timeseries --ti
 
 ---
 
+## Step 4.5 — 四问结论卡（data_feasibility.py，交 m03/m04）
+
+把 Step 1-4 收敛成给 m03/m04 的标准工件（区别于给 m05/a03 做实验的 data_card/quality_report）：
+
+```bash
+# 先把 Step 2 的规模检查存成 JSON 喂进来，其余三问手填：
+python scripts/sample_size_check.py --task clf --n 3000 --classes 3 \
+    --per-class 1800,800,400 --features 25 --json > size.json
+python scripts/data_feasibility.py --project goat-behavior \
+    --q1 ok:"3类行为有判别性传感器特征，剔除泄漏列后25维有效" \
+    --q2 warn:"error级门禁全过；accel_x偶发越界(warn)待异常处理" \
+    --scale-json size.json \
+    --q4 ok:"无ID-like误用、无目标泄漏，特征-目标关系真实" \
+    --out data_feasibility.md
+```
+
+产出 `data_feasibility.md`：四问各档 + 整体 verdict（本例含 warn → `USABLE_WITH_CAVEATS`）。
+- **m03 读它**：verdict 非 INSUFFICIENT 才提 idea；warn 项（如"发情类规模待 power analysis"）写进 idea 约束。
+- **m04 读它**：核 idea 自报"数据够"是否与该卡一致，不一致按封顶处理。
+- 若把发情类改到 40 条，Q3 变 insufficient → 整体 INSUFFICIENT、退出码 1 → **不进 m03**。
+
+> 落位：`python scripts/emit_artifacts.py --check --dir .` 核 data_card.md / quality_report.md / data_feasibility.md 三件套是否齐备并落到 §6.1 标准名。
+
+---
+
 ## Step 5 — 数据卡（data_card_template.md）
 
 填 `assets/data_card_template.md` 的 10 节（对齐 db04）。关键节示意：
@@ -119,5 +144,5 @@ python scripts/safe_split.py --csv ts.csv --target estrus --task timeseries --ti
 | 规模是否足够 | ⚠ 关注稀有类 | 总量 3000 够，但"发情"类须 ≥100；正式结论待 power analysis |
 | 特征是否有挖掘价值 | ✅ 是 | 无 ID-like 误用、无目标泄漏后，特征-目标关系真实 |
 
-> 这套走查产出 quality_report.md + gate.md + data_card.md 三件套，结论喂 m03（idea 是否有数据基础）/ m04（审 idea 时核数据声明）。每步脚本均纯本地零网络、带 selftest。
+> 这套走查产出 quality_report.md + data_card.md + **data_feasibility.md**（+ gate.md）四件套：前两件交 m05/a03/m06 做实验，**data_feasibility.md 交 m03/m04 判 idea 是否有数据基础**（CONVENTIONS §6.1 标准交接，补此前靠聊天传的单向挂载）。每步脚本均纯本地零网络、带 selftest。
 
