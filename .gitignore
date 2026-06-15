@@ -40,3 +40,12 @@ skills/light-novel/
 
 # result-analysis worked_example.py 可重生成的示例输出
 skills/light-result-analysis/examples/example_out/
+
+# selftest/demo 副产物(技能脚本自测生成,不入库)
+skills/**/scripts/demo_*.png
+skills/**/scripts/demo_*.pdf
+skills/**/scripts/demo_*.svg
+skills/**/scripts/demo_*.jpg
+skills/**/scripts/_synth_*.csv
+skills/**/scripts/analysis_out/
+.upgrade/
