@@ -10,6 +10,7 @@ user-invocable: false
 任何技能产出在交付前，先过一遍自检清单，发现问题就**先修后交**，不把粗糙结果直接抛给用户。重大产出可迭代多轮。
 
 **证据闸门（借 verification-before-completion）**：不下「完成/通过/修好了」之类结论，除非当前轮就有新鲜证据。五步——①想清「什么命令/检查能证明它」②当场重跑(不引用旧结果) ③读完整输出、查 exit code、数失败 ④确认输出真支撑结论 ⑤才下结论。跳步=撒谎而非验证。红旗词：should/probably/seems to、提前自我满足、轻信子代理报告。
+- 自查不只靠自觉：`scripts/review_lint.py <交付文本> [--log 本轮工具日志]` 是**外部验证器**，扫三类硬伤——①无显著性证据(p/CI/±std)的强主张(novel/significantly/SOTA/显著)→critical fail；②「测试通过/已修复」等完成声明但工具日志无 exit 0/PASS 证据→critical fail；③定量主张缺引用/表图锚点→warn。产出 `light.findings.v1`(挂接 _shared/findings_schema+gate_runner)，exit≠0 阻断交付，可被 orchestrator passport / CI 直接消费。TACL2024 证自我承诺式自纠最不可靠、缺外部验证器形同虚设——这就是那个验证器。`--selftest` 自检。
 - 测试通过 = 有 0 失败的测试输出；构建成功 = exit 0（光过 lint 不够）；bug 修复 = 原始症状被测且通过；需求满足 = 逐条核对清单。
 - **借口拦截**：临交付前大脑最会编借口跳过验证。「改动小不用跑/应该能过/上次跑过/先交了再说/审稿人不会注意」等都是借口而非判断，命中即回到证据闸门重跑。完整 27 条 excuse→reality 见 `references/excuse_intercept.md`。
 
@@ -67,6 +68,7 @@ user-invocable: false
 ---
 逐工具真实端点/参数/CLI/评审维度与已知坑见 `references.md`。
 交付前自检的配套资产：
+- `scripts/review_lint.py` — 可执行的证据闸门(外部验证器)：扫无证据强主张/未验证完成声明/定量缺锚点，产出 light.findings.v1，exit≠0 阻断。`--selftest` 自检。
 - `assets/self_review_checklist.md` — 可勾选的交付前清单（含证据闸门）。
 - `references/excuse_intercept.md` — 27 条自我借口→真相拦截表。
 - `references/self_check_contrasts.md` — 11 项通用自检的最小 ✓/✖ 反例对照。
