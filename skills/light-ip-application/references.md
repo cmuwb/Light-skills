@@ -253,3 +253,16 @@
 - 可借鉴范例库：https://patents.google.com/ 、https://pss-system.cponline.cnipa.gov.cn
 
 【已知坑/局限】公开不充分或"事后补充实施例"不被接受（中国不允许超范围修改）；有益效果若无依据易被质疑；最终须代理师审核定稿。
+
+---
+
+## 权利要求一致性检查的方法来源（claim_lint.py 借鉴对象，2026-06-15 补）
+
+【是什么】2025 升级新增 `claim_lint.py` 借鉴的查错产品/研究：
+- **Patent Bots**（十年规则版校验商业产品）：核心三类自动检测——**numbering（编号/引用方向）、antecedent basis（在先基础：出现"said X"前须先"a X"引入）、word-support（权利要求术语须在说明书出现）**，外加 Gen AI Review。`claim_lint.py` 把这三类落成中文专利场景的规则检查（"所述/该 X"对应 antecedent basis）。链接：https://blog.patentbots.com/
+- **Towards Automated Quality Assurance of Patent Specifications（arxiv 2510.25402）**：合规/技术连贯/图-标记一致三模块 + 四级就绪度。`claim_lint.py` 的"图-标记悬空"检查对应其 figure-reference 模块。
+- **Tree-of-Claims（arxiv 2511.16972）**：MCTS + EditorAgent/ExaminerAgent 迭代改写权利要求；**新颖性对应判定**见 arxiv 2502.06316。
+
+【可借鉴但未实现（诚实，能力边界）】Tree-of-Claims 的审查员模拟 + MCTS 原子编辑迭代改写闭环、权利要求×在先技术披露逐特征 Disclosed/NotDisclosed 映射（ExaminerAgent）、论文→交底书 chunk-based 抽取（arxiv 2410.07009）——均需 LLM 判定/跨技能管线，`claim_lint.py` **只做规则版形式校验**，上述实质判定仍靠人工 + 代理师，标注为对标 SOTA 的已知短板。
+
+【链接/诚实】上述 arxiv 编号与产品来源源自升级审查 brief 的检索，**未在本环境联网复核原文细节**，引用具体数值/F1 时标"待核查"；`claim_lint.py` 借鉴的是**规则思路**（三类形式错误 + 图标记一致），不依赖这些数值成立。

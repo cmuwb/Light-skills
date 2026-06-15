@@ -53,6 +53,7 @@
 | idea-generation | `scripts/rank_ideas.py` | 候选 idea 排序(m03 triage)：影响×工作量性价比确定性排序+先做/缓做/砍建议，收敛三套评分为唯一裁定 |
 | idea-generation | `scripts/provocation_gen.py` | 反 frame-lock 强制发散器 + 7 角度覆盖门禁：结构化激发算子×核心实体机械生成发散提问，某角度 0 候选即判 frame-lock 拦在收敛前（退出码 1） |
 | idea-generation | `scripts/swiss_rank.py` | 配对比较排序（灭"自报绝对分"病）：瑞士轮+ELO 两两裁判，每次比较喂双方最近邻文献 grounding，elo 注入 rank_ideas 成 lane 内主排序键 |
+| ip-application | `scripts/claim_lint.py` | 权利要求一致性 linter(规则版,对标 Patent Bots 核心):查从属项引用方向/antecedent basis 在先基础/word-support 说明书支持/单部分两部分法混用/图-标记悬空,出 light.findings.v1 接 a08 闸门 |
 | ip-application | `scripts/copyright_source_prep.py` | 软件著作权源代码材料整理：过滤/抽样/编号，避免提交敏感或无关代码 |
 | ip-application | `scripts/patent_search.py` | 在先技术检索辅助，支持引用图一跳扩展 `--snowball` |
 | literature-search | `scripts/arxiv_search.py` | 预印本检索（arXiv Atom + 可选 bioRxiv/medRxiv），标注 preprint 与是否已转正式发表 |
