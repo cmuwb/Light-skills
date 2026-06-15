@@ -91,6 +91,7 @@
 | result-analysis | `scripts/leakage_overfit_check.py` | train/val/test gap 与数据泄漏风险筛查，提示过拟合和异常高分模式 |
 | result-analysis | `scripts/make_figs.py` | 结果分析阶段的 matplotlib 出图模板，快速生成论文级统计图初稿 |
 | result-analysis | `scripts/significance_test.py` | 显著性检验工具：p 值、效应量、置信区间、BH-FDR 多重校正 |
+| review-rebuttal | `scripts/check_commitments.py` | rebuttal 承诺账本核验(把手填 COMMITMENT_GAP 变退出码契约,挂 _shared/findings_schema)：解析 response_matrix 表,查"已改可核"无定位锚=COMMITMENT_GAP/已兑现却含未来词=PLANNED_AS_DONE/让步≥4无证据/连续让步/major漏处理,critical 退出码1,--evidence-map 核工件存在 |
 | review-rebuttal | `scripts/fetch_openreview.py` | 抓取 OpenReview 公开评审语料，校准模拟审稿与 rebuttal 话术 |
 | review-rebuttal | `scripts/rebuttal_budget.py` | 会议 rebuttal 字数/页数预算检查，纯 stdlib 离线，中英混排分别计词、超限返回码 1 |
 | self-review | `scripts/review_lint.py` | 可执行的证据闸门（外部验证器）：扫无证据强主张/未验证完成声明/定量缺锚点，产出 light.findings.v1，exit≠0 阻断 |
