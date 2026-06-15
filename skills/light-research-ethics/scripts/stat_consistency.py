@@ -122,6 +122,94 @@ def f_upper_p(f, df1, df2):
 
 
 # --------------------------------------------------------------------------
+# Regularized incomplete gamma Q(a,x) = 1 - P(a,x)  (Numerical Recipes gammq)
+# Pure stdlib; used for chi-square upper-tail probabilities.
+# --------------------------------------------------------------------------
+def _gser(a, x):
+    """Series representation of the lower regularized gamma P(a,x), x < a+1."""
+    MAXIT = 300
+    EPS = 3.0e-14
+    if x <= 0.0:
+        return 0.0
+    ap = a
+    total = 1.0 / a
+    delta = total
+    for _ in range(MAXIT):
+        ap += 1.0
+        delta *= x / ap
+        total += delta
+        if abs(delta) < abs(total) * EPS:
+            break
+    return total * math.exp(-x + a * math.log(x) - math.lgamma(a))
+
+
+def _gcf(a, x):
+    """Continued fraction for the upper regularized gamma Q(a,x), x >= a+1."""
+    MAXIT = 300
+    EPS = 3.0e-14
+    FPMIN = 1.0e-300
+    b = x + 1.0 - a
+    c = 1.0 / FPMIN
+    d = 1.0 / b
+    h = d
+    for i in range(1, MAXIT + 1):
+        an = -i * (i - a)
+        b += 2.0
+        d = an * d + b
+        if abs(d) < FPMIN:
+            d = FPMIN
+        c = b + an / c
+        if abs(c) < FPMIN:
+            c = FPMIN
+        d = 1.0 / d
+        delta = d * c
+        h *= delta
+        if abs(delta - 1.0) < EPS:
+            break
+    return math.exp(-x + a * math.log(x) - math.lgamma(a)) * h
+
+
+def gammq(a, x):
+    """Upper regularized incomplete gamma Q(a, x) = 1 - P(a, x)."""
+    if x < 0.0 or a <= 0.0:
+        raise ValueError("invalid arguments to gammq")
+    if x == 0.0:
+        return 1.0
+    if x < a + 1.0:
+        return 1.0 - _gser(a, x)
+    return _gcf(a, x)
+
+
+def chi2_upper_p(chi2, df):
+    """Upper-tail p-value P(chi^2 > x) for a chi-square statistic with df."""
+    if df <= 0:
+        raise ValueError("df must be > 0")
+    chi2 = float(chi2)
+    if chi2 <= 0:
+        return 1.0
+    return gammq(df / 2.0, chi2 / 2.0)
+
+
+def z_two_tailed_p(z):
+    """Two-tailed p-value for a standard-normal Z statistic: erfc(|z|/sqrt2)."""
+    return math.erfc(abs(float(z)) / math.sqrt(2.0))
+
+
+def r_two_tailed_p(r, df):
+    """Two-tailed p-value for a Pearson r with df degrees of freedom (df=n-2).
+
+    Converts r to its equivalent t = r*sqrt(df/(1-r^2)) then uses the t tail.
+    """
+    if df <= 0:
+        raise ValueError("df must be > 0")
+    r = float(r)
+    if abs(r) >= 1.0:
+        return 0.0
+    t = r * math.sqrt(df / (1.0 - r * r))
+    return t_two_tailed_p(t, df)
+
+
+# --------------------------------------------------------------------------
 # GRIM / granularity test
 # --------------------------------------------------------------------------
 def _reported_decimals(mean_str):
@@ -189,11 +277,12 @@ def grim_check(n, mean_str, items=1):
 # p-value vs df consistency
 # --------------------------------------------------------------------------
 def pcheck(reported_p, t=None, df=None, F=None, df1=None, df2=None,
-           gross_ratio=3.0):
+           chi2=None, z=None, r=None, gross_ratio=3.0):
     """Compare a reported p-value with the p implied by the reported statistic.
 
-    Provide either (t, df) or (F, df1, df2). gross_ratio: factor beyond which the
-    reported and recomputed p are deemed grossly inconsistent (default 3x).
+    Provide one of: (t, df) | (F, df1, df2) | (chi2, df) | (z,) | (r, df).
+    gross_ratio: factor beyond which the reported and recomputed p are deemed
+    grossly inconsistent (default 3x).
     """
     if t is not None and df is not None:
         computed = t_two_tailed_p(t, df)
@@ -202,8 +291,18 @@ def pcheck(reported_p, t=None, df=None, F=None, df1=None, df2=None,
         computed = f_upper_p(F, df1, df2)
         stat_desc = "F=%g, df1=%g, df2=%g (upper tail)" % (
             float(F), float(df1), float(df2))
+    elif chi2 is not None and df is not None:
+        computed = chi2_upper_p(chi2, df)
+        stat_desc = "chi2=%g, df=%g (upper tail)" % (float(chi2), float(df))
+    elif z is not None:
+        computed = z_two_tailed_p(z)
+        stat_desc = "Z=%g (two-tailed)" % float(z)
+    elif r is not None and df is not None:
+        computed = r_two_tailed_p(r, df)
+        stat_desc = "r=%g, df=%g (two-tailed)" % (float(r), float(df))
     else:
-        raise ValueError("provide (t, df) or (F, df1, df2)")
+        raise ValueError(
+            "provide (t,df) | (F,df1,df2) | (chi2,df) | (z) | (r,df)")
     reported_p = float(reported_p)
     # Compare on a ratio basis, guarding tiny values.
     lo = min(reported_p, computed)
@@ -287,6 +386,19 @@ def _selftest():
     f, df2 = 4.0, 30
     assert abs(f_upper_p(f, 1, df2) - t_two_tailed_p(math.sqrt(f), df2)) < 1e-7
 
+    # chi-square: df=1 chi2 statistic equals Z^2; P(chi2_1 > z^2) == 2-tailed Z.
+    assert abs(chi2_upper_p(1.96 ** 2, 1) - z_two_tailed_p(1.96)) < 1e-9
+    # chi2=3.841 df=1 ~ 0.05; chi2 with df=2 has closed form exp(-x/2).
+    assert abs(chi2_upper_p(3.841459, 1) - 0.05) < 1e-4
+    assert abs(chi2_upper_p(4.0, 2) - math.exp(-2.0)) < 1e-9
+    # Z two-tailed: |z|=1.96 ~ 0.05, z=0 -> 1.
+    assert abs(z_two_tailed_p(1.96) - 0.05) < 2e-3
+    assert abs(z_two_tailed_p(0.0) - 1.0) < 1e-12
+    # Pearson r -> t equivalence: r with df gives same p as its t.
+    rt = r_two_tailed_p(0.5, 28)
+    teq = t_two_tailed_p(0.5 * math.sqrt(28 / (1 - 0.25)), 28)
+    assert abs(rt - teq) < 1e-9
+
     # GRIM impossible case: classic example, n=28 mean 3.45 (1-item Likert)
     # is NOT achievable; nearest grid means are 96/28=3.428.., 97/28=3.464..
     r = grim_check(28, "3.45")
@@ -322,10 +434,25 @@ def _selftest():
     pc4 = pcheck(0.017, F=4.50, df1=2, df2=40)
     assert pc4["consistent"], "F=4.50 path should cohere: %r" % pc4
 
+    # chi2 pcheck consistent: chi2=6.0, df=2 -> p ~ 0.0498.
+    pc5 = pcheck(0.0498, chi2=6.0, df=2)
+    assert pc5["consistent"], "chi2 path should cohere: %r" % pc5
+    # chi2 mismatch: chi2=6.0, df=2 cannot give p=0.5.
+    assert not pcheck(0.5, chi2=6.0, df=2)["consistent"]
+    # Z pcheck consistent: z=2.58 -> p ~ 0.0099.
+    pc6 = pcheck(0.0099, z=2.58)
+    assert pc6["consistent"], "Z path should cohere: %r" % pc6
+    # r pcheck consistent: r=0.30, df=98 -> p ~ 0.0024.
+    pc7 = pcheck(0.0024, r=0.30, df=98)
+    assert pc7["consistent"], "r path should cohere: %r" % pc7
+    # r mismatch: r=0.05, df=98 is not significant; reported .001 crosses.
+    assert not pcheck(0.001, r=0.05, df=98)["consistent"]
+
     print("[selftest] betai/t/F tail functions PASS")
     print("[selftest] GRIM impossible(n=28,3.45) & consistent(3.46) PASS")
     print("[selftest] GRIM items>1 widening & large-n PASS")
     print("[selftest] pcheck cohere / gross-ratio / threshold-cross / F PASS")
+    print("[selftest] chi2/Z/r tail functions & pcheck branches PASS")
     print("[selftest] all assertions PASS")
     return 0 if not fails else 1
 
@@ -350,10 +477,13 @@ def main():
     p = sub.add_parser("pcheck", help="p-value vs df consistency")
     p.add_argument("--p", required=True, type=float, help="reported p-value")
     p.add_argument("--t", type=float, help="reported t statistic")
-    p.add_argument("--df", type=float, help="df for t")
+    p.add_argument("--df", type=float, help="df for t / chi2 / r")
     p.add_argument("--F", type=float, help="reported F statistic")
     p.add_argument("--df1", type=float, help="numerator df for F")
     p.add_argument("--df2", type=float, help="denominator df for F")
+    p.add_argument("--chi2", type=float, help="reported chi-square statistic")
+    p.add_argument("--z", type=float, help="reported Z statistic")
+    p.add_argument("--r", type=float, help="reported Pearson r (df=n-2)")
     p.add_argument("--gross-ratio", type=float, default=3.0,
                    help="ratio beyond which p is deemed grossly inconsistent")
     p.add_argument("--json", action="store_true")
@@ -364,13 +494,20 @@ def main():
     if args.cmd == "grim":
         return _emit(grim_check(args.n, args.mean, args.items), args.json)
     if args.cmd == "pcheck":
+        gr = args.gross_ratio
         if args.t is not None and args.df is not None:
-            res = pcheck(args.p, t=args.t, df=args.df, gross_ratio=args.gross_ratio)
+            res = pcheck(args.p, t=args.t, df=args.df, gross_ratio=gr)
         elif args.F is not None and args.df1 is not None and args.df2 is not None:
             res = pcheck(args.p, F=args.F, df1=args.df1, df2=args.df2,
-                         gross_ratio=args.gross_ratio)
+                         gross_ratio=gr)
+        elif args.chi2 is not None and args.df is not None:
+            res = pcheck(args.p, chi2=args.chi2, df=args.df, gross_ratio=gr)
+        elif args.z is not None:
+            res = pcheck(args.p, z=args.z, gross_ratio=gr)
+        elif args.r is not None and args.df is not None:
+            res = pcheck(args.p, r=args.r, df=args.df, gross_ratio=gr)
         else:
-            p.error("provide either --t and --df, or --F, --df1 and --df2")
+            p.error("provide --t/--df | --F/--df1/--df2 | --chi2/--df | --z | --r/--df")
         return _emit(res, args.json)
     ap.error("choose a subcommand: grim | pcheck  (or --selftest)")
 

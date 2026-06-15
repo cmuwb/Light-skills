@@ -1,0 +1,35 @@
+{
+  "schema": "light.tool_choice_eval.v1",
+  "_about": "工具路由回归基准(借 RouteLLM benchmark / skill-creator with-vs-without eval 思路)。把 detect_stack 的 task→tool 映射从'断言'变成'可验证':每条样例给一个依赖/语境，断言期望命中的类别、工具或异味。RULES/ALIASES/SMELLS 任何改动都跑此 eval，命中率掉了即回归报警，防阈值/规则漂移。",
+  "_caveat": "这是对本技能确定性映射表的回归保护，不是对'选得对不对'的真理裁判——映射规则本身的合理性仍靠正文/人审。期望值随 RULES 演进可更新，但每次更新需自觉(diff 可见)。",
+  "last_reviewed": "2026-06-15",
+  "routing_cases": [
+    {"id": "r01", "deps": ["pandas"], "expect_category": "数据处理", "expect_tool": "pandas"},
+    {"id": "r02", "deps": ["torch"], "expect_category": "深度学习", "expect_tool": "torch"},
+    {"id": "r03", "deps": ["fastapi"], "expect_category": "后端", "expect_tool": "fastapi"},
+    {"id": "r04", "deps": ["statsmodels"], "expect_category": "统计推断", "expect_tool": "statsmodels"},
+    {"id": "r05", "deps": ["matplotlib"], "expect_category": "绘图", "expect_tool": "matplotlib"},
+    {"id": "r06", "deps": ["next", "react"], "expect_category": "前端", "expect_tool": "next"},
+    {"id": "r07", "deps": ["pytest"], "expect_category": "测试", "expect_tool": "pytest"},
+    {"id": "r08", "deps": ["mlflow"], "expect_category": "实验管理", "expect_tool": "mlflow"},
+    {"id": "r09", "deps": ["duckdb"], "expect_category": "数据处理", "expect_tool": "duckdb"}
+  ],
+  "alias_cases": [
+    {"id": "a01", "dep": "torch-geometric", "canon": "torch", "expect_category": "深度学习"},
+    {"id": "a02", "dep": "langchain-core", "canon": "langchain", "expect_category": "大模型编排"},
+    {"id": "a03", "dep": "scikit-image", "canon": "scikit-image", "expect_category": "计算机视觉"},
+    {"id": "a04", "dep": "react-dom", "canon": "react", "expect_category": "前端"},
+    {"id": "a05", "dep": "opencv-contrib-python", "canon": "opencv-python", "expect_category": "计算机视觉"},
+    {"id": "a06", "dep": "pandas-profiling", "canon": "ydata-profiling", "expect_category": "数据质量"}
+  ],
+  "no_signal_cases": [
+    {"id": "n01", "dep": "some-private-internal-lib"},
+    {"id": "n02", "dep": "totally-made-up-pkg-xyz"}
+  ],
+  "smell_cases": [
+    {"id": "s01", "deps": ["tensorflow", "torch"], "expect_smell": "double_dl_framework"},
+    {"id": "s02", "deps": ["requests", "httpx", "aiohttp"], "expect_smell": "redundant_http"},
+    {"id": "s03", "deps": ["vaex"], "expect_smell": "deprecated_dep"},
+    {"id": "s04", "conda_deps": ["numpy"], "pip_deps": ["numpy"], "expect_smell": "pip_conda_mix"}
+  ]
+}

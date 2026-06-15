@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import pathlib
 import re
 import sys
 import time
@@ -32,6 +33,16 @@ from typing import Any
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
+
+# ── 挂接共享语义相似度契约 (skills/_shared/semantic_sim.py) ──────────────
+# 词面覆盖率治不了"语义相关但措辞不同"（如 '心梗' vs 'myocardial infarction'、
+# '大模型' vs 'LLM'，标题不含 query 词即被判低分漏掉）。复用 _shared 的三档降级
+# 语义相似度（embedding/LLM/离线混合）替纯词面，不在本技能重造轮子。
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "_shared"))
+try:
+    import semantic_sim as _semsim  # noqa: E402
+except ImportError:  # _shared 不可达时降级到纯词面，明确标注不静默
+    _semsim = None
 
 # 礼貌池邮箱：优先环境变量 OPENALEX_MAILTO / CROSSREF_MAILTO，其次 --mailto，不传则匿名（不伪造）。
 # 不再硬编码伪造邮箱（旧版硬编码了一个 example.com 占位邮箱，违反 OpenAlex/Crossref 礼貌池约定且无意义）。
@@ -395,6 +406,48 @@ def relevance_score(rec: dict, query: str) -> float:
     return round(0.7 * title_cov + 0.3 * abs_cov, 3)
 
 
+def semantic_rerank(records: list[dict], query: str,
+                    alpha: float = 0.6, beta: float = 0.4,
+                    mode: str = "auto") -> list[dict]:
+    """RCS-lite 语义重排：给纯词面 relevance 补一层语义打分（挂接 _shared/semantic_sim）。
+
+    直击 SKILL 自承的硬伤——纯词面覆盖率漏掉同义改写/跨术语的相关文（'心梗' vs
+    'myocardial infarction'、'大模型' vs 'LLM'，标题不含 query 词就被判低分）。
+    词面过滤治"蹭宽词的跑题高被引文"，语义重排治"语义相关但措辞不同被漏掉"，方向相反、互补。
+
+    - semantic_score：query 与 (title + 摘要前 60 词) 的语义相似度 [0,1]。
+      档位由 semantic_sim 自动选（有注入 embedding/LLM 端点用高档，否则离线混合档，
+      比裸 Jaccard 强——词序无关、识别倒装、中文按字 bigram）。所用档位写进 score_parts。
+    - relevance_score：原词面覆盖率 [0,1]（保留，作对照与兜底）。
+    - combined_score = alpha·语义 + beta·词面（默认偏重语义 0.6:0.4）。
+    每条加 semantic_score / combined_score / score_parts 留痕，按 combined 降序。
+    _shared 不可达时（_semsim is None）回退纯词面，combined=relevance，明确标注降级。
+    """
+    if not records:
+        return records
+    degraded = _semsim is None
+    used_mode = "lexical_only(_shared不可达)" if degraded else None
+    for r in records:
+        lex = relevance_score(r, query)
+        if degraded:
+            sem = lex  # 降级：无语义档，combined 退化为纯词面
+        else:
+            ttl = r.get("title") or ""
+            abs_head = " ".join((r.get("abstract") or "").split()[:60])
+            cand = (ttl + ". " + abs_head).strip()
+            sem = _semsim.similarity(query, cand, mode=mode)
+            used_mode = _semsim.last_mode()
+        combined = round(alpha * sem + beta * lex, 4)
+        r["relevance_score"] = lex
+        r["semantic_score"] = round(float(sem), 4)
+        r["combined_score"] = combined
+        r["score_parts"] = {"semantic": round(float(sem), 4), "lexical": lex,
+                            "alpha": alpha, "beta": beta, "sim_mode": used_mode,
+                            "degraded": degraded}
+    records.sort(key=lambda x: x.get("combined_score", 0.0), reverse=True)
+    return records
+
+
 def filter_relevance(records: list[dict], query: str = "",
                      require_terms: list | None = None,
                      exclude_terms: list | None = None,
@@ -453,7 +506,8 @@ def run(query: str, per_page: int = 10, offline_sample: bool = False,
         min_score: float = 0.0, max_results: int = 0, use_doaj: bool = True,
         sort_by: str = "relevance", recency_boost: bool = False,
         current_year: int = 0, half_life: int = 4,
-        classic_min_cites: int = 500) -> dict:
+        classic_min_cites: int = 500, semantic: bool = False,
+        semantic_alpha: float = 0.6, semantic_mode: str = "auto") -> dict:
     offline = False
     recs: list[dict] = []
     if not offline_sample:
@@ -507,6 +561,18 @@ def run(query: str, per_page: int = 10, offline_sample: bool = False,
                     f"未加相关度过滤：前 {len(head)} 条仅 {well_matched} 条命中 query 多数词"
                     f"（{round(hit_ratio*100)}%），纯被引排序可能顶出领域外高被引跑题文。"
                     "建议加 --require-terms/--exclude-terms/--min-score 收窄，详见 SKILL「检索策略」。")
+    # 语义重排（默认关）：挂接 _shared/semantic_sim 给词面相关度补一层语义打分，
+    # 把"语义相关但措辞不同"的文献救回前排（与时效重排互斥优先级：先语义后时效）。
+    if semantic and merged:
+        merged = semantic_rerank(merged, query, alpha=semantic_alpha,
+                                 beta=round(1.0 - semantic_alpha, 4), mode=semantic_mode)
+        out["semantic"] = True
+        sm = merged[0].get("score_parts", {}).get("sim_mode") if merged else None
+        out["semantic_note"] = (f"已挂接 _shared/semantic_sim 语义重排（档位={sm}，"
+                                f"combined=α·语义+β·词面, α={semantic_alpha}）；"
+                                "每条 score_parts 留痕。语义档治'措辞不同被漏掉'，与词面过滤互补。")
+        if _semsim is None:
+            out["semantic_note"] += " [降级] _shared 不可达，combined 退化为纯词面。"
     # 时效综合重排（默认关，开启后近期文上浮、经典高被引豁免不被压沉）。
     # 在相关度过滤之后对留下的条目重排：先剔跑题，再让"近且相关"的上浮。
     if recency_boost and current_year and merged:
@@ -645,7 +711,40 @@ def _selftest() -> int:
     # 加了 require-terms（走过滤分支）则不应有该软告警
     r_nowarn = run("dairy goat behavior", offline_sample=True, require_terms=["goat"])
     assert not r_nowarn.get("relevance_warning"), r_nowarn
-    print("[selftest] PASS search_normalize (含 --from-date 增量 diff + 相关度过滤)")
+
+    # 语义重排（挂接 _shared/semantic_sim）：注入 mock scorer 验证"语义高但词面低"的条目被救回前排。
+    # 这是与 PaperQA2 的核心代差所补，也是 SKILL 自承硬伤（同义改写漏召回）的解法。
+    assert _semsim is not None, "应能从 _shared 导入 semantic_sim"
+    sem_in = [
+        # query='myocardial infarction'；这条标题用中文'心梗'/'急性心肌梗死'，词面零重叠但语义同义
+        {"source_api": "OpenAlex", "title": "急性心肌梗死的早期诊断", "doi": "10.1/zh",
+         "abstract": "心梗 患者 的 临床 研究", "cited_by": 2, "cited_by_src": "OpenAlex"},
+        # 这条标题词面命中 'infarction' 但其实是跑题的兽医文（靠蹭词）
+        {"source_api": "OpenAlex", "title": "infarction in unrelated bovine context xyz", "doi": "10.1/lex",
+         "abstract": "totally different topic", "cited_by": 99, "cited_by_src": "OpenAlex"},
+    ]
+    # mock embedding：把中文同义条目判为与 query 高相似（模拟真 embedding 端点能做的事）
+    def _mock_embed(texts):
+        # 维度0=是否谈心梗/MI 语义，维度1=噪声
+        vecs = []
+        for t in texts:
+            mi = 1.0 if ("myocardial" in t.lower() or "心梗" in t or "心肌梗死" in t) else 0.0
+            vecs.append([mi, 0.2])
+        return vecs
+    _semsim.set_embed_fn(_mock_embed)
+    # 对函数做确定性单测（不依赖网络）
+    ranked = semantic_rerank([dict(x) for x in sem_in], "myocardial infarction", mode="embed")
+    _semsim.set_embed_fn(None)  # 复位
+    # 语义同义的中文条目（词面零重叠）应被语义档救到第一
+    assert ranked[0]["doi"] == "10.1/zh", [(r["doi"], r["combined_score"], r["score_parts"]) for r in ranked]
+    assert ranked[0]["semantic_score"] > ranked[0]["relevance_score"], ranked[0]
+    assert all("combined_score" in r and "score_parts" in r for r in ranked), ranked
+    assert ranked[0]["score_parts"]["sim_mode"] == "embed", ranked[0]["score_parts"]
+    # 离线档（无注入）也能跑通，combined 有值、留痕 degraded=False
+    ranked_off = semantic_rerank([dict(x) for x in _SYNTHETIC], "dairy goat behavior", mode="offline")
+    assert all("combined_score" in r for r in ranked_off), ranked_off
+    assert ranked_off[0]["score_parts"]["degraded"] is False, ranked_off[0]
+    print("[selftest] PASS search_normalize (含 --from-date 增量 diff + 相关度过滤 + 语义重排)")
     return 0
 
 
@@ -685,6 +784,14 @@ def main() -> None:
                     help="时效半衰期（年，默认4）：N 年前的文时效权重减半，越小越偏向最新")
     ap.add_argument("--classic-min-cites", type=int, default=500,
                     help="经典豁免的绝对被引下限（默认500，领域差异大：CS调高、小众畜牧调低）")
+    ap.add_argument("--semantic", action="store_true",
+                    help="语义重排：挂接 _shared/semantic_sim 给词面相关度补语义打分，"
+                         "救回'措辞不同被漏掉'的相关文（combined=α·语义+β·词面）")
+    ap.add_argument("--semantic-alpha", type=float, default=0.6,
+                    help="语义权重 α（默认0.6）；词面权重 β=1-α。combined=α·语义+β·词面")
+    ap.add_argument("--semantic-mode", default="auto",
+                    choices=["auto", "embed", "llm", "offline"],
+                    help="语义档位：auto(按可用资源,默认)/embed/llm/offline(纯stdlib混合)")
     args = ap.parse_args()
 
     global _MAILTO, _API_KEY
@@ -710,7 +817,9 @@ def main() -> None:
                  max_results=args.max_results, use_doaj=not args.no_doaj,
                  sort_by=args.sort, recency_boost=args.recency_boost,
                  current_year=args.current_year, half_life=args.half_life,
-                 classic_min_cites=args.classic_min_cites)
+                 classic_min_cites=args.classic_min_cites,
+                 semantic=args.semantic, semantic_alpha=args.semantic_alpha,
+                 semantic_mode=args.semantic_mode)
     md = to_markdown(result["records"], args.query, sort_by=args.sort)
 
     if args.json_out:

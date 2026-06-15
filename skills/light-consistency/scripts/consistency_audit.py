@@ -7,27 +7,59 @@ consistency_audit.py —— 跨材料一致性审计器 (Light / light-consisten
 检测并定位以下不一致，输出结构化报告：
 
   SUBSTITUTION  受控术语/方法名被同义改写或写错(大小写、连字符、近义词)
+  VARIANT_CONFLICT 同一概念两种写法在材料里"共存即冲突"(无需预写 forbidden,自动发现)
   METRIC_NAME   同一指标被换名(如把 F1 写成 准确率)
   METRIC_VALUE  同一指标(同方法×数据集)在不同材料数值不一致(论文 vs PPT)
   GROSS_MISMATCH 数值同量级但超容差(30%~300%)，疑严重错填，单列告警不静默丢弃
-  CONTRIBUTION_DRIFT 创新点/贡献在某材料提法偏离 db09 标准措辞
+  CONTRIBUTION_DRIFT 创新点/贡献在某材料提法偏离 db09 标准措辞(语义相似度,挂 _shared/semantic_sim)
+  CLAIM_STRENGTH_DRIFT 主张措辞强于其证据档(m06 标 weak 却写"显著/SOTA";挂 _shared/evidence_contract)
+  ABBREV_FIRST_USE 缩写未遵循"首次全称(缩写)、此后用缩写"规则(消费 method_lock.first_use_rule)
+  STALE_SNAPSHOT db09 卡内 [snapshot date=… src=…] 三件套超期(计量>90天/许可>365天)
   COVERAGE_GAP  某规范术语/指标只在部分材料出现，在应出现的材料里缺席
 
 每条发现带定位(material:line)与修正建议。报告末尾做完整性自检(条数核对)。
+作用域感知(scope-aware):```围栏代码块 / `行内代码` 内的命中按需跳过,避免代码里
+的 finetune 被当正文 SUBSTITUTION 误命中(对标 Vale 的 scope=text)。
+
+跨技能反哺(挂接 skills/_shared 共享契约,不重造轮子)：
+  - evidence_contract.py(light.evidence_strength.v1)：CLAIM_STRENGTH_DRIFT 用其
+    grade_evidence/allowed_verb_tier/lint_wording 做"证据档→允许措辞档"机械映射。
+  - semantic_sim.py：CONTRIBUTION_DRIFT 用其 similarity() 替旧的裸 token-Jaccard,
+    词序无关、能识别倒装,治"一字对齐"措辞夸大。缺失时诚实降级回 Jaccard 并标注。
 
 用法：
-  python consistency_audit.py --db09 <dir> --materials a.txt b.txt [--json out.json]
-  python consistency_audit.py            # 无参数 -> 内置合成材料自测
+  python consistency_audit.py --db09 <dir> --materials a.txt b.txt [--json out.json] [--today YYYY-MM-DD]
+  python consistency_audit.py --selftest # 内置合成材料自测(X-1..X-9)
+  python consistency_audit.py            # 无参数 -> 同 --selftest
 
 依赖：PyYAML(已确认环境可用)；无网络、无外部数据。
+_shared 契约为可选增强:缺失时相关检测降级且显式标注,绝不静默假成功。
 """
-import sys, os, re, json, argparse, glob
+import sys, os, re, json, argparse, glob, datetime
 sys.stdout.reconfigure(encoding="utf-8")
 
 try:
     import yaml
 except ImportError:
     sys.stderr.write("需要 PyYAML: pip install pyyaml\n"); sys.exit(2)
+
+# ── 挂接 _shared 共享契约(脚本模式 import,参考 _shared/README 方式B) ──────────
+# 落点: skills/light-consistency/scripts/ → 上两级是 skills/ → skills/_shared/
+_SHARED = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "_shared")
+if _SHARED not in sys.path:
+    sys.path.insert(0, _SHARED)
+try:
+    import evidence_contract as _evc
+    HAVE_EVIDENCE = True
+except Exception:                      # 降级:无证据契约则 CLAIM_STRENGTH_DRIFT 跳过并标注
+    _evc = None
+    HAVE_EVIDENCE = False
+try:
+    import semantic_sim as _sem
+    HAVE_SEMSIM = True
+except Exception:                      # 降级:无语义契约则 CONTRIBUTION_DRIFT 回退裸 Jaccard
+    _sem = None
+    HAVE_SEMSIM = False
 
 NUM_RE = re.compile(r"(?<![\d.])(\d+(?:\.\d+)?)")
 
@@ -94,6 +126,7 @@ def load_db09(db_dir):
         "methods": _load("db09_method_lock.yaml").get("methods", []),
         "metrics": _load("db09_metric_registry.yaml").get("metrics", []),
         "contributions": _load("db09_glossary.yaml").get("contributions", []),
+        "claims": _load("db09_claims_registry.yaml").get("claims", []),
     }
 
 
@@ -138,7 +171,7 @@ def load_db09_markdown(path):
         elif cat in ("方法", "数据集"):
             methods.append({"id": f"md.method.{n}", "canonical": canon, "forbidden": []})
     return {"glossary": glossary, "methods": methods, "metrics": metrics,
-            "contributions": contributions}
+            "contributions": contributions, "claims": []}
 
 
 def load_db09_auto(path):
@@ -156,8 +189,28 @@ def load_db09_auto(path):
 
 
 def read_material(path):
-    with open(path, encoding="utf-8") as f:
-        return {"name": os.path.basename(path), "lines": f.read().splitlines()}
+    lines = open(path, encoding="utf-8").read().splitlines()
+    return {"name": os.path.basename(path), "lines": lines,
+            "code_flags": _code_block_flags(lines)}
+
+
+def _code_block_flags(lines):
+    """标出每行是否处于 ```/~~~ 围栏代码块内(scope-aware,对标 Vale scope=text)。
+    返回与 lines 等长的 bool 列表:True=代码块内,SUBSTITUTION/VARIANT 等文本类检测跳过。"""
+    flags, in_block = [], False
+    fence = re.compile(r"^\s*(```|~~~)")
+    for ln in lines:
+        if fence.match(ln):
+            flags.append(True)        # 围栏行本身也算块内(不在正文)
+            in_block = not in_block
+            continue
+        flags.append(in_block)
+    return flags
+
+
+def _strip_inline_code(line):
+    """挖空 `行内代码` 跨度为等长空格(保留列坐标),使行内 code 里的 finetune 不误命中。"""
+    return re.sub(r"`[^`]*`", lambda m: " " * len(m.group(0)), line)
 
 
 def _finding(kind, severity, material, line_no, line_text, detail, suggestion):
@@ -190,10 +243,14 @@ def audit_substitution(materials, db09):
     for m in db09["methods"]:
         entries.append(("method", m.get("canonical"), _forbidden_literals(m.get("forbidden", [])), True))
     for mat in materials:
+        flags = mat.get("code_flags") or [False] * len(mat["lines"])
         for i, line in enumerate(mat["lines"], 1):
+            if flags[i - 1]:
+                continue                       # scope-aware: 代码块内不查正文术语
+            scan = _strip_inline_code(line)    # 行内 `code` 挖空
             for kind, canon, forbidden, case_lock in entries:
                 for bad in forbidden:
-                    if _word_present(line, bad, case_lock):
+                    if _word_present(scan, bad, case_lock):
                         findings.append(_finding(
                             "SUBSTITUTION", "error", mat["name"], i, line,
                             f"出现禁用写法 '{bad}'（{kind} 规范名应为 '{canon}'）",
@@ -414,18 +471,28 @@ def _jaccard(a, b):
     return inter / uni if uni else 0.0
 
 
+def _sentence_sim(a, b):
+    """句级相似度:挂接 _shared/semantic_sim(词序无关、识别倒装、中文按字)。
+    缺失契约时诚实降级回裸 token-Jaccard 并由调用方标注。"""
+    if HAVE_SEMSIM:
+        return _sem.similarity(a, b, mode="offline")
+    return _jaccard(_tokens(a), _tokens(b))
+
+
 def audit_contribution(materials, db09):
     """创新点提法漂移检测。db09["contributions"] = [{id, canonical}]。
 
     每条贡献:
-      - 抽 canonical 关键 token(实词)；
-      - 对每份材料逐行算"覆盖率"=行 token∩贡献 token / 贡献 token；
-        取覆盖率最高的行作为该材料对此贡献的"代表句"；
-      - 覆盖率 >= ADDR_MIN 视为该材料在表述此贡献；
-      - 代表句与 canonical 的 Jaccard < DRIFT_SIM -> 提法偏离，报 CONTRIBUTION_DRIFT。
+      - 抽 canonical 关键 token,对每份材料逐行算覆盖率,取覆盖率最高行为"代表句";
+      - 覆盖率 >= ADDR_MIN 视为该材料在表述此贡献;
+      - 代表句与 canonical 的【句级相似度】< DRIFT_SIM -> 提法偏离,报 CONTRIBUTION_DRIFT。
+
+    相似度挂接 _shared/semantic_sim(替旧裸 Jaccard):词序无关、能识别倒装,
+    不再把"同词不同序"误判为一致——这是审查指出的"一字对齐"措辞夸大的真实兑现。
     """
     findings = []
     contribs = db09.get("contributions", [])
+    sim_note = "" if HAVE_SEMSIM else "(semantic_sim 缺失,已降级裸 Jaccard)"
     for c in contribs:
         canon = c.get("canonical", "")
         ctoks = _tokens(canon)
@@ -439,26 +506,262 @@ def audit_contribution(materials, db09):
                     continue
                 cover = len(ltoks & ctoks) / len(ctoks)
                 if cover > best[0]:
-                    best = (cover, i, line, _jaccard(ltoks, ctoks))
+                    best = (cover, i, line, _sentence_sim(line, canon))
             cover, ln, line, sim = best
             if cover >= ADDR_MIN and sim < DRIFT_SIM:
                 findings.append(_finding(
                     "CONTRIBUTION_DRIFT", "warn", mat["name"], ln, line,
                     f"贡献 '{c.get('id', '?')}' 在此处提法偏离 db09 标准措辞"
-                    f"(覆盖 {cover*100:.0f}% / 相似 {sim*100:.0f}%)：标准为「{canon}」",
-                    f"按 db09 创新点统一措辞改写，使 {mat['name']} 与论文/软著一字对齐"))
+                    f"(覆盖 {cover*100:.0f}% / 语义相似 {sim*100:.0f}%{sim_note})：标准为「{canon}」",
+                    f"按 db09 创新点统一措辞改写，使 {mat['name']} 与论文/软著对齐"))
     return findings
 
 
-def run_audit(materials, db09):
+# ---------------------------------------------------------------------------
+# 检测 6：主张措辞强于证据 (CLAIM_STRENGTH_DRIFT) —— top_idea #1,跨技能反哺 m06→a07→m07
+#   挂接 _shared/evidence_contract(light.evidence_strength.v1):
+#   m06 为每条主张标证据档(strong/moderate/weak/none),本检测扫所有材料,
+#   若某主张所在行用了"高于其证据档"的措辞(weak 证据却写 demonstrate/significantly/
+#   显著/SOTA),报 ERROR。这是裸模型与 Vale/Acrolinx/Xbench 都没有的科研专属维度。
+# ---------------------------------------------------------------------------
+def _claim_keywords_hit(line, keywords):
+    """该行是否在表述某主张:命中 >=2 个关键词,或命中 >=1 且其中含主方法/指标名。"""
+    low = line.lower()
+    hits = 0
+    for kw in keywords or []:
+        k = kw.lower()
+        if re.search(r"[^\x00-\x7f]", kw):       # 中文子串
+            if k in low:
+                hits += 1
+        elif re.search(r"(?<![A-Za-z0-9_])" + re.escape(k) + r"(?![A-Za-z0-9_])", low):
+            hits += 1
+    return hits >= 2
+
+
+# 中文强断言短语(英文动词表无法覆盖中文材料,显式列;按证据档收紧)
+_ZH_STRONG = ["显著", "大幅", "证明", "确立", "达到 sota", "达到sota", "最优", "首次实现", "完全超越"]
+
+
+def audit_claim_strength(materials, db09):
+    findings = []
+    claims = db09.get("claims", [])
+    if not claims:
+        return findings
+    if not HAVE_EVIDENCE:
+        # 诚实降级:契约缺失则只用本地中文短语表兜底(英文动词档无法机械映射)
+        for mat in materials:
+            flags = mat.get("code_flags") or [False] * len(mat["lines"])
+            for i, line in enumerate(mat["lines"], 1):
+                if flags[i - 1]:
+                    continue
+                for c in claims:
+                    if c.get("evidence_grade") in ("weak", "none") and _claim_keywords_hit(line, c.get("keywords")):
+                        for ph in c.get("forbidden_zh", []):
+                            if ph and ph in line:
+                                findings.append(_finding(
+                                    "CLAIM_STRENGTH_DRIFT", "error", mat["name"], i, line,
+                                    f"主张 '{c.get('claim_id')}' 证据档为 '{c.get('evidence_grade')}',"
+                                    f"却用强措辞 '{ph}'(evidence_contract 缺失,仅中文短语兜底)",
+                                    f"降级措辞:{c.get('evidence_grade')} 档应 hedge(可能/初步),勿用 '{ph}'"))
+        return findings
+    # 正常路径:用 evidence_contract 的 grade→措辞档做机械映射
+    for mat in materials:
+        flags = mat.get("code_flags") or [False] * len(mat["lines"])
+        for i, line in enumerate(mat["lines"], 1):
+            if flags[i - 1]:
+                continue
+            for c in claims:
+                if not _claim_keywords_hit(line, c.get("keywords")):
+                    continue
+                grade = c.get("evidence_grade") or _evc.grade_evidence(
+                    c.get("q_fdr"), c.get("effect_size"), c.get("ci95"), c.get("n"))
+                # 英文措辞:走契约 lint_wording(动词档机械映射)
+                for v in _evc.lint_wording(line, {"evidence_grade": grade}):
+                    if v.get("matched") is None:
+                        continue              # whole-line hedge 缺失对单行材料噪声大,跳过
+                    findings.append(_finding(
+                        "CLAIM_STRENGTH_DRIFT", "error", mat["name"], i, line,
+                        f"主张 '{c.get('claim_id')}' 证据档 '{grade}',措辞 '{v['matched']}' 超档"
+                        f"({v['issue']})",
+                        v["suggestion"]))
+                # 中文措辞:契约动词表覆盖不到,用 registry 的 forbidden_zh 补
+                if grade in ("weak", "none"):
+                    for ph in c.get("forbidden_zh", []):
+                        if ph and ph in line:
+                            findings.append(_finding(
+                                "CLAIM_STRENGTH_DRIFT", "error", mat["name"], i, line,
+                                f"主张 '{c.get('claim_id')}' 证据档 '{grade}',却用强措辞 '{ph}'",
+                                f"{grade} 档须 hedge(可能/初步/有待验证),勿用 '{ph}'"))
+    return findings
+
+
+# ---------------------------------------------------------------------------
+# 检测 7：共存即冲突 (VARIANT_CONFLICT) —— missing_mechanism(Vale/Xbench 有)
+#   无需预写 forbidden 表:对每个 canonical,在材料里自动发现"仅大小写/连字符/空格
+#   不同"的变体写法。若变体与 canonical 同时出现且未登记为 alias,即报不一致。
+#   解决审查指出的"完全依赖人工把禁用写法穷举进 db09,漏写即漏检"。
+# ---------------------------------------------------------------------------
+def _variant_key(s):
+    """归一键:小写 + 去连字符/空格/下划线。'DCA-Net'/'DCA Net'/'dcanet' → 同键。"""
+    return re.sub(r"[-_\s]", "", s.lower())
+
+
+def audit_variant_conflict(materials, db09):
+    findings = []
+    # 登记的"精确写法"(canonical + aliases/abbr/full)不算冲突;forbidden 由 SUBSTITUTION
+    # 负责,此处排除以聚焦"未预写、自动发现"的近形变体(VARIANT_CONFLICT 的存在意义)。
+    entries = []
+    for t in db09.get("glossary", []):
+        canon = t.get("canonical")
+        if canon:
+            surfaces = set([canon] + list(t.get("aliases", [])))
+            forb = set(_forbidden_literals(t.get("forbidden", [])))
+            entries.append((canon, surfaces, forb))
+    for m in db09.get("methods", []):
+        canon = m.get("canonical")
+        if canon:
+            surfaces = set(x for x in [canon, m.get("abbr"), m.get("full")] if x)
+            forb = set(_forbidden_literals(m.get("forbidden", [])))
+            entries.append((canon, surfaces, forb))
+    ckey = re.compile(r"[A-Za-z0-9][A-Za-z0-9\-_ ]*[A-Za-z0-9]|[A-Za-z0-9]")
+    for canon, surfaces, forb in entries:
+        target = _variant_key(canon)
+        reg_keys = set(_variant_key(s) for s in surfaces)   # 已登记写法的归一键
+        variants = {}  # surface -> (material, line_no, line)
+        for mat in materials:
+            flags = mat.get("code_flags") or [False] * len(mat["lines"])
+            for i, line in enumerate(mat["lines"], 1):
+                if flags[i - 1]:
+                    continue
+                scan = _strip_inline_code(line)
+                for mt in ckey.finditer(scan):
+                    surf = mt.group(0).strip()
+                    if not surf or _variant_key(surf) != target:
+                        continue
+                    if surf in surfaces:
+                        continue            # 精确命中登记写法
+                    if surf in forb or any(surf == fb for fb in forb):
+                        continue            # 已在 forbidden,归 SUBSTITUTION 报
+                    if surf not in variants:
+                        variants[surf] = (mat["name"], i, line)
+        # 只有当确实出现"非登记的近形变体"才报(共存即冲突)
+        for surf, (mn, ln, line) in variants.items():
+            findings.append(_finding(
+                "VARIANT_CONFLICT", "warn", mn, ln, line,
+                f"出现 '{canon}' 的未登记近形变体 '{surf}'(仅大小写/连字符/空格不同),共存即不一致",
+                f"统一为规范写法 '{canon}',或把 '{surf}' 登记为 alias/forbidden"))
+    return findings
+
+
+# ---------------------------------------------------------------------------
+# 检测 8：缩写首次全称规则 (ABBREV_FIRST_USE) —— missing_mechanism + 兑现 first_use_rule
+#   method_lock 写了 first_use_rule 字段但旧脚本根本没消费。学术惯例:缩写首次出现
+#   应写"全称(缩写)",此后用缩写。本检测对每份材料逐一核查每个含 full≠abbr 的方法。
+# ---------------------------------------------------------------------------
+def audit_abbrev_first_use(materials, db09):
+    findings = []
+    methods = [m for m in db09.get("methods", [])
+               if m.get("abbr") and m.get("full") and m["abbr"] != m["full"]
+               and m["abbr"] != m.get("canonical")]   # canonical 本身即缩写(方法名)的不查
+    for m in methods:
+        abbr, full = m["abbr"], m["full"]
+        for mat in materials:
+            flags = mat.get("code_flags") or [False] * len(mat["lines"])
+            first_abbr = None      # (line_no, line)
+            full_before = False
+            paren_ok = False
+            for i, line in enumerate(mat["lines"], 1):
+                if flags[i - 1]:
+                    continue
+                scan = _strip_inline_code(line)
+                has_full = _word_present(scan, full, case_lock=False)
+                has_abbr = _word_present(scan, abbr, case_lock=True)
+                if has_full:
+                    full_before = True
+                    # 同行 "全称(缩写)" 形式即合规首次定义
+                    if re.search(re.escape(full) + r"\s*[（(]\s*" + re.escape(abbr) + r"\s*[）)]", scan):
+                        paren_ok = True
+                if has_abbr and first_abbr is None:
+                    first_abbr = (i, line)
+                    break
+            if first_abbr and not full_before and not paren_ok:
+                # 缩写先于任何全称定义出现 → 违反 first_use_rule
+                ln, line = first_abbr
+                findings.append(_finding(
+                    "ABBREV_FIRST_USE", "warn", mat["name"], ln, line,
+                    f"缩写 '{abbr}' 首次出现前未给全称定义(规则:{m.get('first_use_rule', '首次写全称(缩写)')})",
+                    f"首次改为 '{full}（{abbr}）',此后再用 '{abbr}'"))
+    return findings
+
+
+# ---------------------------------------------------------------------------
+# 检测 9：B-fact 快照新鲜度 (STALE_SNAPSHOT) —— top_idea #2,补 SKILL 维度⑦功能名不副实
+#   解析材料/卡内 [snapshot date=YYYY-MM-DD ... src=...] 三件套,按 kind 阈值算超期:
+#     metric(计量) > 90 天 / license(许可) > 365 天 / doi 永不过期。
+#   旧 SKILL 白纸黑字说"consistency_audit.py 可顺带标记"却零实现——本检测兑现。
+# ---------------------------------------------------------------------------
+_SNAP_RE = re.compile(
+    r"\[snapshot\s+date=(\d{4}-\d{2}-\d{2})(?:\s+kind=([a-zA-Z]+))?[^\]]*?src=([^\]]+)\]")
+_STALE_DAYS = {"metric": 90, "license": 365, "doi": None, "default": 180}
+
+
+def _infer_kind(src, kind):
+    if kind:
+        return kind.lower()
+    s = src.lower()
+    if "doi" in s or "10." in s:
+        return "doi"
+    if "license" in s or "许可" in s or "ccby" in s or "cc-by" in s:
+        return "license"
+    if any(w in s for w in ("if", "影响因子", "citescore", "计量", "metric", "jcr")):
+        return "metric"
+    return "default"
+
+
+def audit_snapshot_freshness(materials, db09, today=None):
+    findings = []
+    if today is None:
+        today = datetime.date.today()
+    elif isinstance(today, str):
+        today = datetime.date.fromisoformat(today)
+    for mat in materials:
+        for i, line in enumerate(mat["lines"], 1):
+            for mt in _SNAP_RE.finditer(line):
+                date_s, kind_s, src = mt.group(1), mt.group(2), mt.group(3).strip()
+                try:
+                    snap = datetime.date.fromisoformat(date_s)
+                except ValueError:
+                    continue
+                kind = _infer_kind(src, kind_s)
+                limit = _STALE_DAYS.get(kind, _STALE_DAYS["default"])
+                if limit is None:
+                    continue              # doi 等不过期
+                age = (today - snap).days
+                if age > limit:
+                    findings.append(_finding(
+                        "STALE_SNAPSHOT", "warn", mat["name"], i, line,
+                        f"快照 [{kind}] 取于 {date_s},距今 {age} 天 > 阈值 {limit} 天(src={src})",
+                        f"重新核对 {src} 并更新 [snapshot date=…] 为最新值"))
+    return findings
+
+
+def run_audit(materials, db09, today=None):
+    # 补 code_flags(scope-aware):合成材料/外部构造的 dict 可能没带,这里兜底计算
+    for mat in materials:
+        if "code_flags" not in mat:
+            mat["code_flags"] = _code_block_flags(mat["lines"])
     findings = []
     findings += audit_substitution(materials, db09)
+    findings += audit_variant_conflict(materials, db09)        # VARIANT_CONFLICT(共存即冲突)
     findings += audit_metric_name(materials, db09)
     gross, observed = audit_metric_value(materials, db09)
     findings += gross  # GROSS_MISMATCH(X-2)：超阈值单列告警，不再静默丢弃
     findings += evaluate_value_conflicts(observed)
     findings += audit_coverage(materials, db09)
-    findings += audit_contribution(materials, db09)  # CONTRIBUTION_DRIFT(X-5)
+    findings += audit_contribution(materials, db09)  # CONTRIBUTION_DRIFT(X-5,挂 semantic_sim)
+    findings += audit_claim_strength(materials, db09)          # CLAIM_STRENGTH_DRIFT(挂 evidence_contract)
+    findings += audit_abbrev_first_use(materials, db09)        # ABBREV_FIRST_USE(兑现 first_use_rule)
+    findings += audit_snapshot_freshness(materials, db09, today)  # STALE_SNAPSHOT(维度⑦兑现)
     # 去重：同一(类型,位置,问题)只保留一条(如 DCANet 同时命中术语表与方法锁)。
     seen, deduped = set(), []
     for f in findings:
@@ -483,12 +786,15 @@ def render_report(findings, materials):
     by_kind = {}
     for f in findings:
         by_kind.setdefault(f["kind"], []).append(f)
-    labels = {"SUBSTITUTION": "受控术语/方法名替换", "METRIC_NAME": "指标换名",
-              "METRIC_VALUE": "指标数值冲突", "GROSS_MISMATCH": "指标数值严重偏离",
-              "COVERAGE_GAP": "覆盖缺口", "CONTRIBUTION_DRIFT": "创新点提法漂移"}
+    labels = {"SUBSTITUTION": "受控术语/方法名替换", "VARIANT_CONFLICT": "共存即冲突(近形变体)",
+              "METRIC_NAME": "指标换名", "METRIC_VALUE": "指标数值冲突",
+              "GROSS_MISMATCH": "指标数值严重偏离", "COVERAGE_GAP": "覆盖缺口",
+              "CONTRIBUTION_DRIFT": "创新点提法漂移", "CLAIM_STRENGTH_DRIFT": "措辞强于证据",
+              "ABBREV_FIRST_USE": "缩写首次全称规则", "STALE_SNAPSHOT": "快照超期"}
     n = 0
-    for kind in ["SUBSTITUTION", "METRIC_NAME", "METRIC_VALUE", "GROSS_MISMATCH",
-                 "CONTRIBUTION_DRIFT", "COVERAGE_GAP"]:
+    for kind in ["SUBSTITUTION", "VARIANT_CONFLICT", "METRIC_NAME", "METRIC_VALUE",
+                 "GROSS_MISMATCH", "CLAIM_STRENGTH_DRIFT", "CONTRIBUTION_DRIFT",
+                 "ABBREV_FIRST_USE", "STALE_SNAPSHOT", "COVERAGE_GAP"]:
         items = by_kind.get(kind, [])
         out.append(f"\n## [{kind}] {labels[kind]}　({len(items)} 条)")
         if not items:
@@ -523,9 +829,12 @@ SYNTH_DB09 = {
     "methods": [
         # placeholder:true 项须被跳过(X-1)，否则"本文方法"会误命中正文；
         # 真实禁用写法"我们的网络"仍须生效。
-        {"id": "m1", "canonical": "DCA-Net",
+        {"id": "m1", "canonical": "DCA-Net", "abbr": "DCA-Net", "full": "Dual-Cross Attention Network",
          "forbidden": ["我们的网络",
                        {"text": "本文方法(在正式名出现后仍这么写)", "placeholder": True}]},
+        # X-8: abbr≠full 的模块,缩写首次出现前无全称定义 -> ABBREV_FIRST_USE
+        {"id": "m2", "canonical": "CCA 模块", "abbr": "CCA", "full": "Cross-Channel Attention",
+         "forbidden": [], "first_use_rule": "首次写 CCA(Cross-Channel Attention)"},
     ],
     "metrics": [
         {"id": "f1", "canonical": "F1", "aliases": ["F1-score"],
@@ -537,6 +846,12 @@ SYNTH_DB09 = {
         {"id": "创新点1",
          "canonical": "级联误差传播抑制：检测跟踪行为四级流水线的不确定性传播建模"},
     ],
+    # 主张-证据登记(X-6)：c_weak 证据弱,材料里用强措辞即 CLAIM_STRENGTH_DRIFT
+    "claims": [
+        {"claim_id": "c_weak", "text": "SFP reduces miss rate",
+         "keywords": ["SFP", "漏检", "召回"], "evidence_grade": "weak",
+         "forbidden_zh": ["显著", "大幅", "SOTA"]},
+    ],
 }
 SYNTH_MATERIALS = [
     {"name": "paper.txt", "lines": [
@@ -544,6 +859,8 @@ SYNTH_MATERIALS = [
         "DCA-Net 的 F1 达到 87.6%。",
         "训练阶段对骨干网络做 fine-tune。",
         "本文的级联误差传播抑制对检测跟踪行为四级流水线的不确定性传播建模。",
+        "venue 影响因子见 [snapshot date=2020-01-01 kind=metric src=JCR-IF]。",  # X-9: STALE
+        "SFP 模块对小目标漏检有一定缓解作用。",                                  # claim c_weak,合规
     ]},
     {"name": "ppt.txt", "lines": [
         "本页介绍 DCANet 架构。",                 # SUBSTITUTION: DCANet
@@ -554,23 +871,30 @@ SYNTH_MATERIALS = [
         "DCA-Net 的 F1 写作 0.876。",              # 单位归一化后==87.6，不应误报(X-2)
         "这里做了流水线的误差处理。",               # 覆盖不足，不应误报为漂移
         "本页讲多级流水线误差传播的处理思路与系统稳健性提升方案。",  # CONTRIBUTION_DRIFT(X-5)
+        "SFP 模块显著降低小目标漏检率。",           # X-6: weak 证据用"显著" -> CLAIM_STRENGTH_DRIFT
+        "DCA Net 与基线对比。",                     # X-7: 'DCA Net' 未登记近形变体 -> VARIANT_CONFLICT
+        "CCA 模块用于通道建模。",                   # X-8: 缩写 CCA 首次出现无全称 -> ABBREV_FIRST_USE
+        "代码示例如下：",
+        "```python",
+        "model = finetune(net)  # 代码块内 finetune 不应误报(scope-aware)",
+        "```",
     ]},
     # fine-tune(must_cover) 仅出现在 paper -> COVERAGE_GAP/WARN
 ]
 
 
 def selftest():
-    print(">>> 无参数：运行内置合成自测\n")
-    findings = run_audit(SYNTH_MATERIALS, SYNTH_DB09)
+    print(">>> 运行内置合成自测\n")
+    findings = run_audit(SYNTH_MATERIALS, SYNTH_DB09, today="2026-06-15")
     print(render_report(findings, SYNTH_MATERIALS))
     kinds = {f["kind"] for f in findings}
-    expect = {"SUBSTITUTION", "METRIC_NAME", "METRIC_VALUE",
-              "GROSS_MISMATCH", "CONTRIBUTION_DRIFT", "COVERAGE_GAP"}
+    expect = {"SUBSTITUTION", "METRIC_NAME", "METRIC_VALUE", "GROSS_MISMATCH",
+              "CONTRIBUTION_DRIFT", "COVERAGE_GAP", "CLAIM_STRENGTH_DRIFT",
+              "VARIANT_CONFLICT", "ABBREV_FIRST_USE", "STALE_SNAPSHOT"}
     missing = expect - kinds
     ok = not missing
     checks = []
-    # X-1: dict 形式禁用写法生效(DCA网络 不在材料里，改测"我们的网络"已被 SUBSTITUTION 覆盖)；
-    #      placeholder 跳过 = 没有任何 detail 含"本文方法"的误报
+    # X-1: placeholder 跳过 = 没有任何 detail 含"本文方法"的误报
     no_placeholder = not any("本文方法" in f["detail"] for f in findings)
     checks.append(("X-1 placeholder 占位被跳过", no_placeholder))
     # X-2: GROSS_MISMATCH 恰好命中 50.0 那行，且 0.876 行未被误报
@@ -579,14 +903,38 @@ def selftest():
     norm_ok = not any("0.876" in f["line"] for f in findings)
     checks.append(("X-2 GROSS_MISMATCH 单列且未静默丢弃", gm_ok))
     checks.append(("X-2 单位归一化 0.876==87.6 不误报", norm_ok))
-    # X-4: 普通术语降 INFO；must_cover(fine-tune)缺席报 WARN
+    # X-4: must_cover(fine-tune)缺席报 WARN
     cov = [f for f in findings if f["kind"] == "COVERAGE_GAP"]
     cov_warn = any(f["severity"] == "warn" and "fine-tune" in f["detail"] for f in cov)
     checks.append(("X-4 must_cover 缺席报 WARN", cov_warn))
     # X-5: 创新点漂移命中 ppt 的偏离句
     drift = [f for f in findings if f["kind"] == "CONTRIBUTION_DRIFT"]
     drift_ok = any(f["location"].startswith("ppt.txt") for f in drift)
-    checks.append(("X-5 创新点漂移命中 PPT 偏离句", drift_ok))
+    checks.append(("X-5 创新点漂移命中 PPT 偏离句(挂 semantic_sim)", drift_ok))
+    # X-6: CLAIM_STRENGTH_DRIFT 命中"SFP 模块显著..."且不误报 paper 的合规句
+    csd = [f for f in findings if f["kind"] == "CLAIM_STRENGTH_DRIFT"]
+    csd_ok = any("显著" in f["line"] for f in csd) and not any(
+        "一定缓解" in f["line"] for f in csd)
+    checks.append(("X-6 措辞强于证据(挂 evidence_contract):弱证据'显著'报错、合规句不误报", csd_ok))
+    # X-7: VARIANT_CONFLICT 自动发现 'DCA Net'(未预写 forbidden)
+    vc = [f for f in findings if f["kind"] == "VARIANT_CONFLICT"]
+    vc_ok = any("DCA Net" in f["detail"] for f in vc)
+    checks.append(("X-7 共存即冲突:自动发现未登记变体 'DCA Net'", vc_ok))
+    # X-8: ABBREV_FIRST_USE 命中 CCA(首次无全称),且 DCA-Net(abbr==full)不误报
+    ab = [f for f in findings if f["kind"] == "ABBREV_FIRST_USE"]
+    ab_ok = any("CCA" in f["detail"] for f in ab)
+    checks.append(("X-8 缩写首次全称规则:CCA 报错(消费 first_use_rule)", ab_ok))
+    # X-9: STALE_SNAPSHOT 命中 2020 的计量快照(距 2026-06-15 远超 90 天)
+    ss = [f for f in findings if f["kind"] == "STALE_SNAPSHOT"]
+    ss_ok = any("2020-01-01" in f["line"] for f in ss)
+    checks.append(("X-9 快照超期:计量快照 >90 天报 WARN(维度⑦兑现)", ss_ok))
+    # scope-aware: 代码块内 finetune 未被 SUBSTITUTION 误报
+    scope_ok = not any(f["kind"] == "SUBSTITUTION" and "model = finetune" in f["line"]
+                       for f in findings)
+    checks.append(("scope-aware 代码块内 finetune 不误命中", scope_ok))
+    # 契约挂接留痕
+    print(f"\n[契约挂接] evidence_contract={'已挂' if HAVE_EVIDENCE else '缺失(降级)'} "
+          f"semantic_sim={'已挂' if HAVE_SEMSIM else '缺失(降级)'}")
 
     print("\n[自测断言] 全部检测类型均触发：",
           "通过" if ok else f"缺失 {missing}")
@@ -601,6 +949,7 @@ def main():
     ap.add_argument("--db09", help="db09 源:含三份 yaml 的目录,或真实项目的 terminology.md(Markdown 表)")
     ap.add_argument("--materials", nargs="*", help="材料文本文件(支持 glob)")
     ap.add_argument("--json", help="同时把发现写入该 JSON 文件")
+    ap.add_argument("--today", help="基准日期 YYYY-MM-DD(STALE_SNAPSHOT 用,缺省取今天)")
     ap.add_argument("--selftest", action="store_true", help="run built-in offline synthetic self-test")
     args = ap.parse_args()
 
@@ -618,7 +967,7 @@ def main():
     if not materials:
         sys.stderr.write("未找到任何材料文件\n"); return 2
 
-    findings = run_audit(materials, db09)
+    findings = run_audit(materials, db09, today=args.today)
     print(render_report(findings, materials))
     if args.json:
         with open(args.json, "w", encoding="utf-8") as f:

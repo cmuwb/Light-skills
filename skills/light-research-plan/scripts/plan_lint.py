@@ -18,8 +18,34 @@
 """
 from __future__ import annotations
 import argparse
+import pathlib
 import re
 import sys
+
+# ── 挂接共享契约（_shared，方式B 脚本式 import；缺失则降级，不静默假成功）──
+_SHARED = pathlib.Path(__file__).resolve().parents[2] / "_shared"
+if str(_SHARED) not in sys.path:
+    sys.path.insert(0, str(_SHARED))
+try:
+    from semantic_sim import similarity as _sem_sim, last_mode as _sem_mode
+    _HAS_SEM = True
+except Exception:                      # pragma: no cover - 降级路径
+    _HAS_SEM = False
+    def _sem_sim(a, b, mode="auto"):   # type: ignore
+        return 0.0
+    def _sem_mode():                   # type: ignore
+        return None
+try:
+    from evidence_contract import allowed_verb_tier, _ASSERTIVE_VERBS
+    _HAS_EVID = True
+except Exception:                      # pragma: no cover - 降级路径
+    _HAS_EVID = False
+    _ASSERTIVE_VERBS = ["prove", "demonstrate", "establish", "confirm", "show",
+                        "outperform", "superior", "significantly"]
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
 
 # 列名 → 要素的别名映射（容忍模板措辞差异）
 COL_ALIASES = {
@@ -28,7 +54,13 @@ COL_ALIASES = {
     "baseline": ("baseline", "基线", "对照"),
     "metric": ("指标", "metric", "评价指标"),
     "stop": ("完成判定", "停止条件", "判定", "成功标准"),
+    "confound": ("已控混淆", "负对照", "混淆", "negative control", "control"),
 }
+# 语义对齐阈值：完成判定与指标的语义相似度低于此值才判"脱节"(替代脆弱子串匹配)
+SEM_ALIGN_THRESHOLD = 0.30
+# 因果/贡献声明触发词：含这些的完成判定属"强断言"，应有负对照/混淆控制
+CAUSAL_CLAIM_RE = re.compile(
+    r"证明|归因|因果|贡献|导致|cause|because|due to|attribut|prove|demonstrat", re.I)
 # 占位符（模板未填）视为缺项
 PLACEHOLDER_RE = re.compile(r"^\s*(\{\{.*\}\}|[-—–]|n/?a|tbd|待定|待填|\.\.\.|…)?\s*$", re.I)
 # 实验行 ID 形态：EXP-01 / ABL-02 / SEN-01 / GEN/ROB 等
@@ -96,6 +128,39 @@ def _col_index(header: list[str], element: str) -> int | None:
     return None
 
 
+def _metric_aligned(stop_val: str, metric_val: str) -> bool:
+    """判定完成判定是否与指标对齐，分三层、各层诚实标注能力边界：
+      1) 词面 token 直接命中（最强信号）
+      2) token 缩写/前缀匹配（acc⊂accuracy、mAP⊂mAP@0.5——治常见缩写漏报，纯字符串、不夸张）
+      3) 共享 semantic_sim 语义档（仅当注入 embedding/LLM scorer 才真能跨同义/跨语言；
+         离线档对 acc↔accuracy 这类缩写、mAP↔平均精度这类跨语言同义**力有不逮**，故只作补充信号）
+    """
+    low_stop = stop_val.lower()
+    stop_tokens = re.findall(r"[a-z]+[\-\d@\.]*|[一-鿿]{2,}", low_stop)
+    mtokens = re.findall(r"[A-Za-z]+[\-\d@\.]*|[一-鿿]{2,}", metric_val.lower())
+    mtokens = [t for t in mtokens if len(t) >= 2 or any(ch.isdigit() for ch in t)]
+    if not mtokens:
+        return True                      # 指标无可比 token，不判脱节
+    # 层1：词面直接命中
+    if any(t in low_stop for t in mtokens):
+        return True
+    # 层2：缩写/前缀双向匹配（acc 是 accuracy 的前缀；长度≥3 防误命中 f/r 这种单字母）
+    for mt in mtokens:
+        core = re.sub(r"[\-\d@\.]", "", mt)
+        if len(core) < 3:
+            continue
+        for st in stop_tokens:
+            score = re.sub(r"[\-\d@\.]", "", st)
+            if len(score) < 3:
+                continue
+            if core.startswith(score) or score.startswith(core):
+                return True
+    # 层3：语义档（embedding/LLM 注入时才有真同义判别力，离线档仅补充）
+    if _HAS_SEM:
+        return _sem_sim(metric_val, stop_val, mode="auto") >= SEM_ALIGN_THRESHOLD
+    return False
+
+
 def lint(text: str) -> dict:
     tables = parse_tables(text)
     found = find_experiment_table(tables)
@@ -103,10 +168,12 @@ def lint(text: str) -> dict:
         return {"ok": False, "error": "未找到实验矩阵表（需含「对应假设」列且有 EXP-/ABL- 等实验行）"}
     header, rows = found
     idx = {el: _col_index(header, el) for el in COL_ALIASES}
-    missing_cols = [el for el, i in idx.items() if i is None]
+    # confound 列为可选（新增能力），不计入硬性缺列
+    missing_cols = [el for el, i in idx.items() if i is None and el != "confound"]
     findings = []
     warnings = []           # 语义弱校验（不翻 ok 退出码，但提示"绿了可能仍错"）
     hyp_to_exps = {}        # 假设 → 该假设下的实验 ID 列表（覆盖度检查）
+    n_hypothesis_tests = 0  # 多重比较族大小 K：完成判定里做显著性检验的行数
     checked = 0
     for r in rows:
         if not r or not EXP_ID_RE.match((r[0] or "").strip()):
@@ -138,20 +205,29 @@ def lint(text: str) -> dict:
         if m is None or m >= len(r) or _is_blank(r[m]):
             gaps.append("停止条件(完成判定空)")
         else:
+            # 多重比较族计数：完成判定含 p 值/显著性检验 → 计入 K
+            if re.search(r"p\s*[<>=]|显著|significan|q\s*[<>=]|fdr", stop_val, re.I):
+                n_hypothesis_tests += 1
             # 语义弱校验1：停止条件应可量化（含数字/不等号/p值），纯定性词给 warning
             if not QUANT_RE.search(stop_val):
                 warnings.append(f"{exp_id}: 完成判定「{stop_val[:30]}」无可量化阈值（数字/不等号/p值），"
                                 f"难以客观验收——EXP-Bench 最忌结论判定不可量化")
             elif any(q in stop_val.lower() for q in QUALITATIVE_ONLY) and not QUANT_RE.search(stop_val):
                 warnings.append(f"{exp_id}: 完成判定含定性词且无量化门槛")
-            # 语义弱校验2：完成判定是否提到了该行的指标（判定与指标对齐）
+            # 语义弱校验2：完成判定是否与该行指标对齐（语义相似度，替脆弱子串匹配）
             if metric_val and not _is_blank(metric_val):
-                # 提取指标关键 token：字母(数字)混合名(F1/R2/top-1/acc/mAP)或中文词，含短名
-                mtokens = re.findall(r"[A-Za-z]+[\-\d]*|[一-鿿]{2,}", metric_val.lower())
-                mtokens = [t for t in mtokens if len(t) >= 2 or any(ch.isdigit() for ch in t)]
-                if mtokens and not any(t in stop_val.lower() for t in mtokens):
-                    warnings.append(f"{exp_id}: 完成判定未提及指标「{metric_val[:20]}」关键词，"
+                aligned = _metric_aligned(stop_val, metric_val)
+                if not aligned:
+                    backend = f"[{_sem_mode() or 'literal'}]" if _HAS_SEM else "[literal]"
+                    warnings.append(f"{exp_id}: 完成判定与指标「{metric_val[:20]}」语义不对齐 {backend}，"
                                     f"判定与指标可能脱节（绿了但判定对错存疑）")
+            # 语义弱校验4（新增，借 Popper/co-scientist）：因果/贡献声明须有负对照/混淆控制
+            if CAUSAL_CLAIM_RE.search(stop_val):
+                ci = idx["confound"]
+                conf_val = r[ci] if (ci is not None and ci < len(r)) else ""
+                if ci is None or _is_blank(conf_val):
+                    warnings.append(f"{exp_id}: 完成判定做因果/贡献声明「{stop_val[:24]}」但「已控混淆/负对照」列空——"
+                                    f"缺负对照难排除替代解释（借 Popper 严格 Type-I：声明因果须配负对照）")
         if gaps:
             findings.append({"exp_id": exp_id, "gaps": gaps})
 
@@ -164,8 +240,18 @@ def lint(text: str) -> dict:
                                      f"缺消融难归因增益来自创新点本身")
     warnings.extend(coverage_warnings)
 
-    # 严谨性评分卡（借 ARA Rigor Reviewer）：把"齐全/语义/覆盖"汇成 0-100 严谨度，分项可审计。
-    # 经验扣分制（非真值，可调）：每个硬缺项行扣 15、每条语义 warning 扣 5，封底 0。
+    # 多重比较感知（top_idea 1：m05↔m06 口径对齐）：K>1 但 power 未按校正后 alpha 反推时 warn。
+    power_under_correction_ok = True
+    if n_hypothesis_tests > 1:
+        power_under_correction_ok = False
+        warnings.append(
+            f"多重比较族 K={n_hypothesis_tests}（{n_hypothesis_tests} 行做显著性检验）："
+            f"种子/重复数应在校正后 α 上反推，否则 m06 做 BH-FDR 后整盘静默欠功效。"
+            f"跑 `python scripts/power_check.py --effect <d> --n-comparisons {n_hypothesis_tests} "
+            f"--correction bh` 取校正后 min_n。")
+
+    # 严谨性评分卡：经验扣分制（**非 ARA 那种六维语义认知评审，是计数扣分；诚实降级**）。
+    # 每个硬缺项行扣 15、每条语义 warning 扣 5，封底 0。仅作可审计的相对严谨度起点，非真值。
     rigor = 100
     rigor -= 15 * len(findings)
     rigor -= 5 * len(warnings)
@@ -174,14 +260,19 @@ def lint(text: str) -> dict:
         "form_complete": len(findings) == 0,              # 四要素齐全
         "quantifiable_verdicts": not any("无可量化阈值" in w for w in warnings),
         "verdict_metric_aligned": not any("脱节" in w for w in warnings),
-        "ablation_coverage": not any("消融" in w for w in warnings),
+        "ablation_coverage": not any("无消融实验" in w for w in warnings),
+        "confound_coverage": not any("已控混淆/负对照" in w for w in warnings),
+        "power_under_correction": power_under_correction_ok,
         "n_hard_gaps": len(findings),
         "n_semantic_warnings": len(warnings),
+        "scoring": "计数扣分制(非真值/非语义认知评审)",
     }
 
     return {"ok": len(findings) == 0 and not missing_cols,
             "rigor_score": rigor, "rigor_breakdown": rigor_breakdown,
             "checked_rows": checked, "missing_columns": missing_cols,
+            "n_hypothesis_tests": n_hypothesis_tests,
+            "sem_backend": (_sem_mode() if _HAS_SEM else None),
             "findings": findings, "warnings": warnings,
             "hypotheses": {h: sorted(set(e)) for h, e in hyp_to_exps.items()}}
 
@@ -203,12 +294,16 @@ def _print_report(rep: dict) -> None:
         print(f"  —— 语义弱校验 {len(rep['warnings'])} 条 warning（形式齐全≠语义正确，人工核） ——")
         for w in rep["warnings"]:
             print(f"  ⚠ {w}")
-    # 严谨性评分卡（借 ARA Rigor Reviewer）
+    # 严谨性评分卡（计数扣分制，非 ARA 语义评审）
     if "rigor_score" in rep:
         b = rep["rigor_breakdown"]
-        print(f"  —— 严谨性评分 {rep['rigor_score']}/100（经验扣分制，可审计；非真值） ——")
+        print(f"  —— 严谨性评分 {rep['rigor_score']}/100（计数扣分制，可审计；非真值/非语义认知评审） ——")
         print(f"     四要素齐全={b['form_complete']} 判定可量化={b['quantifiable_verdicts']} "
               f"判定指标对齐={b['verdict_metric_aligned']} 有消融覆盖={b['ablation_coverage']}")
+        print(f"     已控混淆/负对照={b['confound_coverage']} 多重比较已校正={b['power_under_correction']}"
+              f"  (指标对齐档={rep.get('sem_backend') or 'literal'})")
+        if rep.get("n_hypothesis_tests", 0) > 1:
+            print(f"     多重比较族 K={rep['n_hypothesis_tests']} → 功效须按校正后 α 反推")
 
 
 def _selftest() -> int:
@@ -275,12 +370,70 @@ def _selftest() -> int:
     assert not any("消融" in w for w in rab["warnings"]), rab["warnings"]
 
     # 严谨性评分卡：齐全+对齐+有消融 → 高分；缺项/多 warning → 低分
-    assert rab["rigor_score"] >= 90, rab["rigor_score"]          # with_abl 干净
+    assert rab["rigor_score"] >= 85, rab["rigor_score"]          # with_abl 基本干净
     assert rab["rigor_breakdown"]["ablation_coverage"], rab
     assert rs["rigor_score"] < rab["rigor_score"], (rs["rigor_score"], rab["rigor_score"])  # sem 有 warning 应更低
     assert rep2["rigor_score"] < 100, rep2["rigor_score"]        # bad 有硬缺项
 
-    print("[selftest] PASS plan_lint（齐全/缺项/无表 + 语义弱校验 + 覆盖度 + 严谨性评分）")
+    # —— 新增校验1：缩写/前缀对齐治同义词漏报（层2）+ 语义档可用时留痕 ——
+    # 指标 accuracy，完成判定写 acc：词面"accuracy"不在判定里，但 acc⊂accuracy 前缀匹配应对齐
+    syn = """
+| 实验ID | 对应假设 | 数据集 | baseline | 指标 | 完成判定 |
+|--------|----------|--------|----------|------|----------|
+| EXP-01 | H1 | ImageNet | ResNet50 | classification accuracy | acc 提升 > 2 个百分点 |
+| ABL-01 | H1 | ImageNet | 移除X | classification accuracy | acc 下降 > 2% |
+"""
+    rsyn = lint(syn)
+    # 缩写前缀匹配应消除 accuracy↔acc 误报（不依赖 embedding）
+    assert not any("脱节" in w for w in rsyn["warnings"]), \
+        ("acc⊂accuracy 前缀匹配应消除误报", rsyn["warnings"])
+    assert rsyn["ok"], rsyn
+    # 真脱节仍要报：指标 F1 但判定只提 top-1（无前缀/词面/缩写关系）
+    mis = """
+| 实验ID | 对应假设 | 数据集 | baseline | 指标 | 完成判定 |
+|--------|----------|--------|----------|------|----------|
+| EXP-01 | H1 | ImageNet | ResNet50 | F1 score | top-1 > 0.9 |
+"""
+    rmis = lint(mis)
+    assert any("脱节" in w for w in rmis["warnings"]), rmis["warnings"]
+
+    # —— 新增校验2：因果/贡献声明无负对照 → confound warning（借 Popper）——
+    causal = """
+| 实验ID | 对应假设 | 数据集 | baseline | 指标 | 完成判定 |
+|--------|----------|--------|----------|------|----------|
+| ABL-01 | H1 | ImageNet | 移除模块X | top-1 | top-1 下降 > 2% 证明模块X的贡献 |
+"""
+    rc = lint(causal)
+    assert any("已控混淆/负对照" in w for w in rc["warnings"]), rc["warnings"]
+    assert not rc["rigor_breakdown"]["confound_coverage"], rc["rigor_breakdown"]
+    # 补上"已控混淆"列后不再 warn
+    causal_ok = """
+| 实验ID | 对应假设 | 数据集 | baseline | 指标 | 已控混淆/负对照 | 完成判定 |
+|--------|----------|--------|----------|------|-----------------|----------|
+| ABL-01 | H1 | ImageNet | 移除模块X | top-1 | 随机标签负对照+同等调参预算 | top-1 下降 > 2% 证明模块X的贡献 |
+"""
+    rco = lint(causal_ok)
+    assert not any("已控混淆/负对照" in w for w in rco["warnings"]), rco["warnings"]
+    assert rco["rigor_breakdown"]["confound_coverage"], rco["rigor_breakdown"]
+
+    # —— 新增校验3：多重比较族计数 K + 未校正 warning（top_idea 1）——
+    multi = """
+| 实验ID | 对应假设 | 数据集 | baseline | 指标 | 完成判定 |
+|--------|----------|--------|----------|------|----------|
+| EXP-01 | H1 | A | B1 | top-1 | top-1 > baseline 且 p<0.05 |
+| EXP-02 | H1 | A | B2 | top-1 | top-1 > baseline 且 p<0.05 |
+| EXP-03 | H2 | A | B3 | top-1 | top-1 > baseline 且 p<0.05 |
+"""
+    rmul = lint(multi)
+    assert rmul["n_hypothesis_tests"] == 3, rmul["n_hypothesis_tests"]
+    assert any("多重比较族 K=3" in w for w in rmul["warnings"]), rmul["warnings"]
+    assert not rmul["rigor_breakdown"]["power_under_correction"], rmul["rigor_breakdown"]
+    # 单一检验不触发
+    assert rab["n_hypothesis_tests"] <= 1, rab["n_hypothesis_tests"]
+    assert rab["rigor_breakdown"]["power_under_correction"], rab["rigor_breakdown"]
+
+    print("[selftest] PASS plan_lint（齐全/缺项/无表 + 语义弱校验 + 覆盖度 + 严谨性评分 "
+          "+ 语义对齐 + 负对照覆盖 + 多重比较族计数）")
     return 0
 
 

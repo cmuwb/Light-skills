@@ -1,0 +1,25 @@
+{
+  "schema": "light.tool_currency.v1",
+  "_about": "工具时效元数据单一真相源：把唯一一条硬编码 vaex 提示泛化成数据驱动的可维护表，供 detect_stack.py 的版本时效门(check_version_currency)消费。兑现 SKILL 反复宣称的'选成熟、维护活跃的工具'。判定为启发式、非权威：latest_major 是该包当前稳定大版本(整数)，落后≥2 个大版本告警；deprecated=true 表示已停维护/更名/移除。所有条目带 last_checked，引用即标注日期(同 OpenAlex key 诚实纪律)。临界值附近以官方 release/EOL 公告为准。",
+  "_caveat": "本表为人工维护快照，覆盖常见科研/工程包，非全生态；未收录的包 detect_stack 不臆造时效(守 no-signal 纪律)。数字会随时间过期，引用时一律带 last_checked。",
+  "last_reviewed": "2026-06-15",
+  "tools": {
+    "pydantic":     {"latest_major": 2, "last_checked": "2026-06-15", "note": "v2 重写校验核心(rust)，1.x 仅安全维护"},
+    "pandas":       {"latest_major": 2, "last_checked": "2026-06-15"},
+    "numpy":        {"latest_major": 2, "last_checked": "2026-06-15", "note": "2.0 含 ABI 破坏，旧扩展需重编译"},
+    "sqlalchemy":   {"latest_major": 2, "last_checked": "2026-06-15", "note": "2.0 API 与 1.4 差异大"},
+    "flask":        {"latest_major": 3, "last_checked": "2026-06-15"},
+    "django":       {"latest_major": 5, "last_checked": "2026-06-15", "note": "LTS 轨道单独维护"},
+    "fastapi":      {"latest_major": 0, "last_checked": "2026-06-15", "note": "仍 0.x，按 minor 破坏，关注 release notes"},
+    "react":        {"latest_major": 19, "last_checked": "2026-06-15"},
+    "next":         {"latest_major": 15, "last_checked": "2026-06-15"},
+    "vue":          {"latest_major": 3, "last_checked": "2026-06-15", "note": "vue 2 已 EOL(2023-12-31)"},
+    "tailwindcss":  {"latest_major": 4, "last_checked": "2026-06-15", "note": "v4 改 oxide 引擎/配置方式"},
+    "vite":         {"latest_major": 6, "last_checked": "2026-06-15"},
+    "vaex":         {"deprecated": true, "last_checked": "2026-06-15", "note": "2023 后停维护(已淘汰)；迁 DuckDB / polars streaming"},
+    "nose":         {"deprecated": true, "last_checked": "2026-06-15", "note": "已废弃，不兼容新 Python；迁 pytest"},
+    "pandas-profiling": {"deprecated": true, "last_checked": "2026-06-15", "note": "已更名 ydata-profiling，旧名停更"},
+    "python-levenshtein": {"deprecated": true, "last_checked": "2026-06-15", "note": "旧名已弃用；改装 Levenshtein"},
+    "sklearn":      {"deprecated": true, "last_checked": "2026-06-15", "note": "PyPI 占位空壳包；应装 scikit-learn"}
+  }
+}

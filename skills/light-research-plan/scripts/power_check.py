@@ -70,6 +70,40 @@ def power_ttest_ind(effect: float, n: int, alpha: float = 0.05) -> tuple[float, 
         return round(float(power), 4), "normal-approx[APPROX]"
 
 
+def adjust_alpha(alpha: float, n_comparisons: int = 1,
+                 correction: str = "none",
+                 expected_rejections: int = 1) -> tuple[float, str]:
+    """按多重比较族大小把名义 alpha 校正成等效 alpha（规划阶段反推 min_n 用）。
+
+    与 m06 significance_test.py 的 BH-FDR 落地口径对齐：规划时若不校正，等效 alpha 会在
+    m06 校正后骤降，导致整盘实验静默欠功效。这里把校正提前到规划阶段。
+
+    correction:
+      - none       : 不校正（α 原样）——仅单一检验时正确
+      - bonferroni : α/K，控制 FWER，最保守
+      - bh         : Benjamini-Hochberg 控制 FDR。精确 BH 阈值数据依赖（取决于真实
+                     拒绝个数 R 与 p 值分布），规划阶段无法预知，故用**保守括号**：
+                     第 R 位序的等效阈值 = (R/K)·α。默认 R=1（最不利位次，等价 Bonferroni），
+                     给 --expected-rejections 估计可放宽到 (R/K)·α。
+    返回 (alpha_adj, note)。
+    """
+    K = max(1, int(n_comparisons))
+    c = (correction or "none").lower()
+    if K == 1 or c == "none":
+        return alpha, ("单一检验，无需多重比较校正" if K == 1
+                       else "未启用多重比较校正——若 m06 落地做 BH/Bonferroni，本功效数偏乐观")
+    if c == "bonferroni":
+        a = alpha / K
+        return a, f"Bonferroni: α/K = {alpha}/{K} = {a:.5g}（控 FWER，最保守）"
+    if c in ("bh", "fdr", "benjamini-hochberg"):
+        R = max(1, min(int(expected_rejections), K))
+        a = (R / K) * alpha
+        kind = "最不利位次=Bonferroni 等价" if R == 1 else f"按预期拒绝 R={R} 的保守括号"
+        return a, (f"BH 保守近似: (R/K)·α = ({R}/{K})·{alpha} = {a:.5g}"
+                   f"（{kind}；精确 BH 阈值数据依赖，落地以 m06 BH-FDR 为准）")
+    raise ValueError(f"未知 correction: {correction}（none|bonferroni|bh）")
+
+
 def min_n_for_power(effect: float, target: float = 0.8, alpha: float = 0.05,
                     cap: int = 100000) -> int | None:
     """反推达到 target power 所需每组最小重复数。线性扫描（n 不大，够用）。"""
@@ -81,31 +115,56 @@ def min_n_for_power(effect: float, target: float = 0.8, alpha: float = 0.05,
 
 
 def check(effect: float, n: int | None = None, target_power: float = 0.8,
-          alpha: float = 0.05) -> dict:
-    out = {"effect_size": effect, "alpha": alpha, "target_power": target_power}
-    min_n = min_n_for_power(effect, target_power, alpha)
+          alpha: float = 0.05, n_comparisons: int = 1,
+          correction: str = "none", expected_rejections: int = 1) -> dict:
+    alpha_nominal = alpha
+    alpha_adj, corr_note = adjust_alpha(alpha, n_comparisons, correction, expected_rejections)
+    out = {"effect_size": effect, "alpha_nominal": alpha_nominal,
+           "alpha_adjusted": round(alpha_adj, 6), "target_power": target_power,
+           "n_comparisons": int(n_comparisons), "correction": (correction or "none").lower(),
+           "correction_note": corr_note}
+    # 用校正后的 alpha 反推 min_n（核心：校正后所需重复数更大）
+    min_n = min_n_for_power(effect, target_power, alpha_adj)
     out["min_n_for_target"] = min_n
+    if n_comparisons > 1 and (correction or "none").lower() != "none":
+        min_n_uncorrected = min_n_for_power(effect, target_power, alpha_nominal)
+        out["min_n_uncorrected"] = min_n_uncorrected
+        out["inflation_vs_uncorrected"] = (
+            round(min_n / min_n_uncorrected, 2) if min_n and min_n_uncorrected else None)
     if n is not None:
-        power, backend = power_ttest_ind(effect, n, alpha)
+        power, backend = power_ttest_ind(effect, n, alpha_adj)
         out["n"] = n
         out["actual_power"] = power
         out["backend"] = backend
         out["adequate"] = power >= target_power
+        corr_tag = f"（校正后 α={alpha_adj:.4g}，K={n_comparisons} {correction}）" if n_comparisons > 1 and out["correction"] != "none" else ""
         if not out["adequate"]:
-            out["verdict"] = (f"⚠ 欠功效：每组 {n} 次对 d={effect} 仅 power={power}"
+            out["verdict"] = (f"⚠ 欠功效：每组 {n} 次对 d={effect} 仅 power={power}{corr_tag}"
                               f"（<目标 {target_power}）——需 ≥{min_n} 次/组才够。"
                               f"别被'≥5 种子'默认值误导，按本结果设重复数。")
         else:
-            out["verdict"] = f"✓ 每组 {n} 次对 d={effect} 达 power={power} ≥{target_power}，功效充足。"
+            out["verdict"] = f"✓ 每组 {n} 次对 d={effect} 达 power={power} ≥{target_power}{corr_tag}，功效充足。"
     else:
-        out["verdict"] = f"达目标 power {target_power}（d={effect}, α={alpha}）需每组 ≥{min_n} 次重复。"
+        corr_tag = f"，多重比较校正后 α={alpha_adj:.4g}" if n_comparisons > 1 and out["correction"] != "none" else ""
+        out["verdict"] = f"达目标 power {target_power}（d={effect}, 名义 α={alpha_nominal}{corr_tag}）需每组 ≥{min_n} 次重复。"
     out["note"] = ("适用双样本均值比较(t 检验)；ANOVA/比例/相关/混合模型请用 statsmodels 对应 Power 类"
-                   "或 simulation-based 估计。效应量 d 应来自前人/预实验，不是拍脑袋。")
+                   "或 simulation-based 估计。效应量 d 应来自前人/预实验或 pilot，不是拍脑袋——"
+                   "脚本对 d 极敏感，d 来源请在实验矩阵注明(m01 文献 meta / 预实验)。")
     return out
 
 
 def render(rep: dict) -> str:
-    lines = [f"# 统计功效检查（d={rep['effect_size']}, α={rep['alpha']}, 目标 power={rep['target_power']}）", ""]
+    lines = [f"# 统计功效检查（d={rep['effect_size']}, 名义 α={rep['alpha_nominal']}, "
+             f"目标 power={rep['target_power']}）", ""]
+    if rep.get("n_comparisons", 1) > 1 and rep.get("correction", "none") != "none":
+        lines.append(f"- 多重比较族 K = {rep['n_comparisons']}, 校正后 α = **{rep['alpha_adjusted']}**")
+        lines.append(f"  - {rep['correction_note']}")
+        if rep.get("min_n_uncorrected"):
+            lines.append(f"  - ⚠ 校正后所需重复数 {rep['min_n_for_target']} vs 未校正 "
+                         f"{rep['min_n_uncorrected']}（膨胀 ×{rep.get('inflation_vs_uncorrected')}）"
+                         f"——不校正会静默欠功效")
+    elif rep.get("n_comparisons", 1) > 1:
+        lines.append(f"- 多重比较族 K = {rep['n_comparisons']}：{rep['correction_note']}")
     if "actual_power" in rep:
         lines.append(f"- 当前每组 {rep['n']} 次 → 实际 power = **{rep['actual_power']}**（{rep['backend']}）")
     lines.append(f"- 达目标 power 所需每组最小重复数 = **{rep['min_n_for_target']}**")
@@ -140,7 +199,42 @@ def _selftest() -> int:
     assert p_sm >= 0.78, p_sm  # 应接近 0.8
     md = render(check(0.5, n=5))
     assert "欠功效" in md and "power" in md, md
-    print("[selftest] PASS power_check offline")
+
+    # —— 多重比较校正（top_idea 1：power_check × m06 口径对齐）——
+    # Bonferroni：K=10 把 α 0.05 → 0.005
+    a_bonf, note_b = adjust_alpha(0.05, n_comparisons=10, correction="bonferroni")
+    assert abs(a_bonf - 0.005) < 1e-9, a_bonf
+    assert "Bonferroni" in note_b
+    # BH 默认 R=1 等价 Bonferroni 的最不利位次
+    a_bh1, _ = adjust_alpha(0.05, n_comparisons=10, correction="bh")
+    assert abs(a_bh1 - 0.005) < 1e-9, a_bh1
+    # BH 给定预期拒绝 R=5 → 放宽到 (5/10)*0.05=0.025
+    a_bh5, _ = adjust_alpha(0.05, n_comparisons=10, correction="bh", expected_rejections=5)
+    assert abs(a_bh5 - 0.025) < 1e-9, a_bh5
+    # K=1 不校正
+    a1, _ = adjust_alpha(0.05, n_comparisons=1, correction="bonferroni")
+    assert a1 == 0.05, a1
+    # 核心不变量：校正后等效 α 更小 → 所需 min_n 更大（坐实"校正后静默欠功效")
+    rc = check(0.5, n_comparisons=10, correction="bonferroni")
+    ru = check(0.5)
+    assert rc["min_n_for_target"] > ru["min_n_for_target"], (rc["min_n_for_target"], ru["min_n_for_target"])
+    assert rc["alpha_adjusted"] < rc["alpha_nominal"], rc
+    assert rc["inflation_vs_uncorrected"] and rc["inflation_vs_uncorrected"] > 1.0, rc
+    print(f"  多重比较: K=10 Bonferroni α=0.05→{rc['alpha_adjusted']}, "
+          f"min_n {ru['min_n_for_target']}→{rc['min_n_for_target']} "
+          f"(膨胀×{rc['inflation_vs_uncorrected']})")
+    # 在校正后 alpha 下，原本"够用"的 n 可能变欠功效
+    rc5 = check(0.8, n=10, n_comparisons=20, correction="bonferroni")
+    assert "alpha_adjusted" in rc5 and rc5["alpha_adjusted"] < 0.05, rc5
+    # 未知 correction 抛错（不静默）
+    try:
+        adjust_alpha(0.05, 5, "bogus")
+        assert False, "未知 correction 应抛错"
+    except ValueError:
+        pass
+    md2 = render(rc)
+    assert "多重比较族" in md2 and "校正后" in md2, md2
+    print("[selftest] PASS power_check offline + 多重比较校正")
     return 0
 
 
@@ -150,12 +244,19 @@ def main() -> int:
     ap.add_argument("--n", type=int, help="当前每组重复数（看实际 power）")
     ap.add_argument("--target-power", type=float, default=0.8)
     ap.add_argument("--alpha", type=float, default=0.05)
+    ap.add_argument("--n-comparisons", type=int, default=1,
+                    help="多重比较族大小 K（做假设检验的实验/对比数；plan_lint 可自动数）")
+    ap.add_argument("--correction", choices=["none", "bonferroni", "bh"], default="none",
+                    help="多重比较校正法，与 m06 BH-FDR 落地口径对齐")
+    ap.add_argument("--expected-rejections", type=int, default=1,
+                    help="BH 模式下预期真阳性个数 R（默认1=最不利位次=Bonferroni）")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args()
 
     if args.selftest or args.effect is None:
         return _selftest()
-    rep = check(args.effect, args.n, args.target_power, args.alpha)
+    rep = check(args.effect, args.n, args.target_power, args.alpha,
+                args.n_comparisons, args.correction, args.expected_rejections)
     print(render(rep))
     return 0
 
