@@ -9,6 +9,8 @@ user-invocable: false
 ## 适用场景
 科研系统、管理系统、数据分析/可视化平台、竞赛作品、软著申请项目。设计要既能落地(交 a03 实现)又能写进软著/论文(交 m15/m07)。
 
+> **增量边界（诚实，别把裸模型自带的架构常识当本技能贡献）**：模块分层（接口/业务/数据层）、RESTful/OpenAPI 八股、JWT/RBAC/最小权限、统一异常响应、分级日志、Cache-aside、范式权衡——都是**裸 Opus 张口就来的常识，近零增量**。本技能真正超出裸模型的是**可执行检查 + 版本敏感的实测知识**：①`schema_lint.py` 把迁移锁/RLS/设计规则编译成 Squawk 式 linter（此前全是 prose 提醒，现成强制门）②references.md 的 RLS 性能实测数字（initPlan 179→9ms、policy 列索引 171→0.1ms、IN 子查询 9000→20ms）、pgvector vs Milvus 阈值与算子类一致性、OpenAPI 3.1 nullable/Prisma migrate deploy/Alembic autogenerate 检不出重命名等**裸模型易因训练陈旧答错的版本敏感坑**③敏感列→RLS→IRB/合规的科研伦理链路。**诚实落后项**（未做）：liam/Atlas 的 schema 反向工程与 drift detection（er_diagram 仍单向 YAML→图）、Atlas/Skeema 声明式 schema-as-code 自动算迁移 plan。
+
 ## 系统架构
 - 模块划分(分层：接口层/业务层/数据层)、职责边界、数据流转图。
 - 技术选型按需(见 a09，各框架起手式/分层/配置见 references.md)：**FastAPI**(路由+Pydantic 校验+`Depends` 注入+`/docs` Swagger)、**Django REST**(serializer+ModelViewSet+Router，`REST_FRAMEWORK` 集中配)、**Spring Boot**(`@RestController→@Service→@Repository` 分层+构造器注入+多 profile)。
@@ -23,6 +25,7 @@ user-invocable: false
 - **迁移**：Alembic `revision --autogenerate` 生成后**必须人工审**（检不出重命名/匿名约束，报成 drop+add），`upgrade head` 应用，CI `alembic check`；Prisma 开发 `migrate dev`、**生产只能 `migrate deploy`**（不 reset/shadow DB），手改 SQL 用 `--create-only`。
 - **ORM 防 N+1**：SQLAlchemy 用 `selectinload`(二次 IN 查询)/`joinedload`(JOIN) 预加载；DRF 用 `select_related`/`prefetch_related`。连接必须用连接池。
 - 最佳实践参考 supabase-postgres-best-practices(下方安全段含 RLS 具体写法、命名规范)。
+- **设计 + 迁移可执行 lint（别只口头提醒，本技能相对 Squawk/Atlas 最大段位差就在这——现已编译成脚本）**：`python scripts/schema_lint.py --spec schema.yaml`（设计期查表无 PK / FK 无索引 / 缺审计列 / **rls:true 无 policy** / **policy 引用列未建索引**（RLS 性能坑 171ms→0.1ms）/ **PII/PHI 列未开 RLS**（合规）），`python scripts/schema_lint.py --ddl migration.sql`（**迁移锁安全 Squawk 式**：CREATE INDEX 缺 CONCURRENTLY / ADD COLUMN 带 DEFAULT / ADD CONSTRAINT 缺 NOT VALID / ALTER COLUMN TYPE 锁表）。critical/major 命中→退出码 1，出 `light.findings.v1` 接 a08/orchestrator，作 a04 产出门禁。⚠ 正则/规则启发式抓常见高危形态，会漏复杂语句，**不替代生产迁移人工审 + 灰度**。
 
 ## 接口设计
 - RESTful/OpenAPI 3.x 规范：顶层 `openapi`/`info`/`servers`(完整 base URL，版本化放 `/v1`)/`paths`/`components`。

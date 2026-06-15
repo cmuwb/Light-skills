@@ -77,6 +77,7 @@
 | research-plan | `scripts/plan_lint.py` | 实验矩阵四要素齐全性检查：假设/变量/指标/停止条件，缺一即提示，离线只读可接 CI；另含语义弱校验(完成判定可量化/判定指标对齐/假设-消融覆盖度) |
 | research-plan | `scripts/power_check.py` | 统计功效反推：输入效应量+重复数→实际 power+达标最小重复数，纠"≥5 种子"对中效应欠功效误区(d=0.5 需 64/组)，statsmodels 优先缺失降级正态近似 |
 | system-design | `scripts/er_diagram.py` | 表结构定义(YAML/JSON) → Mermaid erDiagram 文本，支持 PK/FK/UK 与关系基数，纯离线 |
+| system-design | `scripts/schema_lint.py` | schema 设计+迁移锁安全可执行检查(把 prose 规则编译成 Squawk 式 linter)：YAML spec 查表无PK/FK无索引/缺审计列/RLS无policy/policy列无索引/PII列未开RLS；DDL 查 CREATE INDEX 缺 CONCURRENTLY/ADD COLUMN 带 DEFAULT/ADD CONSTRAINT 缺 NOT VALID/ALTER TYPE 锁表，出 light.findings.v1 |
 | research-ethics | `scripts/check_retractions.py` | 批量撤稿/更正检查，通过 Crossref 等公开元数据标记 retraction risk |
 | research-ethics | `scripts/text_overlap.py` | 离线自查重，定位与给定语料最长逐字重合片段，辅助学术规范审查 |
 | research-ethics | `scripts/stat_consistency.py` | 统计自洽快查：GRIM/granularity 检验（均值粒度不可能）+ p值-自由度一致性（t/df、F/df1/df2），纯 stdlib 抓 p-hacking/造假信号 |
