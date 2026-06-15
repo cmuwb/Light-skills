@@ -30,6 +30,7 @@
 | figure-drawing | `scripts/color_palettes.py` | 投稿级配色工具：Okabe-Ito、连续/离散色图、灰度与色盲模拟预览 |
 | figure-drawing | `scripts/figure_export.py` | 按目标期刊栏宽精确导出矢量+位图，校验物理尺寸与缩放后字号 |
 | figure-drawing | `scripts/figure_integrity_lint.py` | 图表诚实性静态扫描：y 轴截断、双 y 轴、bar 无误差棒、jet/rainbow、3D 扭曲等 |
+| figure-drawing | `scripts/figure_visual_qa.py` | 渲染后视觉 QA 回看闭环(挂 _shared/visual_qa)：从 matplotlib figure 抽文本/图例 AABB 做几何检测(重叠/溢出被裁/错位)+按目标刊栏宽渲染 PNG 打包回看请求交多模态 Opus 看图列缺陷,出 light.visual_qa.v1,无回看诚实标 pixel_review_done=False |
 | figure-planning | `scripts/audit_figure_set.py` | 整组规划卡集合级审计：display item 预算(F#+T# 计数对照 --cap venue 上限、超预算按砍序"可删→可做降附录→必做不动"给裁定)+反冗余(两卡绑同一 claim 语义近似×figure_type 同族,挂 _shared/semantic_sim),出 light.findings.v1 接 a08 |
 | figure-planning | `scripts/recommend_chart.py` | 图型启发式推荐：数据字段+分析任务→候选图型排序+理由（Cleveland-McGill 感知精度先验），喂规划卡再校验 |
 | figure-planning | `scripts/validate_plan_card.py` | 规划卡契约校验：target_journal/column 命中 figure_export JOURNAL_SPECS、figure_id 唯一、source_card 必填，把 m11 打回前移到规划阶段 |
