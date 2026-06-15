@@ -32,6 +32,19 @@ try:
 except ImportError:
     Presentation = None
 
+import os
+# 挂接共享地基契约3(视觉QA)+本技能 geom_qa：补 layout 维度的确定性几何检测
+# （治审查 gap：design/coherence 此前从不算重叠/溢出，全靠人眼盯缩略图）。
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    from geom_qa import read_shapes, DEFAULT_W, DEFAULT_H  # noqa: E402
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                    "..", "..", "_shared"))
+    from visual_qa import detect_geometry_issues  # noqa: E402
+    _HAS_GEOM = True
+except Exception:
+    _HAS_GEOM = False
+
 EMU_PER_INCH = 914400
 
 # 评测阈值（对齐 SKILL「具体尺度」，经验值、可调，非真值）
@@ -111,18 +124,29 @@ def evaluate(path: str) -> dict:
     if Presentation is None:
         raise RuntimeError("需要 python-pptx：pip install python-pptx")
     prs = Presentation(path)
-    slides = [analyze_slide(s) for s in prs.slides]
+    raw_slides = list(prs.slides)
+    slides = [analyze_slide(s) for s in raw_slides]
     n = len(slides)
     if n == 0:
         return {"error": "空 deck（0 页）", "n_slides": 0}
 
+    W = int(prs.slide_width or DEFAULT_W) if _HAS_GEOM else 0
+    H = int(prs.slide_height or DEFAULT_H) if _HAS_GEOM else 0
     deck_colors = set()
     layouts = []
-    content_issues, design_issues, coherence_issues = [], [], []
+    content_issues, design_issues, coherence_issues, layout_issues = [], [], [], []
 
     for i, s in enumerate(slides, 1):
         deck_colors |= s["colors"]
         layouts.append(s["layout"])
+        # layout 维度：确定性几何检测（重叠/溢出/超边距），治"宣称却没做"的硬伤
+        if _HAS_GEOM and W and H:
+            shapes = read_shapes(raw_slides[i - 1])
+            margins = {"left": int(W * 0.04), "right": int(W * 0.04),
+                       "top": int(H * 0.04), "bottom": int(H * 0.04)}
+            for iss in detect_geometry_issues(shapes, (W, H), margins, align_tol=int(W * 0.005)):
+                if iss["type"] in ("overlap", "overflow_canvas"):  # 硬问题进 layout 扣分
+                    layout_issues.append(f"P{i}: {iss['type']} — {iss['detail']}")
         # content 维度
         if s["bullets"] > MAX_BULLETS_PER_SLIDE:
             content_issues.append(f"P{i}: {s['bullets']} 个要点 > {MAX_BULLETS_PER_SLIDE}（拆页或精简）")
@@ -159,17 +183,27 @@ def evaluate(path: str) -> dict:
     content_s = score(content_issues)
     design_s = score(design_issues)
     coherence_s = score(coherence_issues, per=3.0)
-    overall = round((content_s + design_s + coherence_s) / 3, 1)
+    layout_s = score(layout_issues, per=2.5) if _HAS_GEOM else None
+    dims = [content_s, design_s, coherence_s] + ([layout_s] if layout_s is not None else [])
+    overall = round(sum(dims) / len(dims), 1)
 
+    scores = {"content": content_s, "design": design_s, "coherence": coherence_s,
+              "overall": overall}
+    issues = {"content": content_issues, "design": design_issues,
+              "coherence": coherence_issues}
+    if _HAS_GEOM:
+        scores["layout"] = layout_s
+        issues["layout"] = layout_issues
     return {
         "n_slides": n,
-        "scores": {"content": content_s, "design": design_s,
-                   "coherence": coherence_s, "overall": overall},
+        "scores": scores,
         "deck_color_count": len(deck_colors),
-        "issues": {"content": content_issues, "design": design_issues,
-                   "coherence": coherence_issues},
+        "layout_hard_pass": (len(layout_issues) == 0) if _HAS_GEOM else None,
+        "issues": issues,
         "note": ("可计算的结构性指标(扣分制，阈值对齐 SKILL 经验尺度、可调)；"
-                 "不评美感/内容正确性——配色品味、叙事质量、图表是否真数据仍须人工 + thumbnail.py 肉眼复核。"),
+                 "layout 维度由 geom_qa 做确定性重叠/溢出检测(零重叠零溢出=hard_pass)；"
+                 "不评美感/内容正确性——配色品味、叙事质量、图表是否真数据仍须人工 + "
+                 "render_then_review 把渲染图喂回多模态 Opus 复核。"),
     }
 
 
@@ -183,8 +217,9 @@ def to_markdown(rep: dict) -> str:
              f"| 设计一致 design | {s['design']} |",
              f"| 连贯性 coherence | {s['coherence']} |",
              f"| **综合 overall** | **{s['overall']}** |", ""]
-    for dim, label in (("content", "内容"), ("design", "设计"), ("coherence", "连贯性")):
-        iss = rep["issues"][dim]
+    for dim, label in (("content", "内容"), ("design", "设计"),
+                       ("coherence", "连贯性"), ("layout", "版面几何")):
+        iss = rep["issues"].get(dim)
         if iss:
             lines.append(f"**{label}问题（{len(iss)}）**：")
             lines += [f"- {x}" for x in iss]
@@ -252,7 +287,12 @@ def _selftest() -> int:
     assert bad["issues"]["coherence"], bad["issues"]
     # markdown 含诚实声明
     md = to_markdown(good)
-    assert "人工" in md and "thumbnail" in md, md
+    assert "人工" in md and "render_then_review" in md, md
+    # layout 维度（geom_qa 几何检测）应存在并参与评分
+    if _HAS_GEOM:
+        assert "layout" in good["scores"], good["scores"]
+        assert good.get("layout_hard_pass") is not None, good
+        print(f"[good] layout={good['scores']['layout']} hard_pass={good['layout_hard_pass']}")
     # 空 deck 不崩
     empty_p = os.path.join(d, "empty.pptx")
     Presentation().save(empty_p)
